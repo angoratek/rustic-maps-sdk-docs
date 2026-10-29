@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MINIMUM_INTER_UTTERANCE_SPACING_SECONDS","MINIMUM_UTTERANCE_REPEAT_DISTANCE_METERS"],"enum":["SpeechUtteranceKind"],"struct":["SpeechInstructionPlanner","SpeechUtterance"]};
+window.SIDEBAR_ITEMS = {"constant":["FIRST_SPEECH_UTTERANCE_ID","MINIMUM_INTER_UTTERANCE_SPACING_SECONDS","MINIMUM_UTTERANCE_REPEAT_DISTANCE_METERS"],"enum":["SpeechUtteranceKind"],"struct":["SpeechInstructionPlanner","SpeechUtterance"]};

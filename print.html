@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-63a383bf.js";
+            window.path_to_searchindex_js = "searchindex-4c23c232.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -511,6 +511,12 @@ The contract only ever changes addition-only.</p>
 // the mirror records of the navigation state, the instruction payload and the
 // policy records standing in for the native decision objects.
 //
+// M2's remaining developer-facing sub-item (2026-10-28 tile TTL/budget
+// ruling) adds the tile-cache settings surface additively: the
+// `TileCacheTerms` record and the `MapSdk::set_raster_tile_cache_time_to_live`
+// / `raster_tile_cache_terms` pair over the installed tile cache (byte
+// budget stays registration-time through the frozen registration method).
+//
 // This file is the single source of truth for the native binding surface
 // (Kotlin, Swift, and React Native via `uniffi-bindgen-react-native`; PRD §6,
 // decision 1). The hand-reviewed wasm surface in `crate map-web-bindings`
@@ -561,6 +567,11 @@ namespace map_native_core {
     /// The SDK default deviation policy: the distance-threshold detector with
     /// the SDK's default deviation threshold.
     DeviationPolicy default_deviation_policy();
+
+    /// The SDK default reroute-recalculation policy (round 11): the
+    /// Ferrostar-recommended hysteresis — a 5 s cooldown and a 50 m movement
+    /// threshold.
+    ReroutePolicy default_reroute_policy();
 };
 
 /// A position on the WGS 84 ellipsoid in decimal degrees.
@@ -1128,6 +1139,68 @@ interface MapSdk {
     [Throws=SdkError]
     void register_mapquest_providers_with_tile_cache(string mapquest_api_key, string tile_cache_database_path, u64 tile_cache_absolute_maximum_bytes);
 
+    // --- Tile-cache settings surface (M2's remaining developer-facing
+    // sub-item; addition-only). The frozen
+    // `register_mapquest_providers_with_tile_cache` signature is untouched:
+    // the byte budget stays a registration-time fact (the SQLite store's
+    // quota is fixed when the store opens, so retuning it means
+    // re-registering through the frozen method), while the tile time-to-live
+    // is a property of the installed cache and is tuned live through the two
+    // members below. A per-integration registration-time alternative (a
+    // second registration method carrying the whole frozen parameter set
+    // plus one optional TTL field) was rejected: it duplicates the
+    // registration surface for one optional value, and the terms readback
+    // below already makes the applied value inspectable, so the override
+    // rides the installed cache instead. Re-registration replaces the slots
+    // and the tuning: a freshly registered cache starts again at the
+    // category default, and the integrator re-applies the override after
+    // registering.
+    //
+    // Validation ruling (PRD §6.7's provider-terms-ceiling intent): a
+    // requested time-to-live above the installed provider's declared ceiling
+    // is ACCEPTED, and the ceiling clamps what the cache stores — the terms
+    // ceiling is a compliance bound on what the cache may retain, not a
+    // preference, so the SDK must never retain beyond the provider's terms
+    // whatever the integrator asks for; refusing the call would instead
+    // break a live integration every time the provider's terms move or the
+    // integrator reads a stale ceiling. The ceiling and the effective
+    // (clamped) time-to-live are both in the `raster_tile_cache_terms`
+    // readback, so an integrator sees exactly what went into force. A zero
+    // time-to-live is refused: it would expire every entry on capture
+    // (a cache that stores nothing), which is almost certainly a unit
+    // mistake in the caller.
+
+    /// Tile-cache settings surface (M2): overrides the raster-tile cache's
+    /// time-to-live on the installed cache, in seconds. The tile cache must
+    /// be installed (registered through
+    /// `register_mapquest_providers_with_tile_cache`); otherwise this throws
+    /// `ProviderNotConfigured` naming `TileCache` as the unconfigured
+    /// backing store. A zero value throws `InvalidCoordinateInput` with a
+    /// precise detail (a zero time-to-live expires every entry on capture,
+    /// storing nothing). A value above the installed provider's declared
+    /// terms ceiling is accepted with the ceiling clamping what the cache
+    /// stores (see the ruling above); `raster_tile_cache_terms` reports the
+    /// effective value.
+    [Throws=SdkError]
+    void set_raster_tile_cache_time_to_live(u64 time_to_live_seconds);
+
+    /// Tile-cache settings surface (M2): reads the effective raster-tile
+    /// caching terms so a developer can display them (a settings page, or
+    /// the offline-maps demo's cache panel). Reports the time-to-live
+    /// currently in force on the installed cache (the category default
+    /// thirty days, or the last override this object accepted, clamped when
+    /// it exceeded the provider's terms ceiling), the installed provider's
+    /// declared terms ceiling (null when the provider declares no ceiling,
+    /// in which case the requested time-to-live applies verbatim), and the
+    /// cache category's default time-to-live. The tile cache must be
+    /// installed (registered through
+    /// `register_mapquest_providers_with_tile_cache`); otherwise this
+    /// throws `ProviderNotConfigured` naming `TileCache` as the
+    /// unconfigured backing store. Read-only: the readback never mutates
+    /// the cache.
+    [Throws=SdkError]
+    TileCacheTerms raster_tile_cache_terms();
+
     /// Round-10 diagnostics (capability 6): subscribes the foreign listener
     /// to the SDK's structured internal log events streamed fire-and-forget
     /// from the crates' bounded ring buffers. Only events at
@@ -1145,6 +1218,33 @@ interface MapSdk {
     /// nothing is removed from the ring, so a later flush can redeliver. The
     /// flush is bounded and synchronous: a listener must not block on it.
     u32 flush_recent_diagnostic_events(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity, u32 maximum_count);
+};
+
+// ---------------------------------------------------------------------------
+// Tile-cache settings surface (M2 — addition-only). The record mirrors the
+// effective caching terms of the installed raster-tile cache; the ceiling is
+// the provider-specific caching term (PRD §6.7), read only when a cache is
+// installed, which is the only state the settings surface addresses.
+// ---------------------------------------------------------------------------
+
+/// The effective raster-tile caching terms of the installed cache
+/// (`MapSdk::raster_tile_cache_terms`'s return), shaped so a developer can
+/// display the caching posture: the default, the provider's ceiling and the
+/// value currently in force.
+dictionary TileCacheTerms {
+    /// Time-to-live currently in force on the installed cache, in seconds:
+    /// the category default, or the last accepted override (clamped to the
+    /// ceiling when the override exceeded it).
+    u64 effective_time_to_live_seconds;
+    /// The installed provider's declared caching-terms ceiling in seconds,
+    /// or null when the provider declares no ceiling — the requested
+    /// time-to-live then applies verbatim. For the MapQuest raster tiles
+    /// this is the documented terms ceiling (thirty calendar days).
+    u64? provider_terms_ceiling_seconds;
+    /// The cache category's default time-to-live for raster tiles, in
+    /// seconds (thirty days by the owner ruling of 2026-10-28, PRD §6.7);
+    /// the value a freshly registered cache starts at.
+    u64 default_time_to_live_seconds;
 };
 
 // ---------------------------------------------------------------------------
@@ -1243,9 +1343,37 @@ interface MapNavigationController {
     /// step advance strategy for the new route is configured by
     /// `step_advance_policy` and the deviation policy persists. A reroute
     /// offered to an arrived trip is ignored (no transition); without an
-    /// active trip the event is dropped.
+    /// active trip the event is dropped. Round 11: an in-flight reroute
+    /// calculation is settled by this call (applied or ignored alike), so
+    /// the request-in-flight gate reopens after the integrator acts.
     [Throws=SdkError]
     void provide_reroute(RouteData route, StepAdvancePolicy step_advance_policy);
+
+    /// Round 11 (Ferrostar B3): applies the reroute-recalculation gates to
+    /// one reroute-request signal at the wall clock: true when every gate
+    /// passed (no calculation in flight, outside the cooldown window, and
+    /// — when both fix references exist — beyond the movement threshold)
+    /// and a calculation is now in flight, readable as the trip state's
+    /// `is_calculating_new_route`; false when the signal was refused. A
+    /// signal without an open, still-navigable trip (no trip, or the trip
+    /// has arrived) is refused before the gates are consulted. A passing
+    /// caller owes a settle: the eventual `provide_reroute` (applied or
+    /// ignored) or `cancel_reroute_calculation`. The initial (trip's first)
+    /// attempt always passes the cooldown and movement gates.
+    boolean begin_reroute_calculation();
+
+    /// Round 11: settles an in-flight reroute calculation without applying a
+    /// route (the integrator abandoned the request): the request-in-flight
+    /// gate reopens. The cooldown keeps running from the calculation's
+    /// beginning and the movement reference stays where it was. Idempotent.
+    void cancel_reroute_calculation();
+
+    /// Round 11: swaps the reroute-recalculation hysteresis policy in force,
+    /// keeping the gate's memory as it stands. Both thresholds must be
+    /// finite and non-negative (refused with `InvalidNavigationInput`
+    /// otherwise, and the policy in force is then untouched).
+    [Throws=SdkError]
+    void configure_reroute_policy(ReroutePolicy reroute_policy);
 
     /// The plain state of the active trip, or null without one.
     TripNavigationState? current_trip_state();
@@ -1282,8 +1410,28 @@ enum NavigationPhase {
     "Arrived",
 };
 
-/// Plain-data description of an active deviation from the route.
+/// Which grade of deviation a recorded deviation carries: the two-grade
+/// distinction between off the current step yet still on the route line and
+/// completely off the route. Only the fully-off grade freezes navigation; the
+/// wrong-step grade never freezes on its own.
+enum DeviationGradeKind {
+    /// The fix projects onto neither the current step nor any future step of
+    /// the remaining route line: the freezing grade. The trip's progress is
+    /// frozen until a graded fix recovers or a reroute replaces the route.
+    "FullyOffRoute",
+    /// The fix is off the current step but projects onto a future step of the
+    /// remaining route line: "on route, wrong step". The trip keeps
+    /// navigating and counting down, and is never frozen by this grade alone.
+    "OffStepOnRoute",
+};
+
+/// Plain-data description of an active deviation from the route. The grade
+/// kind distinguishes the freezing fully-off grade from a merely wrong-step
+/// record: a wrong-step record is guidance feedback ("on the route, on a
+/// later step") carried while the trip phase stays `Navigating`.
 dictionary DeviationInfo {
+    /// Which grade of deviation this is (see `DeviationGradeKind`).
+    DeviationGradeKind grade_kind;
     /// Distance, in meters, from the raw fix that triggered (or most recently
     /// confirmed) the deviation to the remaining route line.
     double deviation_from_route_meters;
@@ -1329,9 +1477,15 @@ dictionary TripNavigationState {
     /// Position snapped onto the current step's shape; null until the first
     /// location update has been processed.
     GeographicCoordinate? snapped_coordinate;
-    /// Active deviation, as judged by the deviation detector; set exactly
-    /// while the phase is `OffRoute`.
+    /// Active deviation, as judged by the deviation detector; a fully-off
+    /// grade is set exactly while the phase is `OffRoute`, and a wrong-step
+    /// (`OffStepOnRoute`) grade may be set while the phase stays `Navigating`.
     DeviationInfo? deviation;
+    /// Round 11 (Ferrostar B3): whether a reroute recalculation is currently
+    /// in flight. This is the controller's wall-clock gate fact, not reducer
+    /// state — the reducer stays clock-free — so it is read fresh from the
+    /// controller on every readback.
+    boolean is_calculating_new_route;
 };
 
 /// Length unit a distance-phrase magnitude is expressed in.
@@ -1355,6 +1509,11 @@ enum DistancePhraseKind {
     /// A rounded distance magnitude in a specific unit; the magnitude and
     /// unit are set on this kind.
     "Quantity",
+    /// No distance is phrased because the freezing (fully-off-route) deviation
+    /// grade holds: the projection is frozen, so any countdown composed off it
+    /// would be a phantom measurement. The magnitude is null on this kind, and
+    /// the composed text channels carry no distance prefix.
+    "Suppressed",
 };
 
 /// The unit-system-aware phrasing of the distance remaining to a maneuver,
@@ -1362,9 +1521,11 @@ enum DistancePhraseKind {
 dictionary DistancePhrase {
     /// Which form the phrase takes.
     DistancePhraseKind phrase_kind;
-    /// Rounded magnitude of the phrase; null for the immediate form.
+    /// Rounded magnitude of the phrase; null for the immediate and suppressed
+    /// forms.
     double? magnitude;
-    /// Unit the magnitude is expressed in; null for the immediate form.
+    /// Unit the magnitude is expressed in; null for the immediate and
+    /// suppressed forms.
     DistanceUnit? magnitude_unit;
 };
 
@@ -1427,15 +1588,18 @@ dictionary NavigationInstruction {
     /// zero.
     boolean is_arrival;
     /// True exactly while the trip is off route: the payload beneath the
-    /// marker is the frozen last-on-route projection and must not be
-    /// presented as current guidance.
+    /// marker is the frozen last-on-route projection, whose distance phrase
+    /// is suppressed rather than presented, and must not be presented as
+    /// current guidance.
     boolean is_rerouting_required;
 };
 
 /// Which form a deviation-status update takes.
 enum DeviationStatusChangeKind {
-    /// The trip is judged off route; the deviation description is set on this
-    /// kind.
+    /// The trip is judged deviating; the deviation description is set on this
+    /// kind. The description's grade kind distinguishes the freezing
+    /// fully-off grade from a merely wrong-step record, which is delivered
+    /// while the trip phase stays `Navigating`.
     "OffRoute",
     /// A previously recorded deviation cleared; the trip is judged on route.
     "OnRoute",
@@ -1524,6 +1688,38 @@ dictionary DeviationPolicy {
     /// Distance, in meters, from the remaining route line beyond which a fix
     /// is judged off route (before any accuracy widening, strictly greater).
     double deviation_threshold_meters;
+};
+
+// ---------------------------------------------------------------------------
+// Round 11 (Ferrostar adoption batch 2, mechanism adopted from `FerrostarCore`
+// under its BSD 3-Clause license; the expressions are our own). The
+// reroute-recalculation hysteresis: three gates stand between a fully
+// off-route signal and an actual recalculation request — the request-in-flight
+// gate, the cooldown and the movement threshold — plus the in-flight
+// readback on the trip state, so a jittery off-route bounce cannot spam the
+// integrator's routing engine. The gates live at the controller seam with
+// the wall clock (exactly like the speech pacing's planner), never in the
+// reducer: the reducer stays a pure, clock-free event function. The gates
+// close the round-9 contract gap ("no reroute timestamp on the phase
+// channel") without an addition there: a reroute timestamp on the phase
+// channel is not addition-only (`NavigationPhaseChange` stays a payloadless
+// flat enum), so the phase channel stays untouched and the honest closure is
+// the gate seam plus the `is_calculating_new_route` readback plus
+// `begin_reroute_calculation`'s boolean answer.
+// ---------------------------------------------------------------------------
+
+/// The reroute-recalculation hysteresis policy of a navigation controller
+/// (round 11, Ferrostar B3's mechanism). Both thresholds must be finite and
+/// non-negative; the controller refuses otherwise (`InvalidNavigationInput`),
+/// leaving the policy in force untouched.
+dictionary ReroutePolicy {
+    /// Minimum wall-clock seconds between the beginnings of two reroute
+    /// calculations (the SDK default: 5).
+    double recalculation_cooldown_seconds;
+    /// Minimum displacement, in meters, between the raw position fix current
+    /// at a calculation's beginning and the one current at the previous
+    /// calculation's beginning (the SDK default: 50).
+    double recalculation_movement_meters;
 };
 // ---------------------------------------------------------------------------
 // Native surface views (round 8, slice 0). The additions below mirror the
@@ -1830,6 +2026,12 @@ dictionary SpeechInstruction {
     string utterance_speech_text;
     /// The live distance to the maneuver in meters at emission time.
     double trigger_distance_meters;
+    /// Round 11 (Ferrostar B4): the utterance identity — a stable monotonic
+    /// id composed at emission, strictly increasing over every line the
+    /// controller has emitted since construction and never reused.
+    /// Identical text re-emitted is a new id; dedup and flush decisions stay
+    /// at the platform speaker.
+    u64 utterance_id;
     /// What triggered this line (a crossed band, the immediate band, an
     /// off-route recovery, or the trip's arrival).
     SpeechInstructionKind instruction_kind;
@@ -2949,8 +3151,89 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
-<p>The published changelog is a curated copy and ships with a later
-site build. The complete changelog lives in the source repository.</p>
+<p>The SDK is in active development; everything below is unreleased. The
+FFI contract surface it describes changes <strong>addition-only</strong> — existing
+members keep their signature and meaning. This page is a curated,
+public-facing summary — the complete development log lives in the source
+repository.</p>
+<h2 id="imagery-and-caching"><a class="header" href="#imagery-and-caching">Imagery and caching</a></h2>
+<ul>
+<li>All seven MapQuest provider APIs are implemented and fixture-tested
+(route with strategies and multiple legs, route matrix, forward/reverse
+geocoding, search prediction, traffic incidents, traffic-flow congestion
+polylines, raster tiles in standard and retina resolutions).</li>
+<li>A SQLite-backed response cache under an absolute byte budget and/or a
+share of free disk space: per-category time-to-live, LRU eviction,
+cache-then-network around every provider contract. Tile imagery caches
+heavily by default — <strong>30 calendar days</strong>, the common maximum under
+imagery-provider terms — and the provider contract declares its own
+caching terms so an integrator tunes it knowingly per provider
+(<code>setRasterTileCacheTimeToLive</code>, read back through
+<code>rasterTileCacheTerms</code>; values above a provider’s declared ceiling stay
+compliance-clamped).</li>
+</ul>
+<h2 id="rendering"><a class="header" href="#rendering">Rendering</a></h2>
+<ul>
+<li>An own minimal <code>wgpu</code> raster renderer: web-mercator projection with
+exact frustum tile listing (Sutherland–Hodgman over the six frustum
+planes, antimeridian world-copy handling), anchored camera with
+fit-bounds/insets-aware framing and a <code>flyTo</code>-style hyperbolic arc, a
+byte-bounded GPU texture cache, a tile scheduler with per-frame dedup,
+parent fallback and a fetch budget, and route/polygon/marker/traffic
+overlay layers plus a renderer-owned location indicator (tracking dot
+with accuracy ring, or guided course arrow).</li>
+<li>The same renderer scene draws headless (deterministic golden-image
+tests), into live Android/iOS surfaces, and in the browser (WebGPU) —
+one WGSL/vertex pattern byte-identical across the wasm and native
+paths.</li>
+</ul>
+<h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
+<ul>
+<li>A pure reducer over <code>Option&lt;NavigationSession&gt;</code> with Ferrostar-pattern
+step-advance conditions (manual, eager distance-to-end, delayed
+current-step; Or/And combinators; fresh-instance reset contract),
+deviation detection with accuracy-aware allowances, and provider-verbatim
+instruction composition (banner + speech text; nothing rewritten).</li>
+<li>Deviation is graded: fully-off-route freezes and asks for reroute;
+off-step-but-on-route keeps counting down and reconciles to the
+projected step. Speed runs advance through many steps per fix, bounded
+and stack-safety-tested. Fully-off-route instruction text honestly
+suppresses the countdown rather than projecting from a stale anchor.</li>
+<li>The SDK owns speech <em>triggering</em> (a speech-instruction topic over
+documented distance bands); platforms voice it and keep their own
+pacing/focus policies.</li>
+</ul>
+<h2 id="bindings-and-platforms"><a class="header" href="#bindings-and-platforms">Bindings and platforms</a></h2>
+<ul>
+<li>UniFFI with a frozen, addition-only UDL contract drives generated
+Kotlin/Swift bindings and the React Native bindings; the wasm surface is
+a hand-reviewed TypeScript mirror regression-checked against the same
+UDL. Callback providers (geocoding, tiles) and a navigation controller
+with per-topic subscriptions cross the foreign callbacks seam; exported
+async methods run through a crate-owned runtime handback so foreign
+event loops never meet an unserved reactor.</li>
+<li>Reference applications on Android (Compose), iOS (SwiftUI) and the web
+playground implement one shared design language: bottom-sheet home,
+search → route → simulated turn-by-turn with speech, a five-control
+cluster (zoom, scale bar, my-location, 2D/3D, compass), follow camera,
+offline tile-cache card, and a readiness-chip diagnostics readout. The
+web surface reaches reference-app parity with the native demos.</li>
+</ul>
+<h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
+<ul>
+<li>A <code>tracing</code>-facade diagnostics layer: bounded, per-subsystem ring sinks
+with coordinate scrubbing at the sink and a severity gate that never
+raises once finer events are requested; subscribe/flush seams on the
+native and wasm surfaces back the readouts and a later log-sharing
+story.</li>
+<li>CI runs fmt, clippy with warnings-as-errors, the workspace test suite,
+a wasm-targeted clippy closure, a browser e2e suite, and the
+documentation-site pipeline (build → scrub → stage) on every push.</li>
+</ul>
+<h2 id="attribution"><a class="header" href="#attribution">Attribution</a></h2>
+<p>Map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL).
+Third-party dependency notices are regenerated into <a href="#third-party-notices">their
+chapter</a>.</p>
 
                     </main>
 
