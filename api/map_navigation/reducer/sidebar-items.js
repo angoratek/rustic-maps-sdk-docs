@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["NavigationEvent"],"fn":["reduce_navigation_event"],"struct":["NavigationSession"]};
+window.SIDEBAR_ITEMS = {"constant":["MAXIMUM_STEP_ADVANCES_PER_FIX"],"enum":["NavigationEvent"],"fn":["reduce_navigation_event"],"struct":["NavigationSession"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["deviation","geometry","instruction","location","observer","reducer","speech","state","step_advance"]};
+window.SIDEBAR_ITEMS = {"mod":["deviation","geometry","instruction","location","observer","reducer","reroute","speech","state","step_advance"]};
