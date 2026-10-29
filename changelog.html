@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-008c1313.js";
+            window.path_to_searchindex_js = "searchindex-a4b82ee8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -175,101 +175,108 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
-<p>The SDK is in active development; everything below is unreleased. The
-FFI contract surface it describes changes <strong>addition-only</strong> — existing
-members keep their signature and meaning. This page is a curated,
-public-facing summary — the complete development log lives in the source
-repository.</p>
+<p>The SDK is in active development; everything below is unreleased. The FFI
+contract surface it describes changes <strong>addition-only</strong>: existing members
+keep their signature and meaning. This page is a curated, public-facing
+summary. The complete development log lives in the source repository.</p>
 <h2 id="imagery-and-caching"><a class="header" href="#imagery-and-caching">Imagery and caching</a></h2>
 <ul>
-<li>All seven MapQuest provider APIs are implemented and fixture-tested
-(route with strategies and multiple legs, route matrix, forward/reverse
-geocoding, search prediction, traffic incidents, traffic-flow congestion
-polylines, raster tiles in standard and retina resolutions).</li>
-<li>A SQLite-backed response cache under an absolute byte budget and/or a
-share of free disk space: per-category time-to-live, LRU eviction,
-cache-then-network around every provider contract. Tile imagery caches
-heavily by default — <strong>30 calendar days</strong>, the common maximum under
-imagery-provider terms — and the provider contract declares its own
-caching terms so an integrator tunes it knowingly per provider
+<li>All seven MapQuest provider APIs are implemented and fixture-tested.
+They cover routes with strategies and multiple legs, the route matrix,
+forward and reverse geocoding, search prediction, traffic incidents,
+traffic-flow congestion polylines, and raster tiles in standard and
+retina resolutions.</li>
+<li>A SQLite-backed response cache holds provider responses under an
+absolute byte budget, a share of free disk space, or both. It provides
+per-category time-to-live, LRU eviction, and cache-then-network
+behavior around every provider contract. Tile imagery caches heavily
+by default: <strong>30 calendar days</strong>, the common maximum under
+imagery-provider terms. Each provider contract declares its own caching
+terms, so an integrator tunes the cache knowingly per provider
 (<code>setRasterTileCacheTimeToLive</code>, read back through
-<code>rasterTileCacheTerms</code>; values above a provider’s declared ceiling stay
-compliance-clamped).</li>
+<code>rasterTileCacheTerms</code>). Values above a provider’s declared ceiling
+stay compliance-clamped.</li>
 </ul>
 <h2 id="rendering"><a class="header" href="#rendering">Rendering</a></h2>
 <ul>
-<li>An own minimal <code>wgpu</code> raster renderer: web-mercator projection with
-exact frustum tile listing (Sutherland–Hodgman over the six frustum
-planes, antimeridian world-copy handling), anchored camera with
-fit-bounds/insets-aware framing and a <code>flyTo</code>-style hyperbolic arc, a
-byte-bounded GPU texture cache, a tile scheduler with per-frame dedup,
-parent fallback and a fetch budget, and route/polygon/marker/traffic
-overlay layers plus a renderer-owned location indicator (tracking dot
-with accuracy ring, or guided course arrow).</li>
+<li>The project maintains its own minimal <code>wgpu</code> raster renderer. It
+implements web-mercator projection with exact frustum tile listing
+(Sutherland–Hodgman over the six frustum planes, with antimeridian
+world-copy handling), an anchored camera with fit-bounds and
+insets-aware framing and a <code>flyTo</code>-style hyperbolic arc, a byte-bounded
+GPU texture cache, and a tile scheduler with per-frame dedup, parent
+fallback, and a fetch budget. Route, polygon, marker, and traffic
+overlay layers sit on top of the tiles, and the renderer owns the
+location indicator (a tracking dot with accuracy ring, or a guided
+course arrow).</li>
 <li>The same renderer scene draws headless (deterministic golden-image
-tests), into live Android/iOS surfaces, and in the browser (WebGPU) —
-one WGSL/vertex pattern byte-identical across the wasm and native
-paths.</li>
+tests), into live Android/iOS surfaces, and in the browser through
+WebGPU. One WGSL/vertex pattern is byte-identical across the wasm and
+native paths.</li>
 </ul>
 <h2 id="offline-routing"><a class="header" href="#offline-routing">Offline routing</a></h2>
 <ul>
-<li>The offline routing pipeline is in place: a deterministic compiler turns
-an OpenStreetMap PBF extract into a self-describing routing archive
-(nodes, per-edge pack with road class/speed/access columns, turn
-restrictions), a memory-mapped reader validates the container’s
-alignment invariants, and an offline routing provider answers routes
-with A* over the graph — honoring recorded turn restrictions and
-derivable turn maneuvers (left/right/slight/sharp/U-turn from the
-geometry’s bearing change; texts stay honest where the archive carries
-no street names). A routing decorator retries over the offline graph
-when the primary (online) provider fails.</li>
+<li>The offline routing pipeline is in place. A deterministic compiler
+turns an OpenStreetMap PBF extract into a self-describing routing
+archive (nodes, a per-edge pack with road class, speed, and access
+columns, and turn restrictions). A memory-mapped reader validates the
+container’s alignment invariants. An offline routing provider answers
+routes with A* over the graph. It honors recorded turn restrictions
+and derives turn maneuvers (left/right/slight/sharp/U-turn) from the
+geometry’s bearing change; its texts stay honest where the archive
+carries no street names. A routing decorator retries over the offline
+graph when the primary (online) provider fails.</li>
 </ul>
 <h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
 <ul>
-<li>A pure reducer over <code>Option&lt;NavigationSession&gt;</code> with Ferrostar-pattern
-step-advance conditions (manual, eager distance-to-end, delayed
-current-step; Or/And combinators; fresh-instance reset contract),
-deviation detection with accuracy-aware allowances, and provider-verbatim
-instruction composition (banner + speech text; nothing rewritten).</li>
-<li>Deviation is graded: fully-off-route freezes and asks for reroute;
-off-step-but-on-route keeps counting down and reconciles to the
-projected step. Speed runs advance through many steps per fix, bounded
-and stack-safety-tested. Fully-off-route instruction text honestly
-suppresses the countdown rather than projecting from a stale anchor.</li>
-<li>The SDK owns speech <em>triggering</em> (a speech-instruction topic over
-documented distance bands); platforms voice it and keep their own
-pacing/focus policies.</li>
+<li>Navigation state is a pure reducer over <code>Option&lt;NavigationSession&gt;</code>.
+It implements Ferrostar-pattern step-advance conditions (manual, eager
+distance-to-end, delayed current-step, Or/And combinators, and the
+fresh-instance reset contract), deviation detection with
+accuracy-aware allowances, and provider-verbatim instruction
+composition (banner and speech text; nothing rewritten).</li>
+<li>Deviation is graded. A fully-off-route state freezes the guidance and
+asks for a reroute; an off-step-but-on-route state keeps counting down
+and reconciles to the projected step. Speed runs advance through many
+steps per fix, and the advance is bounded and stack-safety-tested. The
+fully-off-route instruction text suppresses the countdown honestly
+rather than projecting it from a stale anchor.</li>
+<li>The SDK owns speech <em>triggering</em>: it publishes a speech-instruction
+topic over documented distance bands. Platforms voice that topic and
+keep their own pacing and focus policies.</li>
 </ul>
 <h2 id="camera-and-gestures"><a class="header" href="#camera-and-gestures">Camera and gestures</a></h2>
 <ul>
-<li>The gesture-input camera seam: platform recognizers forward plain
-deltas, the SDK owns the camera math — pan by screen pixels, focal-point
-zoom and rotation with an exact hold-the-focal-point correction,
-clamped through the camera’s own ranges.</li>
+<li>The gesture-input camera seam keeps the camera math in the SDK.
+Platform recognizers forward plain deltas, and the SDK applies them:
+pan by screen pixels, focal-point zoom and rotation with an exact
+hold-the-focal-point correction, clamped through the camera’s own
+ranges.</li>
 </ul>
 <h2 id="bindings-and-platforms"><a class="header" href="#bindings-and-platforms">Bindings and platforms</a></h2>
 <ul>
-<li>UniFFI with a frozen, addition-only UDL contract drives generated
-Kotlin/Swift bindings and the React Native bindings; the wasm surface is
+<li>UniFFI drives the generated Kotlin/Swift bindings and the React Native
+bindings from a frozen, addition-only UDL contract. The wasm surface is
 a hand-reviewed TypeScript mirror regression-checked against the same
 UDL. Callback providers (geocoding, tiles) and a navigation controller
-with per-topic subscriptions cross the foreign callbacks seam; exported
-async methods run through a crate-owned runtime handback so foreign
+with per-topic subscriptions cross the foreign callbacks seam. Exported
+async methods run through a crate-owned runtime handback, so foreign
 event loops never meet an unserved reactor.</li>
-<li>Reference applications on Android (Compose), iOS (SwiftUI) and the web
-playground implement one shared design language: bottom-sheet home,
-search → route → simulated turn-by-turn with speech, a five-control
-cluster (zoom, scale bar, my-location, 2D/3D, compass), follow camera,
-offline tile-cache card, and a readiness-chip diagnostics readout. The
-web surface reaches reference-app parity with the native demos.</li>
+<li>Reference applications on Android (Compose), iOS (SwiftUI), and the
+web playground implement one shared design language. Each reaches
+search → route → simulated turn-by-turn with speech through a
+bottom-sheet home, a five-control cluster (zoom, scale bar,
+my-location, 2D/3D, compass), a follow camera, an offline tile-cache
+card, and a readiness-chip diagnostics readout. The web surface
+reaches reference-app parity with the native demos.</li>
 </ul>
 <h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
 <ul>
-<li>A <code>tracing</code>-facade diagnostics layer: bounded, per-subsystem ring sinks
-with coordinate scrubbing at the sink and a severity gate that never
-raises once finer events are requested; subscribe/flush seams on the
-native and wasm surfaces back the readouts and a later log-sharing
-story.</li>
+<li>A <code>tracing</code>-facade diagnostics layer provides bounded, per-subsystem
+ring sinks with coordinate scrubbing at the sink. Its severity gate
+never raises once finer events have been requested. Subscribe and
+flush seams on the native and wasm surfaces back the reference apps’
+readouts and a later log-sharing story.</li>
 <li>CI runs fmt, clippy with warnings-as-errors, the workspace test suite,
 a wasm-targeted clippy closure, a browser e2e suite, and the
 documentation-site pipeline (build → scrub → stage) on every push.</li>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["archive","compiler","mmap_reader","profile"]};
+window.SIDEBAR_ITEMS = {"mod":["archive","compiler","profile"]};

@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-008c1313.js";
+            window.path_to_searchindex_js = "searchindex-a4b82ee8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -174,12 +174,12 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="coding-conventions--rustic-maps-sdk"><a class="header" href="#coding-conventions--rustic-maps-sdk">Coding Conventions — Rustic Maps SDK</a></h1>
-<p>Full project conventions live in <code>CLAUDE.md</code> (behavioral rules) and the PRD.
-This document translates them into per-language practice, including the
-generated binding surfaces.</p>
+                        <h1 id="contributing-conventions--rustic-maps-sdk"><a class="header" href="#contributing-conventions--rustic-maps-sdk">Contributing Conventions — Rustic Maps SDK</a></h1>
+<p>The project guides set the repository’s behavioral rules. This document
+translates them into per-language practice, including the generated
+binding surfaces.</p>
 <h2 id="1-no-abbreviations-in-public-identifiers"><a class="header" href="#1-no-abbreviations-in-public-identifiers">1. No abbreviations in public identifiers</a></h2>
-<p>Every public identifier is spelled out, concise yet precise:</p>
+<p>Every public identifier is spelled out, and stays concise yet precise:</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -194,8 +194,8 @@ generated binding surfaces.</p>
 </tbody>
 </table>
 </div>
-<p>Accepted standard forms: <code>SDK</code>, <code>URL</code>, <code>HTTP</code>, <code>wasm</code>, <code>MVT</code> in documentation
-text; never as identifier shorthand.</p>
+<p>The standard forms <code>SDK</code>, <code>URL</code>, <code>HTTP</code>, <code>wasm</code>, and <code>MVT</code> are accepted
+in documentation text, but never as identifier shorthand.</p>
 <h2 id="2-solid-mapping"><a class="header" href="#2-solid-mapping">2. SOLID mapping</a></h2>
 <div class="table-wrapper">
 <table>
@@ -203,9 +203,9 @@ text; never as identifier shorthand.</p>
 <tr><th>Principle</th><th>Rust core</th><th>Kotlin binding surface</th><th>Swift binding surface</th></tr>
 </thead>
 <tbody>
-<tr><td>Single responsibility</td><td>one crate per concern (PRD §3)</td><td>one class per screen/feature</td><td>one struct per screen/feature</td></tr>
-<tr><td>Open–closed</td><td>new vendor = new <code>*Provider</code> impl; core untouched</td><td>new capability = new composable/view-model</td><td><code>final class</code> + protocol, no forks in existing code</td></tr>
-<tr><td>Liskov substitution</td><td>mocks in <code>geospatial-traits::mock</code> must satisfy every tested consumer</td><td>subclasses/refapps honor suspend contracts</td><td>SwiftUI view models honor async throws contracts</td></tr>
+<tr><td>Single responsibility</td><td>one crate per concern</td><td>one class per screen/feature</td><td>one struct per screen/feature</td></tr>
+<tr><td>Open–closed</td><td>a new vendor means a new <code>*Provider</code> impl; the core stays untouched</td><td>a new capability means a new composable or view-model</td><td><code>final class</code> + protocol; no forks in existing code</td></tr>
+<tr><td>Liskov substitution</td><td>mocks in <code>geospatial-traits::mock</code> must satisfy every tested consumer</td><td>subclasses and refapps honor suspend contracts</td><td>SwiftUI view models honor async throws contracts</td></tr>
 <tr><td>Interface segregation</td><td>nine narrow contracts, not one mega-trait</td><td>expose role-targeted protocols, not god objects</td><td>role-targeted protocols</td></tr>
 <tr><td>Dependency inversion</td><td>crates depend on <code>geospatial-traits</code>, never on a provider</td><td>view models depend on injected SDK protocols</td><td>dependency injection through initializers</td></tr>
 </tbody>
@@ -213,17 +213,20 @@ text; never as identifier shorthand.</p>
 </div>
 <h2 id="3-errors"><a class="header" href="#3-errors">3. Errors</a></h2>
 <ul>
-<li>Rust: every failure is <code>geospatial_types::SDKError</code> — no <code>unwrap</code>, <code>expect</code>,
-or raw <code>String</code> errors in crate code; panics never cross the FFI boundary.</li>
-<li>Kotlin: UniFFI maps the UDL contract to typed exceptions; refapps surface
-them as sealed UI states.</li>
-<li>Swift: UniFFI maps to typed Swift errors thrown from async methods.</li>
+<li>Rust: every failure is <code>geospatial_types::SDKError</code>. Crate code uses no
+<code>unwrap</code>, no <code>expect</code>, and no raw <code>String</code> errors, and panics never
+cross the FFI boundary.</li>
+<li>Kotlin: UniFFI maps the UDL contract to typed exceptions, and the
+refapps surface them as sealed UI states.</li>
+<li>Swift: UniFFI maps the contract to typed Swift errors thrown from async
+methods.</li>
 </ul>
 <h2 id="4-property--and-fixture-first-testing"><a class="header" href="#4-property--and-fixture-first-testing">4. Property- and fixture-first testing</a></h2>
 <ul>
-<li>Coordinate/camera/projection math gets <code>proptest</code> suites.</li>
+<li>Coordinate, camera, and projection math gets <code>proptest</code> suites.</li>
 <li>Every external payload gets a recorded fixture and a parser test.</li>
-<li>Reference applications are also UI-test hosts (Espresso / XCUITest / Detox).</li>
+<li>Reference applications double as UI-test hosts (Espresso / XCUITest /
+Detox).</li>
 </ul>
 
                     </main>

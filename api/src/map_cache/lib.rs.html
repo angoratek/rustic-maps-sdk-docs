@@ -8,20 +8,30 @@
 <a href=#8 id=8 data-nosnippet>8</a>//!   [`CacheQuota`] of absolute bytes and/or a share of free disk space.
 <a href=#9 id=9 data-nosnippet>9</a>//! - [`cached_providers`]: cache-then-network wrappers around every
 <a href=#10 id=10 data-nosnippet>10</a>//!   [`geospatial_traits`] provider contract.
-<a href=#11 id=11 data-nosnippet>11</a>
-<a href=#12 id=12 data-nosnippet>12</a></span><span class="kw">pub mod </span>cached_providers;
-<a href=#13 id=13 data-nosnippet>13</a><span class="kw">pub mod </span>disk_quota;
-<a href=#14 id=14 data-nosnippet>14</a><span class="kw">pub mod </span>request_fingerprint;
-<a href=#15 id=15 data-nosnippet>15</a><span class="kw">pub mod </span>response_category;
-<a href=#16 id=16 data-nosnippet>16</a><span class="kw">pub mod </span>sqlite_store;
-<a href=#17 id=17 data-nosnippet>17</a>
-<a href=#18 id=18 data-nosnippet>18</a><span class="kw">pub use </span>cached_providers::{
-<a href=#19 id=19 data-nosnippet>19</a>    CachedDistanceMatrixProvider, CachedGeocodingProvider, CachedRasterTileProvider,
-<a href=#20 id=20 data-nosnippet>20</a>    CachedRoutingProvider, CachedSearchPlaceProvider, CachedTrafficFlowProvider,
-<a href=#21 id=21 data-nosnippet>21</a>    CachedTrafficIncidentProvider,
-<a href=#22 id=22 data-nosnippet>22</a>};
-<a href=#23 id=23 data-nosnippet>23</a><span class="kw">pub use </span>disk_quota::{CacheQuota, DiskSpaceProbe, FixedDiskSpaceProbe, RealDiskSpaceProbe};
-<a href=#24 id=24 data-nosnippet>24</a><span class="kw">pub use </span>request_fingerprint::{RequestDescriptor, coordinate_to_fingerprint_text};
-<a href=#25 id=25 data-nosnippet>25</a><span class="kw">pub use </span>response_category::ResponseCategory;
-<a href=#26 id=26 data-nosnippet>26</a><span class="kw">pub use </span>sqlite_store::{SqliteResponseCache, SqliteResponseCacheConfiguration};
+<a href=#11 id=11 data-nosnippet>11</a>//! - [`tile_packs`]: the PRD FR-F tile-pack manager over the same store —
+<a href=#12 id=12 data-nosnippet>12</a>//!   region selection, download, honest per-region on-disk reporting and
+<a href=#13 id=13 data-nosnippet>13</a>//!   explicit per-pack eviction, with pack tiles pinned against ordinary
+<a href=#14 id=14 data-nosnippet>14</a>//!   LRU eviction while their pack record exists.
+<a href=#15 id=15 data-nosnippet>15</a>
+<a href=#16 id=16 data-nosnippet>16</a></span><span class="kw">pub mod </span>cached_providers;
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">pub mod </span>disk_quota;
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">pub mod </span>request_fingerprint;
+<a href=#19 id=19 data-nosnippet>19</a><span class="kw">pub mod </span>response_category;
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">pub mod </span>sqlite_store;
+<a href=#21 id=21 data-nosnippet>21</a><span class="kw">pub mod </span>tile_packs;
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">pub use </span>cached_providers::{
+<a href=#24 id=24 data-nosnippet>24</a>    CachedDistanceMatrixProvider, CachedGeocodingProvider, CachedRasterTileProvider,
+<a href=#25 id=25 data-nosnippet>25</a>    CachedRoutingProvider, CachedSearchPlaceProvider, CachedTrafficFlowProvider,
+<a href=#26 id=26 data-nosnippet>26</a>    CachedTrafficIncidentProvider,
+<a href=#27 id=27 data-nosnippet>27</a>};
+<a href=#28 id=28 data-nosnippet>28</a><span class="kw">pub use </span>disk_quota::{CacheQuota, DiskSpaceProbe, FixedDiskSpaceProbe, RealDiskSpaceProbe};
+<a href=#29 id=29 data-nosnippet>29</a><span class="kw">pub use </span>request_fingerprint::{RequestDescriptor, coordinate_to_fingerprint_text};
+<a href=#30 id=30 data-nosnippet>30</a><span class="kw">pub use </span>response_category::ResponseCategory;
+<a href=#31 id=31 data-nosnippet>31</a><span class="kw">pub use </span>sqlite_store::{SqliteResponseCache, SqliteResponseCacheConfiguration};
+<a href=#32 id=32 data-nosnippet>32</a><span class="kw">pub use </span>tile_packs::{
+<a href=#33 id=33 data-nosnippet>33</a>    MAXIMUM_TILE_PACK_TILE_COUNT, MAXIMUM_TILE_PACK_ZOOM_LEVEL, TilePackDescription,
+<a href=#34 id=34 data-nosnippet>34</a>    TilePackManager, TilePackProgress, TilePackRecord, TilePackRemovalReport, TilePackTileAddress,
+<a href=#35 id=35 data-nosnippet>35</a>    enumerate_region_tiles,
+<a href=#36 id=36 data-nosnippet>36</a>};
 </code></pre></div></section></main></body></html>

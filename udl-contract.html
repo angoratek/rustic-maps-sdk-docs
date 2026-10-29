@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-008c1313.js";
+            window.path_to_searchindex_js = "searchindex-a4b82ee8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -175,11 +175,17 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="the-uniffi-contract"><a class="header" href="#the-uniffi-contract">The UniFFI contract</a></h1>
-<p>This is the frozen UDL contract (<code>crates/map-native-core/src/map_native_core.udl</code>) published verbatim: it is the single source of
-truth the Kotlin, Swift and React Native bindings are generated from,
-and the regression reference for the WebAssembly TypeScript mirror.
-The contract only ever changes addition-only.</p>
-<p>The plain-text form is served at <a href="../udl/map_native_core.udl">udl/map_native_core.udl</a>.</p>
+<p>The page you are reading is the frozen UDL contract
+(<code>crates/map-native-core/src/map_native_core.udl</code>), published verbatim
+from the source repository. This file is the single source of truth: the
+Kotlin, Swift, and React Native bindings are generated from it, and the
+WebAssembly TypeScript mirror is regression-checked against it. The
+contract changes addition-only: existing members keep their signature
+and meaning.</p>
+<p>The build pipeline copies this page from the source file and serves the
+plain-text copy at <a href="../udl/map_native_core.udl">udl/map_native_core.udl</a>.
+Both are byte-equality checked against the source file on every publish,
+so an edit to the contract propagates to the site or the build fails.</p>
 <pre><code class="language-udl">// FROZEN (M4, slice 1 — 2026-10-27) — the UniFFI contract of the Maps SDK;
 // extended in M4 slice 2 with the fit-bounds constructor (`EdgeInsetsPixels`
 // and the named `MapCamera` constructor), in M4 slice 3 with the async

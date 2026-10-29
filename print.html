@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-008c1313.js";
+            window.path_to_searchindex_js = "searchindex-a4b82ee8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -176,56 +176,60 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="rustic-maps-sdk"><a class="header" href="#rustic-maps-sdk">Rustic Maps SDK</a></h1>
-<p>A native map SDK in Rust exposing map platform APIs, turn-by-turn navigation, and
-offline maps — bound to <strong>Android (Kotlin)</strong>, <strong>iOS (Swift)</strong> and <strong>React Native</strong> via
-UniFFI (UDL-first), with <strong>WebAssembly as a first-class target</strong> for a fast browser
-test loop.</p>
-<h2 id="design-highlights"><a class="header" href="#design-highlights">Design highlights</a></h2>
+<p>A native map SDK in Rust. It exposes map platform APIs, turn-by-turn
+navigation, and offline maps, and you bind it to <strong>Android (Kotlin)</strong>,
+<strong>iOS (Swift)</strong>, and <strong>React Native</strong> through UniFFI with a UDL-first
+contract. <strong>WebAssembly is a first-class target</strong>, so you can exercise the
+whole stack in a fast browser test loop.</p>
+<h2 id="what-the-sdk-gives-you"><a class="header" href="#what-the-sdk-gives-you">What the SDK gives you</a></h2>
 <ul>
-<li><strong>One contract, four platforms.</strong> The FFI surface is a single frozen UniFFI UDL
-file; Kotlin, Swift and React Native Turbo Module bindings are generated from it,
-and the WebAssembly TypeScript mirror is regression-checked against it.</li>
-<li><strong>Vendor-neutral core.</strong> Nine provider contracts (routing, geocoding, search,
-traffic, elevation, raster tiles, offline routing) with a full map-platform
-provider implementation: rate-limited, retry-aware, wiremock-tested against
-recorded fixtures.</li>
-<li><strong>Own rendering core.</strong> Web-mercator projection, an anchored map camera with
-animations, exact camera-frustum tile listing, a frame-driven tile scheduler
-(most-detailed-first, fetch budgets, parent fallback) and a byte-budget LRU
-texture pool feeding a headless <code>wgpu</code> raster renderer.</li>
-<li><strong>Turn-by-turn navigation.</strong> A Ferrostar-inspired trip-state machine with
-Ferrostar-modeled step-advance conditions, spoken-instruction triggers, and
-deviation detection.</li>
+<li><strong>One contract, four platforms.</strong> The FFI surface is a single frozen
+UniFFI UDL file. The Kotlin, Swift, and React Native Turbo Module
+bindings are generated from it, and the WebAssembly TypeScript mirror
+is regression-checked against it.</li>
+<li><strong>A vendor-neutral core.</strong> The core speaks nine provider contracts
+(routing, geocoding, search, traffic, elevation, raster tiles, offline
+routing). A full map-platform provider implementation backs them: it is
+rate-limited, retry-aware, and wiremock-tested against recorded
+fixtures.</li>
+<li><strong>A rendering core the project owns.</strong> The renderer covers
+web-mercator projection, an anchored map camera with animations, exact
+camera-frustum tile listing, a frame-driven tile scheduler
+(most-detailed-first, fetch budgets, parent fallback), and a
+byte-budget LRU texture pool that feeds a headless <code>wgpu</code> raster
+renderer.</li>
+<li><strong>Turn-by-turn navigation.</strong> The trip-state machine follows the
+Ferrostar model: its step-advance conditions, spoken-instruction
+triggers, and deviation detection work the way Ferrostar’s do.</li>
 </ul>
 <h2 id="where-to-go-next"><a class="header" href="#where-to-go-next">Where to go next</a></h2>
 <ul>
-<li><strong><a href="#the-uniffi-contract">The UniFFI contract</a></strong> — the frozen FFI surface, published
-verbatim: the single source of truth every binding layer is generated from.</li>
-<li><strong><a href="#api-reference-rustdoc">API reference</a></strong> — rustdoc for the workspace crates.</li>
-<li><strong><a href="#the-browser-loop-platformweb">The browser e2e loop</a></strong> — how the WebAssembly harness and the
-Playwright suite work.</li>
-<li><strong><a href="#coding-conventions--rustic-maps-sdk">Contributing conventions</a></strong> — the working conventions
-the codebase is held to.</li>
-<li><strong><a href="#third-party-notices">Third-party notices</a></strong> — every dependency, its license,
-and the map-data attribution.</li>
+<li><a href="#the-uniffi-contract">The UniFFI contract</a>: the frozen FFI surface,
+published verbatim. Every binding layer is generated from it.</li>
+<li><a href="#api-reference-rustdoc">API reference</a>: rustdoc for the workspace crates.</li>
+<li><a href="#the-browser-loop-platformweb">The browser e2e loop</a>: how the WebAssembly harness
+and the Playwright suite work.</li>
+<li><a href="#contributing-conventions--rustic-maps-sdk">Contributing conventions</a>: the working
+conventions the codebase is held to.</li>
+<li><a href="#third-party-notices">Third-party notices</a>: every dependency, its
+license, and the map-data attribution.</li>
 </ul>
 <h2 id="status"><a class="header" href="#status">Status</a></h2>
 <p>The SDK is in active development. The rendered site is rebuilt from the
-source repository’s build pipeline; each section is exposed here only once
-the pipeline that produces it is green (each page carries the build’s
-provenance stamp).</p>
+source repository’s build pipeline. A section appears here only once the
+pipeline that produces it is green, and each page carries the build’s
+provenance stamp.</p>
 <h2 id="license"><a class="header" href="#license">License</a></h2>
 <p>The SDK is dual-licensed under <strong>MIT OR Apache-2.0</strong>.</p>
 <p>Map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL). See
-<a href="#third-party-notices">third-party notices</a> for the full attribution and
-license table.</p>
+<a href="#third-party-notices">third-party notices</a> for the full attribution
+and license table.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="the-browser-loop-platformweb"><a class="header" href="#the-browser-loop-platformweb">The browser loop (<code>platform/web/</code>)</a></h1>
-<p>Maintainer guide to the wasm browser harness: build the <code>pkg</code>, serve it, test
-it in Playwright, and understand what the WebGPU canvas is allowed to assume.
-Every fact below is grounded in the named files; the one forward-looking
-section is clearly marked (see “Canvas-vs-golden compare (designed, not yet
-implemented)”).</p>
+<p>This is the maintainer guide to the WebAssembly browser harness. It shows
+you how to build the <code>pkg</code>, serve it, test it in Playwright, and what the
+WebGPU canvas is allowed to assume. Every fact below is grounded in the
+named files.</p>
 <h2 id="what-lives-where"><a class="header" href="#what-lives-where">What lives where</a></h2>
 <div class="table-wrapper">
 <table>
@@ -237,212 +241,230 @@ implemented)”).</p>
 <tr><td><code>platform/web/pkg/</code></td><td>Generated <code>wasm-bindgen</code> ES module (<code>--target web</code> shape), committed</td></tr>
 <tr><td><code>platform/web/serve.mjs</code></td><td>Dependency-free static server on <code>localhost:8642</code> with the same-origin <code>/tiles/{zoom}_{x}_{y}.png</code> fixture route into <code>crates/map-rendering/fixtures/render/tiles/</code></td></tr>
 <tr><td><code>platform/web/index.html</code></td><td>The playground: drag-pan, wheel zoom, bearing/pitch sliders, WebGPU canvas (<code>#map-canvas</code>) with the 2D tile-grid overlay (<code>#map-overlay</code>) above it</td></tr>
-<tr><td><code>platform/web/main.mjs</code></td><td>Loads the wasm module, runs <code>start_sdk</code>, exposes the bound surface on <code>window.mapTest</code>; the <code>window.mapTestReady</code> promise gates every test</td></tr>
+<tr><td><code>platform/web/main.mjs</code></td><td>Loads the wasm module, runs <code>start_sdk</code>, and exposes the bound surface on <code>window.mapTest</code>; the <code>window.mapTestReady</code> promise gates every test</td></tr>
 <tr><td><code>platform/web/tests/sdk_core.spec.mjs</code></td><td>Six Playwright tests (version, projection, round trip, antimeridian listing, WebGPU smoke, drag readout)</td></tr>
 <tr><td><code>platform/web/types/map_native_core.d.ts</code></td><td>Hand-reviewed TypeScript mirror of the frozen UniFFI contract’s records (<code>GeographicCoordinate</code>, <code>BoundingBox</code>, <code>ScreenPoint</code>, <code>NormalizedWorldCoordinate</code>, <code>TileKeyRecord</code>, <code>ViewportPixels</code>, <code>EdgeInsetsPixels</code>) and the <code>SdkError</code> variants; snake-case contract fields become lower camel case to match the runtime objects</td></tr>
-<tr><td><code>platform/web/tests/contract_sync.mjs</code></td><td>Contract-sync test (no npm dependency): parses the UDL, the TypeScript mirror and the wasm export sources and asserts they agree on the shared camera/projection surface</td></tr>
+<tr><td><code>platform/web/tests/contract_sync.mjs</code></td><td>Contract-sync test (no npm dependency): parses the UDL, the TypeScript mirror, and the wasm export sources and asserts they agree on the shared camera/projection surface</td></tr>
 <tr><td><code>platform/web/playwright.config.mjs</code></td><td>Chromium channel, viewport 640×480, <code>deviceScaleFactor: 1</code>, <code>globalSetup: ./global_setup.mjs</code> (the contract-sync assertions), <code>webServer: node serve.mjs</code> with <code>reuseExistingServer: false</code></td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="building-the-pkg"><a class="header" href="#building-the-pkg">Building the pkg</a></h2>
 <p>The harness has no bundler and no <code>wasm-pack</code>; <code>wasm-bindgen-cli</code> runs
-directly (same commands as the README’s WebAssembly section):</p>
+directly. Use the same commands as the README’s WebAssembly section:</p>
 <pre><code class="language-bash">rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli --version 0.2.129   # must match the crate version
 cargo build -p map-web-bindings --release --target wasm32-unknown-unknown
 wasm-bindgen --target web --out-dir platform/web/pkg \
   target/wasm32-unknown-unknown/release/map_web_bindings.wasm
 </code></pre>
-<p><strong>Version matching is load-bearing.</strong> <code>wasm-bindgen-cli</code> refuses (or corrupts)
-mismatches against the <code>wasm-bindgen</code> crate version the wasm binary was
-compiled with. The workspace pins <code>wasm-bindgen 0.2.129</code>
-(<code>crates/map-web-bindings</code> dependency tree) and the installed CLI is
-0.2.129 — after any <code>wasm-bindgen</code> bump, reinstall the CLI at the same
-version and regenerate <code>platform/web/pkg</code>. Check both ends with
-<code>wasm-bindgen --version</code> and <code>cargo tree -p map-web-bindings | grep wasm-bindgen</code>.</p>
-<p>Clippy runs for both hosts on this crate: <code>cargo clippy -p map-web-bindings --target wasm32-unknown-unknown</code> (the GPU canvas slice is <code>cfg</code>-gated to
-wasm32).</p>
-<h2 id="contract-sync-test-udl--wasm-surface"><a class="header" href="#contract-sync-test-udl--wasm-surface">Contract-sync test (UDL ↔ wasm surface)</a></h2>
-<p><code>node --test platform/web/tests/contract_sync.mjs</code> asserts the wasm surface
-mirrors the frozen UniFFI contract <code>crates/map-native-core/src/ map_native_core.udl</code> (PRD §4.7) with no npm dependency: a small line parser
-reads the UDL, the curated TypeScript mirror (<code>platform/web/types/ map_native_core.d.ts</code>) and the hand-reviewed wasm exports
-(<code>crates/map-web-bindings/src/exports.rs</code>) and compares the shared
-camera/projection surface. Per frozen dictionary it requires the same field
-names (snake_case UDL fields versus the mirror’s lower camel case, e.g.
-<code>tile_x</code> ↔ <code>tileX</code>) and the UniFFI types’ TypeScript spellings (<code>double</code>/<code>u32</code>
-↔ <code>number</code>); it then requires the frozen <code>MapCamera</code> methods and free helpers
-in the UDL and in both wasm sources, and rejects a wasm member the UDL lacks
-(the wasm-only lifecycle helpers <code>start_sdk</code> and
-<code>retina_device_pixel_ratio_threshold</code> are the documented exceptions). The
-comparison is addition-tolerant: contract-only members (the <code>MapSdk</code> provider
-surface, the <code>fit_bounds</code> constructor) are never required on wasm, so the UDL
-can grow without breaking the test. The generated <code>pkg/ map_web_bindings.d.ts</code> is checked the same way whenever the build artifact is
-present. No server or browser session is needed to run it, and the Playwright
-config’s <code>globalSetup</code> also runs it before every <code>npx playwright test</code>.</p>
-<h2 id="serving-and-manual-testing"><a class="header" href="#serving-and-manual-testing">Serving and manual testing</a></h2>
+<p><strong>Version matching is load-bearing.</strong> The CLI refuses mismatches, or
+corrupts the output, when its version differs from the <code>wasm-bindgen</code>
+crate version the wasm binary was compiled with. The workspace pins
+<code>wasm-bindgen 0.2.129</code> (the <code>crates/map-web-bindings</code> dependency tree),
+and the installed CLI is 0.2.129. After you bump the crate version, you
+must reinstall the CLI at the same version and regenerate
+<code>platform/web/pkg</code>. Check both ends with <code>wasm-bindgen --version</code> and
+<code>cargo tree -p map-web-bindings | grep wasm-bindgen</code>.</p>
+<p>Clippy runs for both hosts on this crate: <code>cargo clippy -p map-web-bindings --target wasm32-unknown-unknown</code>. The GPU canvas slice
+is <code>cfg</code>-gated to wasm32.</p>
+<h2 id="the-contract-sync-test-udl--wasm-surface"><a class="header" href="#the-contract-sync-test-udl--wasm-surface">The contract-sync test (UDL ↔ wasm surface)</a></h2>
+<p>Run the sync test with <code>node --test platform/web/tests/contract_sync.mjs</code>.
+It asserts that the wasm surface mirrors the frozen UniFFI contract
+<code>crates/map-native-core/src/map_native_core.udl</code>, and it needs neither npm
+nor a browser: a small line parser reads the UDL, the curated TypeScript
+mirror (<code>platform/web/types/map_native_core.d.ts</code>), and the hand-reviewed
+wasm exports (<code>crates/map-web-bindings/src/exports.rs</code>), then compares
+the shared camera/projection surface.</p>
+<p>For each frozen dictionary, the test requires the same field names
+(snake_case UDL fields versus the mirror’s lower camel case, for example
+<code>tile_x</code> ↔ <code>tileX</code>) and the UniFFI types’ TypeScript spellings
+(<code>double</code>/<code>u32</code> ↔ <code>number</code>). It then requires the frozen <code>MapCamera</code>
+methods and free helpers in the UDL and in both wasm sources, and it
+rejects a wasm member the UDL lacks (the wasm-only lifecycle helpers
+<code>start_sdk</code> and <code>retina_device_pixel_ratio_threshold</code> are the documented
+exceptions). The comparison is addition-tolerant: contract-only members
+(the <code>MapSdk</code> provider surface, the <code>fit_bounds</code> constructor) are never
+required on wasm, so the UDL can grow without breaking the test. The
+generated <code>pkg/map_web_bindings.d.ts</code> is checked the same way whenever
+the build artifact is present. You need no server or browser session to
+run it, and the Playwright config’s <code>globalSetup</code> also runs it before
+every <code>npx playwright test</code>.</p>
+<h2 id="serving-the-harness-and-testing-by-hand"><a class="header" href="#serving-the-harness-and-testing-by-hand">Serving the harness and testing by hand</a></h2>
 <pre><code class="language-bash">node platform/web/serve.mjs    # http://localhost:8642/
 </code></pre>
 <p>The server answers <code>/</code> and static paths from <code>platform/web/</code>, and
-<code>/tiles/{zoom}_{x}_{y}.png</code> from the recorded platform tile fixtures (the
-browser never fetches an external network; unknown tiles 404). The playground
-camera defaults to the Zurich anchor (47.3769, 8.5417) at zoom 14 — the
-recorded fixture neighborhood — so the page shows real imagery immediately.</p>
-<p>The browser never needs flags for the manual loop: plain Chrome and
-<code>localhost</code> (a secure context) resolve WebGPU.</p>
-<h2 id="running-playwright-e2e"><a class="header" href="#running-playwright-e2e">Running Playwright e2e</a></h2>
+<code>/tiles/{zoom}_{x}_{y}.png</code> from the recorded platform tile fixtures. The
+browser never fetches from an external network, and unknown tiles answer
+with a 404. The playground camera defaults to the Zurich anchor (47.3769,
+8.5417) at zoom 14, which is the recorded fixture neighborhood, so the
+page shows real imagery immediately.</p>
+<p>The browser needs no flags for the manual loop: plain Chrome over
+<code>localhost</code>, which is a secure context, resolves WebGPU.</p>
+<h2 id="running-the-playwright-e2e-suite"><a class="header" href="#running-the-playwright-e2e-suite">Running the Playwright e2e suite</a></h2>
 <pre><code class="language-bash">cd platform/web
 npx playwright install chromium   # first time only
 npx playwright test               # 6 tests, chromium channel, headless
 </code></pre>
-<p>Config details that matter: <code>deviceScaleFactor: 1</code> (canvas backing pixels ==
-viewport pixels), viewport 640×480, and the config’s own webServer spins up
-<code>serve.mjs</code> with <code>reuseExistingServer: false</code> — the port 8642 is hardcoded,
-so a manually started server or another running harness will conflict (kill
-it or the run fails to bind; see “Known gaps”).</p>
-<p>Tests gate on <code>window.mapTestReady</code> (resolves only after the Rust-side
-<code>start_sdk</code> completed) and additionally on <code>window.mapRendererMode()</code> for
-GPU-path assertions; the smoke test skips with a documented reason when the
-mode degrades to <code>overlay</code>.</p>
+<p>Three config details matter. <code>deviceScaleFactor: 1</code> makes the canvas
+backing pixels equal the viewport pixels. The viewport is 640×480. And
+the config’s own webServer spins up <code>serve.mjs</code> with
+<code>reuseExistingServer: false</code>; because port 8642 is hardcoded, a manually
+started server or another running harness will conflict. Kill it first,
+or the run fails to bind (see “Known gaps”).</p>
+<p>Tests gate on <code>window.mapTestReady</code>, which resolves only after the
+Rust-side <code>start_sdk</code> completed. GPU-path assertions additionally gate on
+<code>window.mapRendererMode()</code>, and the smoke test skips with a documented
+reason when the mode degrades to <code>overlay</code>.</p>
 <h2 id="webgpu-facts"><a class="header" href="#webgpu-facts">WebGPU facts</a></h2>
 <ul>
-<li><strong>Secure context required; localhost counts.</strong> WebGPU only exists in
-secure contexts, and <code>http://localhost:8642</code> qualifies.</li>
-<li><strong>Chromium channel works out of the box headless</strong> (verified during the M8
-canvas slice): the adapter resolves with no launch flags at all. The
-Playwright config still passes <code>--enable-unsafe-webgpu --enable-gpu --use-angle=swiftshader --no-sandbox</code> — belt-and-braces flags for GPU
-process stability in headless, not requirements in the current build.</li>
-<li><strong><code>drawImage</code> of a WebGPU canvas reads only a freshly presented frame.</strong>
-Once the compositor has consumed a presented frame, later <code>drawImage</code> calls
-stop yielding those bytes. The smoke test works around this by nudging a
-zero-delta wheel event (re-schedules a GPU frame without moving the
-camera) and sampling <code>getImageData</code> across the following animation frames.
-Any future pixel probe of <code>#map-canvas</code> must reuse this pattern.</li>
-<li><strong>Playwright’s WebKit also resolves WebGPU today</strong> (WebKit 27.2,
-<code>webkit-2370</code>, verified headless on macOS): <code>navigator.gpu</code> exists, the
-page initializes in <code>gpu</code> mode and the frame statistics read requested
-4 / drawn 4 / missing 0 at fetch zoom 14 with real imagery on the surface.
-The 2D overlay fallback is therefore <em>not</em> what a WebKit run exercises
-today; it fires only when <code>GpuMapCanvas</code> fails to acquire an adapter or
-device.</li>
+<li><strong>A secure context is required, and localhost counts.</strong> WebGPU exists
+only in secure contexts, and <code>http://localhost:8642</code> qualifies.</li>
+<li><strong>The Chromium channel works headless with no flags.</strong> The adapter
+resolves with no launch flags at all, verified during the M8 canvas
+slice. The Playwright config still passes <code>--enable-unsafe-webgpu --enable-gpu --use-angle=swiftshader --no-sandbox</code>: belt-and-braces
+flags for GPU process stability in headless, not requirements in the
+current build.</li>
+<li><strong><code>drawImage</code> of a WebGPU canvas reads only a freshly presented
+frame.</strong> Once the compositor has consumed a presented frame, later
+<code>drawImage</code> calls stop yielding those bytes. The smoke test works
+around this: it sends a zero-delta wheel event, which re-schedules a
+GPU frame without moving the camera, then samples <code>getImageData</code>
+across the following animation frames. Reuse this pattern for any
+future pixel probe of <code>#map-canvas</code>.</li>
+<li><strong>Playwright’s WebKit also resolves WebGPU today.</strong> (WebKit 27.2,
+<code>webkit-2370</code>, verified headless on macOS.) <code>navigator.gpu</code> exists, the
+page initializes in <code>gpu</code> mode, and the frame statistics read requested
+4 / drawn 4 / missing 0 at fetch zoom 14 with real imagery on the
+surface. A WebKit run therefore does not exercise the 2D overlay
+fallback today; it fires only when <code>GpuMapCanvas</code> fails to acquire an
+adapter or device.</li>
 </ul>
 <h2 id="the-2d-overlay-fallback-story"><a class="header" href="#the-2d-overlay-fallback-story">The 2D-overlay fallback story</a></h2>
-<p><code>GpuMapCanvas::initialize</code> fails cleanly (string error, no panic) when no
-WebGPU adapter supports the canvas or the device request fails; the
-playwright page catches that, abandons the GPU canvas, and reports
-<code>mode overlay (WebGPU unavailable: …)</code> in the status line and readout. In
-overlay mode the separate <code>#map-overlay</code> canvas <em>is</em> the scene (background
-grid + projected tile grid from <code>visible_tile_keys</code>); in GPU mode the overlay
-carries only the opt-in debug tile grid and a red center mark, so the
-WebGPU-locked canvas never needs a 2D context of its own (claiming one would
-poison the surface).</p>
-<p>Two overlapping notes on fallback breadth:</p>
+<p><code>GpuMapCanvas::initialize</code> fails cleanly when no WebGPU adapter supports
+the canvas, or when the device request fails: it returns a string error
+and never panics. The Playwright page catches that, abandons the GPU
+canvas, and reports <code>mode overlay (WebGPU unavailable: …)</code> in the status
+line and the readout. In overlay mode the separate <code>#map-overlay</code> canvas
+<em>is</em> the scene: a background grid plus the projected tile grid from
+<code>visible_tile_keys</code>. In GPU mode the overlay carries only the opt-in
+debug tile grid and a red center mark, so the WebGPU-locked canvas never
+needs a 2D context of its own (claiming one would poison the surface).</p>
+<p>Two notes qualify how broad that fallback is:</p>
 <ul>
-<li><code>wgpu</code> is compiled with both <code>webgpu</code> and <code>webgl</code> workspace features, so
-the wasm adapter request could in principle also reach a WebGL2 context on
-canvas — the canvas slice deliberately does not implement or test that
-path; the documented fallback is the 2D overlay.</li>
-<li>The historical PLAN line “WebGL2 fallback checked in Safari/WebKit” is
-softened by the WebKit finding above: current WebKit ships WebGPU, so the
+<li><code>wgpu</code> is compiled with both the <code>webgpu</code> and <code>webgl</code> workspace
+features, so the wasm adapter request could in principle also reach a
+WebGL2 context on canvas. The canvas slice deliberately does not
+implement or test that path; the documented fallback is the 2D overlay.</li>
+<li>The plan once said “WebGL2 fallback checked in Safari/WebKit”. The
+WebKit finding above softens it: current WebKit ships WebGPU, so the
 thing to check there is <em>graceful degradation</em>, not WebGL.</li>
 </ul>
 <h2 id="parity-with-the-native-renderer"><a class="header" href="#parity-with-the-native-renderer">Parity with the native renderer</a></h2>
-<p><code>crates/map-web-bindings/src/canvas.rs</code> mirrors the native headless pipeline
-in <code>crates/map-rendering</code> (which cannot be reused directly: it is <code>cfg</code>-gated
-out on wasm) and the rule is <strong>same WGSL text, same vertex layout, same index
-pattern</strong>:</p>
+<p><code>crates/map-web-bindings/src/canvas.rs</code> mirrors the native headless
+pipeline in <code>crates/map-rendering</code>. The native crate cannot be reused
+directly on wasm because it is <code>cfg</code>-gated out there, so the copy follows
+one rule: <strong>same WGSL text, same vertex layout, same index pattern</strong>.</p>
 <ul>
 <li>The WGSL (<code>TILE_QUAD_SHADER_SOURCE</code>) is copied verbatim from the native
 renderer: clip-space positions in, texture sample out.</li>
 <li>Vertices are <code>ClipSpaceTileVertex</code> chunks (<code>Float32x4</code> clip position at
-offset 0, <code>Float32x2</code> texture coordinates at the <code>offset_of!</code> offset), the
-same memory layout the native <code>map-rendering</code> encoder emits.</li>
+offset 0, <code>Float32x2</code> texture coordinates at the <code>offset_of!</code> offset),
+the same memory layout the native <code>map-rendering</code> encoder emits.</li>
 <li>Indices are <code>u16</code> in the two-triangle pattern <code>0, 1, 2, 2, 1, 3</code>
-(<code>INDICES_PER_QUAD</code> = 6, <code>CORNERS_PER_QUAD</code> = 4), with the caller bounding
-fragments under <code>MAXIMUM_QUADS_PER_FRAME</code> before encoding.</li>
-<li>Tile textures are <code>Rgba8Unorm</code> with a linear, clamp-to-edge sampler; both
-preferred surface formats (<code>Bgra8Unorm</code>, <code>Rgba8Unorm</code>) are non-sRGB, so
-tile texel values reach the screen unchanged — the parity that makes a
-browser-vs-golden pixel compare meaningful.</li>
-<li>Degradation rules match too: an undecodable pooled payload skips its quads
-for the frame and is evicted from the pool for refetch, while only
-structural failures surface as errors.</li>
+(<code>INDICES_PER_QUAD</code> = 6, <code>CORNERS_PER_QUAD</code> = 4), with the caller
+bounding fragments under <code>MAXIMUM_QUADS_PER_FRAME</code> before encoding.</li>
+<li>Tile textures are <code>Rgba8Unorm</code> with a linear, clamp-to-edge sampler.
+Both preferred surface formats (<code>Bgra8Unorm</code>, <code>Rgba8Unorm</code>) are
+non-sRGB, so tile texel values reach the screen unchanged. This parity
+is what makes a browser-vs-golden pixel compare meaningful.</li>
+<li>Degradation rules match too: an undecodable pooled payload skips its
+quads for the frame and is evicted from the pool for refetch, while
+only structural failures surface as errors.</li>
 </ul>
-<p>The page must also serialize frames: the wasm binding borrows its draw state
-across the <code>render_frame</code> future, so overlapping calls are a borrow
-violation — the playground keeps a busy/queued render loop.</p>
-<h2 id="canvas-vs-golden-compare-implemented-testsgolden_comparespecmjs"><a class="header" href="#canvas-vs-golden-compare-implemented-testsgolden_comparespecmjs">Canvas-vs-golden compare (implemented: <code>tests/golden_compare.spec.mjs</code>)</a></h2>
+<p>The page must also serialize frames. The wasm binding borrows its draw
+state across the <code>render_frame</code> future, so overlapping calls are a borrow
+violation; the playground keeps a busy/queued render loop.</p>
+<h2 id="canvas-vs-golden-compare-testsgolden_comparespecmjs"><a class="header" href="#canvas-vs-golden-compare-testsgolden_comparespecmjs">Canvas-vs-golden compare (<code>tests/golden_compare.spec.mjs</code>)</a></h2>
 <p>The two committed goldens (<code>crates/map-rendering/fixtures/render/golden/</code>)
-are rendered with the exact camera the playground defaults to — center
-47.3769/8.5417, zoom 14, bearing 0, pitch 0 (pitched variant 45°), field of
-view 60° == <code>map-rendering</code>‘s <code>DEFAULT_FIELD_OF_VIEW_DEGREES</code> — so the only
-parameter to bridge is the <strong>512×512 viewport</strong> of <code>golden_image.rs</code> vs the
-harness’ 640×480 window.</p>
+are rendered with the exact camera the playground defaults to: center
+47.3769/8.5417, zoom 14, bearing 0, pitch 0 (pitched variant 45°), field
+of view 60° == <code>map-rendering</code>’s <code>DEFAULT_FIELD_OF_VIEW_DEGREES</code>. The
+only parameter to bridge is the <strong>512×512 viewport</strong> of <code>golden_image.rs</code>
+versus the harness’s 640×480 window.</p>
 <ul>
-<li><strong>Probe mechanics</strong> (reuse the smoke test’s proven pattern): a zero-delta
-wheel nudge to re-present, then <code>drawImage</code> the GPU canvas into a
-same-size 2D probe and sample <code>getImageData</code> across a dozen animation
-frames, keeping the best (minimum-error) sample — a stale pre-presentation
-read is a clear-color frame and maximizes the error rather than matching.</li>
-<li><strong>Pixel geometry</strong>: set the viewport to 512×512 (or back the canvas
-explicitly) with <code>deviceScaleFactor: 1</code>, so composited pixels are 1:1 with
-canvas backing pixels and the sampler never rescales. The clear color
-<code>[0, 0, 0, 1]</code> and <code>CompositeAlphaMode::Opaque</code> make the 2D round trip
-opacity-neutral (premultiplication is a no-op at alpha 255).</li>
+<li><strong>Probe mechanics</strong> (reuse the smoke test’s proven pattern): send a
+zero-delta wheel nudge to re-present, then <code>drawImage</code> the GPU canvas
+into a same-size 2D probe and sample <code>getImageData</code> across a dozen
+animation frames, keeping the best (minimum-error) sample. A stale
+pre-presentation read is a clear-color frame and maximizes the error
+rather than matching.</li>
+<li><strong>Pixel geometry</strong>: set the viewport to 512×512 (or size the canvas
+explicitly) with <code>deviceScaleFactor: 1</code>, so composited pixels are 1:1
+with canvas backing pixels and the sampler never rescales. The clear
+color <code>[0, 0, 0, 1]</code> and <code>CompositeAlphaMode::Opaque</code> make the 2D round
+trip opacity-neutral (premultiplication is a no-op at alpha 255).</li>
 <li><strong>Golden bytes reach the page</strong> the way tile fixtures do: an added
-allow-listed route in <code>serve.mjs</code> (e.g. <code>/golden/{file}.png</code> naming only
-the two committed goldens) keeps the compare same-origin and lets the page
-<code>createImageBitmap</code> the golden and diff in-page, avoiding a 512×512×4
-payload over the Playwright protocol. A dedicated minimal fixture page (a
-fixed 512×512 canvas rendering the golden camera on demand) beats driving
-the playground UI for this test.</li>
-<li><strong>Tolerance strategy</strong>: mirror <code>golden_image.rs</code> verbatim — mean absolute
-per-channel error ≤ 2.0, and at most a 0.02 fraction of pixels whose
-maximum channel error exceeds 24 — plus preconditions (golden decodes to
-512×512; settled frame statistics match the scene’s tile counts and
-<code>tileZoomLevel === 14</code>; the pitched camera’s fully culled
-14/8579/5737 leaves one requested-but-undrawn tile, so its expected
-<code>missingTiles</code> is 1, not 0). The comparison there is pixel-loop based, not
-screenshot-based, which is the right granularity for the browser probe
-too. The page also reproduces the golden harness’s deliberate
-parent-fallback tile (the last visible scene tile drawn from its pooled
-zoom-13 parent via <code>GpuMapCanvas::stage_tile_parent_fallback</code>), without
-which the browser would draw sharper imagery than the reference.</li>
-<li><strong>Hazards</strong>: (1) the freshness rule above — probe only right after a
-forced re-present, never assume <code>render_frame</code>‘s resolution implies
-readable bytes; (2) canvas size mismatch — the playground resizes its
-canvases to the window, so the test must control the window or use a
-dedicated page; (3) <code>--use-angle=swiftshader</code> renders the software ANGLE
-path, whose sampler behavior is exactly the GPU-vs-GPU difference the
-tolerance absorbs — if the SwiftShader mean error exceeds the budget,
-drop the swiftshader arg for this test project rather than widening the
-shared tolerance; (4) the fetch zoom clamps to the fixtures’ maximum
-(14), so cameras above zoom 14 are not apples-to-apples against these
-goldens.</li>
+allow-listed route in <code>serve.mjs</code> (for example <code>/golden/{file}.png</code>,
+naming only the two committed goldens) keeps the compare same-origin
+and lets the page <code>createImageBitmap</code> the golden and diff in-page. This
+avoids a 512×512×4 payload over the Playwright protocol. A dedicated
+minimal fixture page (a fixed 512×512 canvas rendering the golden
+camera on demand) beats driving the playground UI for this test.</li>
+<li><strong>Tolerance strategy</strong>: mirror <code>golden_image.rs</code> verbatim. The mean
+absolute per-channel error stays ≤ 2.0, and at most a 0.02 fraction of
+pixels may have a maximum channel error exceeding 24. Add preconditions
+as well: the golden decodes to 512×512; settled frame statistics match
+the scene’s tile counts and <code>tileZoomLevel === 14</code>; and the pitched
+camera’s fully culled 14/8579/5737 leaves one requested-but-undrawn
+tile, so its expected <code>missingTiles</code> is 1, not 0. The comparison there
+is pixel-loop based, not screenshot-based, which is the right
+granularity for the browser probe too. The page also reproduces the
+golden harness’s deliberate parent-fallback tile (the last visible
+scene tile drawn from its pooled zoom-13 parent via
+<code>GpuMapCanvas::stage_tile_parent_fallback</code>); without it the browser
+would draw sharper imagery than the reference.</li>
+<li><strong>Hazards</strong>:
+<ol>
+<li>The freshness rule above: probe only right after a forced
+re-present, and never assume that <code>render_frame</code>’s resolution
+implies readable bytes.</li>
+<li>Canvas size mismatch: the playground resizes its canvases to the
+window, so the test must control the window or use a dedicated page.</li>
+<li><code>--use-angle=swiftshader</code> renders the software ANGLE path, whose
+sampler behavior is exactly the GPU-vs-GPU difference the tolerance
+absorbs. If the SwiftShader mean error exceeds the budget, drop the
+swiftshader argument for this test project rather than widening the
+shared tolerance.</li>
+<li>The fetch zoom clamps to the fixtures’ maximum (14), so cameras
+above zoom 14 are not apples-to-apples against these goldens.</li>
+</ol>
+</li>
 </ul>
 <h2 id="known-gaps"><a class="header" href="#known-gaps">Known gaps</a></h2>
 <ul>
-<li><code>serve.mjs</code> hardcodes the host/port (<code>localhost:8642</code>) and the Playwright
-config runs with <code>reuseExistingServer: false</code>, so two harness sessions
-(or a manual server plus a test run) cannot share the machine’s single
-port. A test-only copy with an environment-variable port override is the
-current workaround; upstreaming that override would be a one-line change.</li>
-<li>Nothing in the repo automates the pkg step (no script wrapping the
-<code>cargo build</code> + <code>wasm-bindgen</code> pair documented above); regenerate by hand
-and commit the <code>pkg/</code> output as the slice does today.</li>
+<li><code>serve.mjs</code> hardcodes the host and port (<code>localhost:8642</code>), and the
+Playwright config runs with <code>reuseExistingServer: false</code>. Two harness
+sessions, or a manual server plus a test run, therefore cannot share
+the machine’s single port. A test-only copy with an environment-variable
+port override is the current workaround; upstreaming that override
+would be a one-line change.</li>
+<li>Nothing in the repository automates the pkg step (no script wraps the
+<code>cargo build</code> + <code>wasm-bindgen</code> pair documented above); regenerate it by
+hand and commit the <code>pkg/</code> output, as the slices do today.</li>
 <li>Playwright’s WebKit browser binary is not installed by the harness (only
-the chromium channel is pinned in <code>browsers.json</code>); enable the WebKit
+the chromium channel is pinned in <code>browsers.json</code>). Enable the WebKit
 check with <code>npx playwright install webkit</code> before running it.</li>
 <li>The project’s chromium tests use <code>--use-angle=swiftshader</code> (software
 GPU); a hardware-GPU compare run is untested.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="coding-conventions--rustic-maps-sdk"><a class="header" href="#coding-conventions--rustic-maps-sdk">Coding Conventions — Rustic Maps SDK</a></h1>
-<p>Full project conventions live in <code>CLAUDE.md</code> (behavioral rules) and the PRD.
-This document translates them into per-language practice, including the
-generated binding surfaces.</p>
+<h1 id="contributing-conventions--rustic-maps-sdk"><a class="header" href="#contributing-conventions--rustic-maps-sdk">Contributing Conventions — Rustic Maps SDK</a></h1>
+<p>The project guides set the repository’s behavioral rules. This document
+translates them into per-language practice, including the generated
+binding surfaces.</p>
 <h2 id="1-no-abbreviations-in-public-identifiers"><a class="header" href="#1-no-abbreviations-in-public-identifiers">1. No abbreviations in public identifiers</a></h2>
-<p>Every public identifier is spelled out, concise yet precise:</p>
+<p>Every public identifier is spelled out, and stays concise yet precise:</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -457,8 +479,8 @@ generated binding surfaces.</p>
 </tbody>
 </table>
 </div>
-<p>Accepted standard forms: <code>SDK</code>, <code>URL</code>, <code>HTTP</code>, <code>wasm</code>, <code>MVT</code> in documentation
-text; never as identifier shorthand.</p>
+<p>The standard forms <code>SDK</code>, <code>URL</code>, <code>HTTP</code>, <code>wasm</code>, and <code>MVT</code> are accepted
+in documentation text, but never as identifier shorthand.</p>
 <h2 id="2-solid-mapping"><a class="header" href="#2-solid-mapping">2. SOLID mapping</a></h2>
 <div class="table-wrapper">
 <table>
@@ -466,9 +488,9 @@ text; never as identifier shorthand.</p>
 <tr><th>Principle</th><th>Rust core</th><th>Kotlin binding surface</th><th>Swift binding surface</th></tr>
 </thead>
 <tbody>
-<tr><td>Single responsibility</td><td>one crate per concern (PRD §3)</td><td>one class per screen/feature</td><td>one struct per screen/feature</td></tr>
-<tr><td>Open–closed</td><td>new vendor = new <code>*Provider</code> impl; core untouched</td><td>new capability = new composable/view-model</td><td><code>final class</code> + protocol, no forks in existing code</td></tr>
-<tr><td>Liskov substitution</td><td>mocks in <code>geospatial-traits::mock</code> must satisfy every tested consumer</td><td>subclasses/refapps honor suspend contracts</td><td>SwiftUI view models honor async throws contracts</td></tr>
+<tr><td>Single responsibility</td><td>one crate per concern</td><td>one class per screen/feature</td><td>one struct per screen/feature</td></tr>
+<tr><td>Open–closed</td><td>a new vendor means a new <code>*Provider</code> impl; the core stays untouched</td><td>a new capability means a new composable or view-model</td><td><code>final class</code> + protocol; no forks in existing code</td></tr>
+<tr><td>Liskov substitution</td><td>mocks in <code>geospatial-traits::mock</code> must satisfy every tested consumer</td><td>subclasses and refapps honor suspend contracts</td><td>SwiftUI view models honor async throws contracts</td></tr>
 <tr><td>Interface segregation</td><td>nine narrow contracts, not one mega-trait</td><td>expose role-targeted protocols, not god objects</td><td>role-targeted protocols</td></tr>
 <tr><td>Dependency inversion</td><td>crates depend on <code>geospatial-traits</code>, never on a provider</td><td>view models depend on injected SDK protocols</td><td>dependency injection through initializers</td></tr>
 </tbody>
@@ -476,25 +498,34 @@ text; never as identifier shorthand.</p>
 </div>
 <h2 id="3-errors"><a class="header" href="#3-errors">3. Errors</a></h2>
 <ul>
-<li>Rust: every failure is <code>geospatial_types::SDKError</code> — no <code>unwrap</code>, <code>expect</code>,
-or raw <code>String</code> errors in crate code; panics never cross the FFI boundary.</li>
-<li>Kotlin: UniFFI maps the UDL contract to typed exceptions; refapps surface
-them as sealed UI states.</li>
-<li>Swift: UniFFI maps to typed Swift errors thrown from async methods.</li>
+<li>Rust: every failure is <code>geospatial_types::SDKError</code>. Crate code uses no
+<code>unwrap</code>, no <code>expect</code>, and no raw <code>String</code> errors, and panics never
+cross the FFI boundary.</li>
+<li>Kotlin: UniFFI maps the UDL contract to typed exceptions, and the
+refapps surface them as sealed UI states.</li>
+<li>Swift: UniFFI maps the contract to typed Swift errors thrown from async
+methods.</li>
 </ul>
 <h2 id="4-property--and-fixture-first-testing"><a class="header" href="#4-property--and-fixture-first-testing">4. Property- and fixture-first testing</a></h2>
 <ul>
-<li>Coordinate/camera/projection math gets <code>proptest</code> suites.</li>
+<li>Coordinate, camera, and projection math gets <code>proptest</code> suites.</li>
 <li>Every external payload gets a recorded fixture and a parser test.</li>
-<li>Reference applications are also UI-test hosts (Espresso / XCUITest / Detox).</li>
+<li>Reference applications double as UI-test hosts (Espresso / XCUITest /
+Detox).</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="the-uniffi-contract"><a class="header" href="#the-uniffi-contract">The UniFFI contract</a></h1>
-<p>This is the frozen UDL contract (<code>crates/map-native-core/src/map_native_core.udl</code>) published verbatim: it is the single source of
-truth the Kotlin, Swift and React Native bindings are generated from,
-and the regression reference for the WebAssembly TypeScript mirror.
-The contract only ever changes addition-only.</p>
-<p>The plain-text form is served at <a href="../udl/map_native_core.udl">udl/map_native_core.udl</a>.</p>
+<p>The page you are reading is the frozen UDL contract
+(<code>crates/map-native-core/src/map_native_core.udl</code>), published verbatim
+from the source repository. This file is the single source of truth: the
+Kotlin, Swift, and React Native bindings are generated from it, and the
+WebAssembly TypeScript mirror is regression-checked against it. The
+contract changes addition-only: existing members keep their signature
+and meaning.</p>
+<p>The build pipeline copies this page from the source file and serves the
+plain-text copy at <a href="../udl/map_native_core.udl">udl/map_native_core.udl</a>.
+Both are byte-equality checked against the source file on every publish,
+so an edit to the contract propagates to the site or the build fails.</p>
 <pre><code class="language-udl">// FROZEN (M4, slice 1 — 2026-10-27) — the UniFFI contract of the Maps SDK;
 // extended in M4 slice 2 with the fit-bounds constructor (`EdgeInsetsPixels`
 // and the named `MapCamera` constructor), in M4 slice 3 with the async
@@ -2182,12 +2213,16 @@ dictionary ProviderFailureDiagnostic {
 <h1 id="api-reference-rustdoc"><a class="header" href="#api-reference-rustdoc">API reference (rustdoc)</a></h1>
 <p>The rustdoc for the workspace crates ships at the <code>api/</code> path of this
 site: <a href="../api/geospatial_types/index.html">start at <code>geospatial-types</code></a>,
-the record and math layer every other crate builds on. The rendered
-rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
+the record and math layer every other crate builds on.</p>
+<p>This tree is generated, not hand-maintained. The build script runs
+<code>cargo doc</code> against the source commit named in <code>provenance.txt</code> on every
+publish, and stages the rendered tree at <code>api/</code> without post-processing.
+Pages under <code>api/</code> therefore describe exactly that commit; a newer
+publish replaces the whole tree at the same paths.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="third-party-notices"><a class="header" href="#third-party-notices">Third-Party Notices</a></h1>
 <p>Generated by <code>scripts/generate-third-party-notices</code> from the workspace dependency graph (<code>Cargo.toml</code> manifests + <code>Cargo.lock</code>, via <code>cargo metadata --offline</code> — no network access). License identities are additionally gated by <code>cargo-deny</code> (<code>deny.toml</code>). <strong>Regenerate and commit this file whenever any dependency changes.</strong> Output is deterministic, so a re-run on an unchanged graph is a byte-identical no-op.</p>
-<p>This file lists the third-party <em>software</em> the workspace depends on: 428 registry packages (382 reachable through normal dependency edges, 46 test/dev-only). The first-party workspace crates are not listed here; they carry the SDK’s own license (MIT OR Apache-2.0, see <code>Cargo.toml</code>).</p>
+<p>This file lists the third-party <em>software</em> the workspace depends on: 444 registry packages (382 reachable through normal dependency edges, 62 test/dev-only). The first-party workspace crates are not listed here; they carry the SDK’s own license (MIT OR Apache-2.0, see <code>Cargo.toml</code>).</p>
 <h2 id="map-data-attribution"><a class="header" href="#map-data-attribution">Map-data attribution</a></h2>
 <p>Separate from the software above: map imagery © MapQuest; map data © OpenStreetMap contributors, licensed under the Open Database License (ODbL). The reference apps render this attribution in-app (<code>platform/web/index.html</code>, <code>platform/ios/reference-application/Sources/ReferenceApplicationConfiguration.swift</code>, and the Android reference app’s <code>ReferenceApplicationConstants.kt</code>). Integrators must keep this attribution visible in their own apps and reproduce this notices file with their distribution.</p>
 <h2 id="license-summary"><a class="header" href="#license-summary">License summary</a></h2>
@@ -2200,12 +2235,12 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>(MIT OR Apache-2.0) AND NCSA</code></td><td>1</td></tr>
 <tr><td><code>(MIT OR Apache-2.0) AND Unicode-3.0</code></td><td>1</td></tr>
 <tr><td><code>0BSD OR MIT OR Apache-2.0</code></td><td>1</td></tr>
-<tr><td><code>Apache-2.0</code></td><td>7</td></tr>
+<tr><td><code>Apache-2.0</code></td><td>10</td></tr>
 <tr><td><code>Apache-2.0 / MIT</code></td><td>1</td></tr>
 <tr><td><code>Apache-2.0 AND ISC</code></td><td>1</td></tr>
 <tr><td><code>Apache-2.0 OR BSL-1.0</code></td><td>1</td></tr>
 <tr><td><code>Apache-2.0 OR ISC OR MIT</code></td><td>2</td></tr>
-<tr><td><code>Apache-2.0 OR MIT</code></td><td>19</td></tr>
+<tr><td><code>Apache-2.0 OR MIT</code></td><td>21</td></tr>
 <tr><td><code>Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT</code></td><td>7</td></tr>
 <tr><td><code>Apache-2.0/MIT</code></td><td>4</td></tr>
 <tr><td><code>BSD-2-Clause</code></td><td>3</td></tr>
@@ -2215,18 +2250,19 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>CC0-1.0 OR Apache-2.0</code></td><td>1</td></tr>
 <tr><td><code>CDLA-Permissive-2.0</code></td><td>1</td></tr>
 <tr><td><code>ISC</code></td><td>3</td></tr>
-<tr><td><code>MIT</code></td><td>79</td></tr>
-<tr><td><code>MIT OR Apache-2.0</code></td><td>210</td></tr>
+<tr><td><code>MIT</code></td><td>84</td></tr>
+<tr><td><code>MIT OR Apache-2.0</code></td><td>212</td></tr>
 <tr><td><code>MIT OR Apache-2.0 OR LGPL-2.1-or-later</code></td><td>2</td></tr>
 <tr><td><code>MIT OR Apache-2.0 OR Zlib</code></td><td>6</td></tr>
 <tr><td><code>MIT OR Zlib OR Apache-2.0</code></td><td>2</td></tr>
-<tr><td><code>MIT/Apache-2.0</code></td><td>22</td></tr>
+<tr><td><code>MIT/Apache-2.0</code></td><td>24</td></tr>
 <tr><td><code>MPL-2.0</code></td><td>9</td></tr>
 <tr><td><code>Unicode-3.0</code></td><td>18</td></tr>
 <tr><td><code>Unlicense OR MIT</code></td><td>6</td></tr>
+<tr><td><code>Unlicense/MIT</code></td><td>2</td></tr>
 <tr><td><code>Zlib</code></td><td>3</td></tr>
 <tr><td><code>Zlib OR Apache-2.0 OR MIT</code></td><td>9</td></tr>
-<tr><td><strong>Total</strong></td><td><strong>428</strong></td></tr>
+<tr><td><strong>Total</strong></td><td><strong>444</strong></td></tr>
 </tbody>
 </table>
 </div>
@@ -2264,7 +2300,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
-<h3 id="apache-20-7-packages"><a class="header" href="#apache-20-7-packages"><code>Apache-2.0</code> (7 package(s))</a></h3>
+<h3 id="apache-20-10-packages"><a class="header" href="#apache-20-10-packages"><code>Apache-2.0</code> (10 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2272,6 +2308,9 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </thead>
 <tbody>
 <tr><td><code>borsh-derive†</code></td><td>1.8.1</td><td><a href="https://borsh.io">https://borsh.io</a></td></tr>
+<tr><td><code>ciborium†</code></td><td>0.2.2</td><td><a href="https://github.com/enarx/ciborium">https://github.com/enarx/ciborium</a></td></tr>
+<tr><td><code>ciborium-io†</code></td><td>0.2.2</td><td><a href="https://github.com/enarx/ciborium">https://github.com/enarx/ciborium</a></td></tr>
+<tr><td><code>ciborium-ll†</code></td><td>0.2.2</td><td><a href="https://github.com/enarx/ciborium">https://github.com/enarx/ciborium</a></td></tr>
 <tr><td><code>codespan-reporting</code></td><td>0.13.1</td><td><a href="https://github.com/brendanzab/codespan">https://github.com/brendanzab/codespan</a></td></tr>
 <tr><td><code>gl_generator†</code></td><td>0.14.0</td><td><a href="https://github.com/brendanzab/gl-rs/">https://github.com/brendanzab/gl-rs/</a></td></tr>
 <tr><td><code>glutin_wgl_sys</code></td><td>0.6.1</td><td><a href="https://github.com/rust-windowing/glutin">https://github.com/rust-windowing/glutin</a></td></tr>
@@ -2327,7 +2366,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
-<h3 id="apache-20-or-mit-19-packages"><a class="header" href="#apache-20-or-mit-19-packages"><code>Apache-2.0 OR MIT</code> (19 package(s))</a></h3>
+<h3 id="apache-20-or-mit-21-packages"><a class="header" href="#apache-20-or-mit-21-packages"><code>Apache-2.0 OR MIT</code> (21 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2341,6 +2380,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>bit-vec†</code></td><td>0.10.1</td><td><a href="https://github.com/contain-rs/bit-vec">https://github.com/contain-rs/bit-vec</a></td></tr>
 <tr><td><code>bit-vec</code></td><td>0.9.1</td><td><a href="https://github.com/contain-rs/bit-vec">https://github.com/contain-rs/bit-vec</a></td></tr>
 <tr><td><code>const-oid</code></td><td>0.10.2</td><td><a href="https://github.com/RustCrypto/formats/tree/master/const-oid">https://github.com/RustCrypto/formats/tree/master/const-oid</a></td></tr>
+<tr><td><code>criterion†</code></td><td>0.5.1</td><td><a href="https://bheisler.github.io/criterion.rs/book/index.html">https://bheisler.github.io/criterion.rs/book/index.html</a></td></tr>
 <tr><td><code>equivalent</code></td><td>1.0.3</td><td><a href="https://github.com/indexmap-rs/equivalent">https://github.com/indexmap-rs/equivalent</a></td></tr>
 <tr><td><code>fastrand</code></td><td>2.5.0</td><td><a href="https://github.com/smol-rs/fastrand">https://github.com/smol-rs/fastrand</a></td></tr>
 <tr><td><code>idna_adapter</code></td><td>1.2.2</td><td><a href="https://docs.rs/crate/idna_adapter/latest">https://docs.rs/crate/idna_adapter/latest</a></td></tr>
@@ -2350,6 +2390,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>portable-atomic</code></td><td>1.15.0</td><td><a href="https://github.com/taiki-e/portable-atomic">https://github.com/taiki-e/portable-atomic</a></td></tr>
 <tr><td><code>portable-atomic-util</code></td><td>0.2.8</td><td><a href="https://github.com/taiki-e/portable-atomic-util">https://github.com/taiki-e/portable-atomic-util</a></td></tr>
 <tr><td><code>rustc-hash</code></td><td>2.1.3</td><td><a href="https://github.com/rust-lang/rustc-hash">https://github.com/rust-lang/rustc-hash</a></td></tr>
+<tr><td><code>tinytemplate†</code></td><td>1.2.1</td><td><a href="https://github.com/bheisler/TinyTemplate">https://github.com/bheisler/TinyTemplate</a></td></tr>
 <tr><td><code>utf8_iter</code></td><td>1.0.4</td><td><a href="https://docs.rs/utf8_iter/">https://docs.rs/utf8_iter/</a></td></tr>
 <tr><td><code>uuid</code></td><td>1.29.0</td><td><a href="https://github.com/uuid-rs/uuid">https://github.com/uuid-rs/uuid</a></td></tr>
 <tr><td><code>zeroize</code></td><td>1.9.1</td><td><a href="https://github.com/RustCrypto/utils">https://github.com/RustCrypto/utils</a></td></tr>
@@ -2477,7 +2518,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
-<h3 id="mit-79-packages"><a class="header" href="#mit-79-packages"><code>MIT</code> (79 package(s))</a></h3>
+<h3 id="mit-84-packages"><a class="header" href="#mit-84-packages"><code>MIT</code> (84 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2506,6 +2547,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>hyper</code></td><td>1.12.0</td><td><a href="https://hyper.rs">https://hyper.rs</a></td></tr>
 <tr><td><code>hyper-util</code></td><td>0.1.21</td><td><a href="https://hyper.rs">https://hyper.rs</a></td></tr>
 <tr><td><code>interpolate_name</code></td><td>0.2.4</td><td><a href="https://github.com/lu-zero/interpolate_name">https://github.com/lu-zero/interpolate_name</a></td></tr>
+<tr><td><code>is-terminal†</code></td><td>0.4.17</td><td><a href="https://github.com/sunfishcode/is-terminal">https://github.com/sunfishcode/is-terminal</a></td></tr>
 <tr><td><code>libm</code></td><td>0.2.16</td><td><a href="https://github.com/rust-lang/compiler-builtins">https://github.com/rust-lang/compiler-builtins</a></td></tr>
 <tr><td><code>libsqlite3-sys</code></td><td>0.38.2</td><td><a href="https://github.com/rusqlite/rusqlite">https://github.com/rusqlite/rusqlite</a></td></tr>
 <tr><td><code>loop9</code></td><td>0.1.5</td><td><a href="https://lib.rs/crates/loop9">https://lib.rs/crates/loop9</a></td></tr>
@@ -2518,7 +2560,11 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>objc2</code></td><td>0.6.5</td><td><a href="https://github.com/madsmtm/objc2">https://github.com/madsmtm/objc2</a></td></tr>
 <tr><td><code>objc2-encode</code></td><td>4.1.0</td><td><a href="https://github.com/madsmtm/objc2">https://github.com/madsmtm/objc2</a></td></tr>
 <tr><td><code>objc2-foundation</code></td><td>0.3.2</td><td><a href="https://github.com/madsmtm/objc2">https://github.com/madsmtm/objc2</a></td></tr>
+<tr><td><code>oorandom†</code></td><td>11.1.5</td><td><a href="https://hg.sr.ht/~icefox/oorandom">https://hg.sr.ht/~icefox/oorandom</a></td></tr>
 <tr><td><code>ordered-float</code></td><td>5.5.1</td><td><a href="https://github.com/reem/rust-ordered-float">https://github.com/reem/rust-ordered-float</a></td></tr>
+<tr><td><code>plotters†</code></td><td>0.3.7</td><td><a href="https://plotters-rs.github.io/">https://plotters-rs.github.io/</a></td></tr>
+<tr><td><code>plotters-backend†</code></td><td>0.3.7</td><td><a href="https://plotters-rs.github.io">https://plotters-rs.github.io</a></td></tr>
+<tr><td><code>plotters-svg†</code></td><td>0.3.7</td><td><a href="https://plotters-rs.github.io">https://plotters-rs.github.io</a></td></tr>
 <tr><td><code>protobuf</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/">https://github.com/stepancheg/rust-protobuf/</a></td></tr>
 <tr><td><code>protobuf-codegen†</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/">https://github.com/stepancheg/rust-protobuf/</a></td></tr>
 <tr><td><code>protobuf-parse†</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/tree/master/protobuf-parse/">https://github.com/stepancheg/rust-protobuf/tree/master/protobuf-parse/</a></td></tr>
@@ -2567,7 +2613,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </table>
 </div>
 <p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
-<h3 id="mit-or-apache-20-210-packages"><a class="header" href="#mit-or-apache-20-210-packages"><code>MIT OR Apache-2.0</code> (210 package(s))</a></h3>
+<h3 id="mit-or-apache-20-212-packages"><a class="header" href="#mit-or-apache-20-212-packages"><code>MIT OR Apache-2.0</code> (212 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2577,6 +2623,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>aligned</code></td><td>0.4.3</td><td><a href="https://github.com/rust-embedded-community/aligned">https://github.com/rust-embedded-community/aligned</a></td></tr>
 <tr><td><code>allocator-api2</code></td><td>0.2.21</td><td><a href="https://github.com/zakarumych/allocator-api2">https://github.com/zakarumych/allocator-api2</a></td></tr>
 <tr><td><code>android_system_properties</code></td><td>0.1.6</td><td><a href="https://github.com/nical/android_system_properties">https://github.com/nical/android_system_properties</a></td></tr>
+<tr><td><code>anes†</code></td><td>0.1.6</td><td><a href="https://github.com/zrzka/anes-rs">https://github.com/zrzka/anes-rs</a></td></tr>
 <tr><td><code>anstyle</code></td><td>1.0.14</td><td><a href="https://github.com/rust-cli/anstyle.git">https://github.com/rust-cli/anstyle.git</a></td></tr>
 <tr><td><code>anyhow</code></td><td>1.0.104</td><td><a href="https://github.com/dtolnay/anyhow">https://github.com/dtolnay/anyhow</a></td></tr>
 <tr><td><code>arbitrary</code></td><td>1.5.0</td><td><a href="https://github.com/rust-fuzz/arbitrary/">https://github.com/rust-fuzz/arbitrary/</a></td></tr>
@@ -2597,6 +2644,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>bumpalo</code></td><td>3.20.3</td><td><a href="https://github.com/fitzgen/bumpalo">https://github.com/fitzgen/bumpalo</a></td></tr>
 <tr><td><code>camino</code></td><td>1.2.6</td><td><a href="https://github.com/camino-rs/camino">https://github.com/camino-rs/camino</a></td></tr>
 <tr><td><code>cargo-platform</code></td><td>0.3.3</td><td><a href="https://github.com/rust-lang/cargo">https://github.com/rust-lang/cargo</a></td></tr>
+<tr><td><code>cast†</code></td><td>0.3.0</td><td><a href="https://github.com/japaric/cast.rs">https://github.com/japaric/cast.rs</a></td></tr>
 <tr><td><code>cc†</code></td><td>1.10.0</td><td><a href="https://github.com/rust-lang/cc-rs">https://github.com/rust-lang/cc-rs</a></td></tr>
 <tr><td><code>cfg-if</code></td><td>1.0.5</td><td><a href="https://github.com/rust-lang/cfg-if">https://github.com/rust-lang/cfg-if</a></td></tr>
 <tr><td><code>chacha20</code></td><td>0.10.2</td><td><a href="https://github.com/RustCrypto/stream-ciphers">https://github.com/RustCrypto/stream-ciphers</a></td></tr>
@@ -2829,7 +2877,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
-<h3 id="mitapache-20-22-packages"><a class="header" href="#mitapache-20-22-packages"><code>MIT/Apache-2.0</code> (22 package(s))</a></h3>
+<h3 id="mitapache-20-24-packages"><a class="header" href="#mitapache-20-24-packages"><code>MIT/Apache-2.0</code> (24 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2838,9 +2886,11 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tbody>
 <tr><td><code>bitstream-io</code></td><td>4.10.0</td><td><a href="https://github.com/tuffy/bitstream-io">https://github.com/tuffy/bitstream-io</a></td></tr>
 <tr><td><code>core_detect†</code></td><td>1.0.0</td><td><a href="https://github.com/thomcc/core_detect">https://github.com/thomcc/core_detect</a></td></tr>
+<tr><td><code>criterion-plot†</code></td><td>0.5.0</td><td><a href="https://github.com/bheisler/criterion.rs">https://github.com/bheisler/criterion.rs</a></td></tr>
 <tr><td><code>fallible-iterator</code></td><td>0.3.0</td><td><a href="https://github.com/sfackler/rust-fallible-iterator">https://github.com/sfackler/rust-fallible-iterator</a></td></tr>
 <tr><td><code>fallible-streaming-iterator</code></td><td>0.1.9</td><td><a href="https://github.com/sfackler/fallible-streaming-iterator">https://github.com/sfackler/fallible-streaming-iterator</a></td></tr>
 <tr><td><code>fs2</code></td><td>0.4.3</td><td><a href="https://github.com/danburkert/fs2-rs">https://github.com/danburkert/fs2-rs</a></td></tr>
+<tr><td><code>itertools†</code></td><td>0.10.5</td><td><a href="https://github.com/rust-itertools/itertools">https://github.com/rust-itertools/itertools</a></td></tr>
 <tr><td><code>khronos-egl</code></td><td>6.0.0</td><td><a href="https://github.com/timothee-haudebourg/khronos-egl">https://github.com/timothee-haudebourg/khronos-egl</a></td></tr>
 <tr><td><code>minimal-lexical</code></td><td>0.2.1</td><td><a href="https://github.com/Alexhuszagh/minimal-lexical">https://github.com/Alexhuszagh/minimal-lexical</a></td></tr>
 <tr><td><code>plain</code></td><td>0.2.3</td><td><a href="https://github.com/randomites/plain">https://github.com/randomites/plain</a></td></tr>
@@ -2927,6 +2977,19 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </table>
 </div>
 <p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
+<h3 id="unlicensemit-2-packages"><a class="header" href="#unlicensemit-2-packages"><code>Unlicense/MIT</code> (2 package(s))</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Package</th><th>Version</th><th>Homepage</th></tr>
+</thead>
+<tbody>
+<tr><td><code>same-file†</code></td><td>1.0.6</td><td><a href="https://github.com/BurntSushi/same-file">https://github.com/BurntSushi/same-file</a></td></tr>
+<tr><td><code>walkdir†</code></td><td>2.5.0</td><td><a href="https://github.com/BurntSushi/walkdir">https://github.com/BurntSushi/walkdir</a></td></tr>
+</tbody>
+</table>
+</div>
+<p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
 <h3 id="zlib-3-packages"><a class="header" href="#zlib-3-packages"><code>Zlib</code> (3 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
@@ -2977,9 +3040,11 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>bit-vec</code> 0.10.1 — Copyright (c) 2023 The Rust Project Developers</li>
 <li><code>bit-vec</code> 0.9.1 — Copyright (c) 2023 The Rust Project Developers</li>
 <li><code>const-oid</code> 0.10.2 — Copyright (c) 2020-2026 The RustCrypto Project Developers</li>
+<li><code>criterion</code> 0.5.1 — Copyright (c) 2014 Jorge Aparicio</li>
 <li><code>equivalent</code> 1.0.3 — Copyright (c) 2016–2023</li>
 <li><code>indexmap</code> 2.14.2 — Copyright (c) 2016–2017</li>
 <li><code>no_std_io2</code> 0.9.4 — Copyright (c) 2020-2021  Brendan Molloy <a href="mailto:brendan@bbqsrc.net">brendan@bbqsrc.net</a></li>
+<li><code>tinytemplate</code> 1.2.1 — Copyright (c) 2019 Brook Heisler</li>
 <li><code>uuid</code> 1.29.0 — Copyright (c) 2014 The Rust Project Developers / Copyright (c) 2018 Ashley Mannix, Christopher Armstrong, Dylan DPC, Hunar Roop Kahlon</li>
 <li><code>zeroize</code> 1.9.1 — Copyright (c) 2018-2026 The RustCrypto Project Developers</li>
 <li><code>bit_field</code> 0.10.3 — Copyright (c) 2016 Philipp Oppermann</li>
@@ -3018,6 +3083,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>hyper</code> 1.12.0 — Copyright (c) 2014-2026 Sean McArthur</li>
 <li><code>hyper-util</code> 0.1.21 — Copyright (c) 2023-2025 Sean McArthur</li>
 <li><code>interpolate_name</code> 0.2.4 — Copyright (c) 2018 Luca Barbato</li>
+<li><code>is-terminal</code> 0.4.17 — Copyright (c) 2015-2019 Doug Tangren</li>
 <li><code>libm</code> 0.2.16 — Copyright (c) 2018 Jorge Aparicio / Copyright © 2005-2020 Rich Felker, et al. / Copyright © 1993,2004 Sun Microsystems or</li>
 <li><code>libsqlite3-sys</code> 0.38.2 — Copyright (c) 2014 The rusqlite developers</li>
 <li><code>maybe-rayon</code> 0.1.1 — Copyright (c) 2021 Joshua Holmer</li>
@@ -3026,6 +3092,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>nom</code> 7.1.3 — Copyright (c) 2014-2019 Geoffroy Couprie</li>
 <li><code>nom</code> 8.0.0 — Copyright (c) 2014-2019 Geoffroy Couprie</li>
 <li><code>noop_proc_macro</code> 0.3.0 — Copyright (c) 2019 Luca Barbato</li>
+<li><code>oorandom</code> 11.1.5 — Copyright (c) 2019 Simon Heath</li>
 <li><code>ordered-float</code> 5.5.1 — Copyright (c) 2015 Jonathan Reem</li>
 <li><code>protobuf</code> 3.7.2 — Copyright (c) 2019 Stepan Koltsov</li>
 <li><code>protobuf-codegen</code> 3.7.2 — Copyright (c) 2019 Stepan Koltsov</li>
@@ -3076,6 +3143,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>block-buffer</code> 0.12.1 — Copyright (c) 2018-2025 The RustCrypto Project Developers</li>
 <li><code>borsh</code> 1.8.1 — Copyright 2019 Near</li>
 <li><code>bumpalo</code> 3.20.3 — Copyright (c) 2019 Nick Fitzgerald</li>
+<li><code>cast</code> 0.3.0 — Copyright (c) 2014-2017 Jorge Aparicio</li>
 <li><code>cc</code> 1.10.0 — Copyright (c) 2014 Alex Crichton</li>
 <li><code>cfg-if</code> 1.0.5 — Copyright (c) 2014 Alex Crichton</li>
 <li><code>chacha20</code> 0.10.2 — Copyright (c) 2019-2026 The RustCrypto Project Developers</li>
@@ -3200,9 +3268,11 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>miniz_oxide</code> 0.9.1 — Copyright 2013-2014 RAD Game Tools and Valve Software / Copyright 2010-2014 Rich Geldreich and Tenacious Software LLC / Copyright (c) 2017 Frommi</li>
 <li><code>bitstream-io</code> 4.10.0 — Copyright (c) 2017 Brian Langenberger</li>
 <li><code>core_detect</code> 1.0.0 — Copyright (c) 2017-2020 The Rust Project Developers</li>
+<li><code>criterion-plot</code> 0.5.0 — Copyright (c) 2014 Jorge Aparicio</li>
 <li><code>fallible-iterator</code> 0.3.0 — Copyright (c) 2015 The rust-openssl-verify Developers</li>
 <li><code>fallible-streaming-iterator</code> 0.1.9 — Copyright (c) 2016 The fallible-streaming-iterator Developers</li>
 <li><code>fs2</code> 0.4.3 — Copyright (c) 2015 The Rust Project Developers</li>
+<li><code>itertools</code> 0.10.5 — Copyright (c) 2015</li>
 <li><code>minimal-lexical</code> 0.2.1 — Copyright (c) 2009 The Go Authors. All rights reserved.</li>
 <li><code>plain</code> 0.2.3 — Copyright (c) 2017 Plain contributors</li>
 <li><code>qoi</code> 0.4.1 — Copyright (c) 2022 Ivan Smirnov</li>
@@ -3240,6 +3310,8 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>memchr</code> 2.8.3 — Copyright (c) 2015 Andrew Gallant</li>
 <li><code>termcolor</code> 1.4.1 — Copyright (c) 2015 Andrew Gallant</li>
 <li><code>winapi-util</code> 0.1.11 — Copyright (c) 2017 Andrew Gallant</li>
+<li><code>same-file</code> 1.0.6 — Copyright (c) 2017 Andrew Gallant</li>
+<li><code>walkdir</code> 2.5.0 — Copyright (c) 2015 Andrew Gallant</li>
 <li><code>foldhash</code> 0.2.0 — Copyright (c) 2024 Orson Peters</li>
 <li><code>slotmap</code> 1.1.1 — Copyright (c) 2021 Orson Peters <a href="mailto:orsonpeters@gmail.com">orsonpeters@gmail.com</a></li>
 <li><code>bytemuck</code> 1.25.2 — Copyright (c) 2019 Daniel “Lokathor” Gee.</li>
@@ -3258,101 +3330,108 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
-<p>The SDK is in active development; everything below is unreleased. The
-FFI contract surface it describes changes <strong>addition-only</strong> — existing
-members keep their signature and meaning. This page is a curated,
-public-facing summary — the complete development log lives in the source
-repository.</p>
+<p>The SDK is in active development; everything below is unreleased. The FFI
+contract surface it describes changes <strong>addition-only</strong>: existing members
+keep their signature and meaning. This page is a curated, public-facing
+summary. The complete development log lives in the source repository.</p>
 <h2 id="imagery-and-caching"><a class="header" href="#imagery-and-caching">Imagery and caching</a></h2>
 <ul>
-<li>All seven MapQuest provider APIs are implemented and fixture-tested
-(route with strategies and multiple legs, route matrix, forward/reverse
-geocoding, search prediction, traffic incidents, traffic-flow congestion
-polylines, raster tiles in standard and retina resolutions).</li>
-<li>A SQLite-backed response cache under an absolute byte budget and/or a
-share of free disk space: per-category time-to-live, LRU eviction,
-cache-then-network around every provider contract. Tile imagery caches
-heavily by default — <strong>30 calendar days</strong>, the common maximum under
-imagery-provider terms — and the provider contract declares its own
-caching terms so an integrator tunes it knowingly per provider
+<li>All seven MapQuest provider APIs are implemented and fixture-tested.
+They cover routes with strategies and multiple legs, the route matrix,
+forward and reverse geocoding, search prediction, traffic incidents,
+traffic-flow congestion polylines, and raster tiles in standard and
+retina resolutions.</li>
+<li>A SQLite-backed response cache holds provider responses under an
+absolute byte budget, a share of free disk space, or both. It provides
+per-category time-to-live, LRU eviction, and cache-then-network
+behavior around every provider contract. Tile imagery caches heavily
+by default: <strong>30 calendar days</strong>, the common maximum under
+imagery-provider terms. Each provider contract declares its own caching
+terms, so an integrator tunes the cache knowingly per provider
 (<code>setRasterTileCacheTimeToLive</code>, read back through
-<code>rasterTileCacheTerms</code>; values above a provider’s declared ceiling stay
-compliance-clamped).</li>
+<code>rasterTileCacheTerms</code>). Values above a provider’s declared ceiling
+stay compliance-clamped.</li>
 </ul>
 <h2 id="rendering"><a class="header" href="#rendering">Rendering</a></h2>
 <ul>
-<li>An own minimal <code>wgpu</code> raster renderer: web-mercator projection with
-exact frustum tile listing (Sutherland–Hodgman over the six frustum
-planes, antimeridian world-copy handling), anchored camera with
-fit-bounds/insets-aware framing and a <code>flyTo</code>-style hyperbolic arc, a
-byte-bounded GPU texture cache, a tile scheduler with per-frame dedup,
-parent fallback and a fetch budget, and route/polygon/marker/traffic
-overlay layers plus a renderer-owned location indicator (tracking dot
-with accuracy ring, or guided course arrow).</li>
+<li>The project maintains its own minimal <code>wgpu</code> raster renderer. It
+implements web-mercator projection with exact frustum tile listing
+(Sutherland–Hodgman over the six frustum planes, with antimeridian
+world-copy handling), an anchored camera with fit-bounds and
+insets-aware framing and a <code>flyTo</code>-style hyperbolic arc, a byte-bounded
+GPU texture cache, and a tile scheduler with per-frame dedup, parent
+fallback, and a fetch budget. Route, polygon, marker, and traffic
+overlay layers sit on top of the tiles, and the renderer owns the
+location indicator (a tracking dot with accuracy ring, or a guided
+course arrow).</li>
 <li>The same renderer scene draws headless (deterministic golden-image
-tests), into live Android/iOS surfaces, and in the browser (WebGPU) —
-one WGSL/vertex pattern byte-identical across the wasm and native
-paths.</li>
+tests), into live Android/iOS surfaces, and in the browser through
+WebGPU. One WGSL/vertex pattern is byte-identical across the wasm and
+native paths.</li>
 </ul>
 <h2 id="offline-routing"><a class="header" href="#offline-routing">Offline routing</a></h2>
 <ul>
-<li>The offline routing pipeline is in place: a deterministic compiler turns
-an OpenStreetMap PBF extract into a self-describing routing archive
-(nodes, per-edge pack with road class/speed/access columns, turn
-restrictions), a memory-mapped reader validates the container’s
-alignment invariants, and an offline routing provider answers routes
-with A* over the graph — honoring recorded turn restrictions and
-derivable turn maneuvers (left/right/slight/sharp/U-turn from the
-geometry’s bearing change; texts stay honest where the archive carries
-no street names). A routing decorator retries over the offline graph
-when the primary (online) provider fails.</li>
+<li>The offline routing pipeline is in place. A deterministic compiler
+turns an OpenStreetMap PBF extract into a self-describing routing
+archive (nodes, a per-edge pack with road class, speed, and access
+columns, and turn restrictions). A memory-mapped reader validates the
+container’s alignment invariants. An offline routing provider answers
+routes with A* over the graph. It honors recorded turn restrictions
+and derives turn maneuvers (left/right/slight/sharp/U-turn) from the
+geometry’s bearing change; its texts stay honest where the archive
+carries no street names. A routing decorator retries over the offline
+graph when the primary (online) provider fails.</li>
 </ul>
 <h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
 <ul>
-<li>A pure reducer over <code>Option&lt;NavigationSession&gt;</code> with Ferrostar-pattern
-step-advance conditions (manual, eager distance-to-end, delayed
-current-step; Or/And combinators; fresh-instance reset contract),
-deviation detection with accuracy-aware allowances, and provider-verbatim
-instruction composition (banner + speech text; nothing rewritten).</li>
-<li>Deviation is graded: fully-off-route freezes and asks for reroute;
-off-step-but-on-route keeps counting down and reconciles to the
-projected step. Speed runs advance through many steps per fix, bounded
-and stack-safety-tested. Fully-off-route instruction text honestly
-suppresses the countdown rather than projecting from a stale anchor.</li>
-<li>The SDK owns speech <em>triggering</em> (a speech-instruction topic over
-documented distance bands); platforms voice it and keep their own
-pacing/focus policies.</li>
+<li>Navigation state is a pure reducer over <code>Option&lt;NavigationSession&gt;</code>.
+It implements Ferrostar-pattern step-advance conditions (manual, eager
+distance-to-end, delayed current-step, Or/And combinators, and the
+fresh-instance reset contract), deviation detection with
+accuracy-aware allowances, and provider-verbatim instruction
+composition (banner and speech text; nothing rewritten).</li>
+<li>Deviation is graded. A fully-off-route state freezes the guidance and
+asks for a reroute; an off-step-but-on-route state keeps counting down
+and reconciles to the projected step. Speed runs advance through many
+steps per fix, and the advance is bounded and stack-safety-tested. The
+fully-off-route instruction text suppresses the countdown honestly
+rather than projecting it from a stale anchor.</li>
+<li>The SDK owns speech <em>triggering</em>: it publishes a speech-instruction
+topic over documented distance bands. Platforms voice that topic and
+keep their own pacing and focus policies.</li>
 </ul>
 <h2 id="camera-and-gestures"><a class="header" href="#camera-and-gestures">Camera and gestures</a></h2>
 <ul>
-<li>The gesture-input camera seam: platform recognizers forward plain
-deltas, the SDK owns the camera math — pan by screen pixels, focal-point
-zoom and rotation with an exact hold-the-focal-point correction,
-clamped through the camera’s own ranges.</li>
+<li>The gesture-input camera seam keeps the camera math in the SDK.
+Platform recognizers forward plain deltas, and the SDK applies them:
+pan by screen pixels, focal-point zoom and rotation with an exact
+hold-the-focal-point correction, clamped through the camera’s own
+ranges.</li>
 </ul>
 <h2 id="bindings-and-platforms"><a class="header" href="#bindings-and-platforms">Bindings and platforms</a></h2>
 <ul>
-<li>UniFFI with a frozen, addition-only UDL contract drives generated
-Kotlin/Swift bindings and the React Native bindings; the wasm surface is
+<li>UniFFI drives the generated Kotlin/Swift bindings and the React Native
+bindings from a frozen, addition-only UDL contract. The wasm surface is
 a hand-reviewed TypeScript mirror regression-checked against the same
 UDL. Callback providers (geocoding, tiles) and a navigation controller
-with per-topic subscriptions cross the foreign callbacks seam; exported
-async methods run through a crate-owned runtime handback so foreign
+with per-topic subscriptions cross the foreign callbacks seam. Exported
+async methods run through a crate-owned runtime handback, so foreign
 event loops never meet an unserved reactor.</li>
-<li>Reference applications on Android (Compose), iOS (SwiftUI) and the web
-playground implement one shared design language: bottom-sheet home,
-search → route → simulated turn-by-turn with speech, a five-control
-cluster (zoom, scale bar, my-location, 2D/3D, compass), follow camera,
-offline tile-cache card, and a readiness-chip diagnostics readout. The
-web surface reaches reference-app parity with the native demos.</li>
+<li>Reference applications on Android (Compose), iOS (SwiftUI), and the
+web playground implement one shared design language. Each reaches
+search → route → simulated turn-by-turn with speech through a
+bottom-sheet home, a five-control cluster (zoom, scale bar,
+my-location, 2D/3D, compass), a follow camera, an offline tile-cache
+card, and a readiness-chip diagnostics readout. The web surface
+reaches reference-app parity with the native demos.</li>
 </ul>
 <h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
 <ul>
-<li>A <code>tracing</code>-facade diagnostics layer: bounded, per-subsystem ring sinks
-with coordinate scrubbing at the sink and a severity gate that never
-raises once finer events are requested; subscribe/flush seams on the
-native and wasm surfaces back the readouts and a later log-sharing
-story.</li>
+<li>A <code>tracing</code>-facade diagnostics layer provides bounded, per-subsystem
+ring sinks with coordinate scrubbing at the sink. Its severity gate
+never raises once finer events have been requested. Subscribe and
+flush seams on the native and wasm surfaces back the reference apps’
+readouts and a later log-sharing story.</li>
 <li>CI runs fmt, clippy with warnings-as-errors, the workspace test suite,
 a wasm-targeted clippy closure, a browser e2e suite, and the
 documentation-site pipeline (build → scrub → stage) on every push.</li>

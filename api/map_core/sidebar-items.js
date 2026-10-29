@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cache_policy","offline_routing","registry","routing_fallback"]};
+window.SIDEBAR_ITEMS = {"mod":["cache_policy","offline_routing","offline_routing_benchmark","registry","routing_fallback"]};
