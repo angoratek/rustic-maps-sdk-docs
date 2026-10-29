@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4c23c232.js";
+            window.path_to_searchindex_js = "searchindex-008c1313.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -211,6 +211,19 @@ tests), into live Android/iOS surfaces, and in the browser (WebGPU) —
 one WGSL/vertex pattern byte-identical across the wasm and native
 paths.</li>
 </ul>
+<h2 id="offline-routing"><a class="header" href="#offline-routing">Offline routing</a></h2>
+<ul>
+<li>The offline routing pipeline is in place: a deterministic compiler turns
+an OpenStreetMap PBF extract into a self-describing routing archive
+(nodes, per-edge pack with road class/speed/access columns, turn
+restrictions), a memory-mapped reader validates the container’s
+alignment invariants, and an offline routing provider answers routes
+with A* over the graph — honoring recorded turn restrictions and
+derivable turn maneuvers (left/right/slight/sharp/U-turn from the
+geometry’s bearing change; texts stay honest where the archive carries
+no street names). A routing decorator retries over the offline graph
+when the primary (online) provider fails.</li>
+</ul>
 <h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
 <ul>
 <li>A pure reducer over <code>Option&lt;NavigationSession&gt;</code> with Ferrostar-pattern
@@ -226,6 +239,13 @@ suppresses the countdown rather than projecting from a stale anchor.</li>
 <li>The SDK owns speech <em>triggering</em> (a speech-instruction topic over
 documented distance bands); platforms voice it and keep their own
 pacing/focus policies.</li>
+</ul>
+<h2 id="camera-and-gestures"><a class="header" href="#camera-and-gestures">Camera and gestures</a></h2>
+<ul>
+<li>The gesture-input camera seam: platform recognizers forward plain
+deltas, the SDK owns the camera math — pan by screen pixels, focal-point
+zoom and rotation with an exact hold-the-focal-point correction,
+clamped through the camera’s own ranges.</li>
 </ul>
 <h2 id="bindings-and-platforms"><a class="header" href="#bindings-and-platforms">Bindings and platforms</a></h2>
 <ul>

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4c23c232.js";
+            window.path_to_searchindex_js = "searchindex-008c1313.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -516,6 +516,13 @@ The contract only ever changes addition-only.</p>
 // `TileCacheTerms` record and the `MapSdk::set_raster_tile_cache_time_to_live`
 // / `raster_tile_cache_terms` pair over the installed tile cache (byte
 // budget stays registration-time through the frozen registration method).
+//
+// Round 12 (owner ruling of 2026-10-29) adds the provider-failure diagnostic
+// seam additively: the `ProviderFailureClassification` enum and the
+// `ProviderFailureDiagnostic` record, plus the
+// `MapSdk::latest_provider_failure_diagnostics` readback over the bounded
+// per-object ring the foreign-callback provider adapters write when a
+// foreign-implemented provider contract call fails.
 //
 // This file is the single source of truth for the native binding surface
 // (Kotlin, Swift, and React Native via `uniffi-bindgen-react-native`; PRD §6,
@@ -1218,6 +1225,23 @@ interface MapSdk {
     /// nothing is removed from the ring, so a later flush can redeliver. The
     /// flush is bounded and synchronous: a listener must not block on it.
     u32 flush_recent_diagnostic_events(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity, u32 maximum_count);
+
+    /// Round-12 provider-failure diagnostic seam (addition-only): reads the
+    /// retained diagnostics of every failed foreign-callback provider call
+    /// this object has served — the failures foreign implementations of the
+    /// `[Trait, WithForeign]` provider contracts threw, both the typed ones
+    /// (the foreign code threw one of the contract's `SdkError` variants) and
+    /// the unclassified ones (the foreign code failed without a mapped
+    /// error). Returns the ring's retained entries oldest first, in
+    /// recency-bounded order: the ring keeps the last
+    /// `PROVIDER_FAILURE_DIAGNOSTIC_RING_CAPACITY` failures and drops the
+    /// oldest beyond it, and reading is non-destructive. Read-only: the
+    /// readback never records anything and never clears the ring. See
+    /// `ProviderFailureDiagnostic` for what an entry carries; the frozen
+    /// `SdkError` variants are untouched — failures still surface typed at
+    /// the throwing call, and this seam only adds where they can be
+    /// classified after the fact.
+    sequence&lt;ProviderFailureDiagnostic&gt; latest_provider_failure_diagnostics();
 };
 
 // ---------------------------------------------------------------------------
@@ -2092,6 +2116,67 @@ interface SdkDiagnosticEventListener {
     /// Receives one structured event (severity-gated at the subscription).
     void on_diagnostic_event(DiagnosticLogEvent event);
 };
+
+// ---------------------------------------------------------------------------
+// Round-12 provider-failure diagnostics (addition-only; the owner ruling of
+// 2026-10-29 on unclassified foreign provider failures). Foreign
+// implementations of the `[Trait, WithForeign]` provider contracts fail in
+// two shapes: the typed shape (the foreign code threw one of the contract's
+// `SdkError` variants, which round-trips one-to-one) and the unclassified
+// shape (the foreign code failed some other way, which the Rust conversion
+// reports under `ProviderRequestRejected` with its verbatim reason — the
+// honest but thin detail the seam exists for). Every failed foreign-callback
+// provider call is recorded on the seam with the contract and the callback
+// method it occurred on, a timestamp, the classification, and the verbatim
+// failure text; `MapSdk::latest_provider_failure_diagnostics` reads the
+// bounded ring back.
+//
+// Honest limitation of the classification: the unclassified shape is
+// recognized by the unclassified-callback conversion's verbatim detail text
+// (one Rust-side constant shared by the conversion and the adapter-side
+// classifier), so a foreign implementation that itself throws
+// `ProviderRequestRejected` carrying exactly that conversion phrasing is
+// indistinguishable and lands as unclassified. Richer typed payloads (a
+// provider status code, a retriable flag) would need a channel the frozen
+// provider traits cannot carry without a contract change; until one exists
+// the foreign side's only input to the seam is the failure text it throws,
+// which the entries carry verbatim — no data is parsed or invented.
+// ---------------------------------------------------------------------------
+
+/// Which shape of foreign provider failure a diagnostic captured
+/// (`ProviderFailureDiagnostic::failure_classification`).
+enum ProviderFailureClassification {
+    /// The foreign implementation failed without a mapped error (an
+    /// exception the contract does not spell): the failure text is the
+    /// uniffi callback machinery's verbatim reason for it.
+    "UnclassifiedCallbackFailure",
+    /// The foreign implementation threw one of the contract's `SdkError`
+    /// variants, which round-trips typed through the seam: the failure text
+    /// is the thrown binding error's verbatim display form.
+    "MappedContractError",
+};
+
+/// One failed foreign-callback provider call, as retained in
+/// `MapSdk::latest_provider_failure_diagnostics`'s bounded per-object ring.
+/// Everything carried here is knowable at the adapter boundary that bridges
+/// the foreign implementation onto the native provider registry; no data is
+/// invented beyond it.
+dictionary ProviderFailureDiagnostic {
+    /// Wall-clock milliseconds since the Unix epoch, as the seam recorded
+    /// the failure.
+    u64 timestamp_milliseconds_since_epoch;
+    /// Which failure shape this entry captured.
+    ProviderFailureClassification failure_classification;
+    /// The provider contract the foreign code implements, e.g.
+    /// `GeocodingProvider`.
+    string provider_contract_name;
+    /// The contract method whose call failed, e.g. `forward_geocode`.
+    string provider_method_name;
+    /// The verbatim failure text: the uniffi callback machinery's reason for
+    /// the unclassified shape, or the thrown binding error's display form
+    /// for the mapped shape.
+    string failure_detail;
+};
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="api-reference-rustdoc"><a class="header" href="#api-reference-rustdoc">API reference (rustdoc)</a></h1>
@@ -2102,7 +2187,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="third-party-notices"><a class="header" href="#third-party-notices">Third-Party Notices</a></h1>
 <p>Generated by <code>scripts/generate-third-party-notices</code> from the workspace dependency graph (<code>Cargo.toml</code> manifests + <code>Cargo.lock</code>, via <code>cargo metadata --offline</code> — no network access). License identities are additionally gated by <code>cargo-deny</code> (<code>deny.toml</code>). <strong>Regenerate and commit this file whenever any dependency changes.</strong> Output is deterministic, so a re-run on an unchanged graph is a byte-identical no-op.</p>
-<p>This file lists the third-party <em>software</em> the workspace depends on: 415 registry packages (375 reachable through normal dependency edges, 40 test/dev-only). The first-party workspace crates are not listed here; they carry the SDK’s own license (MIT OR Apache-2.0, see <code>Cargo.toml</code>).</p>
+<p>This file lists the third-party <em>software</em> the workspace depends on: 428 registry packages (382 reachable through normal dependency edges, 46 test/dev-only). The first-party workspace crates are not listed here; they carry the SDK’s own license (MIT OR Apache-2.0, see <code>Cargo.toml</code>).</p>
 <h2 id="map-data-attribution"><a class="header" href="#map-data-attribution">Map-data attribution</a></h2>
 <p>Separate from the software above: map imagery © MapQuest; map data © OpenStreetMap contributors, licensed under the Open Database License (ODbL). The reference apps render this attribution in-app (<code>platform/web/index.html</code>, <code>platform/ios/reference-application/Sources/ReferenceApplicationConfiguration.swift</code>, and the Android reference app’s <code>ReferenceApplicationConstants.kt</code>). Integrators must keep this attribution visible in their own apps and reproduce this notices file with their distribution.</p>
 <h2 id="license-summary"><a class="header" href="#license-summary">License summary</a></h2>
@@ -2121,7 +2206,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>Apache-2.0 OR BSL-1.0</code></td><td>1</td></tr>
 <tr><td><code>Apache-2.0 OR ISC OR MIT</code></td><td>2</td></tr>
 <tr><td><code>Apache-2.0 OR MIT</code></td><td>19</td></tr>
-<tr><td><code>Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT</code></td><td>5</td></tr>
+<tr><td><code>Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT</code></td><td>7</td></tr>
 <tr><td><code>Apache-2.0/MIT</code></td><td>4</td></tr>
 <tr><td><code>BSD-2-Clause</code></td><td>3</td></tr>
 <tr><td><code>BSD-2-Clause OR Apache-2.0 OR MIT</code></td><td>2</td></tr>
@@ -2130,18 +2215,18 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>CC0-1.0 OR Apache-2.0</code></td><td>1</td></tr>
 <tr><td><code>CDLA-Permissive-2.0</code></td><td>1</td></tr>
 <tr><td><code>ISC</code></td><td>3</td></tr>
-<tr><td><code>MIT</code></td><td>74</td></tr>
-<tr><td><code>MIT OR Apache-2.0</code></td><td>205</td></tr>
+<tr><td><code>MIT</code></td><td>79</td></tr>
+<tr><td><code>MIT OR Apache-2.0</code></td><td>210</td></tr>
 <tr><td><code>MIT OR Apache-2.0 OR LGPL-2.1-or-later</code></td><td>2</td></tr>
 <tr><td><code>MIT OR Apache-2.0 OR Zlib</code></td><td>6</td></tr>
 <tr><td><code>MIT OR Zlib OR Apache-2.0</code></td><td>2</td></tr>
 <tr><td><code>MIT/Apache-2.0</code></td><td>22</td></tr>
 <tr><td><code>MPL-2.0</code></td><td>9</td></tr>
 <tr><td><code>Unicode-3.0</code></td><td>18</td></tr>
-<tr><td><code>Unlicense OR MIT</code></td><td>5</td></tr>
+<tr><td><code>Unlicense OR MIT</code></td><td>6</td></tr>
 <tr><td><code>Zlib</code></td><td>3</td></tr>
 <tr><td><code>Zlib OR Apache-2.0 OR MIT</code></td><td>9</td></tr>
-<tr><td><strong>Total</strong></td><td><strong>415</strong></td></tr>
+<tr><td><strong>Total</strong></td><td><strong>428</strong></td></tr>
 </tbody>
 </table>
 </div>
@@ -2272,7 +2357,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </table>
 </div>
 <p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
-<h3 id="apache-20-with-llvm-exception-or-apache-20-or-mit-5-packages"><a class="header" href="#apache-20-with-llvm-exception-or-apache-20-or-mit-5-packages"><code>Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT</code> (5 package(s))</a></h3>
+<h3 id="apache-20-with-llvm-exception-or-apache-20-or-mit-7-packages"><a class="header" href="#apache-20-with-llvm-exception-or-apache-20-or-mit-7-packages"><code>Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT</code> (7 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2280,6 +2365,8 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </thead>
 <tbody>
 <tr><td><code>linux-raw-sys</code></td><td>0.12.1</td><td><a href="https://github.com/sunfishcode/linux-raw-sys">https://github.com/sunfishcode/linux-raw-sys</a></td></tr>
+<tr><td><code>linux-raw-sys†</code></td><td>0.4.15</td><td><a href="https://github.com/sunfishcode/linux-raw-sys">https://github.com/sunfishcode/linux-raw-sys</a></td></tr>
+<tr><td><code>rustix†</code></td><td>0.38.44</td><td><a href="https://github.com/bytecodealliance/rustix">https://github.com/bytecodealliance/rustix</a></td></tr>
 <tr><td><code>rustix</code></td><td>1.1.6</td><td><a href="https://github.com/bytecodealliance/rustix">https://github.com/bytecodealliance/rustix</a></td></tr>
 <tr><td><code>wasi</code></td><td>0.11.1+wasi-snapshot-preview1</td><td><a href="https://github.com/bytecodealliance/wasi">https://github.com/bytecodealliance/wasi</a></td></tr>
 <tr><td><code>wasip2</code></td><td>1.0.4+wasi-0.2.12</td><td><a href="https://github.com/bytecodealliance/wasi-rs">https://github.com/bytecodealliance/wasi-rs</a></td></tr>
@@ -2287,6 +2374,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
+<p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
 <h3 id="apache-20mit-4-packages"><a class="header" href="#apache-20mit-4-packages"><code>Apache-2.0/MIT</code> (4 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
@@ -2389,7 +2477,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
-<h3 id="mit-74-packages"><a class="header" href="#mit-74-packages"><code>MIT</code> (74 package(s))</a></h3>
+<h3 id="mit-79-packages"><a class="header" href="#mit-79-packages"><code>MIT</code> (79 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2431,6 +2519,10 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>objc2-encode</code></td><td>4.1.0</td><td><a href="https://github.com/madsmtm/objc2">https://github.com/madsmtm/objc2</a></td></tr>
 <tr><td><code>objc2-foundation</code></td><td>0.3.2</td><td><a href="https://github.com/madsmtm/objc2">https://github.com/madsmtm/objc2</a></td></tr>
 <tr><td><code>ordered-float</code></td><td>5.5.1</td><td><a href="https://github.com/reem/rust-ordered-float">https://github.com/reem/rust-ordered-float</a></td></tr>
+<tr><td><code>protobuf</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/">https://github.com/stepancheg/rust-protobuf/</a></td></tr>
+<tr><td><code>protobuf-codegen†</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/">https://github.com/stepancheg/rust-protobuf/</a></td></tr>
+<tr><td><code>protobuf-parse†</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/tree/master/protobuf-parse/">https://github.com/stepancheg/rust-protobuf/tree/master/protobuf-parse/</a></td></tr>
+<tr><td><code>protobuf-support</code></td><td>3.7.2</td><td><a href="https://github.com/stepancheg/rust-protobuf/">https://github.com/stepancheg/rust-protobuf/</a></td></tr>
 <tr><td><code>pulp</code></td><td>0.22.3</td><td><a href="https://github.com/sarah-quinones/pulp/">https://github.com/sarah-quinones/pulp/</a></td></tr>
 <tr><td><code>pulp-wasm-simd-flag</code></td><td>0.1.1</td><td><a href="https://github.com/sarah-quinones/pulp/">https://github.com/sarah-quinones/pulp/</a></td></tr>
 <tr><td><code>r2d2_sqlite</code></td><td>0.35.0</td><td><a href="https://github.com/ivanceras/r2d2-sqlite">https://github.com/ivanceras/r2d2-sqlite</a></td></tr>
@@ -2466,6 +2558,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>want</code></td><td>0.3.2</td><td><a href="https://github.com/seanmonstar/want">https://github.com/seanmonstar/want</a></td></tr>
 <tr><td><code>wayland-sys</code></td><td>0.31.11</td><td><a href="https://github.com/smithay/wayland-rs">https://github.com/smithay/wayland-rs</a></td></tr>
 <tr><td><code>weedle2</code></td><td>5.0.0</td><td><a href="https://github.com/mozilla/uniffi-rs/tree/main/weedle2">https://github.com/mozilla/uniffi-rs/tree/main/weedle2</a></td></tr>
+<tr><td><code>which†</code></td><td>4.4.2</td><td><a href="https://github.com/harryfei/which-rs.git">https://github.com/harryfei/which-rs.git</a></td></tr>
 <tr><td><code>winnow</code></td><td>1.0.4</td><td><a href="https://github.com/winnow-rs/winnow">https://github.com/winnow-rs/winnow</a></td></tr>
 <tr><td><code>xml-rs†</code></td><td>0.8.29</td><td><a href="https://lib.rs/crates/xml">https://lib.rs/crates/xml</a></td></tr>
 <tr><td><code>y4m</code></td><td>0.8.0</td><td><a href="https://github.com/image-rs/y4m">https://github.com/image-rs/y4m</a></td></tr>
@@ -2474,7 +2567,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </table>
 </div>
 <p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
-<h3 id="mit-or-apache-20-205-packages"><a class="header" href="#mit-or-apache-20-205-packages"><code>MIT OR Apache-2.0</code> (205 package(s))</a></h3>
+<h3 id="mit-or-apache-20-210-packages"><a class="header" href="#mit-or-apache-20-210-packages"><code>MIT OR Apache-2.0</code> (210 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2551,6 +2644,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>hashlink</code></td><td>0.12.2</td><td><a href="https://github.com/djc/hashlink">https://github.com/djc/hashlink</a></td></tr>
 <tr><td><code>heck</code></td><td>0.5.0</td><td><a href="https://github.com/withoutboats/heck">https://github.com/withoutboats/heck</a></td></tr>
 <tr><td><code>hermit-abi†</code></td><td>0.5.3</td><td><a href="https://github.com/hermit-os/hermit-rs">https://github.com/hermit-os/hermit-rs</a></td></tr>
+<tr><td><code>home†</code></td><td>0.5.12</td><td><a href="https://github.com/rust-lang/cargo">https://github.com/rust-lang/cargo</a></td></tr>
 <tr><td><code>http</code></td><td>1.5.0</td><td><a href="https://github.com/hyperium/http">https://github.com/hyperium/http</a></td></tr>
 <tr><td><code>httparse</code></td><td>1.10.1</td><td><a href="https://github.com/seanmonstar/httparse">https://github.com/seanmonstar/httparse</a></td></tr>
 <tr><td><code>httpdate</code></td><td>1.0.3</td><td><a href="https://github.com/pyfisch/httpdate">https://github.com/pyfisch/httpdate</a></td></tr>
@@ -2571,6 +2665,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>litrs</code></td><td>1.0.1</td><td><a href="https://github.com/LukasKalbertodt/litrs">https://github.com/LukasKalbertodt/litrs</a></td></tr>
 <tr><td><code>lock_api</code></td><td>0.4.14</td><td><a href="https://github.com/Amanieu/parking_lot">https://github.com/Amanieu/parking_lot</a></td></tr>
 <tr><td><code>log</code></td><td>0.4.34</td><td><a href="https://github.com/rust-lang/log">https://github.com/rust-lang/log</a></td></tr>
+<tr><td><code>memmap2</code></td><td>0.5.10</td><td><a href="https://github.com/RazrFalcon/memmap2-rs">https://github.com/RazrFalcon/memmap2-rs</a></td></tr>
 <tr><td><code>naga</code></td><td>30.0.1</td><td><a href="https://github.com/gfx-rs/wgpu">https://github.com/gfx-rs/wgpu</a></td></tr>
 <tr><td><code>naga-types</code></td><td>30.0.1</td><td><a href="https://wgpu.rs/">https://wgpu.rs/</a></td></tr>
 <tr><td><code>ndk-sys</code></td><td>0.6.0+11769913</td><td><a href="https://github.com/rust-mobile/ndk">https://github.com/rust-mobile/ndk</a></td></tr>
@@ -2582,6 +2677,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>num-traits</code></td><td>0.2.19</td><td><a href="https://github.com/rust-num/num-traits">https://github.com/rust-num/num-traits</a></td></tr>
 <tr><td><code>num_cpus†</code></td><td>1.17.0</td><td><a href="https://github.com/seanmonstar/num_cpus">https://github.com/seanmonstar/num_cpus</a></td></tr>
 <tr><td><code>once_cell</code></td><td>1.21.4</td><td><a href="https://github.com/matklad/once_cell">https://github.com/matklad/once_cell</a></td></tr>
+<tr><td><code>osmpbf</code></td><td>0.3.8</td><td><a href="https://github.com/b-r-u/osmpbf">https://github.com/b-r-u/osmpbf</a></td></tr>
 <tr><td><code>parking_lot</code></td><td>0.12.5</td><td><a href="https://github.com/Amanieu/parking_lot">https://github.com/Amanieu/parking_lot</a></td></tr>
 <tr><td><code>parking_lot_core</code></td><td>0.9.12</td><td><a href="https://github.com/Amanieu/parking_lot">https://github.com/Amanieu/parking_lot</a></td></tr>
 <tr><td><code>paste</code></td><td>1.0.15</td><td><a href="https://github.com/dtolnay/paste">https://github.com/dtolnay/paste</a></td></tr>
@@ -2635,7 +2731,9 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <tr><td><code>syn</code></td><td>2.0.119</td><td><a href="https://github.com/dtolnay/syn">https://github.com/dtolnay/syn</a></td></tr>
 <tr><td><code>syn</code></td><td>3.0.9</td><td><a href="https://github.com/dtolnay/syn">https://github.com/dtolnay/syn</a></td></tr>
 <tr><td><code>tempfile</code></td><td>3.27.0</td><td><a href="https://stebalien.com/projects/tempfile-rs/">https://stebalien.com/projects/tempfile-rs/</a></td></tr>
+<tr><td><code>thiserror</code></td><td>1.0.69</td><td><a href="https://github.com/dtolnay/thiserror">https://github.com/dtolnay/thiserror</a></td></tr>
 <tr><td><code>thiserror</code></td><td>2.0.21</td><td><a href="https://github.com/dtolnay/thiserror">https://github.com/dtolnay/thiserror</a></td></tr>
+<tr><td><code>thiserror-impl</code></td><td>1.0.69</td><td><a href="https://github.com/dtolnay/thiserror">https://github.com/dtolnay/thiserror</a></td></tr>
 <tr><td><code>thiserror-impl</code></td><td>2.0.21</td><td><a href="https://github.com/dtolnay/thiserror">https://github.com/dtolnay/thiserror</a></td></tr>
 <tr><td><code>tokio-rustls</code></td><td>0.26.6</td><td><a href="https://github.com/rustls/tokio-rustls">https://github.com/rustls/tokio-rustls</a></td></tr>
 <tr><td><code>toml</code></td><td>1.1.8+spec-1.1.0</td><td><a href="https://github.com/toml-rs/toml">https://github.com/toml-rs/toml</a></td></tr>
@@ -2812,7 +2910,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </tbody>
 </table>
 </div>
-<h3 id="unlicense-or-mit-5-packages"><a class="header" href="#unlicense-or-mit-5-packages"><code>Unlicense OR MIT</code> (5 package(s))</a></h3>
+<h3 id="unlicense-or-mit-6-packages"><a class="header" href="#unlicense-or-mit-6-packages"><code>Unlicense OR MIT</code> (6 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2820,6 +2918,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 </thead>
 <tbody>
 <tr><td><code>aho-corasick†</code></td><td>1.1.5</td><td><a href="https://github.com/BurntSushi/aho-corasick">https://github.com/BurntSushi/aho-corasick</a></td></tr>
+<tr><td><code>byteorder</code></td><td>1.5.0</td><td><a href="https://github.com/BurntSushi/byteorder">https://github.com/BurntSushi/byteorder</a></td></tr>
 <tr><td><code>byteorder-lite</code></td><td>0.1.0</td><td><a href="https://github.com/image-rs/byteorder-lite">https://github.com/image-rs/byteorder-lite</a></td></tr>
 <tr><td><code>memchr</code></td><td>2.8.3</td><td><a href="https://github.com/BurntSushi/memchr">https://github.com/BurntSushi/memchr</a></td></tr>
 <tr><td><code>termcolor</code></td><td>1.4.1</td><td><a href="https://github.com/BurntSushi/termcolor">https://github.com/BurntSushi/termcolor</a></td></tr>
@@ -2928,6 +3027,10 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>nom</code> 8.0.0 — Copyright (c) 2014-2019 Geoffroy Couprie</li>
 <li><code>noop_proc_macro</code> 0.3.0 — Copyright (c) 2019 Luca Barbato</li>
 <li><code>ordered-float</code> 5.5.1 — Copyright (c) 2015 Jonathan Reem</li>
+<li><code>protobuf</code> 3.7.2 — Copyright (c) 2019 Stepan Koltsov</li>
+<li><code>protobuf-codegen</code> 3.7.2 — Copyright (c) 2019 Stepan Koltsov</li>
+<li><code>protobuf-parse</code> 3.7.2 — Copyright (c) 2019 Stepan Koltsov / Copyright 2008 Google Inc.  All rights reserved.</li>
+<li><code>protobuf-support</code> 3.7.2 — Copyright (c) 2019 Stepan Koltsov</li>
 <li><code>pulp</code> 0.22.3 — Copyright (c) 2021 sarah</li>
 <li><code>r2d2_sqlite</code> 0.35.0 — Copyright (c) 2015 Jovansonlee Cesar</li>
 <li><code>raw-cpuid</code> 11.6.0 — Copyright (c) 2015 Gerd Zellweger</li>
@@ -2955,6 +3058,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>want</code> 0.3.2 — Copyright (c) 2018-2019 Sean McArthur</li>
 <li><code>wayland-sys</code> 0.31.11 — Copyright (c) 2015 Elinor Berger</li>
 <li><code>weedle2</code> 5.0.0 — Copyright 2018-Present Sharad Chand / Copyright 2022 Jan-Erik Rediger</li>
+<li><code>which</code> 4.4.2 — Copyright (c) 2015 fangyuanziti</li>
 <li><code>xml-rs</code> 0.8.29 — Copyright (c) 2014 Vladimir Matveev</li>
 <li><code>y4m</code> 0.8.0 — Copyright (c) 2015-2019 PistonDevelopers / Copyright (c) 2019 image-rs contributors</li>
 <li><code>aligned</code> 0.4.3 — Copyright (c) 2017 Jorge Aparicio</li>
@@ -3023,6 +3127,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>litrs</code> 1.0.1 — Copyright (c) 2020 Project Developers</li>
 <li><code>lock_api</code> 0.4.14 — Copyright (c) 2016 The Rust Project Developers</li>
 <li><code>log</code> 0.4.34 — Copyright (c) 2014 The Rust Project Developers</li>
+<li><code>memmap2</code> 0.5.10 — Copyright (c) 2020 Yevhenii Reizner / Copyright (c) 2015 Dan Burkert</li>
 <li><code>naga</code> 30.0.1 — Copyright (c) 2025 The gfx-rs developers</li>
 <li><code>naga-types</code> 30.0.1 — Copyright (c) 2025 The gfx-rs developers</li>
 <li><code>num-bigint</code> 0.4.8 — Copyright (c) 2014 The Rust Project Developers</li>
@@ -3032,6 +3137,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>num-rational</code> 0.4.2 — Copyright (c) 2014 The Rust Project Developers</li>
 <li><code>num-traits</code> 0.2.19 — Copyright (c) 2014 The Rust Project Developers</li>
 <li><code>num_cpus</code> 1.17.0 — Copyright (c) 2015-2025 Sean McArthur</li>
+<li><code>osmpbf</code> 0.3.8 — Copyright (c) 2017 Johannes Hofmann <a href="mailto:mail@b-r-u.org">mail@b-r-u.org</a></li>
 <li><code>parking_lot</code> 0.12.5 — Copyright (c) 2016 The Rust Project Developers</li>
 <li><code>parking_lot_core</code> 0.9.12 — Copyright (c) 2016 The Rust Project Developers</li>
 <li><code>percent-encoding</code> 2.3.2 — Copyright (c) 2013-2025 The rust-url developers</li>
@@ -3129,6 +3235,7 @@ rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
 <li><code>zerovec</code> 0.11.9 — Copyright © 2020-2024 Unicode, Inc. / ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation and others.</li>
 <li><code>zerovec-derive</code> 0.11.7 — Copyright © 2020-2024 Unicode, Inc. / ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation and others.</li>
 <li><code>aho-corasick</code> 1.1.5 — Copyright (c) 2015 Andrew Gallant</li>
+<li><code>byteorder</code> 1.5.0 — Copyright (c) 2015 Andrew Gallant</li>
 <li><code>byteorder-lite</code> 0.1.0 — Copyright (c) 2015 Andrew Gallant</li>
 <li><code>memchr</code> 2.8.3 — Copyright (c) 2015 Andrew Gallant</li>
 <li><code>termcolor</code> 1.4.1 — Copyright (c) 2015 Andrew Gallant</li>
@@ -3187,6 +3294,19 @@ tests), into live Android/iOS surfaces, and in the browser (WebGPU) —
 one WGSL/vertex pattern byte-identical across the wasm and native
 paths.</li>
 </ul>
+<h2 id="offline-routing"><a class="header" href="#offline-routing">Offline routing</a></h2>
+<ul>
+<li>The offline routing pipeline is in place: a deterministic compiler turns
+an OpenStreetMap PBF extract into a self-describing routing archive
+(nodes, per-edge pack with road class/speed/access columns, turn
+restrictions), a memory-mapped reader validates the container’s
+alignment invariants, and an offline routing provider answers routes
+with A* over the graph — honoring recorded turn restrictions and
+derivable turn maneuvers (left/right/slight/sharp/U-turn from the
+geometry’s bearing change; texts stay honest where the archive carries
+no street names). A routing decorator retries over the offline graph
+when the primary (online) provider fails.</li>
+</ul>
 <h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
 <ul>
 <li>A pure reducer over <code>Option&lt;NavigationSession&gt;</code> with Ferrostar-pattern
@@ -3202,6 +3322,13 @@ suppresses the countdown rather than projecting from a stale anchor.</li>
 <li>The SDK owns speech <em>triggering</em> (a speech-instruction topic over
 documented distance bands); platforms voice it and keep their own
 pacing/focus policies.</li>
+</ul>
+<h2 id="camera-and-gestures"><a class="header" href="#camera-and-gestures">Camera and gestures</a></h2>
+<ul>
+<li>The gesture-input camera seam: platform recognizers forward plain
+deltas, the SDK owns the camera math — pan by screen pixels, focal-point
+zoom and rotation with an exact hold-the-focal-point correction,
+clamped through the camera’s own ranges.</li>
 </ul>
 <h2 id="bindings-and-platforms"><a class="header" href="#bindings-and-platforms">Bindings and platforms</a></h2>
 <ul>
