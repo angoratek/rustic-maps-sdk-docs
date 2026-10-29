@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cached_providers","disk_quota","request_fingerprint","response_category","sqlite_store"]};
+window.SIDEBAR_ITEMS = {"mod":["cached_providers","disk_quota","request_fingerprint","response_category","sqlite_store","tile_packs"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CachedDistanceMatrixProvider","CachedGeocodingProvider","CachedRasterTileProvider","CachedRoutingProvider","CachedSearchPlaceProvider","CachedTrafficFlowProvider","CachedTrafficIncidentProvider"]};
+window.SIDEBAR_ITEMS = {"fn":["tile_request_descriptor"],"struct":["CachedDistanceMatrixProvider","CachedGeocodingProvider","CachedRasterTileProvider","CachedRoutingProvider","CachedSearchPlaceProvider","CachedTrafficFlowProvider","CachedTrafficIncidentProvider"]};

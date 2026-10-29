@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "dark";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-008c1313.js";
+            window.path_to_searchindex_js = "searchindex-a4b82ee8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-c33f3fb9.js"></script>
@@ -177,8 +177,12 @@
                         <h1 id="api-reference-rustdoc"><a class="header" href="#api-reference-rustdoc">API reference (rustdoc)</a></h1>
 <p>The rustdoc for the workspace crates ships at the <code>api/</code> path of this
 site: <a href="../api/geospatial_types/index.html">start at <code>geospatial-types</code></a>,
-the record and math layer every other crate builds on. The rendered
-rustdoc mirrors the source commit named in <code>provenance.txt</code>.</p>
+the record and math layer every other crate builds on.</p>
+<p>This tree is generated, not hand-maintained. The build script runs
+<code>cargo doc</code> against the source commit named in <code>provenance.txt</code> on every
+publish, and stages the rendered tree at <code>api/</code> without post-processing.
+Pages under <code>api/</code> therefore describe exactly that commit; a newer
+publish replaces the whole tree at the same paths.</p>
 
                     </main>
 

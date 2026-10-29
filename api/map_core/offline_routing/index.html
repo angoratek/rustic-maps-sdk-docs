@@ -1,15 +1,26 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The consumption path of compiled `OfflineRoutingNetworkGraph` archives: the in-repo `OfflineRoutingProvider` implementation."><title>map_core::offline_routing - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module offline_routing</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_core/index.html">map_<wbr>core</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module offline_<wbr>routing</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#honest-scope-of-this-slice" title="Honest scope of this slice">Honest scope of this slice</a></li><li><a href="#runtime-rules" title="Runtime rules">Runtime rules</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>core</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_core</a></div><h1>Module <span>offline_<wbr>routing</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_core/offline_routing.rs.html#1-1505">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The consumption path of compiled <code>OfflineRoutingNetworkGraph</code> archives:
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The consumption path of compiled `OfflineRoutingNetworkGraph` archives: the in-repo `OfflineRoutingProvider` implementation."><title>map_core::offline_routing - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module offline_routing</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_core/index.html">map_<wbr>core</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module offline_<wbr>routing</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#wasm-path-milestone-m7-prdmd-4647" title="Wasm path (milestone M7, `PRD.md` §4.6/§4.7)">Wasm path (milestone M7, <code>PRD.md</code> §4.6/§4.7)</a></li><li><a href="#honest-scope-of-this-slice" title="Honest scope of this slice">Honest scope of this slice</a></li><li><a href="#benchmark-reference-m7-slice-6" title="Benchmark reference (M7 slice 6)">Benchmark reference (M7 slice 6)</a></li><li><a href="#runtime-rules" title="Runtime rules">Runtime rules</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>core</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_core</a></div><h1>Module <span>offline_<wbr>routing</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_core/offline_routing.rs.html#1-1932">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The consumption path of compiled <code>OfflineRoutingNetworkGraph</code> archives:
 the in-repo <a href="../../geospatial_traits/trait.OfflineRoutingProvider.html" title="trait geospatial_traits::OfflineRoutingProvider"><code>OfflineRoutingProvider</code></a> implementation.</p>
-<p>The provider loads a compiled archive (memory-mapped file on native or
-in-memory bytes — both validated by the same typed reader in
-<code>map-offline-graph-compiler::archive</code>), keeps the validated graph plus a
-prebuilt half-edge adjacency and the turn-restriction rules, and answers
-route calculations over it with A* under a haversine heuristic (the M7
-engine of <code>PRD.md</code> §4.6).</p>
-<p>This module is compiled only for native targets: the browser path still
-consumes the archive from in-memory bytes and is the remaining M7
-wasm-slice work, so the whole implementation is cfg-gated out of the
-wasm32 build (the compiler crate is outside the wasm closure).</p>
+<p>The provider loads a compiled archive (from a memory-mapped file on
+native targets or from in-memory bytes everywhere — both validated by
+the same typed reader in <code>map-offline-graph-archive::archive</code>), keeps
+the validated graph plus a prebuilt half-edge adjacency and the
+turn-restriction rules, and answers route calculations over it with A*
+under a haversine heuristic (the M7 engine of <code>PRD.md</code> §4.6).</p>
+<h2 id="wasm-path-milestone-m7-prdmd-4647"><a class="doc-anchor" href="#wasm-path-milestone-m7-prdmd-4647">§</a>Wasm path (milestone M7, <code>PRD.md</code> §4.6/§4.7)</h2>
+<p><code>PRD.md</code> §4.6 turns the browser into a “compile-time target switch, not
+a runtime one”: the whole module compiles on every target — the A*
+search, snap, restriction and maneuver logic is target-agnostic — and
+the graph-loading seam is what differs:</p>
+<ul>
+<li><code>OfflineGraphSource::Memory</code> (in-memory archive bytes) is the seam
+every target loads through; on wasm it is the <em>only</em> graph source,
+with no <code>mmap</code> in the browser path.</li>
+<li><code>OfflineGraphSource::FilePath</code> maps the archive file natively; on
+wasm it is rejected typed instead of being silently unavailable:
+<code>SDKError::ProviderRequestRejected</code>, with a message that names the
+<code>OfflineGraphSource::Memory</code> seam to use in the browser (the
+<code>wasm_file_path_rejection_message</code> constant).</li>
+</ul>
 <h2 id="honest-scope-of-this-slice"><a class="doc-anchor" href="#honest-scope-of-this-slice">§</a>Honest scope of this slice</h2>
 <ul>
 <li>Routing covers <strong>automobile travel only</strong>: the archive profile is the
@@ -27,7 +38,12 @@ vocabulary (the same enum the reducer, instruction emitter and FFI
 labels speak; no competing classification is invented here). The
 archive carries no street names, so step texts stay name-free and
 true to the geometry (<code>"Turn right"</code>, <code>"U-turn"</code>); a class/speed
-change without a turn stays a <code>Continue</code> step. The per-turn-restriction
+change without a turn stays a <code>Continue</code> step. A step’s displayed and
+spoken <em>text</em> is end-anchored like the online provider’s re-anchor: a
+step’s banner names the maneuver at the step’s <em>end</em> — the junction
+node the countdown points at — while the head-anchored <code>ManeuverType</code>
+is unchanged (see [<code>end_anchored_instruction_text</code>]). The
+per-turn-restriction
 instruction strings remain <em>restriction</em> records — they describe
 forbidden turns, which a route by construction never traverses — and
 are not step content. Derived from adjacent graph-edge bearings, a
@@ -40,10 +56,25 @@ incoming edge, which is exact unless a node can be reached on several
 best-cost paths through differently-restricted incoming edges
 (over-restrictive rather than understating).</li>
 </ul>
+<h2 id="benchmark-reference-m7-slice-6"><a class="doc-anchor" href="#benchmark-reference-m7-slice-6">§</a>Benchmark reference (M7 slice 6)</h2>
+<p><code>PRD.md</code> §4.6’s engine decision — “Dijkstra upgraded to A*” — is measured
+here, not asserted: [<code>dijkstra_reference_search</code>] is a plainly named
+Dijkstra over the same [<code>LoadedRoutingGraph</code>], differing from
+[<code>a_star_search</code>] in exactly the heuristic (zero instead of haversine).
+<strong>It is not a production path and nothing consumes it outside the
+criterion benchmark suite and the test suite</strong> (<code>benches/ offline_search_benchmark.rs</code>, <code>offline_routing_benchmark.rs</code>); it exists
+so “A* beats Dijkstra” is a recorded benchmark, and for nothing else.</p>
+<p>Both searches expose their <em>settled-node count</em> on
+[<code>ComputedRoute::settled_node_count</code>] — a deterministic, noise-free
+expansion metric — and the coarse CI alarm (an asserted generous upper
+bound, <code>offline_routing_benchmark</code>’s budget test) guards gross
+regressions; the criterion numbers are the recorded trend baseline, not
+a CI pass/fail (shared-runner wall clock is too noisy to gate on).</p>
 <h2 id="runtime-rules"><a class="doc-anchor" href="#runtime-rules">§</a>Runtime rules</h2>
 <p><code>load_offline_graph</code> performs its mmap/read/validate work synchronously
 inside the async method — short-lived, with no await points, so no lock
-or I/O ever crosses an await. <code>calculate_offline_route</code> is pure
+or I/O ever crosses an await (on wasm, bytes are read and validated in
+the same synchronous span; there is no <code>mmap</code> step). <code>calculate_offline_route</code> is pure
 computation over the loaded graph. A load fully validates the new source
 and only then replaces an already-loaded graph; a failed load leaves the
 previous graph loaded.</p>

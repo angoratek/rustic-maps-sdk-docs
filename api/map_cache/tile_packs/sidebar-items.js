@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAXIMUM_TILE_PACK_TILE_COUNT","MAXIMUM_TILE_PACK_ZOOM_LEVEL"],"fn":["enumerate_region_tiles"],"struct":["TilePackDescription","TilePackManager","TilePackProgress","TilePackRecord","TilePackRemovalReport","TilePackTileAddress"]};
