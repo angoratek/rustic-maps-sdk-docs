@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAXIMUM_FLOW_PIXEL_SIDE","MINIMUM_SEVERITY_FILTER"],"fn":["map_traffic_bucket_to_congestion_level","parse_flow_payload","select_flow_view"],"struct":["FlowViewParameters","MapQuestTrafficFlowProvider"]};

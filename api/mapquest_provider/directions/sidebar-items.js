@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["map_turn_type_to_maneuver_type","parse_matrix_payload","parse_route_payload"],"struct":["MapQuestDistanceMatrixProvider","MapQuestRoutingProvider"]};

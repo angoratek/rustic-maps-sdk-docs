@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["bounding_box_to_query_text","coordinate_to_location_query_text","coordinate_to_request_value"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ManeuverType","RouteStrategy","TransportationMode","TurnDirection","UnitSystem"],"struct":["AvoidOptions","DistanceMatrix","DistanceMatrixEntry","LaneGuidance","RouteData","RouteLeg","RouteOptions","RouteStep"]};

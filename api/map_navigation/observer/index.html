@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Mapbox-pattern per-topic observers over the navigation state machine."><title>map_navigation::observer - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_navigation" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module observer</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_navigation/index.html">map_<wbr>navigation</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module observer</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#threading-contract" title="Threading contract">Threading contract</a></li><li><a href="#dispatch-rules" title="Dispatch rules">Dispatch rules</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>navigation</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_navigation</a></div><h1>Module <span>observer</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_navigation/observer.rs.html#1-1102">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Mapbox-pattern per-topic observers over the navigation state machine.</p>
+<p>Following the Mapbox Navigation observer split, this module registers
+listeners <em>per topic</em> behind one
+<a href="trait.NavigationStateChangeListener.html" title="trait map_navigation::observer::NavigationStateChangeListener"><code>NavigationStateChangeListener</code></a> trait, each subscription with an
+explicit <a href="struct.TopicSubscription.html#method.cancel" title="method map_navigation::observer::TopicSubscription::cancel"><code>TopicSubscription::cancel</code></a>, so a consumer subscribes to only
+what it needs and each subscription cancels exactly itself:</p>
+<ul>
+<li><strong>instructions</strong> (<code>dispatch_*</code> always): the composed
+<a href="../instruction/struct.NavigationInstruction.html" title="struct map_navigation::instruction::NavigationInstruction"><code>NavigationInstruction</code></a> payload of every dispatched state change,
+produced by <a href="../instruction/fn.compose_navigation_instructions.html" title="fn map_navigation::instruction::compose_navigation_instructions"><code>crate::instruction::compose_navigation_instructions</code></a>;</li>
+<li><strong>deviation status</strong> (on change): <a href="enum.DeviationStatusChange.html" title="enum map_navigation::observer::DeviationStatusChange"><code>DeviationStatusChange</code></a> as the
+detector’s judgment enters, deepens/updates or clears — the per-fix
+judgment stream, including measurement drift while the phase stays
+<code>OffRoute</code>;</li>
+<li><strong>phase</strong> (on transition): <a href="enum.NavigationPhaseChange.html" title="enum map_navigation::observer::NavigationPhaseChange"><code>NavigationPhaseChange</code></a> — one-shot
+transitions <code>OffRoute</code> entered/cleared, <code>RerouteProvided</code> applied, and
+<code>Arrived</code>.</li>
+</ul>
+<h2 id="threading-contract"><a class="doc-anchor" href="#threading-contract">§</a>Threading contract</h2>
+<p>Dispatch is synchronous and single-threaded by contract: callbacks run on
+the caller’s thread, in the dispatch’s own stack frame. The foreign
+callback wiring into the frozen UDL contract is a later slice and will own
+platform-side thread hop; this stays a Rust-side seam. Cross-thread calls
+are data-race-free (the trait requires <a href="https://doc.rust-lang.org/1.99.0/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a> + <a href="https://doc.rust-lang.org/1.99.0/core/marker/trait.Sync.html" title="trait core::marker::Sync"><code>Sync</code></a>) and are at
+worst <a href="enum.NavigationDispatchOutcome.html#variant.SuppressedReentrant" title="variant map_navigation::observer::NavigationDispatchOutcome::SuppressedReentrant">suppressed</a> by the
+re-entrancy guard, but the ordering guarantee is stated for
+single-threaded use only.</p>
+<h2 id="dispatch-rules"><a class="doc-anchor" href="#dispatch-rules">§</a>Dispatch rules</h2>
+<ul>
+<li><strong>No lock is held across listener callbacks.</strong> The registry lock is
+taken once to snapshot the (cheaply cloned) listener lists and released
+before the first callback runs, so a listener may freely call back into
+the broadcaster — including <a href="struct.TopicSubscription.html#method.cancel" title="method map_navigation::observer::TopicSubscription::cancel"><code>TopicSubscription::cancel</code></a> — without
+deadlocking (Mapbox’s rule in spirit).</li>
+<li><strong>Delivery order</strong>: within a topic, strict registration order;
+across topics, instructions first, then deviation status, then phase.</li>
+<li><strong>One dispatch in flight.</strong> The deliberate re-entrancy bound: a
+dispatch that starts while another dispatch is still in flight —
+typically a listener driving the reducer and re-dispatching from its own
+callback — delivers <em>nothing</em> and reports
+<a href="enum.NavigationDispatchOutcome.html#variant.SuppressedReentrant" title="variant map_navigation::observer::NavigationDispatchOutcome::SuppressedReentrant"><code>NavigationDispatchOutcome::SuppressedReentrant</code></a>. Nothing is queued
+(no unbounded growth, no re-entrant cascade): the state change behind a
+suppressed dispatch is never lost — it already happened in the reducer —
+but its broadcast is skipped, so a listener that re-dispatches must let
+the outer dispatch finish and dispatch again from the top level. The
+common listener shapes (recording, platform notification) are fully
+synchronous and unaffected.</li>
+<li><strong>Listener errors cannot poison the reducer.</strong> Listener methods return
+nothing, so there is no error channel by construction; the dispatch
+runs <em>after</em> the reducer has already produced its new state and only
+reads the state it is handed. A listener that panics propagates the
+panic to the dispatch caller (this is a synchronous Rust seam, not a
+foreign boundary), and cannot corrupt the trip state or wedge the
+broadcaster: the in-flight guard releases on unwind. Whether to catch
+panics per listener is deferred to the foreign-wiring slice, which owns
+the actual FFI error policy.</li>
+<li><strong>Snapshot semantics for cancel</strong>: a subscription cancelled during a
+dispatch may still receive that dispatch’s callbacks (the snapshot was
+taken before); cancellation is guaranteed for every dispatch started
+after <code>cancel</code> returns.</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.NavigationStateBroadcaster.html" title="struct map_navigation::observer::NavigationStateBroadcaster">Navigation<wbr>State<wbr>Broadcaster</a></dt><dd>Per-topic observer registry: registers listeners, cancels subscriptions,
+and dispatches state changes.</dd><dt><a class="struct" href="struct.TopicSubscription.html" title="struct map_navigation::observer::TopicSubscription">Topic<wbr>Subscription</a></dt><dd>Handle coupled to exactly one <code>(topic, listener)</code> registration.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.DeviationStatusChange.html" title="enum map_navigation::observer::DeviationStatusChange">Deviation<wbr>Status<wbr>Change</a></dt><dd>A deviation-topic update: the detector’s judgment changed between the
+previous and the current trip state.</dd><dt><a class="enum" href="enum.NavigationDispatchOutcome.html" title="enum map_navigation::observer::NavigationDispatchOutcome">Navigation<wbr>Dispatch<wbr>Outcome</a></dt><dd>Outcome of one dispatch call.</dd><dt><a class="enum" href="enum.NavigationPhaseChange.html" title="enum map_navigation::observer::NavigationPhaseChange">Navigation<wbr>Phase<wbr>Change</a></dt><dd>A phase-transition event delivered on the phase topic.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.NavigationStateChangeListener.html" title="trait map_navigation::observer::NavigationStateChangeListener">Navigation<wbr>State<wbr>Change<wbr>Listener</a></dt><dd>One listener’s callback surface, split by topic.</dd></dl></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["deviation","geometry","instruction","location","observer","reducer","speech","state","step_advance"]};

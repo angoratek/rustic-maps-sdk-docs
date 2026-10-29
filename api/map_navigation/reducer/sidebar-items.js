@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["NavigationEvent"],"fn":["reduce_navigation_event"],"struct":["NavigationSession"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FRAME_TEXTURE_FORMAT","MAXIMUM_QUADS_PER_FRAME","TILE_TEXTURE_ADDRESS_MODE","TILE_TEXTURE_FILTER","TILE_TEXTURE_MIPMAP_FILTER"],"enum":["GraphicsContextError","HeadlessRenderError"],"fn":["capture_frame_bytes"],"struct":["CapturedFrame","GraphicsContext","HeadlessTileRenderer","WgpuGraphicsContextSource"],"trait":["GraphicsContextSource"]};

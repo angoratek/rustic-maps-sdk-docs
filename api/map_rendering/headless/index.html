@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Headless `wgpu` rendering of raster tiles plus deterministic frame capture."><title>map_rendering::headless - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_rendering" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module headless</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_rendering/index.html">map_<wbr>rendering</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module headless</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#capturing-snapshots-maplibre-snapshot--snapshotsync" title="Capturing snapshots (MapLibre `snapshot()` / `snapshotSync()`)">Capturing snapshots (MapLibre <code>snapshot()</code> / <code>snapshotSync()</code>)</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>rendering</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_rendering</a></div><h1>Module <span>headless</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_rendering/headless.rs.html#1-1306">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Headless <code>wgpu</code> rendering of raster tiles plus deterministic frame
+capture.</p>
+<p>The renderer draws one textured quad per pooled tile for a single frame
+into an off-screen render-attachment texture and reads the pixels back
+into a <a href="struct.CapturedFrame.html" title="struct map_rendering::headless::CapturedFrame"><code>CapturedFrame</code></a>; an optional overlay layer
+(<a href="../overlay/enum.MapOverlay.html" title="enum map_rendering::overlay::MapOverlay"><code>crate::overlay::MapOverlay</code></a>) draws after the quads in the same render
+pass through a separate solid-color pipeline. Pooled payloads that fail to
+decode are skipped
+for the frame and evicted from the pool so the scheduler refetches them —
+one corrupt tile never poisons the frames after it; only structural
+failures (an overflowing draw list, a failed context acquisition or
+capture) are errors. No surface is requested, so this works on any native
+backend (Metal, Vulkan, DirectX): device acquisition lives behind the
+object-safe <a href="trait.GraphicsContextSource.html" title="trait map_rendering::headless::GraphicsContextSource"><code>GraphicsContextSource</code></a> seam, keeping <code>wgpu</code> types out of
+the scheduling core and letting tests substitute their own context source
+or skip rendering when no adapter exists.</p>
+<p>This module is native-only: blocking on the asynchronous <code>wgpu</code>
+initialization calls and polling the device is not valid on wasm, where
+the browser’s own async runtime drives <code>webgpu</code>.</p>
+<h2 id="capturing-snapshots-maplibre-snapshot--snapshotsync"><a class="doc-anchor" href="#capturing-snapshots-maplibre-snapshot--snapshotsync">§</a>Capturing snapshots (MapLibre <code>snapshot()</code> / <code>snapshotSync()</code>)</h2>
+<p>MapLibre renders the current frame into a bitmap asynchronously
+(<code>snapshot()</code>) or synchronously (<code>snapshotSync()</code>), and GL JS fires its
+<code>idle</code> event precisely when no tile loading or animation work remains —
+the pair exists so captures are deterministic (await the idle state, then
+snapshot without racing late work). Reading that pattern against what the
+headless path actually is:</p>
+<ul>
+<li>Every capture here is already snapshot-shaped: frames compose into an
+off-screen render attachment that is never presented to a window, and
+<a href="fn.capture_frame_bytes.html" title="fn map_rendering::headless::capture_frame_bytes"><code>capture_frame_bytes</code></a> reads the result back — the same separation of
+scene composition from presented output the MapLibre snapshot relies
+on, with no capture machinery of a live view to sidestep.</li>
+<li>There is no async/sync split to port, because no asynchronous runtime
+drives the device: a capture is inherently blocking on the readback
+(<a href="fn.capture_frame_bytes.html" title="fn map_rendering::headless::capture_frame_bytes"><code>capture_frame_bytes</code></a> escalates to a blocking device poll), so an
+async <code>snapshot()</code> twin would be ceremony over the same call.</li>
+<li>What is actually missing for deterministic captures is the <em>idle
+gate</em>. It is implemented as
+<a href="struct.HeadlessTileRenderer.html#method.snapshot_frame_when_idle" title="method map_rendering::headless::HeadlessTileRenderer::snapshot_frame_when_idle"><code>HeadlessTileRenderer::snapshot_frame_when_idle</code></a>, which refuses to
+render while pending tile work remains — returning
+<a href="enum.HeadlessRenderError.html#variant.PendingTileWork" title="variant map_rendering::headless::HeadlessRenderError::PendingTileWork"><code>HeadlessRenderError::PendingTileWork</code></a> immediately, without touching
+the GPU — and otherwise behaves exactly like the ordinary capture. That
+makes it the non-blocking half: the refusal decision costs no device
+work and never waits for pending work to finish; completing the work is
+the caller’s next prepare frame. MapLibre’s un-gated synchronous
+variant is the ordinary capture
+(<a href="struct.HeadlessTileRenderer.html#method.render_captured_frame_with_overlays" title="method map_rendering::headless::HeadlessTileRenderer::render_captured_frame_with_overlays"><code>HeadlessTileRenderer::render_captured_frame_with_overlays</code></a>) — it
+always renders and captures, however much tile work is still pending.</li>
+</ul>
+<p>The idle gate covers tile fetch state only; camera animations are
+composed outside this renderer entirely (see
+<a href="../tile_scheduler/index.html" title="mod map_rendering::tile_scheduler"><code>crate::tile_scheduler</code></a> on the full idle semantics).</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.CapturedFrame.html" title="struct map_rendering::headless::CapturedFrame">Captured<wbr>Frame</a></dt><dd>One rendered frame copied back from the GPU: tightly packed RGBA8,
+row-major, origin top-left, no row padding.</dd><dt><a class="struct" href="struct.GraphicsContext.html" title="struct map_rendering::headless::GraphicsContext">Graphics<wbr>Context</a></dt><dd>An adapter/device/queue triple acquired for headless rendering.</dd><dt><a class="struct" href="struct.HeadlessTileRenderer.html" title="struct map_rendering::headless::HeadlessTileRenderer">Headless<wbr>Tile<wbr>Renderer</a></dt><dd>Renders raster tiles headlessly. Owns the pipeline, sampler, and the
+uploaded-texture cache; the graphics context is injected, so production
+code and tests can supply any backed device through
+<a href="trait.GraphicsContextSource.html" title="trait map_rendering::headless::GraphicsContextSource"><code>GraphicsContextSource</code></a>.</dd><dt><a class="struct" href="struct.WgpuGraphicsContextSource.html" title="struct map_rendering::headless::WgpuGraphicsContextSource">Wgpu<wbr>Graphics<wbr>Context<wbr>Source</a></dt><dd>The production source: requests the first available adapter with no
+compatible surface, blocking on it with <code>pollster</code> (native only; see the
+module documentation).</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.GraphicsContextError.html" title="enum map_rendering::headless::GraphicsContextError">Graphics<wbr>Context<wbr>Error</a></dt><dd>Why no graphics context could be acquired.</dd><dt><a class="enum" href="enum.HeadlessRenderError.html" title="enum map_rendering::headless::HeadlessRenderError">Headless<wbr>Render<wbr>Error</a></dt><dd>Why one frame could not be rendered or captured.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.FRAME_TEXTURE_FORMAT.html" title="constant map_rendering::headless::FRAME_TEXTURE_FORMAT">FRAME_<wbr>TEXTURE_<wbr>FORMAT</a></dt><dd>GPU format of both the tile textures and the captured frame. The <code>image</code>
+crate decodes tile payloads to plain RGBA8, so no sRGB conversion is
+applied in the pipeline this slice; colors round-trip byte-for-byte.</dd><dt><a class="constant" href="constant.MAXIMUM_QUADS_PER_FRAME.html" title="constant map_rendering::headless::MAXIMUM_QUADS_PER_FRAME">MAXIMUM_<wbr>QUADS_<wbr>PER_<wbr>FRAME</a></dt><dd>Draw quads a frame may carry, where a world-copy fragment of a tile
+counts as one draw quad: the bound keeps both the fragment vertices (four
+corners each) and the draw list inside a 16-bit index buffer.</dd><dt><a class="constant" href="constant.TILE_TEXTURE_ADDRESS_MODE.html" title="constant map_rendering::headless::TILE_TEXTURE_ADDRESS_MODE">TILE_<wbr>TEXTURE_<wbr>ADDRESS_<wbr>MODE</a></dt><dd>Clamp sampler addressing: quads sample exactly their declared sub-window
+of the texture, so edge behavior never triggers.</dd><dt><a class="constant" href="constant.TILE_TEXTURE_FILTER.html" title="constant map_rendering::headless::TILE_TEXTURE_FILTER">TILE_<wbr>TEXTURE_<wbr>FILTER</a></dt><dd>Filter mode of the tile sampler. Linear interpolation gives smooth
+minification for both the pitched camera and fallback draws scaled up.</dd><dt><a class="constant" href="constant.TILE_TEXTURE_MIPMAP_FILTER.html" title="constant map_rendering::headless::TILE_TEXTURE_MIPMAP_FILTER">TILE_<wbr>TEXTURE_<wbr>MIPMAP_<wbr>FILTER</a></dt><dd>Interpolation between mip levels. The textures this slice uploads carry no
+mip chain, so the mode never applies; linear keeps the sampler consistent
+should mip chains arrive in a later slice.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.GraphicsContextSource.html" title="trait map_rendering::headless::GraphicsContextSource">Graphics<wbr>Context<wbr>Source</a></dt><dd>The dependency-inversion seam for device acquisition: tests substitute
+their own source (a scripted renderer, a pinned backend, or a context
+created elsewhere) instead of relying on environment adapter discovery.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.capture_frame_bytes.html" title="fn map_rendering::headless::capture_frame_bytes">capture_<wbr>frame_<wbr>bytes</a></dt><dd>Copies a rendered texture into a staging buffer honoring the 256-byte row
+alignment ([<code>wgpu::COPY_BYTES_PER_ROW_ALIGNMENT</code>]), maps the buffer, and
+reads it back as a tightly packed <a href="struct.CapturedFrame.html" title="struct map_rendering::headless::CapturedFrame"><code>CapturedFrame</code></a>, stripping the padding
+the alignment inserts between rows.</dd></dl></section></div></main></body></html>
