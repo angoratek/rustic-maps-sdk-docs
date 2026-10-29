@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Frame-driven raster tile scheduling with parent fallback."><title>map_rendering::tile_scheduler - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_rendering" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module tile_scheduler</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_rendering/index.html">map_<wbr>rendering</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module tile_<wbr>scheduler</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-idle-render-state-signal" title="The idle render-state signal">The idle render-state signal</a></li><li><a href="#the-sync-resolve--detached-warm-split" title="The sync resolve / detached warm split">The sync resolve / detached warm split</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>rendering</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_rendering</a></div><h1>Module <span>tile_<wbr>scheduler</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_rendering/tile_scheduler.rs.html#1-1223">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Frame-driven raster tile scheduling with parent fallback.</p>
+<p>Each frame the scheduler receives the XYZ tiles the camera needs (usually
+from <a href="../projection/fn.tiles_covering.html" title="fn map_rendering::projection::tiles_covering"><code>crate::projection::tiles_covering</code></a> on the camera footprint). For
+every requested tile it reports one readiness:</p>
+<ul>
+<li><code>Present</code> — pooled at the requested zoom;</li>
+<li><code>FallsBackTo</code> — a nearest pooled ancestor stands in while the detailed
+tile loads or while its fetch failed, so the map blurs instead of
+flashing holes;</li>
+<li><code>Unavailable</code> — the provider rejected the tile this frame; a later frame
+may retry.</li>
+</ul>
+<p>Fetches are deduplicated within a frame (one provider call per distinct
+tile), ordered most-detailed-first, and capped by the configured per-frame
+fetch budget; requests beyond the cap report <code>Deferred</code>. Fetch overlap
+with GPU work and eviction-aware prioritization
+are deferred until the render loop measures upload timing.</p>
+<h2 id="the-idle-render-state-signal"><a class="doc-anchor" href="#the-idle-render-state-signal">§</a>The idle render-state signal</h2>
+<p>GL JS’s <code>idle</code> event fires when no more tile loads and no animation work
+remain — the condition golden-image tests await before capturing, so a
+capture can never race a late fetch. This module exposes the equivalent
+render-state queries: <a href="struct.TileScheduler.html#method.is_idle" title="method map_rendering::tile_scheduler::TileScheduler::is_idle"><code>TileScheduler::is_idle</code></a> over the fetch state, and
+<a href="fn.prepared_frame_is_idle.html" title="fn map_rendering::tile_scheduler::prepared_frame_is_idle"><code>prepared_frame_is_idle</code></a> over a captured frame’s readiness verdicts.</p>
+<p>What counts as pending is stated over the fetch state, because the
+scheduler itself is frame-driven: <a href="struct.TileScheduler.html#method.prepare_frame" title="method map_rendering::tile_scheduler::TileScheduler::prepare_frame"><code>TileScheduler::prepare_frame</code></a> awaits
+every fetch it issues, so a fetch is never observable through this API
+mid-flight. The pending states are therefore exactly the readiness
+verdicts whose pixels a later successful frame can still change:</p>
+<ul>
+<li><code>Deferred</code> — the fetch budget spent; a later frame fetches the tile.</li>
+<li><code>Unavailable</code> — the provider rejected the tile; a later frame retries
+it.</li>
+<li><code>FallsBackTo</code> — a coarser ancestor covers the area while the detailed
+tile loads or its fetch failed; when the fetch lands, the area re-renders
+at its own detail level.</li>
+</ul>
+<p>A frame is idle when every requested tile resolved <code>Present</code>: no
+scheduled work can change its pixels. An empty request set is idle by
+vacuity. Idle is a <em>query</em>, not an event: it can flip back to pending
+when the pool loses a requested payload — least-recently-used budget
+pressure, or the renderer evicting an undecodable payload after a draw —
+until the next prepare frame refetches it.</p>
+<p>Explicitly not part of the verdict: camera animations
+(<code>crate::camera::CameraAnimation</code>), which are composed entirely outside
+the renderer; GPU upload state, which never spans calls on the headless
+render path (uploads happen synchronously inside one frame render; the
+wasm canvas, in contrast, keeps browser fetches in flight across a render
+frame — the mirror of this signal there is deferred to the canvas slice);
+and evictions of payloads the current request set does not ask for.</p>
+<h2 id="the-sync-resolve--detached-warm-split"><a class="doc-anchor" href="#the-sync-resolve--detached-warm-split">§</a>The sync resolve / detached warm split</h2>
+<p>The frame path never awaits the network: <a href="struct.TileScheduler.html#method.resolve_frame" title="method map_rendering::tile_scheduler::TileScheduler::resolve_frame"><code>TileScheduler::resolve_frame</code></a>
+answers every requested tile’s readiness from the pool’s current state
+alone (plus the in-flight warming set it reports as <code>Deferred</code>), purely
+synchronously, and the misses are fetched by <a href="struct.TileScheduler.html#method.warm_tiles" title="method map_rendering::tile_scheduler::TileScheduler::warm_tiles"><code>TileScheduler::warm_tiles</code></a>
+(or its detached twin <a href="struct.TileScheduler.html#method.plan_warm_tiles" title="method map_rendering::tile_scheduler::TileScheduler::plan_warm_tiles"><code>TileScheduler::plan_warm_tiles</code></a>, whose
+<a href="struct.TileWarmTask.html" title="struct map_rendering::tile_scheduler::TileWarmTask"><code>TileWarmTask</code></a> runs on the caller’s background runtime) so detail
+arrives in a later frame. The blocking <a href="struct.TileScheduler.html#method.prepare_frame" title="method map_rendering::tile_scheduler::TileScheduler::prepare_frame"><code>TileScheduler::prepare_frame</code></a>
+remains the await-everything reference behavior the tests and goldens
+pin; the split’s verdicts are the same taxonomy over the same pool.</p>
+<p>The diagnostics: per-frame resolve and warm events emit at Debug and
+per-tile fetch events at Trace under the <code>tile_fetch</code> target, behind the
+diagnostics severity gate (see <code>map-native-core</code>’s diagnostics module).</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.PreparedTile.html" title="struct map_rendering::tile_scheduler::PreparedTile">Prepared<wbr>Tile</a></dt><dd>One requested tile and how it resolved.</dd><dt><a class="struct" href="struct.TileScheduler.html" title="struct map_rendering::tile_scheduler::TileScheduler">Tile<wbr>Scheduler</a></dt><dd>Schedules raster tile fetches into a <a href="../tile_texture_pool/struct.TileTexturePool.html" title="struct map_rendering::tile_texture_pool::TileTexturePool"><code>TileTexturePool</code></a>.</dd><dt><a class="struct" href="struct.TileWarmTask.html" title="struct map_rendering::tile_scheduler::TileWarmTask">Tile<wbr>Warm<wbr>Task</a></dt><dd>One planned detached warm fetch: the owned inputs (the provider handle,
+the request formats) plus the shared in-flight registry, runnable as its
+own background task. Built by <a href="struct.TileScheduler.html#method.plan_warm_tiles" title="method map_rendering::tile_scheduler::TileScheduler::plan_warm_tiles"><code>TileScheduler::plan_warm_tiles</code></a>; the
+frame path runs it fire-and-forget so no draw ever awaits the network
+(see the module documentation).</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.TileReadiness.html" title="enum map_rendering::tile_scheduler::TileReadiness">Tile<wbr>Readiness</a></dt><dd>How a requested tile resolves for one frame.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.prepared_frame_is_idle.html" title="fn map_rendering::tile_scheduler::prepared_frame_is_idle">prepared_<wbr>frame_<wbr>is_<wbr>idle</a></dt><dd>The idle render-state signal over a captured frame’s readiness verdicts:
+whether every requested tile of the frame resolved <code>Present</code> at its own
+zoom level. The verdict-level twin of <a href="struct.TileScheduler.html#method.is_idle" title="method map_rendering::tile_scheduler::TileScheduler::is_idle"><code>TileScheduler::is_idle</code></a>, kept
+GPU-free so callers (golden tests, the idle-gated snapshot of
+<a href="../headless/index.html" title="mod map_rendering::headless"><code>crate::headless</code></a>) can assert determinism before any capture.</dd></dl></section></div></main></body></html>

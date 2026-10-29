@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DIAGNOSTIC_COORDINATE_DECIMALS","DIAGNOSTIC_IDLE_RECORDING_SEVERITY","DIAGNOSTIC_RING_CAPACITY"],"struct":["DiagnosticsHandle"],"trait":["SdkDiagnosticEventListener"]};

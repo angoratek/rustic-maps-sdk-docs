@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["NavigationPhase"],"struct":["DeviationInfo","RouteStepPosition","TripNavigationState","TripProgress"]};

@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The pure event reducer driving an active trip."><title>map_navigation::reducer - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_navigation" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module reducer</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_navigation/index.html">map_<wbr>navigation</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module reducer</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>navigation</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_navigation</a></div><h1>Module <span>reducer</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_navigation/reducer.rs.html#1-1382">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The pure event reducer driving an active trip.</p>
+<p><code>reduce_navigation_event</code> maps one event onto the previous session and
+returns the next one; it has no I/O, no clock and no mutable globals, so
+every outcome is reproducible from the event history (the seam Ferrostar
+builds its whole controller around). The live
+<a href="../step_advance/trait.StepAdvanceCondition.html" title="trait map_navigation::step_advance::StepAdvanceCondition"><code>StepAdvanceCondition</code></a> and
+<a href="../deviation/trait.DeviationDetector.html" title="trait map_navigation::deviation::DeviationDetector"><code>DeviationDetector</code></a> instances are threaded through
+<a href="struct.NavigationSession.html" title="struct map_navigation::reducer::NavigationSession"><code>NavigationSession</code></a> — pairing state with its decision objects exactly as
+Ferrostar’s <code>NavState</code> does — because they are swapped for their
+<a href="../step_advance/trait.StepAdvanceCondition.html#tymethod.fresh_instance" title="method map_navigation::step_advance::StepAdvanceCondition::fresh_instance"><code>StepAdvanceCondition::fresh_instance</code></a> (or
+<a href="../deviation/trait.DeviationDetector.html#tymethod.fresh_instance" title="method map_navigation::deviation::DeviationDetector::fresh_instance"><code>DeviationDetector::fresh_instance</code></a>) counterparts at reset points, and the
+exported <a href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState"><code>crate::state::TripNavigationState</code></a> must stay free of trait
+objects.</p>
+<p>Semantics in this slice:</p>
+<ul>
+<li><a href="enum.NavigationEvent.html#variant.StartTrip" title="variant map_navigation::reducer::NavigationEvent::StartTrip"><code>NavigationEvent::StartTrip</code></a> flattens the route and reports the declared
+step values as remaining progress until the first fix arrives.</li>
+<li><a href="enum.NavigationEvent.html#variant.LocationUpdated" title="variant map_navigation::reducer::NavigationEvent::LocationUpdated"><code>NavigationEvent::LocationUpdated</code></a> is judged for deviation first:
+a fix the detector judges off route <em>freezes</em> the session — the snapped
+coordinate and progress stay at the last on-route values, and neither the
+step-advance condition is consulted nor the step advances (deviating
+positions must not drive route progress; the reference freezes the same
+way while deviating). A fix without an accuracy report is not judged at
+all: it can neither raise nor clear a deviation, because one threshold
+rule cannot conservatively decide both directions. A graded fix inside
+the allowance lifts an active deviation and the update then proceeds
+normally (condition consulted, position snapped, progress recomputed).
+At most one advance happens per update, exactly as before.
+<a href="../state/enum.NavigationPhase.html#variant.OffRoute" title="variant map_navigation::state::NavigationPhase::OffRoute"><code>crate::state::NavigationPhase::OffRoute</code></a> is therefore a pause the user
+may recover from by returning to the route, not a terminal state.</li>
+<li><a href="enum.NavigationEvent.html#variant.RerouteProvided" title="variant map_navigation::reducer::NavigationEvent::RerouteProvided"><code>NavigationEvent::RerouteProvided</code></a> rebuilds the session for the same
+trip from a fresh route. The remote-first, offline-fallback policy
+(compute the replacement route remotely, fall back to an offline graph)
+lives at the integrator/event-source layer, which owns the route request;
+the reducer stays policy-free and pure. See the event documentation for
+the route-anchoring contract it implies.</li>
+<li>Updates after the phase is <code>Arrived</code> are ignored; reroutes offered to an
+arrived trip are ignored as well.</li>
+</ul>
+<p>Later slices, deliberately deferred: observers and listeners, and
+programmatic step advance.</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.NavigationSession.html" title="struct map_navigation::reducer::NavigationSession">Navigation<wbr>Session</a></dt><dd>An active trip: the plain-data state plus the live decision instances.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.NavigationEvent.html" title="enum map_navigation::reducer::NavigationEvent">Navigation<wbr>Event</a></dt><dd>Inputs the reducer accepts for one active trip.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.reduce_navigation_event.html" title="fn map_navigation::reducer::reduce_navigation_event">reduce_<wbr>navigation_<wbr>event</a></dt><dd>Reduces one event onto the previous session.</dd></dl></section></div></main></body></html>
