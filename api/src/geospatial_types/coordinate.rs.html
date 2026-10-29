@@ -70,17 +70,17 @@
 <a href=#70 id=70 data-nosnippet>70</a>
 <a href=#71 id=71 data-nosnippet>71</a>    <span class="attr">#[test]
 <a href=#72 id=72 data-nosnippet>72</a>    </span><span class="kw">fn </span>zero_distance_for_identical_coordinates() {
-<a href=#73 id=73 data-nosnippet>73</a>        <span class="kw">let </span>coordinate = GeographicCoordinate::from_degrees(<span class="number">47.3769</span>, <span class="number">8.5417</span>).unwrap();
+<a href=#73 id=73 data-nosnippet>73</a>        <span class="kw">let </span>coordinate = GeographicCoordinate::from_degrees(<span class="number">38.5766</span>, -<span class="number">121.4944</span>).unwrap();
 <a href=#74 id=74 data-nosnippet>74</a>        <span class="macro">assert!</span>(coordinate.haversine_distance_meters(<span class="kw-2">&amp;</span>coordinate) &lt; <span class="number">1e-6</span>);
 <a href=#75 id=75 data-nosnippet>75</a>    }
 <a href=#76 id=76 data-nosnippet>76</a>
 <a href=#77 id=77 data-nosnippet>77</a>    <span class="attr">#[test]
-<a href=#78 id=78 data-nosnippet>78</a>    </span><span class="kw">fn </span>known_distance_between_zurich_and_bern() {
-<a href=#79 id=79 data-nosnippet>79</a>        <span class="kw">let </span>zurich = GeographicCoordinate::from_degrees(<span class="number">47.3769</span>, <span class="number">8.5417</span>).unwrap();
-<a href=#80 id=80 data-nosnippet>80</a>        <span class="kw">let </span>bern = GeographicCoordinate::from_degrees(<span class="number">46.9480</span>, <span class="number">7.4474</span>).unwrap();
-<a href=#81 id=81 data-nosnippet>81</a>        <span class="kw">let </span>distance = zurich.haversine_distance_meters(<span class="kw-2">&amp;</span>bern);
-<a href=#82 id=82 data-nosnippet>82</a>        <span class="comment">// Published great-circle distance is roughly 95 km.
-<a href=#83 id=83 data-nosnippet>83</a>        </span><span class="macro">assert!</span>((<span class="number">92_000.0</span>..=<span class="number">98_000.0</span>).contains(<span class="kw-2">&amp;</span>distance));
+<a href=#78 id=78 data-nosnippet>78</a>    </span><span class="kw">fn </span>known_distance_between_sacramento_and_san_francisco() {
+<a href=#79 id=79 data-nosnippet>79</a>        <span class="kw">let </span>capitol = GeographicCoordinate::from_degrees(<span class="number">38.5766</span>, -<span class="number">121.4944</span>).unwrap();
+<a href=#80 id=80 data-nosnippet>80</a>        <span class="kw">let </span>san_francisco = GeographicCoordinate::from_degrees(<span class="number">37.7749</span>, -<span class="number">122.4194</span>).unwrap();
+<a href=#81 id=81 data-nosnippet>81</a>        <span class="kw">let </span>distance = capitol.haversine_distance_meters(<span class="kw-2">&amp;</span>san_francisco);
+<a href=#82 id=82 data-nosnippet>82</a>        <span class="comment">// Published great-circle distance is roughly 120 km.
+<a href=#83 id=83 data-nosnippet>83</a>        </span><span class="macro">assert!</span>((<span class="number">117_000.0</span>..=<span class="number">123_500.0</span>).contains(<span class="kw-2">&amp;</span>distance));
 <a href=#84 id=84 data-nosnippet>84</a>    }
 <a href=#85 id=85 data-nosnippet>85</a>
 <a href=#86 id=86 data-nosnippet>86</a>    <span class="macro">proptest!</span> {

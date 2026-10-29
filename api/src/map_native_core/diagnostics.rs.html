@@ -757,7 +757,7 @@
 <a href=#757 id=757 data-nosnippet>757</a>        tracing::subscriber::with_default(Arc::new(subscriber), || {
 <a href=#758 id=758 data-nosnippet>758</a>            <span class="macro">tracing::info!</span>(
 <a href=#759 id=759 data-nosnippet>759</a>                target: <span class="string">"renderer"</span>,
-<a href=#760 id=760 data-nosnippet>760</a>                latitude = <span class="number">47.376_912_345_678_f64</span>,
+<a href=#760 id=760 data-nosnippet>760</a>                latitude = <span class="number">38.576_612_345_678_f64</span>,
 <a href=#761 id=761 data-nosnippet>761</a>                tile_x = <span class="number">8_724_u32</span>,
 <a href=#762 id=762 data-nosnippet>762</a>                <span class="string">"frame drawn"
 <a href=#763 id=763 data-nosnippet>763</a>            </span>);
@@ -769,13 +769,13 @@
 <a href=#769 id=769 data-nosnippet>769</a>            .message_line
 <a href=#770 id=770 data-nosnippet>770</a>            .clone();
 <a href=#771 id=771 data-nosnippet>771</a>        <span class="macro">assert!</span>(
-<a href=#772 id=772 data-nosnippet>772</a>            recorded_line.contains(<span class="string">"latitude=47.377"</span>),
+<a href=#772 id=772 data-nosnippet>772</a>            recorded_line.contains(<span class="string">"latitude=38.577"</span>),
 <a href=#773 id=773 data-nosnippet>773</a>            <span class="string">"scrubbed latitude: {recorded_line}"
 <a href=#774 id=774 data-nosnippet>774</a>        </span>);
 <a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">assert!</span>(recorded_line.contains(<span class="string">"tile_x=8724"</span>));
 <a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">assert!</span>(recorded_line.contains(<span class="string">"frame drawn"</span>));
 <a href=#777 id=777 data-nosnippet>777</a>        <span class="macro">assert!</span>(
-<a href=#778 id=778 data-nosnippet>778</a>            !recorded_line.contains(<span class="string">"47.376912345678"</span>),
+<a href=#778 id=778 data-nosnippet>778</a>            !recorded_line.contains(<span class="string">"38.576612345678"</span>),
 <a href=#779 id=779 data-nosnippet>779</a>            <span class="string">"full precision must not survive the sink: {recorded_line}"
 <a href=#780 id=780 data-nosnippet>780</a>        </span>);
 <a href=#781 id=781 data-nosnippet>781</a>    }
@@ -785,7 +785,7 @@
 <a href=#785 id=785 data-nosnippet>785</a>    </span><span class="attr">#[test]
 <a href=#786 id=786 data-nosnippet>786</a>    </span><span class="kw">fn </span>unparseable_coordinates_are_replaced_with_the_placeholder() {
 <a href=#787 id=787 data-nosnippet>787</a>        <span class="macro">assert_eq!</span>(
-<a href=#788 id=788 data-nosnippet>788</a>            EventLineVisitor::scrub_coordinate_text(<span class="string">"47.376912345678 deg N"</span>),
+<a href=#788 id=788 data-nosnippet>788</a>            EventLineVisitor::scrub_coordinate_text(<span class="string">"38.576612345678 deg N"</span>),
 <a href=#789 id=789 data-nosnippet>789</a>            SCRUBBED_FIELD_PLACEHOLDER
 <a href=#790 id=790 data-nosnippet>790</a>        );
 <a href=#791 id=791 data-nosnippet>791</a>    }

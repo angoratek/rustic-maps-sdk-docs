@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CONNECT_TIMEOUT","REQUEST_TIMEOUT"],"enum":["HttpMethod","TransportError"],"fn":["sleep"],"struct":["HttpRequest","HttpResponse","ReqwestTransport"],"trait":["HttpTransport"]};

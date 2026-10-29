@@ -103,12 +103,12 @@
 <a href=#103 id=103 data-nosnippet>103</a>
 <a href=#104 id=104 data-nosnippet>104</a>    <span class="attr">#[test]
 <a href=#105 id=105 data-nosnippet>105</a>    </span><span class="kw">fn </span>coordinates_format_stably() {
-<a href=#106 id=106 data-nosnippet>106</a>        <span class="kw">let </span>coordinate = GeographicCoordinate::from_degrees(<span class="number">47.3701234</span>, <span class="number">8.5412345</span>).unwrap();
+<a href=#106 id=106 data-nosnippet>106</a>        <span class="kw">let </span>coordinate = GeographicCoordinate::from_degrees(<span class="number">38.5766123</span>, -<span class="number">121.4944123</span>).unwrap();
 <a href=#107 id=107 data-nosnippet>107</a>        <span class="macro">assert_eq!</span>(
 <a href=#108 id=108 data-nosnippet>108</a>            coordinate_to_fingerprint_text(<span class="kw-2">&amp;</span>coordinate),
-<a href=#109 id=109 data-nosnippet>109</a>            <span class="string">"47.3701234,8.5412345"
+<a href=#109 id=109 data-nosnippet>109</a>            <span class="string">"38.5766123,-121.4944123"
 <a href=#110 id=110 data-nosnippet>110</a>        </span>);
-<a href=#111 id=111 data-nosnippet>111</a>        <span class="kw">let </span>shifted = GeographicCoordinate::from_degrees(<span class="number">47.3701234</span>, <span class="number">8.54123451</span>).unwrap();
+<a href=#111 id=111 data-nosnippet>111</a>        <span class="kw">let </span>shifted = GeographicCoordinate::from_degrees(<span class="number">38.5766123</span>, -<span class="number">121.49441231</span>).unwrap();
 <a href=#112 id=112 data-nosnippet>112</a>        <span class="macro">assert_eq!</span>(
 <a href=#113 id=113 data-nosnippet>113</a>            coordinate_to_fingerprint_text(<span class="kw-2">&amp;</span>coordinate),
 <a href=#114 id=114 data-nosnippet>114</a>            coordinate_to_fingerprint_text(<span class="kw-2">&amp;</span>shifted)
