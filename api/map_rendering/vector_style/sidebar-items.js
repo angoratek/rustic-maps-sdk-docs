@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_VECTOR_CIRCLE_RADIUS_PIXELS","DEFAULT_VECTOR_LINE_WIDTH_PIXELS","MERCATOR_MAXIMUM_LATITUDE_DEGREES"],"enum":["VectorStyleGeometryKind"],"fn":["feature_geometry_kind","tile_local_point_to_coordinate","vector_tile_overlays"],"struct":["VectorAttributeFilter","VectorLayerStyle","VectorTileAddress","VectorTileStyle"]};

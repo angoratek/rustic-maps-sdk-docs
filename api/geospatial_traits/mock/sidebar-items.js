@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["MockDistanceMatrixProvider","MockElevationProvider","MockGeocodingProvider","MockOfflineRoutingProvider","MockRasterTileProvider","MockRoutingProvider","MockSearchPlaceProvider","MockTrafficFlowProvider","MockTrafficIncidentProvider"]};
+window.SIDEBAR_ITEMS = {"struct":["MockDistanceMatrixProvider","MockElevationProvider","MockGeocodingProvider","MockOfflineRoutingProvider","MockRasterTileProvider","MockRoutingProvider","MockSearchPlaceProvider","MockTrafficFlowProvider","MockTrafficIncidentProvider","MockVectorTileProvider"]};

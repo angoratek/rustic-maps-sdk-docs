@@ -1,0 +1,193 @@
+{
+  "artifact": {
+    "name": "reference-scenes",
+    "version": 1,
+    "purpose": "The language-neutral demo content the reference applications load, so every platform refapp presents identical demo data (docs/ReferenceAppUX.md, 'Shared demo-scene artifact'). Keys are snake_case; congestion-level strings mirror the CanvasTrafficFlowCongestionLevel enum names."
+  },
+  "camera_presets": [
+    {
+      "id": "fixture-center",
+      "label": "Fixture center",
+      "latitude_degrees": 38.5766,
+      "longitude_degrees": -121.4944,
+      "zoom_level": 14,
+      "bearing_degrees": 0,
+      "pitch_degrees": 0,
+      "note": "The recorded golden camera: the Sacramento fixture neighborhood at its recorded zoom, north up, top down."
+    },
+    {
+      "id": "route-preview",
+      "label": "Route preview",
+      "latitude_degrees": 38.577235,
+      "longitude_degrees": -121.49405,
+      "zoom_level": 14,
+      "bearing_degrees": 30,
+      "pitch_degrees": 30,
+      "note": "Centers on the demo route polyline's bounding box at a tilted, bearing-rotated framing."
+    },
+    {
+      "id": "pitched-view",
+      "label": "Pitched view",
+      "latitude_degrees": 38.5766,
+      "longitude_degrees": -121.4944,
+      "zoom_level": 14,
+      "bearing_degrees": 0,
+      "pitch_degrees": 45,
+      "note": "The committed pitched golden camera."
+    }
+  ],
+  "overlay_scenes": {
+    "route": {
+      "label": "Route polyline",
+      "description": "A three-point polyline entering bottom-left, bent through the viewport center (Capitol Park), and leaving upper-right (the native overlay golden's route scene).",
+      "kind": "routePolyline",
+      "coordinates": [
+        {
+          "latitude_degrees": 38.573483,
+          "longitude_degrees": -121.5023
+        },
+        {
+          "latitude_degrees": 38.5766,
+          "longitude_degrees": -121.4944
+        },
+        {
+          "latitude_degrees": 38.580987,
+          "longitude_degrees": -121.4858
+        }
+      ]
+    },
+    "polygon": {
+      "label": "Polygon fill",
+      "description": "A rectangle ring spanning roughly the center third of the viewport (the native overlay golden's polygon scene).",
+      "kind": "filledPolygon",
+      "ring_coordinates": [
+        {
+          "latitude_degrees": 38.573483,
+          "longitude_degrees": -121.4987
+        },
+        {
+          "latitude_degrees": 38.573483,
+          "longitude_degrees": -121.4901
+        },
+        {
+          "latitude_degrees": 38.579717,
+          "longitude_degrees": -121.4901
+        },
+        {
+          "latitude_degrees": 38.579717,
+          "longitude_degrees": -121.4987
+        }
+      ]
+    },
+    "markers": {
+      "label": "Point markers",
+      "description": "Three anchor positions spread diagonally across the viewport (the native overlay golden's marker scene).",
+      "kind": "pointMarkers",
+      "positions": [
+        {
+          "latitude_degrees": 38.574984,
+          "longitude_degrees": -121.4971
+        },
+        {
+          "latitude_degrees": 38.5766,
+          "longitude_degrees": -121.4944
+        },
+        {
+          "latitude_degrees": 38.578216,
+          "longitude_degrees": -121.4917
+        }
+      ]
+    },
+    "traffic": {
+      "label": "Traffic flow",
+      "description": "One segment per congestion level: free-flowing, slow, congested, and blocked (the native overlay golden's traffic scene, along the downtown L Street corridor).",
+      "kind": "trafficFlow",
+      "segments": [
+        {
+          "shape_coordinates": [
+            {
+              "latitude_degrees": 38.579024,
+              "longitude_degrees": -121.5021
+            },
+            {
+              "latitude_degrees": 38.579024,
+              "longitude_degrees": -121.4871
+            }
+          ],
+          "congestion_level": "FreeFlow"
+        },
+        {
+          "shape_coordinates": [
+            {
+              "latitude_degrees": 38.574984,
+              "longitude_degrees": -121.5016
+            },
+            {
+              "latitude_degrees": 38.574984,
+              "longitude_degrees": -121.4876
+            }
+          ],
+          "congestion_level": "Slow"
+        },
+        {
+          "shape_coordinates": [
+            {
+              "latitude_degrees": 38.573252,
+              "longitude_degrees": -121.4951
+            },
+            {
+              "latitude_degrees": 38.580179,
+              "longitude_degrees": -121.4951
+            }
+          ],
+          "congestion_level": "Congested"
+        },
+        {
+          "shape_coordinates": [
+            {
+              "latitude_degrees": 38.573829,
+              "longitude_degrees": -121.4911
+            },
+            {
+              "latitude_degrees": 38.579602,
+              "longitude_degrees": -121.4911
+            }
+          ],
+          "congestion_level": "Blocked"
+        }
+      ]
+    }
+  },
+  "navigation_demo": {
+    "simulated_trace": {
+      "name": "sacramento_clean_walk",
+      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
+      "sample_interval_seconds": 5.0,
+      "provenance": "Deterministic synthetic trace generated at the California State Capitol, downtown Sacramento (38.5766, -121.4944) by map-navigation's trace_fixture generator; no live provider capture."
+    },
+    "wasm_seam_status": {
+      "available": false,
+      "reason": "The MapNavigationController is not exposed on the wasm seam yet; live simulated navigation arrives with the contract wave. Kotlin and Swift bind it today through the frozen UniFFI contract."
+    },
+    "layout_preview": {
+      "notice": "Layout preview with fixed sample values from the demo trace's first recorded state. Illustrative and explicitly not live guidance.",
+      "phase": "Navigating",
+      "active_maneuver": {
+        "distance_phrase_text": "250 m",
+        "display_text": "Turn left onto 15th Street"
+      },
+      "upcoming_maneuver": {
+        "display_text": "Turn right onto O Street"
+      },
+      "progress": {
+        "distance_to_next_maneuver_meters": 249.99999996506537,
+        "distance_remaining_meters": 799.9872079755606,
+        "duration_remaining_seconds": 399.9936039877803
+      },
+      "deviation_alert_preview": {
+        "status_change_kind": "OffRoute",
+        "text": "Off route entered — 12.4 m from the route line; guidance is frozen (deviation-alert styling sample)"
+      }
+    }
+  }
+}

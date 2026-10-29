@@ -1,0 +1,5 @@
+source_commit: dcb6da9fc9569be4612f80bfd68da72993991337
+dirty_tree: no
+generator: scripts/build-docs-site.sh (maps-sdk-rs)
+content_license: MIT OR Apache-2.0
+map_attribution: map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL)

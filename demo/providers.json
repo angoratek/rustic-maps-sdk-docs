@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "fixture_base_path": "/providers",
+  "providers": [
+    {
+      "provider_key": "mapquest",
+      "display_name": "MapQuest",
+      "credential_label": "API key",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — tile imagery © MapQuest",
+      "terms_note": "MapQuest terms apply: rate limits and a 30-day raster-tile caching ceiling.",
+      "settings_hint": "Create a key in the MapQuest developer console.",
+      "wasm_registration": "mapquest",
+      "fixture_routes": [
+        {
+          "purpose": "geocoding",
+          "method": "GET",
+          "path_pattern": "^geocoding/v1/address$",
+          "fixture": "fixtures/mapquest/geocode_address_city.json"
+        },
+        {
+          "purpose": "directions",
+          "method": "GET",
+          "path_pattern": "^directions/v2/route$",
+          "fixture": "fixtures/mapquest/directions_route_two_waypoints.json"
+        },
+        {
+          "purpose": "raster_tiles",
+          "method": "GET",
+          "path_pattern": "^tiles/v1/render/latest/[a-z0-9_-]+/(?<tile_zoom_level>\\d+)/(?<tile_x>\\d+)/(?<tile_y>\\d+)/(?<size_segment>256|256@2x)/(?<format>png|jpeg)$",
+          "fixture_kind": "tile_directory",
+          "fixture_directory": "crates/map-rendering/fixtures/render/tiles",
+          "image_format": "png",
+          "standard_size_segment": "256",
+          "retina_size_segment": "256@2x"
+        }
+      ]
+    }
+  ]
+}
