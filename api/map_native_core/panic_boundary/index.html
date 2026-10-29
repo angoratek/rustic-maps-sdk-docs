@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Panic containment at the FFI edges"><title>map_native_core::panic_boundary - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_native_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module panic_boundary</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../map_native_core/index.html">map_<wbr>native_<wbr>core</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module panic_<wbr>boundary</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#panic-containment-at-the-ffi-edges" title="Panic containment at the FFI edges">Panic containment at the FFI edges</a></li><li><a href="#what-uniffis-own-scaffolding-already-contains-verified-against-the" title="What UniFFI’s own scaffolding already contains (verified against the">What UniFFI’s own scaffolding already contains (verified against the</a></li><li><a href="#the-remaining-deliberate-panics-unreachable-internal-invariants" title="The remaining deliberate panics: unreachable internal invariants">The remaining deliberate panics: unreachable internal invariants</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate map_<wbr>native_<wbr>core</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">map_native_core</a></div><h1>Module <span>panic_<wbr>boundary</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/map_native_core/panic_boundary.rs.html#1-236">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="panic-containment-at-the-ffi-edges"><a class="doc-anchor" href="#panic-containment-at-the-ffi-edges">§</a>Panic containment at the FFI edges</h2>
+<p>The task of this module is one decision, written down once instead of
+forty times: what happens when a Rust panic reaches an FFI edge of this
+crate — and where the crate takes deliberate panics instead of hidden
+<code>unwrap</code>/<code>expect</code> calls.</p>
+<h2 id="what-uniffis-own-scaffolding-already-contains-verified-against-the"><a class="doc-anchor" href="#what-uniffis-own-scaffolding-already-contains-verified-against-the">§</a>What UniFFI’s own scaffolding already contains (verified against the</h2>
+<p>pinned <code>uniffi 0.32.2</code>)</p>
+<p>Every frame the foreign code enters goes through code UniFFI generated,
+and UniFFI generated it with a catch boundary already installed:</p>
+<ul>
+<li><strong>Exported synchronous frames</strong> (free functions, methods, constructors,
+object handle clone/free): the generated <code>extern "C"</code> wrapper bodies
+are <code>::uniffi::rust_call(call_status, || ...)</code> (the proc-macro
+scaffolding of the <code>export</code>/<code>export_for_udl</code> paths, <code>uniffi_macros</code>
+<code>export/scaffolding.rs</code> and <code>object.rs</code>), and <code>uniffi_core</code>‘s
+<code>ffi::rustcalls::rust_call_with_out_status</code> wraps that closure in
+<code>panic::catch_unwind</code>. A caught panic becomes the call’s
+<code>RustCallStatusCode::UnexpectedError</code> (an “unexpected error” status the
+foreign bindings report as an unspecified failure, not a typed
+<code>SdkError</code>), with the panic message lowered into the status’ error
+buffer; the message lowering itself runs inside a second,
+deliberately defensive <code>catch_unwind</code>.</li>
+<li><strong>Exported <code>[Async]</code> frames</strong>: the exported FFI function does not hand
+the future to the foreign executor; <code>rust_future_new</code> wraps it in
+<code>uniffi_core</code>’s <code>WrappedFuture</code>, whose every poll runs inside
+<code>try_rust_call</code> (with <code>AssertUnwindSafe</code>, because a panicked future is
+never polled again). A poll panic completes the future with the same
+unexpected-error status, so the foreign await <em>resolves</em> — the handback
+never tears — instead of the panic tearing through the executor.</li>
+<li><strong>The crate-owned runtime handback</strong> ([<code>crate::runtime::drive</code>]): a
+panic in the spawned work is deliberately resurfaced on the poller,
+which is exactly the frame the per-poll boundary above catches ([<code>crate::runtime::drive</code>]
+documents this pairing). A panicking fire-and-forget task
+([<code>crate::runtime::spawn_detached</code>]) never crosses any FFI edge at
+all: it dies on the crate-owned runtime’s worker thread.</li>
+<li><strong>Foreign callbacks invoked from Rust</strong> (the <code>[Trait, WithForeign]</code>
+contracts): a foreign implementation raising an exception (rather than
+throwing the contract’s <code>SdkError</code>) is not a Rust panic at all — the
+foreign vtable reports an unexpected status and <code>uniffi_core</code>’s
+<code>LiftReturn</code> machinery turns it into <code>UnexpectedUniFFICallbackError</code>,
+which panics the proxy call unless the contract’s error type converts
+it (<a href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError"><code>crate::error::SdkError</code></a> implements that <code>From</code>; see there). That
+panic, like every other panic inside an exported frame, is caught by
+the same scaffolding boundary. Callback contracts whose methods have no
+error channel (<code>NavigationStateEventListener</code>,
+<code>SdkDiagnosticEventListener</code>) can only take the panic route; that is
+fine for the same reason.</li>
+</ul>
+<p>So: <strong>no Rust panic can unwind into foreign code over UniFFI’s edges.</strong>
+Adding our own <code>catch_unwind</code> wrappers at the exported entry points would
+be redundant containment; mapping a caught internal panic onto a typed
+<code>SdkError</code> variant would be dishonest — every variant names a <em>cause</em>
+(<code>invalid render input</code>, <code>network request failed</code>, …) and none of them
+truthfully names “an internal invariant broke”. The scaffolding’s
+<code>UnexpectedError</code> status is the contract’s honest report for that. The
+one honest typing addition is
+<a href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError"><code>crate::error::SdkError</code></a>’s conversion of a foreign provider
+implementation’s unexpected failure, which today (without it) degrades
+through a panic into the same untyped unexpected error.</p>
+<h2 id="the-remaining-deliberate-panics-unreachable-internal-invariants"><a class="doc-anchor" href="#the-remaining-deliberate-panics-unreachable-internal-invariants">§</a>The remaining deliberate panics: unreachable internal invariants</h2>
+<p>A small class of failure modes in this crate cannot produce an <code>SdkError</code>
+without lying, and cannot happen without a bug in this crate’s own code:
+a mutex that is only ever held over documented panic-free regions is
+poisoned by an internal invariant breach, and an invariant whose value is
+provably established by validation a few lines earlier. For those, the
+helpers below take the panic out of the <code>unwrap</code>/<code>expect</code> shorthand and
+into a documented, named choice — a panic that the scaffolding boundary
+contains, so an internal bug degrades an <em>exported call</em> to an unexpected
+error instead of aborting the process or hiding behind a default value.</p>
+<p>The workspace clippy config denies <code>clippy::unwrap_used</code> and
+<code>clippy::expect_used</code> for the crate’s non-test build (see
+<code>lib.rs</code>); the helpers here hold the crate’s only justifications.</p>
+</div></details></section></div></main></body></html>

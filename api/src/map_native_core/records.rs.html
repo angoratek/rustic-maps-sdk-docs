@@ -2001,4 +2001,44 @@
 <a href=#2001 id=2001 data-nosnippet>2001</a>    <span class="doccomment">/// The one-line already-scrubbed message.
 <a href=#2002 id=2002 data-nosnippet>2002</a>    </span><span class="kw">pub </span>message_line: String,
 <a href=#2003 id=2003 data-nosnippet>2003</a>}
+<a href=#2004 id=2004 data-nosnippet>2004</a>
+<a href=#2005 id=2005 data-nosnippet>2005</a><span class="doccomment">/// Which shape of foreign provider failure a diagnostic captured. The two
+<a href=#2006 id=2006 data-nosnippet>2006</a>/// shapes follow the two ways a foreign implementation of a
+<a href=#2007 id=2007 data-nosnippet>2007</a>/// `[Trait, WithForeign]` provider contract can fail: typed (it threw one of
+<a href=#2008 id=2008 data-nosnippet>2008</a>/// the contract's `SdkError` variants) or unclassified (it failed without a
+<a href=#2009 id=2009 data-nosnippet>2009</a>/// mapped error, the round-11 conversion's subject).
+<a href=#2010 id=2010 data-nosnippet>2010</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+<a href=#2011 id=2011 data-nosnippet>2011</a></span><span class="kw">pub enum </span>ProviderFailureClassification {
+<a href=#2012 id=2012 data-nosnippet>2012</a>    <span class="doccomment">/// The foreign implementation failed without a mapped error (an
+<a href=#2013 id=2013 data-nosnippet>2013</a>    /// exception the contract does not spell): the failure text is the
+<a href=#2014 id=2014 data-nosnippet>2014</a>    /// uniffi callback machinery's verbatim reason for it.
+<a href=#2015 id=2015 data-nosnippet>2015</a>    </span>UnclassifiedCallbackFailure,
+<a href=#2016 id=2016 data-nosnippet>2016</a>    <span class="doccomment">/// The foreign implementation threw one of the contract's `SdkError`
+<a href=#2017 id=2017 data-nosnippet>2017</a>    /// variants, which round-trips typed through the seam: the failure text
+<a href=#2018 id=2018 data-nosnippet>2018</a>    /// is the thrown binding error's verbatim display form.
+<a href=#2019 id=2019 data-nosnippet>2019</a>    </span>MappedContractError,
+<a href=#2020 id=2020 data-nosnippet>2020</a>}
+<a href=#2021 id=2021 data-nosnippet>2021</a>
+<a href=#2022 id=2022 data-nosnippet>2022</a><span class="doccomment">/// One failed foreign-callback provider call, as retained in
+<a href=#2023 id=2023 data-nosnippet>2023</a>/// `MapSdk::latest_provider_failure_diagnostics`'s bounded per-object ring
+<a href=#2024 id=2024 data-nosnippet>2024</a>/// (round 12, the addition-only provider-failure diagnostic seam). Every
+<a href=#2025 id=2025 data-nosnippet>2025</a>/// field is knowable at the adapter boundary; no data is invented beyond it
+<a href=#2026 id=2026 data-nosnippet>2026</a>/// (see the UDL seam section for the honest classification limitation).
+<a href=#2027 id=2027 data-nosnippet>2027</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
+<a href=#2028 id=2028 data-nosnippet>2028</a></span><span class="kw">pub struct </span>ProviderFailureDiagnostic {
+<a href=#2029 id=2029 data-nosnippet>2029</a>    <span class="doccomment">/// Wall-clock milliseconds since the Unix epoch, as the seam recorded
+<a href=#2030 id=2030 data-nosnippet>2030</a>    /// the failure.
+<a href=#2031 id=2031 data-nosnippet>2031</a>    </span><span class="kw">pub </span>timestamp_milliseconds_since_epoch: u64,
+<a href=#2032 id=2032 data-nosnippet>2032</a>    <span class="doccomment">/// Which failure shape this entry captured.
+<a href=#2033 id=2033 data-nosnippet>2033</a>    </span><span class="kw">pub </span>failure_classification: ProviderFailureClassification,
+<a href=#2034 id=2034 data-nosnippet>2034</a>    <span class="doccomment">/// The provider contract the foreign code implements, e.g.
+<a href=#2035 id=2035 data-nosnippet>2035</a>    /// `GeocodingProvider`.
+<a href=#2036 id=2036 data-nosnippet>2036</a>    </span><span class="kw">pub </span>provider_contract_name: String,
+<a href=#2037 id=2037 data-nosnippet>2037</a>    <span class="doccomment">/// The contract method whose call failed, e.g. `forward_geocode`.
+<a href=#2038 id=2038 data-nosnippet>2038</a>    </span><span class="kw">pub </span>provider_method_name: String,
+<a href=#2039 id=2039 data-nosnippet>2039</a>    <span class="doccomment">/// The verbatim failure text: the uniffi callback machinery's reason for
+<a href=#2040 id=2040 data-nosnippet>2040</a>    /// the unclassified shape, or the thrown binding error's display form
+<a href=#2041 id=2041 data-nosnippet>2041</a>    /// for the mapped shape.
+<a href=#2042 id=2042 data-nosnippet>2042</a>    </span><span class="kw">pub </span>failure_detail: String,
+<a href=#2043 id=2043 data-nosnippet>2043</a>}
 </code></pre></div></section></main></body></html>

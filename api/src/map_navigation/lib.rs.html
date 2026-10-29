@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/map-navigation/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_navigation" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">map_navigation/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Turn-by-turn navigation: a pure-functional state machine
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/map-navigation/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="map_navigation" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0 (b940084d7 2026-09-28)" data-channel="1.99.0" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">map_navigation/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Turn-by-turn navigation: a pure-functional state machine
 <a href=#2 id=2 data-nosnippet>2</a>//! (`Navigating ⇄ OffRoute → Arrived`, rerouting via explicit route-swap
 <a href=#3 id=3 data-nosnippet>3</a>//! events), route-progress snapping, pluggable step-advance conditions
 <a href=#4 id=4 data-nosnippet>4</a>//! (including Or/And combinators), and deviation detection.
@@ -13,70 +13,91 @@
 <a href=#13 id=13 data-nosnippet>13</a>//! consumes, and per-topic observers with explicit subscription cancellation
 <a href=#14 id=14 data-nosnippet>14</a>//! ([`observer`]) deliver it Mapbox-style. The reroute-recalculation
 <a href=#15 id=15 data-nosnippet>15</a>//! hysteresis ([`reroute`]) gates the recalculation signals a fully
-<a href=#16 id=16 data-nosnippet>16</a>//! off-route excursion raises (Ferrostar's mechanism). Programmatic step
-<a href=#17 id=17 data-nosnippet>17</a>//! advance and the foreign-wiring of the listener surface into the frozen
-<a href=#18 id=18 data-nosnippet>18</a>//! UDL contract remain later slices.
-<a href=#19 id=19 data-nosnippet>19</a>//!
-<a href=#20 id=20 data-nosnippet>20</a>//! Implemented in milestone M6 (online) per PLAN.md; offline navigation lands
-<a href=#21 id=21 data-nosnippet>21</a>//! in M7.
-<a href=#22 id=22 data-nosnippet>22</a>
-<a href=#23 id=23 data-nosnippet>23</a></span><span class="kw">pub mod </span>deviation;
-<a href=#24 id=24 data-nosnippet>24</a><span class="kw">pub mod </span>geometry;
-<a href=#25 id=25 data-nosnippet>25</a><span class="kw">pub mod </span>instruction;
-<a href=#26 id=26 data-nosnippet>26</a><span class="kw">pub mod </span>location;
-<a href=#27 id=27 data-nosnippet>27</a><span class="kw">pub mod </span>observer;
-<a href=#28 id=28 data-nosnippet>28</a><span class="kw">pub mod </span>reducer;
-<a href=#29 id=29 data-nosnippet>29</a><span class="kw">pub mod </span>reroute;
-<a href=#30 id=30 data-nosnippet>30</a><span class="kw">pub mod </span>speech;
-<a href=#31 id=31 data-nosnippet>31</a><span class="kw">pub mod </span>state;
-<a href=#32 id=32 data-nosnippet>32</a><span class="kw">pub mod </span>step_advance;
-<a href=#33 id=33 data-nosnippet>33</a>
-<a href=#34 id=34 data-nosnippet>34</a><span class="kw">pub use </span>deviation::{
-<a href=#35 id=35 data-nosnippet>35</a>    DEFAULT_DEVIATION_DISTANCE_THRESHOLD_METERS, DeviationDetectionInputs, DeviationDetector,
-<a href=#36 id=36 data-nosnippet>36</a>    DeviationStatus, DistanceDeviationDetector,
-<a href=#37 id=37 data-nosnippet>37</a>};
-<a href=#38 id=38 data-nosnippet>38</a><span class="kw">pub use </span>geometry::{PolylineSnap, snap_coordinate_to_polyline};
-<a href=#39 id=39 data-nosnippet>39</a><span class="kw">pub use </span>instruction::{
-<a href=#40 id=40 data-nosnippet>40</a>    ActiveManeuverInstruction, DistancePhrase, DistanceUnit, ManeuverInstructionText,
-<a href=#41 id=41 data-nosnippet>41</a>    NavigationInstruction, UpcomingManeuverInstruction, compose_navigation_instructions,
-<a href=#42 id=42 data-nosnippet>42</a>};
-<a href=#43 id=43 data-nosnippet>43</a><span class="kw">pub use </span>location::NavigationLocationUpdate;
-<a href=#44 id=44 data-nosnippet>44</a><span class="kw">pub use </span>observer::{
-<a href=#45 id=45 data-nosnippet>45</a>    DeviationStatusChange, NavigationDispatchOutcome, NavigationPhaseChange,
-<a href=#46 id=46 data-nosnippet>46</a>    NavigationStateBroadcaster, NavigationStateChangeListener, TopicSubscription,
-<a href=#47 id=47 data-nosnippet>47</a>};
-<a href=#48 id=48 data-nosnippet>48</a><span class="kw">pub use </span>reducer::{
-<a href=#49 id=49 data-nosnippet>49</a>    MAXIMUM_STEP_ADVANCES_PER_FIX, NavigationEvent, NavigationSession, reduce_navigation_event,
-<a href=#50 id=50 data-nosnippet>50</a>};
-<a href=#51 id=51 data-nosnippet>51</a><span class="kw">pub use </span>reroute::{
-<a href=#52 id=52 data-nosnippet>52</a>    DEFAULT_REROUTE_RECALCULATION_COOLDOWN_SECONDS, DEFAULT_REROUTE_RECALCULATION_MOVEMENT_METERS,
-<a href=#53 id=53 data-nosnippet>53</a>    ReroutePolicy, RerouteRecalculationGate,
+<a href=#16 id=16 data-nosnippet>16</a>//! off-route excursion raises (Ferrostar's mechanism), an opt-in bounded
+<a href=#17 id=17 data-nosnippet>17</a>//! [`recorder`] captures the fix and state-change stream for debugging,
+<a href=#18 id=18 data-nosnippet>18</a>//! and step advance inside the arrival window consults a separately
+<a href=#19 id=19 data-nosnippet>19</a>//! configured arrival condition when a trip carries one ([`reducer`]).
+<a href=#20 id=20 data-nosnippet>20</a>//! Programmatic step advance and the foreign-wiring of the listener
+<a href=#21 id=21 data-nosnippet>21</a>//! surface into the frozen UDL contract remain later slices.
+<a href=#22 id=22 data-nosnippet>22</a>//!
+<a href=#23 id=23 data-nosnippet>23</a>//! Implemented in milestone M6 (online) per PLAN.md; offline navigation lands
+<a href=#24 id=24 data-nosnippet>24</a>//! in M7.
+<a href=#25 id=25 data-nosnippet>25</a>
+<a href=#26 id=26 data-nosnippet>26</a></span><span class="comment">// The reducer and observer code runs inside map-native-core's exported FFI
+<a href=#27 id=27 data-nosnippet>27</a>// frames, so the no-`unwrap`/`expect` policy of the FFI edge applies here
+<a href=#28 id=28 data-nosnippet>28</a>// too (its `panic_boundary` module documents the scaffolding containment
+<a href=#29 id=29 data-nosnippet>29</a>// these invariants lean on). The deny is lifted for the test builds (this
+<a href=#30 id=30 data-nosnippet>30</a>// crate's test modules, compiled with `cfg(test)`), where the assertion
+<a href=#31 id=31 data-nosnippet>31</a>// shorthands are honest; the deliberately panic-expressing sites that
+<a href=#32 id=32 data-nosnippet>32</a>// remain (the poisoned-lock guard asserts in the broadcaster and the
+<a href=#33 id=33 data-nosnippet>33</a>// recorder, and the reducer's current-step invariant) carry their
+<a href=#34 id=34 data-nosnippet>34</a>// justifications inline.
+<a href=#35 id=35 data-nosnippet>35</a></span><span class="attr">#![cfg_attr(not(test), deny(clippy::expect_used, clippy::unwrap_used))]
+<a href=#36 id=36 data-nosnippet>36</a>
+<a href=#37 id=37 data-nosnippet>37</a></span><span class="kw">pub mod </span>course_filtering;
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">pub mod </span>deviation;
+<a href=#39 id=39 data-nosnippet>39</a><span class="kw">pub mod </span>geometry;
+<a href=#40 id=40 data-nosnippet>40</a><span class="kw">pub mod </span>instruction;
+<a href=#41 id=41 data-nosnippet>41</a><span class="kw">pub mod </span>location;
+<a href=#42 id=42 data-nosnippet>42</a><span class="kw">pub mod </span>observer;
+<a href=#43 id=43 data-nosnippet>43</a><span class="kw">pub mod </span>recorder;
+<a href=#44 id=44 data-nosnippet>44</a><span class="kw">pub mod </span>reducer;
+<a href=#45 id=45 data-nosnippet>45</a><span class="kw">pub mod </span>reroute;
+<a href=#46 id=46 data-nosnippet>46</a><span class="kw">pub mod </span>speech;
+<a href=#47 id=47 data-nosnippet>47</a><span class="kw">pub mod </span>state;
+<a href=#48 id=48 data-nosnippet>48</a><span class="kw">pub mod </span>step_advance;
+<a href=#49 id=49 data-nosnippet>49</a>
+<a href=#50 id=50 data-nosnippet>50</a><span class="kw">pub use </span>course_filtering::{CourseFiltering, effective_course_heading_degrees};
+<a href=#51 id=51 data-nosnippet>51</a><span class="kw">pub use </span>deviation::{
+<a href=#52 id=52 data-nosnippet>52</a>    DEFAULT_DEVIATION_DISTANCE_THRESHOLD_METERS, DeviationDetectionInputs, DeviationDetector,
+<a href=#53 id=53 data-nosnippet>53</a>    DeviationStatus, DistanceDeviationDetector,
 <a href=#54 id=54 data-nosnippet>54</a>};
-<a href=#55 id=55 data-nosnippet>55</a><span class="kw">pub use </span>speech::{
-<a href=#56 id=56 data-nosnippet>56</a>    MINIMUM_INTER_UTTERANCE_SPACING_SECONDS, MINIMUM_UTTERANCE_REPEAT_DISTANCE_METERS,
-<a href=#57 id=57 data-nosnippet>57</a>    SpeechInstructionPlanner, SpeechUtterance, SpeechUtteranceKind,
-<a href=#58 id=58 data-nosnippet>58</a>};
-<a href=#59 id=59 data-nosnippet>59</a><span class="kw">pub use </span>state::{
-<a href=#60 id=60 data-nosnippet>60</a>    DeviationGrade, DeviationInfo, NavigationPhase, RouteStepPosition, TripNavigationState,
-<a href=#61 id=61 data-nosnippet>61</a>    TripProgress,
-<a href=#62 id=62 data-nosnippet>62</a>};
-<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub use </span>step_advance::{
-<a href=#64 id=64 data-nosnippet>64</a>    AndStepAdvanceCondition, DEFAULT_DISTANCE_FROM_STEP_THRESHOLD_METERS,
-<a href=#65 id=65 data-nosnippet>65</a>    DEFAULT_DISTANCE_TO_END_OF_STEP_THRESHOLD_METERS, DEFAULT_MINIMUM_HORIZONTAL_ACCURACY_METERS,
-<a href=#66 id=66 data-nosnippet>66</a>    DistanceFromStepCondition, DistanceToEndOfStepCondition, ManualStepAdvanceCondition,
-<a href=#67 id=67 data-nosnippet>67</a>    OrStepAdvanceCondition, StepAdvanceCondition, StepAdvanceDecision, StepAdvanceInputs,
+<a href=#55 id=55 data-nosnippet>55</a><span class="kw">pub use </span>geometry::{PolylineSnap, snap_coordinate_to_polyline};
+<a href=#56 id=56 data-nosnippet>56</a><span class="kw">pub use </span>instruction::{
+<a href=#57 id=57 data-nosnippet>57</a>    ActiveManeuverInstruction, DistancePhrase, DistanceUnit, ManeuverInstructionText,
+<a href=#58 id=58 data-nosnippet>58</a>    NavigationInstruction, UpcomingManeuverInstruction, compose_navigation_instructions,
+<a href=#59 id=59 data-nosnippet>59</a>};
+<a href=#60 id=60 data-nosnippet>60</a><span class="kw">pub use </span>location::NavigationLocationUpdate;
+<a href=#61 id=61 data-nosnippet>61</a><span class="kw">pub use </span>observer::{
+<a href=#62 id=62 data-nosnippet>62</a>    DeviationStatusChange, NavigationDispatchOutcome, NavigationPhaseChange,
+<a href=#63 id=63 data-nosnippet>63</a>    NavigationStateBroadcaster, NavigationStateChangeListener, TopicSubscription,
+<a href=#64 id=64 data-nosnippet>64</a>};
+<a href=#65 id=65 data-nosnippet>65</a><span class="kw">pub use </span>recorder::{
+<a href=#66 id=66 data-nosnippet>66</a>    DEFAULT_NAVIGATION_RECORDER_CAPACITY, NavigationRecordedEvent, NavigationRecorder,
+<a href=#67 id=67 data-nosnippet>67</a>    NavigationRecordingEntry,
 <a href=#68 id=68 data-nosnippet>68</a>};
-<a href=#69 id=69 data-nosnippet>69</a>
-<a href=#70 id=70 data-nosnippet>70</a><span class="doccomment">/// Recorded GPS-trace fixtures and their deterministic generator; the loader
-<a href=#71 id=71 data-nosnippet>71</a>/// and the regeneration seam of the end-to-end replay tests. Test-only.
-<a href=#72 id=72 data-nosnippet>72</a></span><span class="attr">#[cfg(test)]
-<a href=#73 id=73 data-nosnippet>73</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>trace_fixture;
-<a href=#74 id=74 data-nosnippet>74</a><span class="doccomment">/// End-to-end navigation replay tests over [`trace_fixture`] traces: the full
-<a href=#75 id=75 data-nosnippet>75</a>/// reducer + deviation + reroute + instruction + observer pipeline driven by
-<a href=#76 id=76 data-nosnippet>76</a>/// the committed fixtures at their recorded timing. Test-only.
-<a href=#77 id=77 data-nosnippet>77</a></span><span class="attr">#[cfg(test)]
-<a href=#78 id=78 data-nosnippet>78</a></span><span class="kw">mod </span>trace_replay_tests;
-<a href=#79 id=79 data-nosnippet>79</a>
-<a href=#80 id=80 data-nosnippet>80</a><span class="attr">#[cfg(test)]
-<a href=#81 id=81 data-nosnippet>81</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>test_support;
+<a href=#69 id=69 data-nosnippet>69</a><span class="kw">pub use </span>reducer::{
+<a href=#70 id=70 data-nosnippet>70</a>    MAXIMUM_STEP_ADVANCES_PER_FIX, NavigationEvent, NavigationSession, reduce_navigation_event,
+<a href=#71 id=71 data-nosnippet>71</a>};
+<a href=#72 id=72 data-nosnippet>72</a><span class="kw">pub use </span>reroute::{
+<a href=#73 id=73 data-nosnippet>73</a>    DEFAULT_REROUTE_RECALCULATION_COOLDOWN_SECONDS, DEFAULT_REROUTE_RECALCULATION_MOVEMENT_METERS,
+<a href=#74 id=74 data-nosnippet>74</a>    ReroutePolicy, RerouteRecalculationGate,
+<a href=#75 id=75 data-nosnippet>75</a>};
+<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub use </span>speech::{
+<a href=#77 id=77 data-nosnippet>77</a>    MINIMUM_INTER_UTTERANCE_SPACING_SECONDS, MINIMUM_UTTERANCE_REPEAT_DISTANCE_METERS,
+<a href=#78 id=78 data-nosnippet>78</a>    SpeechInstructionPlanner, SpeechUtterance, SpeechUtteranceKind,
+<a href=#79 id=79 data-nosnippet>79</a>};
+<a href=#80 id=80 data-nosnippet>80</a><span class="kw">pub use </span>state::{
+<a href=#81 id=81 data-nosnippet>81</a>    DeviationGrade, DeviationInfo, NavigationPhase, RouteStepPosition, TripNavigationState,
+<a href=#82 id=82 data-nosnippet>82</a>    TripProgress,
+<a href=#83 id=83 data-nosnippet>83</a>};
+<a href=#84 id=84 data-nosnippet>84</a><span class="kw">pub use </span>step_advance::{
+<a href=#85 id=85 data-nosnippet>85</a>    AndStepAdvanceCondition, DEFAULT_DISTANCE_FROM_STEP_THRESHOLD_METERS,
+<a href=#86 id=86 data-nosnippet>86</a>    DEFAULT_DISTANCE_TO_END_OF_STEP_THRESHOLD_METERS, DEFAULT_MINIMUM_HORIZONTAL_ACCURACY_METERS,
+<a href=#87 id=87 data-nosnippet>87</a>    DistanceFromStepCondition, DistanceToEndOfStepCondition, ManualStepAdvanceCondition,
+<a href=#88 id=88 data-nosnippet>88</a>    OrStepAdvanceCondition, StepAdvanceCondition, StepAdvanceDecision, StepAdvanceInputs,
+<a href=#89 id=89 data-nosnippet>89</a>};
+<a href=#90 id=90 data-nosnippet>90</a>
+<a href=#91 id=91 data-nosnippet>91</a><span class="doccomment">/// Recorded GPS-trace fixtures and their deterministic generator; the loader
+<a href=#92 id=92 data-nosnippet>92</a>/// and the regeneration seam of the end-to-end replay tests. Test-only.
+<a href=#93 id=93 data-nosnippet>93</a></span><span class="attr">#[cfg(test)]
+<a href=#94 id=94 data-nosnippet>94</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>trace_fixture;
+<a href=#95 id=95 data-nosnippet>95</a><span class="doccomment">/// End-to-end navigation replay tests over [`trace_fixture`] traces: the full
+<a href=#96 id=96 data-nosnippet>96</a>/// reducer + deviation + reroute + instruction + observer pipeline driven by
+<a href=#97 id=97 data-nosnippet>97</a>/// the committed fixtures at their recorded timing. Test-only.
+<a href=#98 id=98 data-nosnippet>98</a></span><span class="attr">#[cfg(test)]
+<a href=#99 id=99 data-nosnippet>99</a></span><span class="kw">mod </span>trace_replay_tests;
+<a href=#100 id=100 data-nosnippet>100</a>
+<a href=#101 id=101 data-nosnippet>101</a><span class="attr">#[cfg(test)]
+<a href=#102 id=102 data-nosnippet>102</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>test_support;
 </code></pre></div></section></main></body></html>

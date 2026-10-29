@@ -1,9 +1,9 @@
 (function() {
-    const implementors = Object.fromEntries([["geospatial_traits",[]],["map_cache",[["impl <a class=\"trait\" href=\"geospatial_traits/trait.RoutingProvider.html\" title=\"trait geospatial_traits::RoutingProvider\">RoutingProvider</a> for <a class=\"struct\" href=\"map_cache/cached_providers/struct.CachedRoutingProvider.html\" title=\"struct map_cache::cached_providers::CachedRoutingProvider\">CachedRoutingProvider</a>",0]]],["mapquest_provider",[["impl <a class=\"trait\" href=\"geospatial_traits/trait.RoutingProvider.html\" title=\"trait geospatial_traits::RoutingProvider\">RoutingProvider</a> for <a class=\"struct\" href=\"mapquest_provider/directions/struct.MapQuestRoutingProvider.html\" title=\"struct mapquest_provider::directions::MapQuestRoutingProvider\">MapQuestRoutingProvider</a>",0]]]]);
+    const implementors = Object.fromEntries([["geospatial_traits",[]],["map_cache",[["impl <a class=\"trait\" href=\"geospatial_traits/trait.RoutingProvider.html\" title=\"trait geospatial_traits::RoutingProvider\">RoutingProvider</a> for <a class=\"struct\" href=\"map_cache/cached_providers/struct.CachedRoutingProvider.html\" title=\"struct map_cache::cached_providers::CachedRoutingProvider\">CachedRoutingProvider</a>",0]]],["map_core",[["impl <a class=\"trait\" href=\"geospatial_traits/trait.RoutingProvider.html\" title=\"trait geospatial_traits::RoutingProvider\">RoutingProvider</a> for <a class=\"struct\" href=\"map_core/routing_fallback/struct.OfflineFallbackRoutingProvider.html\" title=\"struct map_core::routing_fallback::OfflineFallbackRoutingProvider\">OfflineFallbackRoutingProvider</a>",0]]],["mapquest_provider",[["impl <a class=\"trait\" href=\"geospatial_traits/trait.RoutingProvider.html\" title=\"trait geospatial_traits::RoutingProvider\">RoutingProvider</a> for <a class=\"struct\" href=\"mapquest_provider/directions/struct.MapQuestRoutingProvider.html\" title=\"struct mapquest_provider::directions::MapQuestRoutingProvider\">MapQuestRoutingProvider</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":59,"fragment_lengths":[24,359,377]}
+//{"start":59,"fragment_lengths":[24,359,383,377]}

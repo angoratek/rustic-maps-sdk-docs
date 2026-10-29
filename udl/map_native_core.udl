@@ -20,6 +20,13 @@
 // / `raster_tile_cache_terms` pair over the installed tile cache (byte
 // budget stays registration-time through the frozen registration method).
 //
+// Round 12 (owner ruling of 2026-10-29) adds the provider-failure diagnostic
+// seam additively: the `ProviderFailureClassification` enum and the
+// `ProviderFailureDiagnostic` record, plus the
+// `MapSdk::latest_provider_failure_diagnostics` readback over the bounded
+// per-object ring the foreign-callback provider adapters write when a
+// foreign-implemented provider contract call fails.
+//
 // This file is the single source of truth for the native binding surface
 // (Kotlin, Swift, and React Native via `uniffi-bindgen-react-native`; PRD §6,
 // decision 1). The hand-reviewed wasm surface in `crate map-web-bindings`
@@ -721,6 +728,23 @@ interface MapSdk {
     /// nothing is removed from the ring, so a later flush can redeliver. The
     /// flush is bounded and synchronous: a listener must not block on it.
     u32 flush_recent_diagnostic_events(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity, u32 maximum_count);
+
+    /// Round-12 provider-failure diagnostic seam (addition-only): reads the
+    /// retained diagnostics of every failed foreign-callback provider call
+    /// this object has served — the failures foreign implementations of the
+    /// `[Trait, WithForeign]` provider contracts threw, both the typed ones
+    /// (the foreign code threw one of the contract's `SdkError` variants) and
+    /// the unclassified ones (the foreign code failed without a mapped
+    /// error). Returns the ring's retained entries oldest first, in
+    /// recency-bounded order: the ring keeps the last
+    /// `PROVIDER_FAILURE_DIAGNOSTIC_RING_CAPACITY` failures and drops the
+    /// oldest beyond it, and reading is non-destructive. Read-only: the
+    /// readback never records anything and never clears the ring. See
+    /// `ProviderFailureDiagnostic` for what an entry carries; the frozen
+    /// `SdkError` variants are untouched — failures still surface typed at
+    /// the throwing call, and this seam only adds where they can be
+    /// classified after the fact.
+    sequence<ProviderFailureDiagnostic> latest_provider_failure_diagnostics();
 };
 
 // ---------------------------------------------------------------------------
@@ -1594,4 +1618,65 @@ dictionary DiagnosticLogEvent {
 interface SdkDiagnosticEventListener {
     /// Receives one structured event (severity-gated at the subscription).
     void on_diagnostic_event(DiagnosticLogEvent event);
+};
+
+// ---------------------------------------------------------------------------
+// Round-12 provider-failure diagnostics (addition-only; the owner ruling of
+// 2026-10-29 on unclassified foreign provider failures). Foreign
+// implementations of the `[Trait, WithForeign]` provider contracts fail in
+// two shapes: the typed shape (the foreign code threw one of the contract's
+// `SdkError` variants, which round-trips one-to-one) and the unclassified
+// shape (the foreign code failed some other way, which the Rust conversion
+// reports under `ProviderRequestRejected` with its verbatim reason — the
+// honest but thin detail the seam exists for). Every failed foreign-callback
+// provider call is recorded on the seam with the contract and the callback
+// method it occurred on, a timestamp, the classification, and the verbatim
+// failure text; `MapSdk::latest_provider_failure_diagnostics` reads the
+// bounded ring back.
+//
+// Honest limitation of the classification: the unclassified shape is
+// recognized by the unclassified-callback conversion's verbatim detail text
+// (one Rust-side constant shared by the conversion and the adapter-side
+// classifier), so a foreign implementation that itself throws
+// `ProviderRequestRejected` carrying exactly that conversion phrasing is
+// indistinguishable and lands as unclassified. Richer typed payloads (a
+// provider status code, a retriable flag) would need a channel the frozen
+// provider traits cannot carry without a contract change; until one exists
+// the foreign side's only input to the seam is the failure text it throws,
+// which the entries carry verbatim — no data is parsed or invented.
+// ---------------------------------------------------------------------------
+
+/// Which shape of foreign provider failure a diagnostic captured
+/// (`ProviderFailureDiagnostic::failure_classification`).
+enum ProviderFailureClassification {
+    /// The foreign implementation failed without a mapped error (an
+    /// exception the contract does not spell): the failure text is the
+    /// uniffi callback machinery's verbatim reason for it.
+    "UnclassifiedCallbackFailure",
+    /// The foreign implementation threw one of the contract's `SdkError`
+    /// variants, which round-trips typed through the seam: the failure text
+    /// is the thrown binding error's verbatim display form.
+    "MappedContractError",
+};
+
+/// One failed foreign-callback provider call, as retained in
+/// `MapSdk::latest_provider_failure_diagnostics`'s bounded per-object ring.
+/// Everything carried here is knowable at the adapter boundary that bridges
+/// the foreign implementation onto the native provider registry; no data is
+/// invented beyond it.
+dictionary ProviderFailureDiagnostic {
+    /// Wall-clock milliseconds since the Unix epoch, as the seam recorded
+    /// the failure.
+    u64 timestamp_milliseconds_since_epoch;
+    /// Which failure shape this entry captured.
+    ProviderFailureClassification failure_classification;
+    /// The provider contract the foreign code implements, e.g.
+    /// `GeocodingProvider`.
+    string provider_contract_name;
+    /// The contract method whose call failed, e.g. `forward_geocode`.
+    string provider_method_name;
+    /// The verbatim failure text: the uniffi callback machinery's reason for
+    /// the unclassified shape, or the thrown binding error's display form
+    /// for the mapped shape.
+    string failure_detail;
 };
