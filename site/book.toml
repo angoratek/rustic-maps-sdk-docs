@@ -1,0 +1,21 @@
+# mdBook configuration for the public documentation site.
+#
+# These site sources are the rebuildable form of the published book: they are
+# seeded into the `site/` directory of the public `rustic-maps-sdk-docs`
+# repository's `main` branch when the repo is created (owner action); the
+# private repo's `scripts/build-docs-site.sh` reads them from here until then.
+# Book chapters are composed at build time from the workspace's own documents
+# (README, docs/*.md, the generated third-party notices) by that script.
+
+[book]
+title = "Rustic Maps SDK"
+description = "A native map SDK in Rust with UniFFI bindings for Android, iOS and React Native, and a first-class WebAssembly target."
+authors = []
+src = "book-src"
+
+[build]
+create-missing = false
+
+[output.html]
+default-theme = "dark"
+preferred-dark-theme = "navy"
