@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" class="dark sidebar-visible" dir="ltr">
+<html lang="en" class="coal sidebar-visible" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -28,17 +28,18 @@
         <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="additional-css/product-docs-593a0290.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
             const path_to_root = "";
-            const default_light_theme = "dark";
+            const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a4b82ee8.js";
+            window.path_to_searchindex_js = "searchindex-83cfa99b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-c33f3fb9.js"></script>
+        <script src="toc-d9eadc08.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -76,7 +77,7 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             const html = document.documentElement;
-            html.classList.remove('dark')
+            html.classList.remove('coal')
             html.classList.add(theme);
             html.classList.add("js");
         </script>
@@ -226,6 +227,10 @@ and derives turn maneuvers (left/right/slight/sharp/U-turn) from the
 geometry’s bearing change; its texts stay honest where the archive
 carries no street names. A routing decorator retries over the offline
 graph when the primary (online) provider fails.</li>
+<li>The same graph runs in the browser: the wasm surface loads the compiled
+archive from in-memory bytes and answers the same route-shaped objects
+and typed refusals, so offline routing behavior is regression-tested in
+a plain browser run.</li>
 </ul>
 <h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
 <ul>
@@ -270,6 +275,37 @@ my-location, 2D/3D, compass), a follow camera, an offline tile-cache
 card, and a readiness-chip diagnostics readout. The web surface
 reaches reference-app parity with the native demos.</li>
 </ul>
+<h2 id="vector-tiles"><a class="header" href="#vector-tiles">Vector tiles</a></h2>
+<ul>
+<li>A Mapbox Vector Tile v2.1 decoder turns fetched tiles into layers,
+features and geometries with typed errors on every malformed path. A
+data-only style pass maps decoded layers into the renderer’s fill,
+polyline and point overlays (an optional one-attribute text filter is
+supported). The OpenStreetMap US Sourdough tileset is the first
+vector-tile provider, with attribution and terms carried by its
+source descriptor.</li>
+</ul>
+<h2 id="provider-credentials"><a class="header" href="#provider-credentials">Provider credentials</a></h2>
+<ul>
+<li>The reference applications never embed a provider key in a build.
+They start keyless and take credentials at runtime from a settings
+surface whose rows come from one shared provider registry; keys stay
+in memory unless the user opts in to device secure storage (Keychain
+or Android Keystore). Automated UI runs can inject a credential through
+a launch intent/environment; it is never persisted or logged.</li>
+</ul>
+<h2 id="releases-and-the-live-demo"><a class="header" href="#releases-and-the-live-demo">Releases and the live demo</a></h2>
+<ul>
+<li>A tag-driven release pipeline runs the gate set on the tagged tree,
+builds the Android AAR, the iOS XCFramework archive and the wasm
+package, and assembles a draft GitHub Release with an exact asset-set
+check, SHA-256 sidecars and manifest, keyless Sigstore signature
+bundles, regenerated third-party notices and changelog-derived notes.</li>
+<li>The same WebAssembly build powers a live, keyless demo at this site’s
+<code>/demo</code> path. Its provider panel can take a runtime key for live
+geocoding, routing and tile probes; the static demo defaults to the
+recorded fixture data.</li>
+</ul>
 <h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
 <ul>
 <li>A <code>tracing</code>-facade diagnostics layer provides bounded, per-subsystem
@@ -282,7 +318,10 @@ a wasm-targeted clippy closure, a browser e2e suite, and the
 documentation-site pipeline (build → scrub → stage) on every push.</li>
 </ul>
 <h2 id="attribution"><a class="header" href="#attribution">Attribution</a></h2>
-<p>Map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL).
+<p>Each provider descriptor carries its own attribution line, and the
+reference applications render it from the shared registry. The bundled
+demo currently shows MapQuest imagery and OpenStreetMap data:
+map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL).
 Third-party dependency notices are regenerated into <a href="third-party-notices.html">their
 chapter</a>.</p>
 
@@ -290,10 +329,13 @@ chapter</a>.</p>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="third-party-notices.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="versions-and-support.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="faq.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -301,10 +343,13 @@ chapter</a>.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="third-party-notices.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="versions-and-support.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="faq.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>
@@ -331,6 +376,7 @@ chapter</a>.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="additional-js/platform-tabs-48da3f42.js"></script>
 
 
 

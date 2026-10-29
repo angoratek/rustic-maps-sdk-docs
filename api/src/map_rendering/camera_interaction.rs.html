@@ -255,11 +255,11 @@
 <a href=#255 id=255 data-nosnippet>255</a>    <span class="doccomment">/// Headroom for bearing wrap arithmetic on the rotate answers.
 <a href=#256 id=256 data-nosnippet>256</a>    </span><span class="kw">const </span>BEARING_DEGREES_TOLERANCE: f64 = <span class="number">1e-9</span>;
 <a href=#257 id=257 data-nosnippet>257</a>
-<a href=#258 id=258 data-nosnippet>258</a>    <span class="doccomment">/// The fixture camera: the recorded Zurich neighborhood at the
+<a href=#258 id=258 data-nosnippet>258</a>    <span class="doccomment">/// The fixture camera: the recorded Sacramento neighborhood at the
 <a href=#259 id=259 data-nosnippet>259</a>    /// playground's initial zoom, pitched and turned so the corrections run
 <a href=#260 id=260 data-nosnippet>260</a>    /// under a real perspective, not only top-down.
 <a href=#261 id=261 data-nosnippet>261</a>    </span><span class="kw">fn </span>fixture_camera() -&gt; MapCamera {
-<a href=#262 id=262 data-nosnippet>262</a>        MapCamera::new(coordinate(<span class="number">47.3769</span>, <span class="number">8.5417</span>), <span class="number">14.0</span>, <span class="number">25.0</span>, <span class="number">30.0</span>)
+<a href=#262 id=262 data-nosnippet>262</a>        MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">25.0</span>, <span class="number">30.0</span>)
 <a href=#263 id=263 data-nosnippet>263</a>    }
 <a href=#264 id=264 data-nosnippet>264</a>
 <a href=#265 id=265 data-nosnippet>265</a>    <span class="doccomment">/// The focal pixel of the shared tests: a quarter of the viewport in
@@ -361,7 +361,7 @@
 <a href=#361 id=361 data-nosnippet>361</a>
 <a href=#362 id=362 data-nosnippet>362</a>    <span class="attr">#[test]
 <a href=#363 id=363 data-nosnippet>363</a>    </span><span class="kw">fn </span>focal_zoom_clamps_to_the_camera_zoom_range() {
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">let </span>camera = MapCamera::new(coordinate(<span class="number">47.3769</span>, <span class="number">8.5417</span>), <span class="number">14.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>);
+<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">let </span>camera = MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>);
 <a href=#365 id=365 data-nosnippet>365</a>        <span class="kw">let </span>viewport = viewport();
 <a href=#366 id=366 data-nosnippet>366</a>        <span class="comment">// Zoom-in clamp against an off-center focal: top-down, so the whole
 <a href=#367 id=367 data-nosnippet>367</a>        // held-point correction is affine and stays inside the map square.

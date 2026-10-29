@@ -1,0 +1,145 @@
+/*
+ * Product-docs styling additions for the public Rustic Maps SDK site.
+ *
+ * Scope: the tutorial platform tabs and the light page furniture the
+ * restructured chapters use (the overview header, feature cards). The book's
+ * own mdBook theme is untouched; every color here resolves through the
+ * theme's CSS variables, so the explicit dark and navy themes both keep
+ * their look and no media query ever decides a color.
+ */
+
+/* --- Platform tabs ------------------------------------------------------- */
+
+/* Without JavaScript (and in print): the titles hide and every panel shows. */
+.platform-tabs .platform-tab-titles {
+    display: none;
+}
+
+.platform-tabs .platform-tab-panel {
+    display: block;
+    padding: 0;
+}
+
+/* With JavaScript: the container becomes an interactive tab set. */
+.platform-tabs--interactive .platform-tab-titles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 1.4em 0 1.2em;
+    border-bottom: 1px solid var(--table-border-color);
+    padding-bottom: 8px;
+}
+
+.platform-tabs--interactive .platform-tab-titles button {
+    appearance: none;
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--table-border-color);
+    border-radius: 8px;
+    padding: 4px 14px;
+    font: inherit;
+    font-size: 0.92em;
+    cursor: pointer;
+}
+
+.platform-tabs--interactive .platform-tab-titles button:hover {
+    border-color: var(--links);
+    color: var(--links);
+}
+
+.platform-tabs--interactive .platform-tab-titles button.platform-tab-title--active {
+    background: var(--sidebar-active, var(--links));
+    border-color: var(--sidebar-active, var(--links));
+    color: var(--bg);
+}
+
+.platform-tabs--interactive .platform-tab-panel[hidden] {
+    display: none;
+}
+
+/* Printable shape: identical to the no-JavaScript shape. */
+@media print {
+    .platform-tabs .platform-tab-titles {
+        display: none;
+    }
+
+    .platform-tabs .platform-tab-panel {
+        display: block !important;
+    }
+
+    .platform-tabs .platform-tab-panel[hidden] {
+        display: block !important;
+    }
+}
+
+/* --- Overview furniture --------------------------------------------------- */
+
+.overview-header {
+    padding: 1.2em 1.4em;
+    margin: 1em 0 2em;
+    border: 1px solid var(--table-border-color);
+    border-radius: 10px;
+    background: var(--theme-popup-bg, transparent);
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin: 1em 0 2em;
+}
+
+.feature-card {
+    border: 1px solid var(--table-border-color);
+    border-radius: 10px;
+    padding: 10px 16px 4px;
+    background: var(--theme-popup-bg, transparent);
+}
+
+.feature-card h3 {
+    margin-top: 0.6em;
+}
+
+.coming-soon {
+    border: 1px dashed var(--table-border-color);
+    border-radius: 10px;
+    padding: 1em 1.4em;
+    margin: 1em 0 1.6em;
+}
+
+/* The landing page's primary actions (the live demo is the product's
+   fastest first impression). */
+.landing-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+.landing-cta a {
+  display: inline-block;
+  padding: 10px 16px;
+  border: 1px solid var(--fg);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.landing-cta a:first-child {
+  background: var(--fg);
+  color: var(--bg);
+}
+.landing-cta a:hover {
+  opacity: 0.85;
+}
+.demo-launch {
+  margin: 24px 0;
+}
+.demo-launch a {
+  display: inline-block;
+  padding: 12px 20px;
+  border: 1px solid var(--fg);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--fg);
+  color: var(--bg);
+}

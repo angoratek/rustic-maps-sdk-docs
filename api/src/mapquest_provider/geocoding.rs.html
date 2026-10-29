@@ -191,11 +191,11 @@
 <a href=#191 id=191 data-nosnippet>191</a>        <span class="kw">let </span>places = parse_geocoding_payload(<span class="kw-2">&amp;</span>payload).unwrap();
 <a href=#192 id=192 data-nosnippet>192</a>        <span class="macro">assert!</span>(!places.is_empty());
 <a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">let </span>first = <span class="kw-2">&amp;</span>places[<span class="number">0</span>];
-<a href=#194 id=194 data-nosnippet>194</a>        <span class="macro">assert_eq!</span>(first.coordinate.latitude, <span class="number">52.51603</span>);
-<a href=#195 id=195 data-nosnippet>195</a>        <span class="macro">assert_eq!</span>(first.coordinate.longitude, <span class="number">13.37699</span>);
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="macro">assert_eq!</span>(first.coordinate.latitude, <span class="number">38.57944</span>);
+<a href=#195 id=195 data-nosnippet>195</a>        <span class="macro">assert_eq!</span>(first.coordinate.longitude, -<span class="number">121.49085</span>);
 <a href=#196 id=196 data-nosnippet>196</a>        <span class="macro">assert_eq!</span>(first.geocode_quality, GeocodeQuality::City);
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="macro">assert!</span>(first.structured_address_text.contains(<span class="string">"Berlin"</span>));
-<a href=#198 id=198 data-nosnippet>198</a>        <span class="macro">assert!</span>(first.structured_address_text.ends_with(<span class="string">"DE"</span>));
+<a href=#197 id=197 data-nosnippet>197</a>        <span class="macro">assert!</span>(first.structured_address_text.contains(<span class="string">"Sacramento"</span>));
+<a href=#198 id=198 data-nosnippet>198</a>        <span class="macro">assert!</span>(first.structured_address_text.ends_with(<span class="string">"US"</span>));
 <a href=#199 id=199 data-nosnippet>199</a>    }
 <a href=#200 id=200 data-nosnippet>200</a>
 <a href=#201 id=201 data-nosnippet>201</a>    <span class="attr">#[test]
