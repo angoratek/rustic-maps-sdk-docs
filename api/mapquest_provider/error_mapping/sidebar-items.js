@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["is_transient_error","map_http_error_response","validate_info_envelope"]};
+window.SIDEBAR_ITEMS = {"fn":["map_http_error_response","validate_info_envelope"]};

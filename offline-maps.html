@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -196,7 +196,7 @@ application’s offline-maps demo runs exactly this:</p>
 <pre><code class="language-kotlin">val tileCacheDatabaseFile = File(context.cacheDir, "reference-tile-cache.sqlite")
 val tileCacheBudgetBytes = 16777216UL   // 16 MiB, the demo's absolute budget
 
-mapSdk.registerMapquestProvidersWithTileCache(
+mapSdk.setProviderCredentialWithTileCache(
     mapQuestApiKey,
     tileCacheDatabaseFile.absolutePath,
     tileCacheBudgetBytes,
@@ -213,6 +213,11 @@ val terms = mapSdk.rasterTileCacheTerms()
 // terms.effectiveTimeToLiveSeconds
 // terms.providerTermsCeilingSeconds
 // terms.defaultTimeToLiveSeconds
+
+// The same calls through the offline facade:
+// val offlineManager = OfflineManager(mapSdk)
+// offlineManager.setTileTimeToLive(timeToLiveSeconds)
+// val terms = offlineManager.tileCacheTerms()
 </code></pre>
 <p>A request above the provider’s declared ceiling is accepted, and the
 ceiling clamps what the cache retains; the readback shows the effective
@@ -229,33 +234,39 @@ archive — OpenStreetMap extract in, self-describing archive file out —
 answers routes with A* over a memory-mapped graph, honoring recorded
 turn restrictions and deriving maneuver text from the geometry’s bearing
 change.</p>
-<p>The direct route call from foreign code joins the contract as an
-addition-only member in a later slice; today the offline layer answers
-the automatic fallback (the routing decorator retries over the offline
-graph when the online provider fails) and the WebAssembly surface’s
-offline route seam, and its maneuver texts stay honest where the extract
-carries no street names.</p>
+<p>The direct route call from foreign code joins the contract in a later
+release. Today the layer answers the WebAssembly surface’s offline route
+seam, and an offline routing decorator lets you retry over the archive
+when your online provider fails — you wrap the provider yourself; the SDK
+registers no fallback on your behalf. Maneuver texts stay honest where
+the extract carries no street names.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="ios">
 <h3 id="register-the-providers-with-a-tile-cache-1"><a class="header" href="#register-the-providers-with-a-tile-cache-1">Register the providers with a tile cache</a></h3>
 <pre><code class="language-swift">let tileCacheDatabasePath = FileManager.default
-    .cachesDirectory.appendingPathComponent("reference-tile-cache.sqlite")
+    .urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    .appendingPathComponent("reference-tile-cache.sqlite")
     .path
 let tileCacheBudgetBytes: UInt64 = 16_777_216   // 16 MiB
 
-try mapSdk.registerMapquestProvidersWithTileCache(
-    mapQuestApiKey,
+try mapSdk.setProviderCredentialWithTileCache(
+    mapquestApiKey: mapQuestApiKey,
     tileCacheDatabasePath: tileCacheDatabasePath,
     tileCacheAbsoluteMaximumBytes: tileCacheBudgetBytes
 )
 </code></pre>
 <h3 id="read-and-tune-the-caching-terms-1"><a class="header" href="#read-and-tune-the-caching-terms-1">Read and tune the caching terms</a></h3>
-<pre><code class="language-swift">try mapSdk.setRasterTileCacheTimeToLive(timeToLiveSeconds)
+<pre><code class="language-swift">try mapSdk.setRasterTileCacheTimeToLive(timeToLiveSeconds: timeToLiveSeconds)
 let terms = try mapSdk.rasterTileCacheTerms()
 // terms.effectiveTimeToLiveSeconds
 // terms.providerTermsCeilingSeconds
 // terms.defaultTimeToLiveSeconds
+
+// The same calls through the offline facade:
+// let offlineManager = OfflineManager(mapSdk: mapSdk)
+// try offlineManager.setTileTimeToLive(timeToLiveSeconds: timeToLiveSeconds)
+// let terms = try offlineManager.tileCacheTerms()
 </code></pre>
 <h3 id="pre-warm-and-render-offline"><a class="header" href="#pre-warm-and-render-offline">Pre-warm and render offline</a></h3>
 <p>Cached tiles render whenever the network is unavailable. Render the
@@ -264,9 +275,9 @@ regions your users revisit while online; the cache answers from disk.</p>
 <p>The offline routing layer runs inside the SDK over a compiled archive:
 A* on a memory-mapped graph, recorded turn restrictions honored,
 maneuver text derived from the geometry. The direct route call from
-Swift joins the contract as an addition-only member in a later slice;
-today the layer serves the automatic fallback when the online provider
-fails, and the WebAssembly surface’s offline route seam.</p>
+Swift joins the contract in a later release; today the layer serves the
+WebAssembly surface’s offline route seam, and you can wrap your online
+provider with the offline fallback decorator yourself.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
@@ -274,10 +285,10 @@ fails, and the WebAssembly surface’s offline route seam.</p>
 <pre><code class="language-js">import { MapSdk } from '@angoratek/rustic-maps-sdk';
 
 const mapSdk = new MapSdk();
-await mapSdk.registerMapquestProvidersWithTileCache(
+await mapSdk.setProviderCredentialWithTileCache(
   mapQuestApiKey,
   tileCacheDatabasePath,   // a writable SQLite path your app owns
-  16_777_216,              // the absolute byte budget (16 MiB)
+  16_777_216n,             // the absolute byte budget (16 MiB); u64 is a bigint
 );
 </code></pre>
 <h3 id="read-and-tune-the-caching-terms-2"><a class="header" href="#read-and-tune-the-caching-terms-2">Read and tune the caching terms</a></h3>
@@ -286,18 +297,32 @@ const terms = await mapSdk.rasterTileCacheTerms();
 // terms.effectiveTimeToLiveSeconds
 // terms.providerTermsCeilingSeconds
 // terms.defaultTimeToLiveSeconds
+
+// The same calls through the offline facade:
+// const offlineManager = new OfflineManager(mapSdk);
+// await offlineManager.setTileTimeToLive(timeToLiveSeconds);
+// const terms = await offlineManager.tileCacheTerms();
 </code></pre>
 <p>Show the effective terms in your offline-maps settings screen; a value
 above the provider’s ceiling is accepted and clamped, and the readback
 is what went into force.</p>
+<h3 id="route-without-the-network-2"><a class="header" href="#route-without-the-network-2">Route without the network</a></h3>
+<p>The same compiled archive the other tabs describe runs inside the SDK on
+this surface too: A* over a memory-mapped graph, recorded turn
+restrictions honored, maneuver text derived from the geometry. The direct
+route call from React Native joins the contract in a later release; today
+the layer serves the WebAssembly surface’s offline route seam, and an
+offline routing decorator wraps your online provider when you choose to
+fall back. The SDK registers no fallback on your behalf.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="scope-note"><a class="header" href="#scope-note">Scope note</a></h3>
-<p>The wasm surface renders from the same-origin <code>/tiles/</code> imagery path you
-host, and loads the offline routing archive from in-memory bytes; the
-SQLite tile cache is a native-platform surface (the provider
-registration seam has no wasm exposure yet).</p>
+<p>The browser has no disk of its own to own, so the offline story differs in
+exactly one place: there is no SQLite tile cache. What the WebAssembly build
+does carry is the routing archive — loaded from bytes you supply — and the
+same provider registration as the native surfaces, so live search, routing and
+raster tiles work from the browser while the disk cache stays native-only.</p>
 <h3 id="route-over-the-archive"><a class="header" href="#route-over-the-archive">Route over the archive</a></h3>
 <p>The <a href="search-and-routing.html">Search and routing</a> tutorial’s
 <a href="search-and-routing.html">WebAssembly</a> tab shows the full offline routing
@@ -360,7 +385,7 @@ run feeds every target.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["geospatial_traits","geospatial_types","map_cache","map_core","map_native_core","map_navigation","map_offline_graph_archive","map_offline_graph_compiler","map_rendering","map_vector_tiles","map_web_bindings","mapquest_provider","openstreetmap_us_vector_provider","provider_transport"];
-//{"start":21,"fragment_lengths":[19,19,12,11,18,17,28,29,16,19,19,20,35,21]}
+window.ALL_CRATES = ["geospatial_traits","geospatial_types","map_cache","map_core","map_native_core","map_navigation","map_offline_graph_archive","map_offline_graph_compiler","map_rendering","map_vector_tiles","map_web_bindings","mapquest_provider","openstreetmap_us_vector_provider","provider_transport","url_template_raster_provider","url_template_vector_provider"];
+//{"start":21,"fragment_lengths":[19,19,12,11,18,17,28,29,16,19,19,20,35,21,31,31]}

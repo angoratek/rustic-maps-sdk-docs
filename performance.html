@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -187,7 +187,7 @@ from your own device and your own route mix.</p>
 Re-registration replaces every slot (including a cached tile slot), so
 an accidental double registration silently reopens the cache and resets
 its tuning: register, then tune with <code>setRasterTileCacheTimeToLive</code>.</li>
-<li>Keep a single <code>MapNavigationController</code> around the lifetime of a trip
+<li>Keep a single <code>Navigator</code> around the lifetime of a trip
 screen; subscriptions are explicit and cheap, but re-subscribing
 listeners is wasted work on every frame.</li>
 </ul>
@@ -213,11 +213,11 @@ own cadence (a display link or choreographer callback). Do not add a
 second render loop; serialize draws and never call <code>draw</code> again while a
 previous call is still in flight — a draw in flight reports the next
 frame busy, and the cadence retries it.</li>
-<li>Poll <code>frameSettled</code> in the render pump to skip <code>draw</code> when a re-draw
+<li>Poll <code>isFrameSettled</code> in the render pump to skip <code>draw</code> when a re-draw
 would present the same pixels: true when the camera, overlay list, and
 location indicator are unchanged and no pending tile pixels remain.
 This keeps battery cost near zero on a static map.</li>
-<li>Read <code>TileFrameStatistics</code> from every draw. The four readiness counts
+<li>Read <code>FrameStatistics</code> from every draw. The four readiness counts
 (<code>present</code>, <code>fallback</code>, <code>deferred</code>, <code>unavailable</code>) always add up to the
 requested count, so a persistent slice of <code>deferred</code> tells you your
 per-frame fetch budget is the limiter on your network, and a slice of
@@ -231,7 +231,7 @@ the focal point exactly.</li>
 <ul>
 <li>Register the tile cache with an absolute byte budget that fits your
 product (the reference application’s demo budget is 16 MiB for the
-whole recorded fixture set). The budget is a registration-time fact:
+whole bundled demo region). The budget is a registration-time fact:
 retuning it means re-registering.</li>
 <li>Set the tile time-to-live live through
 <code>setRasterTileCacheTimeToLive</code>. Imagery-provider terms put a ceiling on
@@ -261,10 +261,11 @@ multiplies your request count for the same data.</li>
 archive with A*; no network round trip. Compile an extract sized to
 the region your users drive in, not the planet: the compiler is
 deterministic and the archive is self-describing.</li>
-<li>The routing decorator retries over the offline graph when the online
-provider fails, so a coverage-limited archive is a graceful degradation,
-not a failure mode. Its maneuver texts stay honest where the archive
-carries no street names.</li>
+<li>The offline routing decorator retries over the offline graph when the
+online provider fails, so a coverage-limited archive is a graceful
+degradation, not a failure mode. You wire it around your online
+provider; the SDK registers no fallback on your behalf. Its maneuver
+texts stay honest where the archive carries no street names.</li>
 </ul>
 <h2 id="profile-with-the-sdks-own-readbacks"><a class="header" href="#profile-with-the-sdks-own-readbacks">Profile with the SDK’s own readbacks</a></h2>
 <ul>
@@ -334,7 +335,7 @@ numbers that matter are the ones your profiling run produces.</li>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

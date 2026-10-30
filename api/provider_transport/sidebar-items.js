@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["CONNECT_TIMEOUT","REQUEST_TIMEOUT"],"enum":["HttpMethod","TransportError"],"fn":["sleep"],"struct":["HttpRequest","HttpResponse","ReqwestTransport"],"trait":["HttpTransport"]};
+window.SIDEBAR_ITEMS = {"constant":["CONNECT_TIMEOUT","HTTP_ERROR_STATUS_CODE_THRESHOLD","REQUEST_TIMEOUT"],"enum":["HttpMethod","TransportError"],"fn":["default_transport","sleep"],"mod":["rate_limit","retry"],"struct":["HttpRequest","HttpResponse","ReqwestTransport"],"trait":["HttpTransport"]};

@@ -26,7 +26,7 @@ validated by the reader, exactly as for in-memory bytes.</p>
 <p>File-level failures (missing, unreadable, mapping refused) surface as
 <code>SDKError::OfflineRoutingFailure(OfflineGraphInvalidReason::ArchiveMalformed)</code>:
 the typed corruption vocabulary deliberately has no I/O cause (the
-<a href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError"><code>SDKError</code></a> variants serialize across the frozen FFI contract), and an
+[<code>SDKError</code>] variants serialize across the frozen FFI contract), and an
 archive that cannot be mapped is unusable in exactly the way a malformed
 one is. A recognized-but-unsupported archive still fails as
 <code>VersionUnsupported</code> out of the shared reader.</p>

@@ -33,13 +33,15 @@ consumers keep the SDK from ever downloading tiles during tests; the
 reference apps’ posture stays low-volume non-commercial.</li>
 </ul>
 <h2 id="crate-posture"><a class="doc-anchor" href="#crate-posture">§</a>Crate posture</h2>
-<p>Like <code>mapquest-provider</code>, this crate sits outside the wasm closure: a
-native-only network provider (reqwest + the crate-owned rate limiter).
-The wasm path gains vector tiles through its own seam in a later M9
-slice; the contract in <code>geospatial-traits</code> is the wasm-clean part.</p>
+<p>Like <code>mapquest-provider</code>, this crate performs its requests through the
+shared <code>provider-transport</code> seam: the same request, retry and
+rate-limiting code runs natively and in the browser. The crate is not
+yet registered on the wasm path; the contract in <code>geospatial-traits</code> is
+the wasm-clean part.</p>
 </div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.OpenStreetMapUsTileHttpClient"><code>pub use http::<a class="struct" href="http/struct.OpenStreetMapUsTileHttpClient.html" title="struct openstreetmap_us_vector_provider::http::OpenStreetMapUsTileHttpClient">OpenStreetMapUsTileHttpClient</a>;</code></dt><dt id="reexport.OpenStreetMapUsVectorTileConfiguration"><code>pub use http::<a class="struct" href="http/struct.OpenStreetMapUsVectorTileConfiguration.html" title="struct openstreetmap_us_vector_provider::http::OpenStreetMapUsVectorTileConfiguration">OpenStreetMapUsVectorTileConfiguration</a>;</code></dt><dt id="reexport.OpenStreetMapUsVectorTileProvider"><code>pub use vector_tiles::<a class="struct" href="vector_tiles/struct.OpenStreetMapUsVectorTileProvider.html" title="struct openstreetmap_us_vector_provider::vector_tiles::OpenStreetMapUsVectorTileProvider">OpenStreetMapUsVectorTileProvider</a>;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="error_mapping/index.html" title="mod openstreetmap_us_vector_provider::error_mapping">error_<wbr>mapping</a></dt><dd>Mapping between tileservice signals and the SDK error model.</dd><dt><a class="mod" href="http/index.html" title="mod openstreetmap_us_vector_provider::http">http</a></dt><dd>HTTP transport for the OpenStreetMap US tileservice: contact-identifying
 headers, bounded retries for idempotent tile GETs, and typed error
 mapping. There is no API key: access tiering runs off the request’s own
 identity headers, so the User-Agent is the honest software marker the
-usage policy requires.</dd><dt><a class="mod" href="rate_limit/index.html" title="mod openstreetmap_us_vector_provider::rate_limit">rate_<wbr>limit</a></dt><dd>Token-bucket rate limiter guarding every outbound tileservice request.</dd><dt><a class="mod" href="vector_tiles/index.html" title="mod openstreetmap_us_vector_provider::vector_tiles">vector_<wbr>tiles</a></dt><dd>OpenStreetMap US tileservice implementation of the vector-tile provider
+usage policy requires. The byte transport and the retry loop are the
+shared <a href="../provider_transport/index.html" title="mod provider_transport"><code>provider_transport</code></a> seam.</dd><dt><a class="mod" href="vector_tiles/index.html" title="mod openstreetmap_us_vector_provider::vector_tiles">vector_<wbr>tiles</a></dt><dd>OpenStreetMap US tileservice implementation of the vector-tile provider
 contract: rate-limited binary tile GETs against the Sourdough tileset.</dd></dl></section></div></main></body></html>

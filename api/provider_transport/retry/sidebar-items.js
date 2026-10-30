@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BACKOFF_BASE_MILLIS"],"fn":["execute_idempotent_get","is_transient_error"],"struct":["RetryPolicy"]};

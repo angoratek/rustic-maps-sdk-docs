@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["error_mapping","provider","url_template"]};

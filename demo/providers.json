@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "fixture_base_path": "/providers",
+  "reference_app_user_agent_template": "RusticMapsReferenceApp/%s (+https://sdk.mapquest.live)",
   "providers": [
     {
       "provider_key": "mapquest",
@@ -56,6 +57,8 @@
       "settings_hint": "",
       "wasm_registration": null,
       "url_template": "https://tiles.openstreetmap.us/vector/sourdough/{z}/{x}/{y}.mvt",
+      "maximum_zoom_level": 15,
+      "vector_style": "carto",
       "fixture_routes": [
         {
           "purpose": "vector_tiles",
@@ -64,6 +67,50 @@
           "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt"
         }
       ]
+    },
+    {
+      "provider_key": "openfreemap",
+      "display_name": "OpenFreeMap",
+      "credential_label": "",
+      "registration_available": {
+        "android": false,
+        "ios": false,
+        "react_native": false,
+        "wasm": false
+      },
+      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles",
+      "terms_note": "OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.",
+      "settings_hint": "",
+      "wasm_registration": null,
+      "url_template": "https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf",
+      "maximum_zoom_level": 14,
+      "vector_style": "openmaptiles",
+      "fixture_routes": [
+        {
+          "purpose": "vector_tiles",
+          "method": "GET",
+          "path_pattern": "^planet/latest/14/2661/6286\\.pbf$",
+          "fixture": "fixtures/openfreemap/openmaptiles_tile_z14_x2661_y6286.pbf"
+        }
+      ]
+    },
+    {
+      "provider_key": "openstreetmap",
+      "display_name": "OpenStreetMap",
+      "credential_label": "",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": false
+      },
+      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors",
+      "terms_note": "OpenStreetMap tile usage policy applies: low-volume use only, with attribution.",
+      "settings_hint": "",
+      "wasm_registration": null,
+      "raster_url_template": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "maximum_zoom_level": 19,
+      "fixture_routes": []
     }
   ]
 }

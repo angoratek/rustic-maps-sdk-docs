@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -178,10 +178,11 @@
                         <h1 id="turn-by-turn-navigation"><a class="header" href="#turn-by-turn-navigation">Turn-by-turn navigation</a></h1>
 <p>Start a trip on a route, deliver position fixes, and receive the banner
 instruction, deviation status, phase, and speech-trigger channels. This
-tutorial rehearses the reference application’s guided-walk demo: the
-route you planned in <a href="search-and-routing.html">Search and routing</a> becomes
-a simulated drive with guidance. Every snippet compiles against the
-<a href="udl-contract.html">frozen FFI contract</a>.</p>
+tutorial rehearses the reference application’s simulated trip, the recorded
+Capitol Park ⇔ Tower Bridge drive: the route you planned in
+<a href="search-and-routing.html">Search and routing</a> becomes a simulated drive with
+guidance. Every snippet compiles against the
+<a href="udl-contract.html">FFI contract</a>.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -195,13 +196,13 @@ a simulated drive with guidance. Every snippet compiles against the
 <p>Subscribe to the topics before you start the trip, so the initial
 instruction dispatch of the trip start is received. The listener
 implements the four callbacks the contract carries:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.MapNavigationController
-import uniffi.map_native_core.NavigationStateEventListener
+<pre><code class="language-kotlin">import uniffi.rustic_maps.Navigator
+import uniffi.rustic_maps.NavigationListener
 
 class GuidanceListener(
     private val onInstruction: (NavigationInstruction) -&gt; Unit,
     private val onSpeech: (SpeechInstruction) -&gt; Unit,
-) : NavigationStateEventListener {
+) : NavigationListener {
     override fun onNavigationInstruction(instruction: NavigationInstruction) {
         onInstruction(instruction)
     }
@@ -219,26 +220,30 @@ class GuidanceListener(
     }
 }
 
-val navigationController = MapNavigationController()
+val navigationController = Navigator()
 val listener = GuidanceListener(onInstruction = ::showBanner, onSpeech = ::speak)
 
-val subscriptions = listOf(
-    navigationController.subscribeToNavigationInstructions(listener),
-    navigationController.subscribeToSpeechInstructions(listener),
-    navigationController.subscribeToDeviationStatus(listener),
-    navigationController.subscribeToPhaseChanges(listener),
-)
+// One call subscribes the listener to all four topics; the returned
+// subscription cancels every one of them.
+val subscription = navigationController.addNavigationListener(listener)
+
+// The four per-topic calls remain available when a screen needs only
+// some of the channels:
+//   navigationController.subscribeToNavigationInstructions(listener)
+//   navigationController.subscribeToSpeechInstructions(listener)
+//   navigationController.subscribeToDeviationStatus(listener)
+//   navigationController.subscribeToPhaseChanges(listener)
 </code></pre>
 <p>A subscription is cancelled with its handle when your screen leaves;
 dropping the reference does not unsubscribe.</p>
 <h3 id="start-the-trip"><a class="header" href="#start-the-trip">Start the trip</a></h3>
 <p>Use the SDK’s default policies unless your product measured different
 ones:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.defaultDeviationPolicy
-import uniffi.map_native_core.defaultStepAdvancePolicy
-import uniffi.map_native_core.UnitSystem
+<pre><code class="language-kotlin">import uniffi.rustic_maps.defaultDeviationPolicy
+import uniffi.rustic_maps.defaultStepAdvancePolicy
+import uniffi.rustic_maps.UnitSystem
 
-navigationController.startTrip(
+navigationController.startNavigation(
     route,
     UnitSystem.METRIC,
     defaultStepAdvancePolicy(),
@@ -250,15 +255,15 @@ banner shows the first maneuver.</p>
 <h3 id="deliver-position-fixes"><a class="header" href="#deliver-position-fixes">Deliver position fixes</a></h3>
 <p>One fix at a time, exactly like a live location source or a recorded
 trace replay would:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.NavigationLocationUpdate
+<pre><code class="language-kotlin">import uniffi.rustic_maps.NavigationLocationUpdate
 
 suspend fun replayFixes(
-    navigationController: MapNavigationController,
+    navigationController: Navigator,
     samples: Sequence&lt;GeographicCoordinate&gt;,
     sampleIntervalMilliseconds: Long,
 ) {
     for (sample in samples) {
-        navigationController.provideLocationUpdate(
+        navigationController.updateLocation(
             NavigationLocationUpdate(
                 coordinate = sample,
                 horizontalAccuracyMeters = 8.0,
@@ -273,6 +278,40 @@ suspend fun replayFixes(
 <p>Fixes without a reported accuracy never advance a step and are never
 judged for deviation, so a simulated source must carry its accuracy
 like a real fix does.</p>
+<h3 id="draw-the-trip-on-the-map"><a class="header" href="#draw-the-trip-on-the-map">Draw the trip on the map</a></h3>
+<p>Navigation state is only half the experience — the map has to show the
+route and follow the vehicle. Two calls do it, and both are contract
+members you already have: the route polyline goes on as an overlay, and
+each instruction rebuilds the camera.</p>
+<pre><code class="language-kotlin">// Once, when the route arrives: the route geometry as one polyline.
+val routeOverlay = MapOverlay(
+    kind = MapOverlayKind.ROUTE_POLYLINE,
+    coordinates = route.legs.flatMap { leg -&gt; leg.steps.flatMap { step -&gt; step.shape } },
+    rgbaColor = OverlayColor(red = 0.16, green = 0.47, blue = 1.0, alpha = 0.95),
+    widthPixels = 6.0,
+    ringCoordinates = null,
+    pointMarkerPositions = null,
+    pointMarkerRadiusPixels = null,
+    trafficFlowSegments = null,
+)
+mapSurface.setOverlays(listOf(routeOverlay))
+
+// On every fix (or every instruction, if you follow instructions instead
+// of raw fixes): a 3D course-up camera over the vehicle.
+val followCamera = MapCamera(
+    center = fix.coordinate,
+    zoomLevel = FOLLOW_ZOOM_LEVEL,
+    bearingDegrees = smoothedCourseHeadingDegrees,
+    pitchDegrees = FOLLOW_PITCH_DEGREES,
+)
+mapSurface.setLocationIndicator(locationIndicatorState, locationIndicatorStyle)
+mapSurface.draw(followCamera)
+</code></pre>
+<p>Keep the bearing smoothed rather than raw: a fix-to-fix course jitters at
+low speed, and a camera that follows it reads as shaky. When the user pans
+away, stop drawing the follow camera until they ask to be re-centered —
+the reference applications break follow on a gesture and re-engage it from
+the location control.</p>
 <h3 id="voice-the-speech-channel"><a class="header" href="#voice-the-speech-channel">Voice the speech channel</a></h3>
 <p>The platform owns playback; the SDK owns when a line is newsworthy.
 When <code>onSpeechInstruction</code> delivers a <code>SpeechInstruction</code>, hand its
@@ -300,11 +339,17 @@ reference application’s trip driver does:</p>
             listOf(currentFixCoordinate, originalDestination),
             routeOptions,
         )
-        navigationController.provideReroute(replacement, defaultStepAdvancePolicy())
+        navigationController.applyReroute(replacement, defaultStepAdvancePolicy())
     }
 } else {
     navigationController.cancelRerouteCalculation()
 }
+</code></pre>
+<h3 id="end-the-trip"><a class="header" href="#end-the-trip">End the trip</a></h3>
+<pre><code class="language-kotlin">// Clears the active trip and its state; later fixes and reroutes are
+// dropped until the next startNavigation. Subscriptions stay registered
+// and serve the next trip.
+navigationController.stopNavigation()
 </code></pre>
 </div>
 
@@ -313,33 +358,33 @@ reference application’s trip driver does:</p>
 <p>The same four callbacks arrive as a Swift conforming object:</p>
 <pre><code class="language-swift">import RusticMapsSDK
 
-final class GuidanceListener: NavigationStateEventListener {
-    func onNavigationInstruction(_ instruction: NavigationInstruction) {
+final class GuidanceListener: NavigationListener {
+    func onNavigationInstruction(instruction: NavigationInstruction) {
         // Update the banner instruction.
     }
 
-    func onSpeechInstruction(_ speechInstruction: SpeechInstruction) {
+    func onSpeechInstruction(speechInstruction: SpeechInstruction) {
         // Hand the verbatim text to your speech engine.
     }
 
-    func onDeviationStatusChange(_ deviationStatusChange: DeviationStatusChange) {
+    func onDeviationStatusChange(deviationStatusChange: DeviationStatusChange) {
         // Update the reroute affordance.
     }
 
-    func onNavigationPhaseChange(_ navigationPhaseChange: NavigationPhaseChange) {
+    func onNavigationPhaseChange(navigationPhaseChange: NavigationPhaseChange) {
         // Drive the phase state.
     }
 }
 
-let navigationController = MapNavigationController()
+let navigationController = Navigator()
 let listener = GuidanceListener()
 
-let subscription = navigationController.subscribeToNavigationInstructions(listener)
-let speechSubscription = navigationController.subscribeToSpeechInstructions(listener)
+// One call subscribes all four topics; cancel() removes all four.
+let subscription = navigationController.addNavigationListener(listener: listener)
 </code></pre>
 <h3 id="start-the-trip-1"><a class="header" href="#start-the-trip-1">Start the trip</a></h3>
-<pre><code class="language-swift">try navigationController.startTrip(
-    route,
+<pre><code class="language-swift">try navigationController.startNavigation(
+    route: route,
     unitSystem: UnitSystem.metric,
     stepAdvancePolicy: defaultStepAdvancePolicy(),
     deviationPolicy: defaultDeviationPolicy()
@@ -347,8 +392,8 @@ let speechSubscription = navigationController.subscribeToSpeechInstructions(list
 </code></pre>
 <h3 id="deliver-position-fixes-1"><a class="header" href="#deliver-position-fixes-1">Deliver position fixes</a></h3>
 <pre><code class="language-swift">func deliver(_ fix: RecordedFix) {
-    navigationController.provideLocationUpdate(
-        NavigationLocationUpdate(
+    navigationController.updateLocation(
+        locationUpdate: NavigationLocationUpdate(
             coordinate: fix.coordinate,
             horizontalAccuracyMeters: fix.horizontalAccuracyMeters,
             courseHeadingDegrees: fix.courseHeadingDegrees,
@@ -360,6 +405,32 @@ let speechSubscription = navigationController.subscribeToSpeechInstructions(list
     }
 }
 </code></pre>
+<h3 id="draw-the-trip-on-the-map-1"><a class="header" href="#draw-the-trip-on-the-map-1">Draw the trip on the map</a></h3>
+<p>Put the route on the map once and follow it with every fix:</p>
+<pre><code class="language-swift">let routeOverlay = MapOverlay(
+    kind: .routePolyline,
+    coordinates: route.legs.flatMap { $0.steps.flatMap { $0.shape } },
+    rgbaColor: OverlayColor(red: 0.16, green: 0.47, blue: 1.0, alpha: 0.95),
+    widthPixels: 6.0,
+    ringCoordinates: nil,
+    pointMarkerPositions: nil,
+    pointMarkerRadiusPixels: nil,
+    trafficFlowSegments: nil
+)
+try mapSurface.setOverlays(overlayDescriptors: [routeOverlay])
+
+let followCamera = try MapCamera(
+    center: fix.coordinate,
+    zoomLevel: followZoomLevel,
+    bearingDegrees: smoothedCourseHeadingDegrees,
+    pitchDegrees: followPitchDegrees
+)
+try mapSurface.setLocationIndicator(state: locationIndicatorState, style: locationIndicatorStyle)
+try await mapSurface.draw(camera: followCamera)
+</code></pre>
+<p>The camera follows the smoothed course, not the raw fix-to-fix bearing, and a
+pan gesture hands control back to the user until the location control is
+tapped again.</p>
 <h3 id="voice-the-speech-channel-1"><a class="header" href="#voice-the-speech-channel-1">Voice the speech channel</a></h3>
 <pre><code class="language-swift">let speechEngine = AVSpeechSynthesizer()
 // In onSpeechInstruction:
@@ -371,11 +442,11 @@ speechEngine.speak(utterance)
 <pre><code class="language-swift">if tripState.deviation?.gradeKind == .fullyOffRoute {
     if navigationController.beginRerouteCalculation() {
         let replacement = try await mapSdk.calculateRoute(
-            [currentFixCoordinate, originalDestination],
+            waypoints: [currentFixCoordinate, originalDestination],
             routeOptions: routeOptions
         )
-        try navigationController.provideReroute(
-            replacement,
+        try navigationController.applyReroute(
+            route: replacement,
             stepAdvancePolicy: defaultStepAdvancePolicy()
         )
     } else {
@@ -386,24 +457,31 @@ speechEngine.speak(utterance)
 <p>The trip state readback (<code>currentTripState()</code>) carries the phase, the
 progress, and <code>isCalculatingNewRoute</code> so your UI can show the
 recalculation honestly.</p>
+<h3 id="end-the-trip-1"><a class="header" href="#end-the-trip-1">End the trip</a></h3>
+<pre><code class="language-swift">// Clears the active trip and its state; subscriptions stay registered.
+navigationController.stopNavigation()
+</code></pre>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="what-the-react-native-surface-carries"><a class="header" href="#what-the-react-native-surface-carries">What the React Native surface carries</a></h3>
 <p>The TurboModule exposes the same contract members as promise-returning
-methods, including the navigation controller’s. A guided-walk
+methods, including the navigation controller’s. A simulated-trip
 integration builds a controller object, subscribes the topics, and
 delivers fixes:</p>
 <pre><code class="language-js">import {
-  MapNavigationController,
+  Navigator,
+  UnitSystem,
   defaultStepAdvancePolicy,
   defaultDeviationPolicy,
 } from '@angoratek/rustic-maps-sdk';
 
-const navigationController = await new MapNavigationController();
+const navigationController = new Navigator();
 
-const instructionsSubscription = await navigationController.subscribeToNavigationInstructions(listener);
-const speechSubscription = await navigationController.subscribeToSpeechInstructions(listener);
+// All four topics in one call: the listener object defined in "Draw the
+// trip on the map" below drives the banner, the voice line, the off-route
+// alert and the drawer phase from one place; cancel() removes all four.
+const subscription = navigationController.addNavigationListener(listener);
 </code></pre>
 <p>The listener implements the four callback methods the contract carries
 (<code>onNavigationInstruction</code>, <code>onSpeechInstruction</code>,
@@ -411,23 +489,78 @@ const speechSubscription = await navigationController.subscribeToSpeechInstructi
 delivers the same payloads the native platforms receive, with lower
 camel case field names.</p>
 <h3 id="start-the-trip-and-deliver-fixes"><a class="header" href="#start-the-trip-and-deliver-fixes">Start the trip and deliver fixes</a></h3>
-<pre><code class="language-js">await navigationController.startTrip(
+<pre><code class="language-js">navigationController.startNavigation(
   route,
-  'Metric',
+  UnitSystem.Metric,
   defaultStepAdvancePolicy(),
   defaultDeviationPolicy(),
 );
 
 // One fix per sample of your location source (or its recorded trace):
-await navigationController.provideLocationUpdate({
+navigationController.updateLocation({
   coordinate: { latitude: sampleLatitude, longitude: sampleLongitude },
   horizontalAccuracyMeters: 8.0,
-  courseHeadingDegrees: null,
-  timestampSeconds: null,
+  courseHeadingDegrees: undefined,
+  timestampSeconds: undefined,
 });
 
-const tripState = await navigationController.currentTripState();
+const tripState = navigationController.currentTripState();
 </code></pre>
+<h3 id="draw-the-trip-on-the-map-2"><a class="header" href="#draw-the-trip-on-the-map-2">Draw the trip on the map</a></h3>
+<p>The generated surface exposes the same overlay, camera and
+location-indicator members the contract carries; the contract’s <code>MapView</code>
+class is the one your native host shell binds to. Put the route on once, then
+drive the next-maneuver card from the instruction listener and the follow
+camera from each accepted fix:</p>
+<pre><code class="language-js">import { MapCamera, MapOverlayKind } from '@angoratek/rustic-maps-sdk';
+
+// Once, when the route arrives: one polyline over the whole route.
+const routeOverlay = {
+  kind: MapOverlayKind.RoutePolyline,
+  coordinates: route.legs.flatMap(
+    (leg) =&gt; leg.steps.flatMap((step) =&gt; step.shape),
+  ),
+  rgbaColor: { red: 0.16, green: 0.47, blue: 1.0, alpha: 0.95 },
+  widthPixels: 6.0,
+};
+mapView.setOverlays([routeOverlay]);
+
+// The listener subscribed above; the next-maneuver card reads the
+// instruction payload the controller dispatches.
+const listener = {
+  onNavigationInstruction(instruction) {
+    setNextManeuver({
+      instructionText: instruction.activeManeuver.instruction.composedDisplayText,
+      distancePhrase: instruction.activeManeuver.distancePhrase,
+      isReroutingRequired: instruction.isReroutingRequired,
+    });
+  },
+  onSpeechInstruction(speechInstruction) {
+    speak(speechInstruction.utteranceSpeechText);
+  },
+  onDeviationStatusChange(deviationStatusChange) {
+    setDeviation(deviationStatusChange);
+  },
+  onNavigationPhaseChange(navigationPhaseChange) {
+    setPhase(navigationPhaseChange);
+  },
+};
+
+// On every accepted fix: the 3D course-up follow camera (z17, 45° pitch,
+// the reference apps' constants).
+const FOLLOW_ZOOM_LEVEL = 17.0;
+const FOLLOW_PITCH_DEGREES = 45.0;
+const followCamera = new MapCamera(
+  { latitude: fix.latitude, longitude: fix.longitude },
+  FOLLOW_ZOOM_LEVEL,
+  smoothedCourseHeadingDegrees,
+  FOLLOW_PITCH_DEGREES,
+);
+await mapView.draw(followCamera);
+</code></pre>
+<p>The camera follows the smoothed course, not the raw fix-to-fix bearing, and
+a pan gesture hands control back to the user until the location control is
+tapped again.</p>
 <h3 id="voice-the-speech-channel-2"><a class="header" href="#voice-the-speech-channel-2">Voice the speech channel</a></h3>
 <p>The SDK triggers; your application voices. In the speech callback, hand
 the verbatim text to the platform’s speech engine (Expo’s Speech, or
@@ -439,22 +572,59 @@ your own TTS wrapper), and use the delivery’s <code>utteranceId</code> for ded
   });
 }
 </code></pre>
+<h3 id="end-the-trip-2"><a class="header" href="#end-the-trip-2">End the trip</a></h3>
+<pre><code class="language-js">// Clears the active trip and its state; subscriptions stay registered.
+navigationController.stopNavigation();
+</code></pre>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="scope-note"><a class="header" href="#scope-note">Scope note</a></h3>
-<p>The turn-by-turn controller surface is native-platform territory today:
-the WebAssembly seam ships the camera, rendering, and offline-routing
-slice, and no navigation controller rides it yet. The contract’s
-navigation surface stays native (the <a href="first-map.html">first map</a>
-tutorial’s note covers the provider surface the same way).</p>
-<h3 id="what-runs-today"><a class="header" href="#what-runs-today">What runs today</a></h3>
-<p>Turn-by-turn state is exercised end to end in the reference
-applications, and the browser harness runs the same renderer core the
-navigation follow-camera draws with: the <a href="live-demo.html">live demo</a> will
-include a guided walk once its bundle lands. Until then, run the
-navigation simulation on the native platforms; the <a href="demo-loop.html">demo loop</a>
-page shows how the browser harness runs and what it exercises.</p>
+<p>The WebAssembly seam ships the camera, rendering, overlays and offline
+routing; it does <strong>not</strong> ship the navigation controller. There is no trip
+state, no banner, speech, deviation or phase dispatch, and no <code>Navigator</code>
+on this surface. The sections below use the same route, the same camera and
+the same follow story the other tabs tell, without claiming navigation
+state exists.</p>
+<h3 id="draw-the-route-and-follow-it"><a class="header" href="#draw-the-route-and-follow-it">Draw the route and follow it</a></h3>
+<p>What the browser can do from the same story is draw the planned route on
+the canvas and follow it with the camera:</p>
+<pre><code class="language-js">// Once, when the route arrives: the route geometry as one polyline.
+mapView.setOverlays([
+  {
+    kind: 'routePolyline',
+    coordinates: route.legs.flatMap(
+      (leg) =&gt; leg.steps.flatMap((step) =&gt; step.shape),
+    ),
+    rgbaColor: { red: 0.16, green: 0.47, blue: 1.0, alpha: 0.95 },
+    widthPixels: 6.0,
+  },
+]);
+
+// On every position you already have: the 3D course-up follow camera
+// (z17, 45° pitch, the reference apps' constants) and the route arrow.
+const FOLLOW_ZOOM_LEVEL = 17.0;
+const FOLLOW_PITCH_DEGREES = 45.0;
+const fieldOfViewDegrees = 60;
+mapView.setLocationIndicator(
+  { coordinate: fix, courseHeadingDegrees: smoothedCourseHeadingDegrees },
+  { visualKind: 'guidedCourseArrow' },
+);
+await mapView.renderFrame(
+  new MapCamera(
+    fix.latitude,
+    fix.longitude,
+    FOLLOW_ZOOM_LEVEL,
+    smoothedCourseHeadingDegrees,
+    FOLLOW_PITCH_DEGREES,
+  ),
+  fieldOfViewDegrees,
+);
+</code></pre>
+<p>The route and step records are the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code>
+objects the native surfaces return, so the polyline extraction is identical.
+Run the navigation simulation itself on a native platform or in the
+<a href="live-demo.html">live demo</a> until the controller reaches this surface.</p>
 </div>
 
 </div>
@@ -511,7 +681,7 @@ page shows how the browser harness runs and what it exercises.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

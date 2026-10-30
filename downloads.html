@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,58 +176,59 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="downloads"><a class="header" href="#downloads">Downloads</a></h1>
+<p>Every package is published under this site’s own versioned path,
+<code>/downloads/vX.Y.Z/</code>, and mirrored to an immutable release record: the version
+page lists the exact files, and a new version never rewrites an existing one.
+There is no Maven Central, npm registry or Swift Package Manager registry
+entry — the files served from this site are the artifacts you install.</p>
 <div class="release-pending">
-<p><strong>First release pending.</strong> The artifacts below are published only as
-<a href="https://github.com/angoratek/rustic-maps-sdk/releases">GitHub Releases</a>
-— there is no Maven Central, no npm registry, and no SPM registry. The
-release workflow that produces this matrix is being rehearsed; when the
-first tag is published, the links on this page resolve to the released
-assets, in the exact file names the table lists.</p>
+<p><strong>Version 0.1 is being prepared.</strong> No artifact is published yet. The table
+below lists the exact file names the release will carry; each will resolve at
+<code>/downloads/v0.1.0/&lt;file&gt;</code> on this site when that version is published.</p>
 </div>
 
 <h2 id="artifact-matrix"><a class="header" href="#artifact-matrix">Artifact matrix</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Platform</th><th>Artifact file</th><th>Status</th><th>What it contains</th></tr>
+<tr><th>Platform</th><th>Artifact file</th><th>What it contains</th></tr>
 </thead>
 <tbody>
-<tr><td>Android</td><td><code>rustic-maps-sdk-android-vX.Y.Z.aar</code></td><td>shipped</td><td>Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a, x86_64</td></tr>
-<tr><td>iOS</td><td><code>rustic-maps-sdk-ios-vX.Y.Z.xcframework.zip</code></td><td>shipped</td><td>The XCFramework (arm64 device and simulator slices), packaged for a Swift Package Manager binary target</td></tr>
-<tr><td>WebAssembly</td><td><code>rustic-maps-sdk-web-vX.Y.Z.tar.gz</code> (raw <code>pkg/</code>) and <code>rustic-maps-sdk-web-vX.Y.Z.tgz</code> (npm)</td><td>shipped</td><td>The wasm module, its JavaScript shim and both type files; the npm package adds the manifest, licenses and notices</td></tr>
-<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-vX.Y.Z.tgz</code> (npm, <code>@angoratek/rustic-maps-sdk</code>)</td><td>shipped (source package)</td><td>The TurboModule package: generated TypeScript, JSI C++, podspec and CMake glue; the native Rust payload lands with the build-rn pipeline item</td></tr>
-<tr><td>All platforms</td><td><code>rustic-maps-sdk-notices-vX.Y.Z.md</code></td><td>shipped</td><td>The third-party dependency notices that accompany your own distribution</td></tr>
+<tr><td>Android</td><td><code>rustic-maps-sdk-android-vX.Y.Z.aar</code></td><td>Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64</td></tr>
+<tr><td>iOS</td><td><code>rustic-maps-sdk-ios-vX.Y.Z.xcframework.zip</code></td><td>The XCFramework (arm64 device and simulator slices), packaged for a Swift Package Manager binary target</td></tr>
+<tr><td>WebAssembly</td><td><code>rustic-maps-sdk-web-vX.Y.Z.tar.gz</code> (the module) and <code>rustic-maps-sdk-web-vX.Y.Z.tgz</code> (the npm package)</td><td>The wasm module, its JavaScript shim and both type files; the npm package adds the manifest, licenses and notices</td></tr>
+<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-vX.Y.Z.tgz</code> (npm package <code>@angoratek/rustic-maps-sdk</code>)</td><td>The TurboModule package: generated TypeScript, JSI C++, podspec and CMake glue</td></tr>
+<tr><td>All platforms</td><td><code>rustic-maps-sdk-notices-vX.Y.Z.md</code></td><td>The third-party dependency notices that accompany your own distribution</td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="what-accompanies-every-release"><a class="header" href="#what-accompanies-every-release">What accompanies every release</a></h2>
-<p>Every release carries a per-asset <code>.sha256</code> sidecar, the aggregated
-<code>SHA256SUMS.txt</code> manifest covering all assets, and a Sigstore signature
-bundle (<code>.sigstore.json</code>) per asset and for <code>SHA256SUMS.txt</code> itself. The
-release is immutable: a problem is fixed by a new tag, never by
-replacing an asset.</p>
+<p>Every version carries a per-file <code>.sha256</code> sidecar, an aggregated
+<code>SHA256SUMS.txt</code> manifest covering all files, and a Sigstore signature bundle
+(<code>.sigstore.json</code>) per file and for <code>SHA256SUMS.txt</code> itself. A published
+version is immutable: a problem is fixed by a new version, never by replacing a
+file.</p>
 <h2 id="verifying-an-artifact"><a class="header" href="#verifying-an-artifact">Verifying an artifact</a></h2>
-<p>Verify the checksum first, then the signature. The signature bundles
-bind the asset to the release workflow and the <code>vX.Y.Z</code> tag, so the
-verification command pins both:</p>
+<p>Verify the checksum first, then the signature. The signature bundles bind the
+file to the release workflow and the <code>vX.Y.Z</code> tag, so the verification command
+pins both:</p>
 <pre><code class="language-bash">sha256sum --check SHA256SUMS.txt --ignore-missing
 
 cosign verify-blob &lt;artifact-file&gt; \
   --bundle &lt;artifact-file&gt;.sigstore.json \
-  --certificate-identity-regexp \
-  "https://github.com/angoratek/rustic-maps-sdk/.github/workflows/release.yml@refs/tags/vX.Y.Z" \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --yes
+  --certificate-identity-regexp "&lt;the identity printed by your download page&gt;" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
 </code></pre>
-<p>The <code>--ignore-missing</code> flag keeps the <code>sha256sum</code> run to the files you
-actually downloaded.</p>
+<p>The version page prints the exact identity string for its own tag. The
+<code>--ignore-missing</code> flag keeps the <code>sha256sum</code> run to the files you actually
+downloaded.</p>
 <h2 id="installing-from-a-release"><a class="header" href="#installing-from-a-release">Installing from a release</a></h2>
-<p>The <a href="first-map.html">tutorials</a> carry the per-platform install steps
-against these exact artifact names: the checked-in AAR path for Android,
-the checksummed zip for the Swift Package Manager binary target, and the
-<code>pkg/</code> archive for the wasm package. The npm packages ship the same
-generated trees with a manifest, licenses and notices; the React Native
-package is source-only until its native payload joins the release pipeline.</p>
+<p>The <a href="first-map.html">tutorials</a> carry the per-platform install steps against
+these exact artifact names: the AAR for Android, the checksummed zip for the
+Swift Package Manager binary target, and the module archive for the wasm
+package. The npm packages ship the same generated trees with a manifest,
+licenses and notices. Until version 0.1 is published, follow the tutorials’
+“checked-in copy” path rather than a download link.</p>
 
                     </main>
 
@@ -280,7 +281,7 @@ package is source-only until its native payload joins the release pipeline.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 
