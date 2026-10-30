@@ -55,6 +55,7 @@
       "terms_note": "OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.",
       "settings_hint": "",
       "wasm_registration": null,
+      "url_template": "https://tiles.openstreetmap.us/vector/sourdough/{z}/{x}/{y}.mvt",
       "fixture_routes": [
         {
           "purpose": "vector_tiles",
