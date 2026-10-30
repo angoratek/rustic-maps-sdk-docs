@@ -167,7 +167,7 @@
     },
     "wasm_seam_status": {
       "available": false,
-      "reason": "The MapNavigationController is not exposed on the wasm seam yet; live simulated navigation arrives with the contract wave. Kotlin and Swift bind it today through the frozen UniFFI contract."
+      "reason": "The Navigator is not exposed on the wasm seam yet; live simulated navigation arrives with the contract wave. Kotlin and Swift bind it today through the frozen UniFFI contract."
     },
     "layout_preview": {
       "notice": "Layout preview with fixed sample values from the demo trace's first recorded state. Illustrative and explicitly not live guidance.",
@@ -220,6 +220,26 @@
       "latitude_degrees": 38.5722,
       "longitude_degrees": -121.4713,
       "note": "The 1839 fort and state historic park."
+    }
+  ],
+  "demo_plans": [
+    {
+      "scenario": "sacramento_clean_walk",
+      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
+      "label": "Clean walk",
+      "description": "Replays a walk that follows the route start to finish; guidance runs clean."
+    },
+    {
+      "scenario": "sacramento_deviation_recovery",
+      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_deviation_recovery.json",
+      "label": "Deviation recovery",
+      "description": "Replays a walk that steps off the line and recovers; guidance freezes while off route."
+    },
+    {
+      "scenario": "sacramento_deviation_reroute",
+      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_deviation_reroute.json",
+      "label": "Deviation reroute",
+      "description": "Replays a walk that steps off the line; a replacement route is applied once the guidance freezes."
     }
   ]
 }

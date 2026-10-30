@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -179,7 +179,7 @@
 <p>Resolve a typed query into places with the geocoding and search
 contracts, then plan a route through the results. The tutorial builds on
 the <a href="first-map.html">first map</a> tutorial’s installed SDK; every snippet
-compiles against the <a href="udl-contract.html">frozen FFI contract</a>.</p>
+compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -192,29 +192,33 @@ compiles against the <a href="udl-contract.html">frozen FFI contract</a>.</p>
 <h3 id="resolve-a-query-into-places"><a class="header" href="#resolve-a-query-into-places">Resolve a query into places</a></h3>
 <p>The provider surface runs on Kotlin coroutines: every <code>MapSdk</code> call you
 see here is a <code>suspend fun</code>. Run it from a coroutine scope:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.GeographicCoordinate
-import uniffi.map_native_core.PlaceResult
+<pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
+import uniffi.rustic_maps.Place
 
-suspend fun resolveDestination(mapSdk: MapSdk, queryText: String): PlaceResult? =
-    mapSdk.forwardGeocode(queryText).firstOrNull()
+// "Capitol Park" is the shared demo query, the same string on every tab.
+suspend fun resolveDestination(
+    mapSdk: MapSdk,
+    queryText: String = "Capitol Park",
+): Place? = mapSdk.forwardGeocode(queryText).firstOrNull()
 </code></pre>
 <p><code>forwardGeocode</code> answers every candidate the provider resolved, most
-likely first; <code>searchAutocomplete</code> answers fast completion candidates
-while the user types, and <code>searchPlaces</code> answers full results for a
+likely first; <code>suggest</code> answers fast completion candidates
+while the user types, and <code>search</code> answers full results for a
 settled query. Both search calls take an optional <code>BoundingBox</code> boundary
 that restricts the search.</p>
 <h3 id="plan-the-route"><a class="header" href="#plan-the-route">Plan the route</a></h3>
-<p><code>calculateRoute</code> takes the ordered waypoints and the routing options. The
-reference application plans pedestrian routes like this:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.AvoidOptions
-import uniffi.map_native_core.RouteOptions
-import uniffi.map_native_core.RouteStrategy
-import uniffi.map_native_core.TransportationMode
-import uniffi.map_native_core.UnitSystem
+<p><code>calculateRoute</code> takes the ordered waypoints and the routing options. This
+is the shared demo request on every platform: exactly two waypoints,
+automobile, fastest, metric, no avoids.</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.AvoidOptions
+import uniffi.rustic_maps.RouteOptions
+import uniffi.rustic_maps.RouteStrategy
+import uniffi.rustic_maps.TransportationMode
+import uniffi.rustic_maps.UnitSystem
 
 val routeOptions = RouteOptions(
-    transportationMode = TransportationMode.PEDESTRIAN,
-    routeStrategy = RouteStrategy.SHORTEST,
+    transportationMode = TransportationMode.AUTOMOBILE,
+    routeStrategy = RouteStrategy.FASTEST,
     unitSystem = UnitSystem.METRIC,
     avoidOptions = AvoidOptions(
         tollRoads = false,
@@ -225,6 +229,7 @@ val routeOptions = RouteOptions(
     departureTimestampSeconds = null,
 )
 
+// Exactly two waypoints: Capitol Park to Tower Bridge.
 val waypoints = listOf(
     originCoordinate,
     destinationCoordinate,
@@ -232,22 +237,22 @@ val waypoints = listOf(
 suspend fun planRoute(mapSdk: MapSdk, waypoints: List&lt;GeographicCoordinate&gt;) =
     mapSdk.calculateRoute(waypoints, routeOptions)
 </code></pre>
-<p>The returned <code>RouteData</code> carries total distance and duration, the
+<p>The returned <code>Route</code> carries total distance and duration, the
 geometry’s bounding box, and one leg per waypoint pair, each with its
 maneuver steps.</p>
 <h3 id="frame-the-route-preview"><a class="header" href="#frame-the-route-preview">Frame the route preview</a></h3>
 <p>Let the camera fit the route’s bounding box through the <code>fitBounds</code>
 constructor instead of hand-tuning zoom:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.EdgeInsetsPixels
-import uniffi.map_native_core.MapCamera
-import uniffi.map_native_core.ViewportPixels
+<pre><code class="language-kotlin">import uniffi.rustic_maps.EdgeInsets
+import uniffi.rustic_maps.MapCamera
+import uniffi.rustic_maps.ViewportSize
 
 val fittedCamera = try {
     MapCamera.fitBounds(
         route.boundingBox,
-        ViewportPixels(widthPixels, heightPixels),
-        EdgeInsetsPixels(left = 224.0, top = 48.0, right = 48.0, bottom = 96.0),
-        maximumZoomLevel = 24.0,
+        ViewportSize(widthPixels, heightPixels),
+        EdgeInsets(left = 224.0, top = 48.0, right = 48.0, bottom = 96.0),
+        maximumZoomLevel = 22.0,
     )
 } catch (sdkException: SdkException) {
     // A refused fit (no positive box area, unusable insets) surfaces
@@ -262,6 +267,19 @@ destination never hides under your own panels.</p>
 map</a> tutorial’s overlay step covers the descriptor), then
 start a trip on the route in the <a href="navigation-simulation.html">navigation
 tutorial</a>.</p>
+<h3 id="group-the-calls-with-engines"><a class="header" href="#group-the-calls-with-engines">Group the calls with engines</a></h3>
+<p>The contract also groups these capabilities into small engine objects built
+over the same SDK. Each one delegates verbatim, with the same typed failures
+and detail text as the <code>MapSdk</code> member it wraps:</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.RoutingEngine
+import uniffi.rustic_maps.SearchEngine
+
+val searchEngine = SearchEngine(mapSdk)
+val settledPlaces = searchEngine.search("Capitol Park", searchBoundary = null)
+
+val routingEngine = RoutingEngine(mapSdk)
+val plannedRoute = routingEngine.calculateRoute(waypoints, routeOptions)
+</code></pre>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="ios">
@@ -269,19 +287,21 @@ tutorial</a>.</p>
 <p>The provider surface throws on failure and awaits its provider calls:</p>
 <pre><code class="language-swift">import RusticMapsSDK
 
-let places = try await mapSdk.forwardGeocode(addressText)
+// "Capitol Park" is the shared demo query, the same string on every tab.
+let places = try await mapSdk.forwardGeocode(addressText: "Capitol Park")
 guard let destination = places.first else {
     // No candidate: surface the empty state.
     return
 }
 </code></pre>
-<p><code>searchAutocomplete</code> gives fast completion candidates for a query under
-construction, <code>searchPlaces</code> gives full results for a settled one, and
+<p><code>suggest</code> gives fast completion candidates for a query under
+construction, <code>search</code> gives full results for a settled one, and
 both take an optional <code>BoundingBox</code> boundary.</p>
 <h3 id="plan-the-route-1"><a class="header" href="#plan-the-route-1">Plan the route</a></h3>
-<pre><code class="language-swift">let routeOptions = RouteOptions(
-    transportationMode: TransportationMode.pedestrian,
-    routeStrategy: RouteStrategy.shortest,
+<pre><code class="language-swift">// The shared demo request: two waypoints, automobile, fastest, metric.
+let routeOptions = RouteOptions(
+    transportationMode: TransportationMode.automobile,
+    routeStrategy: RouteStrategy.fastest,
     unitSystem: UnitSystem.metric,
     avoidOptions: AvoidOptions(
         tollRoads: false,
@@ -293,12 +313,12 @@ both take an optional <code>BoundingBox</code> boundary.</p>
 )
 
 let route = try await mapSdk.calculateRoute(
-    [originCoordinate, destination.coordinate],
+    waypoints: [originCoordinate, destination.coordinate],
     routeOptions: routeOptions
 )
 try planRoutePreview(route)
 </code></pre>
-<p>The returned <code>RouteData</code> carries distance, duration, the bounding box,
+<p>The returned <code>Route</code> carries distance, duration, the bounding box,
 and one leg per waypoint pair with its steps.</p>
 <h3 id="frame-and-draw-the-preview"><a class="header" href="#frame-and-draw-the-preview">Frame and draw the preview</a></h3>
 <p>Fit the camera to the route’s bounding box through the insets-aware
@@ -307,10 +327,25 @@ the route’s geometry to the surface’s overlay list:</p>
 <pre><code class="language-swift">let fittedCamera = try MapCamera.fitBounds(
     boundingBox: route.boundingBox,
     viewport: viewport,
-    edgeInsets: EdgeInsetsPixels(left: 48, top: 48, right: 48, bottom: 96),
+    edgeInsets: EdgeInsets(left: 224, top: 48, right: 48, bottom: 96),
     maximumZoomLevel: 22
 )
 pinnedFitBoundsCamera = fittedCamera
+</code></pre>
+<h3 id="group-the-calls-with-engines-1"><a class="header" href="#group-the-calls-with-engines-1">Group the calls with engines</a></h3>
+<p>Each engine wraps the same SDK and delegates verbatim, keeping the typed
+failures and detail text:</p>
+<pre><code class="language-swift">let searchEngine = SearchEngine(mapSdk: mapSdk)
+let settledPlaces = try await searchEngine.search(
+    queryText: "Capitol Park",
+    searchBoundary: nil
+)
+
+let routingEngine = RoutingEngine(mapSdk: mapSdk)
+let plannedRoute = try await routingEngine.calculateRoute(
+    waypoints: waypoints,
+    routeOptions: routeOptions
+)
 </code></pre>
 </div>
 
@@ -319,22 +354,33 @@ pinnedFitBoundsCamera = fittedCamera
 <p>The TurboModule surface mirrors the contract as promise-returning
 methods. Everything you call on <code>MapSdk</code> resolves to the same records
 the other platforms see, with lower camel case field names:</p>
-<pre><code class="language-js">import { MapSdk, GeographicCoordinate, BoundingBox } from '@angoratek/rustic-maps-sdk';
+<pre><code class="language-js">import {
+  MapSdk,
+  MapCamera,
+  GeographicCoordinate,
+  BoundingBox,
+  TransportationMode,
+  RouteStrategy,
+  UnitSystem,
+} from '@angoratek/rustic-maps-sdk';
 
 const mapSdk = new MapSdk();
-await mapSdk.registerMapquestProviders(mapQuestApiKey);
+await mapSdk.setProviderCredential(mapQuestApiKey);
+
+// "Capitol Park" is the shared demo query, the same string on every tab.
+const queryText = 'Capitol Park';
 
 // Fast completion candidates while the user types:
-const completions = await mapSdk.searchAutocomplete(queryText, null);
+const completions = await mapSdk.suggest(queryText, undefined);
 
 // Full results for a settled query, restricted to the visible region:
-const results = await mapSdk.searchPlaces(settledQueryText, visibleRegionBoundingBox);
+const results = await mapSdk.search(queryText, visibleRegionBoundingBox);
 
 // Address text into a coordinate:
-const destination = (await mapSdk.forwardGeocode(destinationText))[0];
+const destination = (await mapSdk.forwardGeocode(queryText))[0];
 </code></pre>
-<p>Pass <code>null</code> as the boundary to search worldwide, and pass a
-<code>BoundingBox</code> (<code>southWest</code>/<code>northEast</code> corners, lower camel case) to
+<p>Pass <code>undefined</code> (or omit it) as the boundary to search worldwide, and pass
+a <code>BoundingBox</code> (<code>southWest</code>/<code>northEast</code> corners, lower camel case) to
 restrict the search.</p>
 <h3 id="plan-the-route-2"><a class="header" href="#plan-the-route-2">Plan the route</a></h3>
 <pre><code class="language-js">const waypoints = [
@@ -343,16 +389,16 @@ restrict the search.</p>
 ];
 
 const route = await mapSdk.calculateRoute(waypoints, {
-  transportationMode: 'Pedestrian',
-  routeStrategy: 'Shortest',
-  unitSystem: 'Metric',
+  transportationMode: TransportationMode.Automobile,
+  routeStrategy: RouteStrategy.Fastest,
+  unitSystem: UnitSystem.Metric,
   avoidOptions: {
     tollRoads: false,
     limitedAccessHighways: false,
     ferries: false,
     unpavedRoads: false,
   },
-  departureTimestampSeconds: null,
+  departureTimestampSeconds: undefined,
 });
 
 console.log(route.distanceMeters, route.durationSeconds);
@@ -360,30 +406,80 @@ console.log(route.distanceMeters, route.durationSeconds);
 <p>A rejected promise carries the typed <code>SdkError</code>; surface it in your
 error state instead of retrying blindly (the rate limiter refills on its
 own).</p>
+<h3 id="frame-the-route-preview-1"><a class="header" href="#frame-the-route-preview-1">Frame the route preview</a></h3>
+<p>The generated <code>MapCamera.fitBounds</code> takes the same inset story as the
+other tabs: 224 px clear on the left for the route card, 48 px top and
+right, 96 px bottom, clamped at zoom 22:</p>
+<pre><code class="language-js">const fittedCamera = MapCamera.fitBounds(
+  route.boundingBox,
+  { widthPixels, heightPixels },
+  { left: 224, top: 48, right: 48, bottom: 96 },
+  22,
+);
+</code></pre>
+<h3 id="group-the-calls-with-engines-2"><a class="header" href="#group-the-calls-with-engines-2">Group the calls with engines</a></h3>
+<p>The generated engine classes wrap the same SDK and delegate verbatim:</p>
+<pre><code class="language-js">import { SearchEngine, RoutingEngine } from '@angoratek/rustic-maps-sdk';
+
+const searchEngine = new SearchEngine(mapSdk);
+const settledPlaces = await searchEngine.search('Capitol Park', undefined);
+
+const routingEngine = new RoutingEngine(mapSdk);
+const plannedRoute = await routingEngine.calculateRoute(waypoints, routeOptions);
+</code></pre>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
-<h3 id="what-the-wasm-seam-covers-today"><a class="header" href="#what-the-wasm-seam-covers-today">What the wasm seam covers today</a></h3>
-<p>The WebAssembly surface ships the camera, projection, rendering, and
-offline-routing slice of the contract; the async provider surface
-(<code>MapSdk</code>’s geocoding, search, and routing members) has no wasm exposure
-yet and stays a native-platform surface. The types mirror the contract,
-and the contract-sync test keeps the two in lockstep.</p>
-<h3 id="route-over-an-offline-graph-archive"><a class="header" href="#route-over-an-offline-graph-archive">Route over an offline graph archive</a></h3>
-<p>The wasm seam answers routes over a compiled offline routing archive
-loaded from in-memory bytes — the same object shape the native routing
-call returns:</p>
-<pre><code class="language-js">import { offline_route_from_archive_bytes } from './web/map_web_bindings.js';
+<h3 id="search-and-route-in-the-browser"><a class="header" href="#search-and-route-in-the-browser">Search and route in the browser</a></h3>
+<p>The WebAssembly surface answers the same two calls the native tabs make,
+through the same provider registration: register a provider once, then
+forward-geocode and route. The calls are asynchronous and reject with the same
+typed error text the native surfaces throw.</p>
+<pre><code class="language-js">import {
+  registerProvider,
+  forwardGeocode,
+  calculateRoute,
+} from './web/map_web_bindings.js';
 
-// The archive, fetched from a same-origin path (the demo serves the
-// routing-grid fixture at /offline-graph/routing_grid.rmog):
-const archiveBytes = new Uint8Array(
-  await fetch('/offline-graph/routing_grid.rmog').then(
-    (archiveResponse) =&gt; archiveResponse.arrayBuffer(),
-  ),
+// Register the provider you have a credential for; the first argument is the
+// provider key from the registry, the second its credential.
+registerProvider('mapquest', providerCredential);
+
+// Address text into a coordinate: the shared demo query.
+const placeRows = await forwardGeocode('Capitol Park');
+const destination = placeRows[0];
+console.log(destination.structuredAddressText, destination.latitudeDegrees);
+
+// Plan the route between two coordinates.
+const route = await calculateRoute(
+  originLatitude,
+  originLongitude,
+  destination.latitudeDegrees,
+  destination.longitudeDegrees,
 );
+console.log(route.distanceMeters, route.durationSeconds, route.legs[0].steps[0]);
+</code></pre>
+<p>The browser route call plans the same request as the native tabs: automobile,
+fastest route, metric units, exactly two waypoints. Three limits belong to this
+surface, not the route:</p>
+<ul>
+<li><strong>No fit-bounds export.</strong> Frame the route yourself from the returned
+<code>boundingBox</code>; the native tabs use <code>fitBounds</code> with 224/48/48/96 insets
+clamped at zoom 22.</li>
+<li><strong>Forward geocoding and route planning only.</strong> The browser seam carries no
+<code>suggest</code> or <code>search</code> export; a completion list stays a native call.</li>
+<li><strong>Fixed route options.</strong> A non-default routing mode needs your own Rust
+build around the routing provider.</li>
+</ul>
+<h3 id="route-over-an-offline-graph-archive"><a class="header" href="#route-over-an-offline-graph-archive">Route over an offline graph archive</a></h3>
+<p>The browser build also answers routes over a compiled offline routing archive
+loaded from in-memory bytes, with no provider and no network round trip:</p>
+<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/map_web_bindings.js';
 
-const route = await offline_route_from_archive_bytes(
+const archiveResponse = await fetch('/offline-graph/routing_grid.rmog');
+const archiveBytes = new Uint8Array(await archiveResponse.arrayBuffer());
+
+const route = await offlineRouteFromArchiveBytes(
   archiveBytes,
   startLatitude,
   startLongitude,
@@ -391,12 +487,11 @@ const route = await offline_route_from_archive_bytes(
   endLongitude,
 );
 </code></pre>
-<p>The route records mirror the contract’s <code>RouteData</code>/<code>RouteLeg</code>/
-<code>RouteStep</code> dictionaries in lower camel case (<code>instructionDisplayText</code>,
-<code>shape</code>), so a routing UI written for the native surface reads the wasm
-answer with no reshaping. Failures throw the verbatim refusal string:
-bytes that fail archive validation, a coordinate outside every node’s
-snap tolerance, or a request pair the graph cannot connect.</p>
+<p>The route records carry the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code> field names the
+native surfaces return (<code>instructionDisplayText</code>, <code>shape</code>), so one routing UI
+reads either answer. The call rejects verbatim when the bytes fail archive
+validation, a coordinate falls outside every node’s snap tolerance, or the two
+points are not connected in the graph.</p>
 </div>
 
 </div>
@@ -453,7 +548,7 @@ snap tolerance, or a request pair the graph cannot connect.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

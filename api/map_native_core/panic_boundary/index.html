@@ -42,7 +42,7 @@ which panics the proxy call unless the contract’s error type converts
 it (<a href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError"><code>crate::error::SdkError</code></a> implements that <code>From</code>; see there). That
 panic, like every other panic inside an exported frame, is caught by
 the same scaffolding boundary. Callback contracts whose methods have no
-error channel (<code>NavigationStateEventListener</code>,
+error channel (<code>NavigationListener</code>,
 <code>SdkDiagnosticEventListener</code>) can only take the panic route; that is
 fine for the same reason.</li>
 </ul>

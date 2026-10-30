@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["client","directions","error_mapping","geocoding","http","json_coordinates","rate_limit","search","tiles","traffic","traffic_flow"]};
+window.SIDEBAR_ITEMS = {"mod":["client","directions","error_mapping","geocoding","http","json_coordinates","search","tiles","traffic","traffic_flow"]};

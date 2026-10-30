@@ -9,20 +9,20 @@
 // drift from each other, from the other platforms, or from the native scenes.
 //
 // Every scene is one plain descriptor object in the wasm canvas
-// `set_overlays` vocabulary; no color or width override is given, so each
+// `setOverlays` vocabulary; no color or width override is given, so each
 // keeps the documented map-rendering default style the fixtures were
 // rendered with.
 import scene_artifact from '../reference-scenes.json' with { type: 'json' };
-import { CanvasTrafficFlowCongestionLevel } from './pkg/map_web_bindings.js';
+import { TrafficFlowCongestionLevel } from './pkg/map_web_bindings.js';
 
 // The artifact spells congestion levels with the enum's variant names; the
 // wasm canvas rejects unknown values, so an unmapped artifact name surfaces
 // immediately.
 const CONGESTION_LEVELS_BY_ARTIFACT_NAME = {
-  FreeFlow: CanvasTrafficFlowCongestionLevel.FreeFlow,
-  Slow: CanvasTrafficFlowCongestionLevel.Slow,
-  Congested: CanvasTrafficFlowCongestionLevel.Congested,
-  Blocked: CanvasTrafficFlowCongestionLevel.Blocked,
+  FreeFlow: TrafficFlowCongestionLevel.FreeFlow,
+  Slow: TrafficFlowCongestionLevel.Slow,
+  Congested: TrafficFlowCongestionLevel.Congested,
+  Blocked: TrafficFlowCongestionLevel.Blocked,
 };
 
 // Reads the artifact's congestion string (never invents a level).
@@ -45,7 +45,7 @@ function geographic_coordinate(coordinate_pair) {
   };
 }
 
-// Builds the wasm `set_overlays` descriptor for one artifact scene. The
+// Builds the wasm `setOverlays` descriptor for one artifact scene. The
 // per-kind property names are the descriptor vocabulary's
 // (`coordinates`/`ringCoordinates`/`positions`/`shapeCoordinates`); every
 // artifact key without a descriptor meaning (label, description) is dropped

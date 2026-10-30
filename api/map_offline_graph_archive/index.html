@@ -2,7 +2,7 @@
 <code>PRD.md</code> §4.6): the format’s reader and writer home, viable on every
 SDK target.</p>
 <p>This crate is pure byte parsing and encoding with no platform-specific
-dependencies outside <a href="../geospatial_types/index.html" title="mod geospatial_types"><code>geospatial_types</code></a>, so it builds on native
+dependencies outside [<code>geospatial_types</code>], so it builds on native
 targets and on <code>wasm32-unknown-unknown</code> alike: <a href="archive/index.html" title="mod map_offline_graph_archive::archive"><code>archive</code></a> carries the
 format constants, the packed record types, the deterministic writer
 and the fully validating in-memory reader
@@ -44,7 +44,7 @@ multiple of 8; unnamed padding gaps of up to 7 bytes may separate them.</code></
 <p>Resources hold packed array-of-structs records — the GraphHopper-style
 encoded-value columns (<a href="archive/constant.EDGE_RECORD_BYTES.html" title="constant map_offline_graph_archive::archive::EDGE_RECORD_BYTES"><code>archive::EDGE_RECORD_BYTES</code></a>’s <code>encoded_value</code>:
 speed cells, road class, direction access) keep the routing hot path
-branch-free. Corruption anywhere fails typed: <a href="../geospatial_types/index.html" title="mod geospatial_types"><code>geospatial_types</code></a>’s
+branch-free. Corruption anywhere fails typed: [<code>geospatial_types</code>]’s
 <code>SDKError::OfflineRoutingFailure</code> with
 <code>OfflineGraphInvalidReason::{ArchiveMalformed, VersionUnsupported, IndexOutOfRange}</code>.</p>
 <h2 id="who-produces-and-consumes-this-format"><a class="doc-anchor" href="#who-produces-and-consumes-this-format">§</a>Who produces and consumes this format</h2>

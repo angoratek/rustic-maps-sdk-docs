@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,15 +176,14 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="the-ffi-contract"><a class="header" href="#the-ffi-contract">The FFI contract</a></h1>
-<p>The SDK’s binding surface is one frozen UniFFI UDL contract,
+<p>The SDK’s binding surface is one UniFFI UDL contract,
 <code>map_native_core.udl</code>, published verbatim below and as a plain-text
 <a href="../udl/map_native_core.udl">download</a>. This file is the single source of
-truth: the Kotlin, Swift, and React Native bindings are generated from
-it, and the WebAssembly TypeScript mirror is regression-checked against
-it.</p>
-<p>The contract is <strong>addition-only</strong>. Existing members keep their signature
-and meaning, so your compiled bindings stay valid across upgrades; new
-capability is new members. The <a href="api-reference.html">API reference</a>
+truth: the Kotlin, Swift, React Native and WebAssembly bindings are
+generated from it, so every platform exposes the same names and records.</p>
+<p>The contract is still pre-1.0: a release may rename or replace members
+while the API settles, and the <a href="changelog.html">changelog</a> records every
+change with its migration note. The <a href="api-reference.html">API reference</a>
 documents the same surface as generated rustdoc; the UDL
 <a href="../udl/map_native_core.udl">download</a> carries the raw form machine
 tooling consumes.</p>
@@ -194,7 +193,7 @@ propagates to the site through the build or the build fails.</p>
 <details>
 <summary>Show the raw UDL contract</summary>
 <pre><code class="language-udl">// FROZEN (M4, slice 1 — 2026-10-27) — the UniFFI contract of the Maps SDK;
-// extended in M4 slice 2 with the fit-bounds constructor (`EdgeInsetsPixels`
+// extended in M4 slice 2 with the fit-bounds constructor (`EdgeInsets`
 // and the named `MapCamera` constructor), in M4 slice 3 with the async
 // provider surface (the `MapSdk` object resolving the `geospatial-traits`
 // provider contracts one-to-one through the `map-core` `ProviderRegistry`,
@@ -204,8 +203,8 @@ propagates to the site through the build or the build fails.</p>
 // `RasterTileProvider` `[Trait, WithForeign]` interfaces foreign code
 // (Kotlin, Swift) implements and registers on `MapSdk` through the
 // `register_*_from_foreign` methods, and in M6 with the navigation wiring:
-// the `NavigationStateEventListener` `[Trait, WithForeign]` listener and the
-// `MapNavigationController` object driving the `map-navigation` session, with
+// the `NavigationListener` `[Trait, WithForeign]` listener and the
+// `Navigator` object driving the `map-navigation` session, with
 // the mirror records of the navigation state, the instruction payload and the
 // policy records standing in for the native decision objects.
 //
@@ -245,7 +244,7 @@ propagates to the site through the build or the build fails.</p>
 // registry path can produce. Further variants enter the contract as later
 // slices surface real error paths; none are invented here.
 
-namespace map_native_core {
+namespace rustic_maps {
     /// Version of the compiled SDK, equal to the crate's package version.
     string get_sdk_compiled_version();
 
@@ -258,12 +257,12 @@ namespace map_native_core {
     /// The XYZ address of the tile containing the coordinate at the zoom
     /// level.
     [Throws=SdkError]
-    TileKeyRecord tile_key_for_coordinate(GeographicCoordinate coordinate, u8 zoom_level);
+    TileKey tile_key_for_coordinate(GeographicCoordinate coordinate, u8 zoom_level);
 
     /// Every XYZ tile whose area intersects the spanning box, ordered
     /// row-major from the north.
     [Throws=SdkError]
-    sequence&lt;TileKeyRecord&gt; tiles_covering(BoundingBox bounding_box, u8 zoom_level);
+    sequence&lt;TileKey&gt; tiles_covering(BoundingBox bounding_box, u8 zoom_level);
 
     /// The SDK default step-advance policy: the distance-to-end-of-step
     /// condition with the Ferrostar recommended driving defaults.
@@ -314,7 +313,7 @@ dictionary NormalizedWorldCoordinate {
 };
 
 /// One web-mercator XYZ tile address.
-dictionary TileKeyRecord {
+dictionary TileKey {
     /// Tile column, in `0..2^zoom_level`.
     u32 tile_x;
     /// Tile row, counted from the north, in `0..2^zoom_level`.
@@ -324,7 +323,7 @@ dictionary TileKeyRecord {
 };
 
 /// Viewport dimensions in physical pixels.
-dictionary ViewportPixels {
+dictionary ViewportSize {
     /// Horizontal extent in pixels.
     double width_pixels;
     /// Vertical extent in pixels.
@@ -334,7 +333,7 @@ dictionary ViewportPixels {
 /// Screen-space insets kept clear of map content: distances from each
 /// viewport edge in pixels, so UI overlays — route cards, attribution, sheet
 /// panels — never cover the content the camera guarantees visible.
-dictionary EdgeInsetsPixels {
+dictionary EdgeInsets {
     /// Pixels kept clear from the left viewport edge.
     double left;
     /// Pixels kept clear from the top viewport edge.
@@ -395,26 +394,56 @@ interface MapCamera {
     /// zoom are not finite usable values, when the insets are negative or
     /// leave no inset area, or when the box spans no positive world area.
     [Throws=SdkError, Name=fit_bounds]
-    constructor(BoundingBox bounding_box, ViewportPixels viewport, EdgeInsetsPixels edge_insets, double maximum_zoom_level);
+    constructor(BoundingBox bounding_box, ViewportSize viewport, EdgeInsets edge_insets, double maximum_zoom_level);
 
     /// Projects a coordinate to viewport pixels (origin top-left, y down).
     /// Returns null when the point lies behind the camera.
     [Throws=SdkError]
-    ScreenPoint? project_to_screen(GeographicCoordinate coordinate, ViewportPixels viewport, double field_of_view_degrees);
+    ScreenPoint? project_to_screen(GeographicCoordinate coordinate, ViewportSize viewport, double field_of_view_degrees);
 
     /// Unprojects a viewport pixel back onto the ground plane. Returns null
     /// when the ray misses the ground (typically below the horizon at steep
     /// pitch).
     [Throws=SdkError]
-    GeographicCoordinate? screen_to_ground_coordinate(ScreenPoint screen_point, ViewportPixels viewport, double field_of_view_degrees);
+    GeographicCoordinate? screen_to_ground_coordinate(ScreenPoint screen_point, ViewportSize viewport, double field_of_view_degrees);
 
     /// Every tile at `tile_zoom_level` whose area intersects the visible
     /// ground, sorted row-major from the north.
     [Throws=SdkError]
-    sequence&lt;TileKeyRecord&gt; visible_tile_keys(ViewportPixels viewport, double field_of_view_degrees, u8 tile_zoom_level);
+    sequence&lt;TileKey&gt; visible_tile_keys(ViewportSize viewport, double field_of_view_degrees, u8 tile_zoom_level);
 
     /// Nearest whole zoom level a tile fetch should use for this camera.
     u8 tile_zoom_level();
+
+    /// Pans by a pointer travel of `delta_x_pixels` x `delta_y_pixels`
+    /// (screen pixels, x right / y down): the ground point the pointer just
+    /// moved over becomes the new camera center, so map content tracks the
+    /// pointer exactly. Answers the camera unchanged when the delta's ground
+    /// ray misses the plane (above the horizon at steep pitch). Throws when
+    /// the viewport extent is not positive. The gesture-input seam every
+    /// platform's recognizer feeds (docs/ReferenceAppUX.md §5.1): recognition
+    /// stays platform-side, the camera math is the SDK's.
+    [Throws=SdkError]
+    MapCamera pan_by_screen_pixels(double delta_x_pixels, double delta_y_pixels, ViewportSize viewport, double field_of_view_degrees);
+
+    /// Zooms by `delta_zoom_levels` (levels; positive zooms in) keeping the
+    /// world point under `focal_point` fixed under it. Answers the zoom
+    /// without the focal correction when the focal ray misses the ground
+    /// plane (above the horizon at steep pitch). Zoom clamps to the camera's
+    /// own level range before the focal correction applies, so a clamped
+    /// zoom still holds the focal point. Throws when the viewport extent is
+    /// not positive.
+    [Throws=SdkError]
+    MapCamera zoom_by_levels_around_screen_point(double delta_zoom_levels, ScreenPoint focal_point, ViewportSize viewport, double field_of_view_degrees);
+
+    /// Rotates the bearing by `delta_bearing_degrees` (degrees clockwise,
+    /// wrapping into `[0, 360)`) keeping the world point under `focal_point`
+    /// fixed under it. Answers the rotation without the focal correction
+    /// when the focal ray misses the ground plane — rotating about the focal
+    /// pixel, the touch-point turn a two-finger gesture implies. Throws when
+    /// the viewport extent is not positive.
+    [Throws=SdkError]
+    MapCamera rotate_by_degrees_around_screen_point(double delta_bearing_degrees, ScreenPoint focal_point, ViewportSize viewport, double field_of_view_degrees);
 
     /// Reads the camera's attribute state back verbatim as it was built
     /// (round-9 asks). The getters make `fit_bounds`' chosen framing
@@ -439,7 +468,7 @@ interface MapCamera {
     /// honestly; the platform scale bars fit the meter magnitude through a
     /// labeled ladder rather than reading a bare value.
     [Throws=SdkError]
-    double ground_meters_per_screen_pixel(ViewportPixels viewport, double field_of_view_degrees);
+    double ground_meters_per_screen_pixel(ViewportSize viewport, double field_of_view_degrees);
 };
 
 // ---------------------------------------------------------------------------
@@ -462,11 +491,11 @@ interface MapCamera {
 interface GeocodingProvider {
     /// Resolves a free-form address text into candidate places.
     [Async, Throws=SdkError]
-    sequence&lt;PlaceResult&gt; forward_geocode(string address_text);
+    sequence&lt;Place&gt; forward_geocode(string address_text);
 
     /// Resolves a coordinate into candidate places describing that position.
     [Async, Throws=SdkError]
-    sequence&lt;PlaceResult&gt; reverse_geocode(GeographicCoordinate coordinate);
+    sequence&lt;Place&gt; reverse_geocode(GeographicCoordinate coordinate);
 };
 
 /// Raster-tile contract implemented by foreign code and registered on
@@ -596,7 +625,7 @@ enum RasterTileResolution {
 };
 
 /// One resolved location returned by forward or reverse geocoding.
-dictionary PlaceResult {
+dictionary Place {
     /// Display string the provider produced for this place.
     string structured_address_text;
     /// Resolved position.
@@ -663,7 +692,7 @@ dictionary RouteLeg {
 };
 
 /// A complete calculated route.
-dictionary RouteData {
+dictionary Route {
     /// Total distance across all legs, in meters.
     double distance_meters;
     /// Total travel time across all legs, in seconds.
@@ -738,6 +767,39 @@ dictionary RasterTileData {
     sequence&lt;u8&gt; image_bytes;
 };
 
+/// One provider-neutral base-map tile source (M9's native base-map switch):
+/// a web-mercator XYZ raster tileset addressed by a `{z}/{x}/{y}` URL
+/// template.
+///
+/// The values come from the integrator's shared provider registry, never
+/// from the SDK: the SDK names no vendor and carries no URL shape of its
+/// own, so a second base map is a registry entry plus this one call. Every
+/// field is validated when the source is registered, so a malformed
+/// template or an inverted zoom range throws instead of failing on the
+/// first tile.
+dictionary UrlTemplateRasterTileSource {
+    /// The `{z}/{x}/{y}` URL template the tileset publishes: an absolute
+    /// `http`/`https` URL carrying those three placeholders and no other.
+    string url_template;
+    /// The tileset's name, used verbatim in every diagnostic it raises.
+    string source_name;
+    /// Lowest zoom level the tileset serves.
+    u8 minimum_zoom_level;
+    /// Highest zoom level the tileset serves.
+    u8 maximum_zoom_level;
+    /// The image format the tileset serves. Fetched tiles report this format
+    /// whatever the caller requests: the tile bytes are the truth, and the
+    /// renderer decodes by the record it receives.
+    RasterImageFormat image_format;
+    /// The pixel resolution the tileset serves (the same caveat as the
+    /// format).
+    RasterTileResolution tile_resolution;
+    /// The `User-Agent` header every tile request carries; empty sends none.
+    /// A public tile service identifies its clients by it, and several usage
+    /// policies refuse clients that send nothing.
+    string user_agent;
+};
+
 /// Async provider entry point of the SDK: resolves every call of the
 /// implemented `geospatial-traits` contracts through the `map-core`
 /// `ProviderRegistry`. Construct the object empty, then the native
@@ -768,16 +830,16 @@ interface MapSdk {
 
     /// Resolves a free-form address text into candidate places.
     [Async, Throws=SdkError]
-    sequence&lt;PlaceResult&gt; forward_geocode(string address_text);
+    sequence&lt;Place&gt; forward_geocode(string address_text);
 
     /// Resolves a coordinate into candidate places describing that position.
     [Async, Throws=SdkError]
-    sequence&lt;PlaceResult&gt; reverse_geocode(GeographicCoordinate coordinate);
+    sequence&lt;Place&gt; reverse_geocode(GeographicCoordinate coordinate);
 
     /// Calculates a route through the ordered waypoints with the given
     /// options; the waypoints must all be canonical coordinates.
     [Async, Throws=SdkError]
-    RouteData calculate_route(sequence&lt;GeographicCoordinate&gt; waypoints, RouteOptions route_options);
+    Route calculate_route(sequence&lt;GeographicCoordinate&gt; waypoints, RouteOptions route_options);
 
     /// Calculates durations and distances for every origin-destination pair.
     [Async, Throws=SdkError]
@@ -790,12 +852,12 @@ interface MapSdk {
     /// Returns fast completion candidates while the user types; the boundary
     /// restricts the search when given.
     [Async, Throws=SdkError]
-    sequence&lt;PlaceResult&gt; search_autocomplete(string query_text, BoundingBox? search_boundary);
+    sequence&lt;Place&gt; suggest(string query_text, BoundingBox? search_boundary);
 
     /// Returns full search results for a settled query; the boundary
     /// restricts the search when given.
     [Async, Throws=SdkError]
-    sequence&lt;PlaceResult&gt; search_places(string query_text, BoundingBox? search_boundary);
+    sequence&lt;Place&gt; search(string query_text, BoundingBox? search_boundary);
 
     /// Fetches incidents intersecting the bounding box.
     [Async, Throws=SdkError]
@@ -826,11 +888,11 @@ interface MapSdk {
     /// the elevation contract has no MapQuest provider, and elevation calls
     /// keep throwing `ProviderNotConfigured`.
     [Throws=SdkError]
-    void register_mapquest_providers(string mapquest_api_key);
+    void set_provider_credential(string credential);
 
     /// Round 9 (offline-maps demo): registers the seven native MapQuest
     /// provider implementations from one key exactly as
-    /// `register_mapquest_providers`, wrapping the raster-tile contract in
+    /// `set_provider_credential`, wrapping the raster-tile contract in
     /// the disk response cache opened (or created) as a SQLite database at
     /// `tile_cache_database_path` under an absolute byte budget of
     /// `tile_cache_absolute_maximum_bytes`. Cached tile responses follow the
@@ -842,11 +904,31 @@ interface MapSdk {
     /// its verbatim detail. Re-registration replaces the slots (including
     /// the cached raster-tile slot).
     [Throws=SdkError]
-    void register_mapquest_providers_with_tile_cache(string mapquest_api_key, string tile_cache_database_path, u64 tile_cache_absolute_maximum_bytes);
+    void set_provider_credential_with_tile_cache(string mapquest_api_key, string tile_cache_database_path, u64 tile_cache_absolute_maximum_bytes);
+
+    /// Registers a provider-neutral base map (M9's native base-map switch):
+    /// any web-mercator XYZ raster tileset that publishes a `{z}/{x}/{y}`
+    /// URL template, served by the SDK itself with no provider crate
+    /// involved — the mirror of the native integrator's
+    /// `register_raster_tile_provider` call for foreign code, so an
+    /// application can offer a second base map without a new binding.
+    ///
+    /// The registration replaces the raster-tile contract slot only; every
+    /// other provider slot keeps serving. It also drops any installed tile
+    /// cache, because the cache's terms belong to the provider that
+    /// installed it — a later `raster_tile_cache_terms` then throws the
+    /// honest `TileCache` not-configured error rather than reporting
+    /// another provider's ceiling. Re-registering replaces the source.
+    ///
+    /// A malformed template, a blank source name or an inverted zoom range
+    /// throws `InvalidCoordinateInput` with a precise detail, and the slot
+    /// keeps whatever it served before the refused call.
+    [Throws=SdkError]
+    void register_url_template_raster_tile_source(UrlTemplateRasterTileSource source);
 
     // --- Tile-cache settings surface (M2's remaining developer-facing
     // sub-item; addition-only). The frozen
-    // `register_mapquest_providers_with_tile_cache` signature is untouched:
+    // `set_provider_credential_with_tile_cache` signature is untouched:
     // the byte budget stays a registration-time fact (the SQLite store's
     // quota is fixed when the store opens, so retuning it means
     // re-registering through the frozen method), while the tile time-to-live
@@ -878,7 +960,7 @@ interface MapSdk {
     /// Tile-cache settings surface (M2): overrides the raster-tile cache's
     /// time-to-live on the installed cache, in seconds. The tile cache must
     /// be installed (registered through
-    /// `register_mapquest_providers_with_tile_cache`); otherwise this throws
+    /// `set_provider_credential_with_tile_cache`); otherwise this throws
     /// `ProviderNotConfigured` naming `TileCache` as the unconfigured
     /// backing store. A zero value throws `InvalidCoordinateInput` with a
     /// precise detail (a zero time-to-live expires every entry on capture,
@@ -899,7 +981,7 @@ interface MapSdk {
     /// in which case the requested time-to-live applies verbatim), and the
     /// cache category's default time-to-live. The tile cache must be
     /// installed (registered through
-    /// `register_mapquest_providers_with_tile_cache`); otherwise this
+    /// `set_provider_credential_with_tile_cache`); otherwise this
     /// throws `ProviderNotConfigured` naming `TileCache` as the
     /// unconfigured backing store. Read-only: the readback never mutates
     /// the cache.
@@ -971,8 +1053,8 @@ dictionary TileCacheTerms {
 
 // ---------------------------------------------------------------------------
 // Navigation wiring (M6). The `[Trait, WithForeign]`
-// `NavigationStateEventListener` is the listener contract foreign code
-// implements; its subscriptions register on the `MapNavigationController`
+// `NavigationListener` is the listener contract foreign code
+// implements; its subscriptions register on the `Navigator`
 // object, which drives the native `map-navigation` reducer session and its
 // per-topic broadcaster. The records and enums below mirror the
 // `map-navigation` plain-data types field-for-field; the step-advance and
@@ -984,10 +1066,10 @@ dictionary TileCacheTerms {
 // ---------------------------------------------------------------------------
 
 /// State-listener contract implemented by foreign code and subscribed on
-/// `MapNavigationController` through the `subscribe_to_*` methods; each
+/// `Navigator` through the `subscribe_to_*` methods; each
 /// registered subscription delivers only its own topic.
 [Trait, WithForeign]
-interface NavigationStateEventListener {
+interface NavigationListener {
     /// Receives the composed instruction payload of every dispatched state
     /// change (the instructions topic).
     void on_navigation_instruction(NavigationInstruction instruction);
@@ -1012,7 +1094,7 @@ interface NavigationStateEventListener {
 
 /// Handle coupled to exactly one `(topic, listener)` subscription; cancelling
 /// is explicit and idempotent, dropping the handle does not unsubscribe.
-interface NavigationTopicSubscription {
+interface Subscription {
     /// Cancels this subscription: the listener stops receiving the
     /// subscription's topic from the next dispatch on. Idempotent.
     void cancel();
@@ -1029,22 +1111,22 @@ interface NavigationTopicSubscription {
 /// single-in-flight guard (the state change behind it is already applied,
 /// only its broadcast is skipped). The controller never holds its state lock
 /// across a listener callback.
-interface MapNavigationController {
+interface Navigator {
     /// Builds the controller with no active trip and no subscriptions.
     constructor();
 
     /// Subscribes the listener to the instructions topic: the composed
     /// instruction payload of every dispatched state change, in registration
     /// order.
-    NavigationTopicSubscription subscribe_to_navigation_instructions(NavigationStateEventListener listener);
+    Subscription subscribe_to_navigation_instructions(NavigationListener listener);
 
     /// Subscribes the listener to the deviation-status topic, in registration
     /// order.
-    NavigationTopicSubscription subscribe_to_deviation_status(NavigationStateEventListener listener);
+    Subscription subscribe_to_deviation_status(NavigationListener listener);
 
     /// Subscribes the listener to the phase-transition topic, in registration
     /// order.
-    NavigationTopicSubscription subscribe_to_phase_changes(NavigationStateEventListener listener);
+    Subscription subscribe_to_phase_changes(NavigationListener listener);
 
     /// Begins navigating `route` with the given policies, replacing any
     /// active trip. The initial instruction payload is dispatched; no
@@ -1053,12 +1135,12 @@ interface MapNavigationController {
     /// non-finite or negative thresholds, and route records carrying a step
     /// maneuver label the conversion cannot map.
     [Throws=SdkError]
-    void start_trip(RouteData route, UnitSystem unit_system, StepAdvancePolicy step_advance_policy, DeviationPolicy deviation_policy);
+    void start_navigation(Route route, UnitSystem unit_system, StepAdvancePolicy step_advance_policy, DeviationPolicy deviation_policy);
 
     /// Delivers one position fix to the active trip; without one the fix is
     /// dropped. Fixes without an accuracy report never trigger a step
     /// advance and are never judged by the deviation detector.
-    void provide_location_update(NavigationLocationUpdate location_update);
+    void update_location(NavigationLocationUpdate location_update);
 
     /// Replaces the route of the active trip (a reroute). The replacement
     /// route must be anchored at the trip's current snapped coordinate; the
@@ -1069,7 +1151,7 @@ interface MapNavigationController {
     /// calculation is settled by this call (applied or ignored alike), so
     /// the request-in-flight gate reopens after the integrator acts.
     [Throws=SdkError]
-    void provide_reroute(RouteData route, StepAdvancePolicy step_advance_policy);
+    void apply_reroute(Route route, StepAdvancePolicy step_advance_policy);
 
     /// Round 11 (Ferrostar B3): applies the reroute-recalculation gates to
     /// one reroute-request signal at the wall clock: true when every gate
@@ -1079,7 +1161,7 @@ interface MapNavigationController {
     /// `is_calculating_new_route`; false when the signal was refused. A
     /// signal without an open, still-navigable trip (no trip, or the trip
     /// has arrived) is refused before the gates are consulted. A passing
-    /// caller owes a settle: the eventual `provide_reroute` (applied or
+    /// caller owes a settle: the eventual `apply_reroute` (applied or
     /// ignored) or `cancel_reroute_calculation`. The initial (trip's first)
     /// attempt always passes the cooldown and movement gates.
     boolean begin_reroute_calculation();
@@ -1114,7 +1196,27 @@ interface MapNavigationController {
     /// inter-utterance spacing and repeat distance suppress chatter. The
     /// platform keeps playback (including its fallback speak-latest behavior
     /// when no listener subscribes) and synthesis stays out of scope.
-    NavigationTopicSubscription subscribe_to_speech_instructions(NavigationStateEventListener listener);
+    Subscription subscribe_to_speech_instructions(NavigationListener listener);
+
+    /// Subscribes one listener to all four navigation topics — instructions,
+    /// deviation status, phase changes and speech instructions — in one call
+    /// and answers the composite subscription that cancels all four. Delivery
+    /// semantics stay exactly the four `subscribe_to_*` calls': the listener
+    /// receives each topic on its own method, in registration order, and
+    /// `cancel()` removes every one of the four registrations (idempotent,
+    /// like the single-topic subscription).
+    Subscription add_navigation_listener(NavigationListener listener);
+
+    /// Ends the active trip and clears the trip state: after this call
+    /// `current_trip_state` and `current_instructions` answer null and
+    /// location updates, reroutes and reroute-request signals are dropped
+    /// until `start_navigation` begins a new trip. The speech-trigger band
+    /// memory and the reroute-recalculation gate are reset with the trip
+    /// (utterance identifiers stay monotonic across the stop; the configured
+    /// reroute policy persists). Listener subscriptions are untouched — they
+    /// are controller configuration and keep delivering the next trip's
+    /// events. Stopping without an active trip is a no-op.
+    void stop_navigation();
 };
 
 /// High-level phase of a trip that has already been started. Rerouting is not
@@ -1189,7 +1291,7 @@ dictionary TripNavigationState {
     /// Current phase of the trip.
     NavigationPhase phase;
     /// The route being navigated.
-    RouteData route;
+    Route route;
     /// All steps across every leg, flattened in traversal order.
     sequence&lt;RouteStepPosition&gt; step_positions;
     /// Index into `step_positions` of the step currently traversed.
@@ -1449,7 +1551,7 @@ dictionary ReroutePolicy {
 // `filledPolygon`, `pointMarkers`, `trafficFlow` — as a kind enum plus
 // nullable fields (the round-7 navigation payload pattern: a field-carrying
 // native enum lower as a tag with `null` marking the unused payload
-// fields), and expose one `MapSurfaceView` object: the FFI face of the
+// fields), and expose one `MapView` object: the FFI face of the
 // `map-rendering` surface renderer, drawn by a platform view the foreign
 // code owns (Kotlin `SurfaceView`, Swift `UIView`/`MKMapView`-style view,
 // PRD §4.4–4.6). The renderer itself stays native (same `wgpu` machinery as
@@ -1502,7 +1604,7 @@ dictionary OverlayColor {
 /// plain objects carry the same names in camel case (`ringCoordinates`,
 /// `pointMarkerPositions`, `pointMarkerRadiusPixels`,
 /// `trafficFlowSegments`).
-dictionary MapOverlayDescriptor {
+dictionary MapOverlay {
     /// Which overlay shape this descriptor configures and which payload
     /// fields carry it.
     MapOverlayKind kind;
@@ -1537,7 +1639,7 @@ dictionary MapOverlayDescriptor {
 };
 
 /// The platform window surface handle foreign code hands to
-/// `MapSurfaceView::attach`: exactly one platform pointer is set, the rest
+/// `MapView::attach`: exactly one platform pointer is set, the rest
 /// stay null (a null-or-ambiguous handle is refused with
 /// `SdkError::InvalidRenderInput`; a null pointer is `u64 0` or null, never
 /// a zeroed pointer passed through). The handle shape is a single record
@@ -1548,7 +1650,7 @@ dictionary MapOverlayDescriptor {
 /// `wgpu::SurfaceTargetUnsafe`), and detach/drop releases the Rust side
 /// first, so dropping the platform view before `detach` is the caller's
 /// bug.
-dictionary MapSurfaceTargetHandle {
+dictionary SurfaceHandle {
     /// macOS: pointer to the `NSView` the surface renders into (Metal
     /// creates the layer from the view); null on the other platforms.
     u64? appkit_view_pointer;
@@ -1578,9 +1680,11 @@ dictionary MapSurfaceTargetHandle {
 /// for the missing provider slot). `resize` (explicit, called from the
 /// platform's surface-size callback) reconfigures the surface; a zero
 /// extent rejects. `detach` releases the surface state until a re-attach.
-/// Overlay state outlives attach/detach cycles: `set_overlays` and
-/// `clear_overlays` work detached, and the next attach draws the stored
-/// list.
+/// Overlay state outlives attach/detach cycles: `set_overlays`,
+/// `add_overlay`, `update_overlay`, `remove_overlay` and `clear_overlays`
+/// all work detached, and the next attach draws the stored list. The
+/// generated identifiers and the identifier sequence also survive
+/// detach/attach: an overlay added detached stays addressable.
 ///
 /// # Draw model
 ///
@@ -1597,7 +1701,7 @@ dictionary MapSurfaceTargetHandle {
 /// spans network await) reports a concurrent `draw` or `resize` with
 /// `RenderingSurfaceUnavailable`, the foreign cadence retrying the next
 /// frame.
-interface MapSurfaceView {
+interface MapView {
     /// Builds the view over the SDK state it draws from.
     constructor(MapSdk map_sdk);
 
@@ -1607,7 +1711,7 @@ interface MapSurfaceView {
     /// the context, negotiates the format, configures and resolves the
     /// raster provider. Attaching an attached view is refused.
     [Throws=SdkError]
-    void attach(MapSurfaceTargetHandle surface_handle, u32 width_pixels, u32 height_pixels);
+    void attach(SurfaceHandle surface_handle, u32 width_pixels, u32 height_pixels);
 
     /// Reconfigures the surface to the new physical-pixel extent (both
     /// non-zero); a mid-draw resize surfaces the busy state and the next
@@ -1621,15 +1725,51 @@ interface MapSurfaceView {
     /// state is then dropped without being restored).
     void detach();
 
-    /// Replaces the overlay list drawn over the tiles in every following
-    /// `draw`, replacing any earlier list in order (later entries draw
-    /// over earlier ones); an empty list clears. Every descriptor must be
-    /// valid for its kind: no partial lists are kept.
+    /// Replaces the drawn overlay list in one call, in order (later entries
+    /// draw over earlier ones); an empty list clears. Every descriptor must
+    /// be valid for its kind: no partial lists are kept. This is the bulk
+    /// call: it replaces the whole drawn list, including overlays added
+    /// through `add_overlay`, and drops the addressed bookkeeping — an
+    /// identifier `add_overlay` returned before this call no longer
+    /// addresses anything afterwards. Use this call for a list owned whole
+    /// and `add_overlay`/`update_overlay`/`remove_overlay` for individually
+    /// managed overlays; a later `add_overlay` appends to the replaced list
+    /// and works alongside its unaddressed entries.
     [Throws=SdkError]
-    void set_overlays(sequence&lt;MapOverlayDescriptor&gt; overlay_descriptors);
+    void set_overlays(sequence&lt;MapOverlay&gt; overlay_descriptors);
 
-    /// Clears the overlay list; following frames draw the tiles alone
-    /// until `set_overlays` supplies a new list.
+    /// Adds one overlay to the drawn list and answers the generated opaque
+    /// identifier addressing it (a monotonic per-view sequence such as
+    /// `overlay-1`; identifiers are never reused, not even after
+    /// `clear_overlays` or `set_overlays`). Validation is exactly
+    /// `set_overlays`' all-or-nothing validation for the single descriptor:
+    /// a refused descriptor throws and adds nothing, leaving the drawn list
+    /// and the identifier sequence unchanged. The new overlay draws last,
+    /// over the entries already in the list.
+    [Throws=SdkError]
+    string add_overlay(MapOverlay overlay);
+
+    /// Replaces the overlay addressed by `overlay_identifier`. An unknown
+    /// identifier (never generated, or invalidated by a later
+    /// `set_overlays`/`clear_overlays`, or already removed) throws
+    /// `SdkError` with a precise detail. The descriptor is validated exactly
+    /// like `add_overlay`'s; an invalid descriptor throws and keeps the
+    /// previously addressed overlay in force. The replacement keeps its
+    /// position in the draw order.
+    [Throws=SdkError]
+    void update_overlay(string overlay_identifier, MapOverlay overlay);
+
+    /// Removes the overlay addressed by `overlay_identifier` and answers
+    /// whether that identifier was present. Removing an unknown identifier
+    /// is not an error: it answers false and leaves the drawn list
+    /// unchanged.
+    boolean remove_overlay(string overlay_identifier);
+
+    /// Clears the whole drawn overlay list — both the list supplied through
+    /// `set_overlays` and every added addressed overlay — so following
+    /// frames draw the tiles alone until `set_overlays` or `add_overlay`
+    /// supplies new content. Identifiers generated earlier no longer
+    /// address anything afterwards.
     void clear_overlays();
 
     /// Draws one frame for the camera: the camera's visible tiles fetched
@@ -1641,7 +1781,7 @@ interface MapSurfaceView {
     /// the view is detached, a draw is already in flight, or the frame's
     /// rendering failed; a thrown draw leaves the previous frame on screen.
     [Async, Throws=SdkError]
-    TileFrameStatistics draw(MapCamera camera);
+    FrameStatistics draw(MapCamera camera);
 
     /// Round-10 (renderer-owned location indicator): sets the single
     /// location layer drawn after the tile pass and the overlay pass
@@ -1669,7 +1809,7 @@ interface MapSurfaceView {
     /// the presented frame stand and resuming on any change or on the next
     /// pending detail's arrival. Throws when the view is detached.
     [Throws=SdkError]
-    boolean frame_settled(MapCamera camera);
+    boolean is_frame_settled(MapCamera camera);
 };
 
 /// One presented frame's tile and overlay accounting, mirroring how the
@@ -1678,7 +1818,7 @@ interface MapSurfaceView {
 /// `present + fallback + deferred + unavailable` always equals `requested`.
 /// The four readiness names mirror the tile scheduler's fetch-state
 /// taxonomy (`Present`/`FallsBackTo`/`Deferred`/`Unavailable`).
-dictionary TileFrameStatistics {
+dictionary FrameStatistics {
     /// Tile requests the frame resolved (per request; a request listing
     /// carrying duplicates costs one fetch but reports per request).
     u32 requested_tile_count;
@@ -1791,7 +1931,7 @@ enum SdkLogSeverity {
 /// diagnostics listener or read back by a flush. Coordinates in event
 /// messages are rounded at the sink (never the API key, and never raw
 /// coordinates at full precision).
-dictionary DiagnosticLogEvent {
+dictionary LogEvent {
     /// Wall-clock milliseconds since the Unix epoch, as the ring recorded
     /// the event.
     u64 timestamp_milliseconds_since_epoch;
@@ -1812,7 +1952,7 @@ dictionary DiagnosticLogEvent {
 [Trait, WithForeign]
 interface SdkDiagnosticEventListener {
     /// Receives one structured event (severity-gated at the subscription).
-    void on_diagnostic_event(DiagnosticLogEvent event);
+    void on_diagnostic_event(LogEvent event);
 };
 
 // ---------------------------------------------------------------------------
@@ -1875,6 +2015,118 @@ dictionary ProviderFailureDiagnostic {
     /// for the mapped shape.
     string failure_detail;
 };
+
+// ---------------------------------------------------------------------------
+// M17 contract slice (addition-only): the engine interfaces. Each is a thin
+// typed facade constructed over an existing `MapSdk` — it shares that
+// object's provider registry, tile-cache installation and diagnostics rings,
+// and every member delegates to the matching `MapSdk` member verbatim, so
+// validation, typed failures and their detail messages are unchanged. The
+// engines exist so the same verb names reach Kotlin, Swift, React Native and
+// the wasm mirror without rewiring the object graph: a developer holds one
+// `MapSdk` (the provider/credential root) and one engine per capability.
+// ---------------------------------------------------------------------------
+
+/// Search and geocoding facade over a `MapSdk`'s registered provider
+/// contracts. Constructed over the same `MapSdk` the rest of the app holds;
+/// a call into an unregistered contract throws
+/// `SdkError::ProviderNotConfigured` with the contract name, exactly like
+/// the matching `MapSdk` member.
+interface SearchEngine {
+    /// Builds the engine over the SDK whose provider registry serves its
+    /// calls.
+    constructor(MapSdk map_sdk);
+
+    /// Returns full search results for a settled query; the boundary
+    /// restricts the search when given. Delegates to `MapSdk::search`.
+    [Async, Throws=SdkError]
+    sequence&lt;Place&gt; search(string query_text, BoundingBox? search_boundary);
+
+    /// Returns fast completion candidates while the user types; the
+    /// boundary restricts the search when given. Delegates to
+    /// `MapSdk::suggest`.
+    [Async, Throws=SdkError]
+    sequence&lt;Place&gt; suggest(string query_text, BoundingBox? search_boundary);
+
+    /// Resolves a coordinate into candidate places describing that
+    /// position. Delegates to `MapSdk::reverse_geocode`; the coordinate must
+    /// be canonical degrees.
+    [Async, Throws=SdkError]
+    sequence&lt;Place&gt; reverse_geocode(GeographicCoordinate coordinate);
+};
+
+/// Routing facade over a `MapSdk`'s registered provider contracts.
+/// Construction and failure semantics match `SearchEngine`'s: the engine
+/// shares the SDK's registry and delegates verbatim.
+interface RoutingEngine {
+    /// Builds the engine over the SDK whose provider registry serves its
+    /// calls.
+    constructor(MapSdk map_sdk);
+
+    /// Calculates a route through the ordered waypoints with the given
+    /// options; every waypoint must be a canonical coordinate. Delegates to
+    /// `MapSdk::calculate_route`.
+    [Async, Throws=SdkError]
+    Route calculate_route(sequence&lt;GeographicCoordinate&gt; waypoints, RouteOptions route_options);
+
+    /// Calculates durations and distances for every origin-destination
+    /// pair; every origin and destination must be a canonical coordinate.
+    /// Delegates to `MapSdk::calculate_distance_matrix`.
+    [Async, Throws=SdkError]
+    DistanceMatrix calculate_distance_matrix(
+        sequence&lt;GeographicCoordinate&gt; origins,
+        sequence&lt;GeographicCoordinate&gt; destinations,
+        TransportationMode transportation_mode
+    );
+};
+
+/// Offline tile-cache settings facade over a `MapSdk`. The members delegate
+/// to the tile-cache settings surface (`MapSdk::raster_tile_cache_terms` and
+/// `MapSdk::set_raster_tile_cache_time_to_live`), so the installed-cache
+/// requirement, the terms-ceiling clamp and every refusal detail are
+/// unchanged: without a cache installed through
+/// `set_provider_credential_with_tile_cache`, both members throw
+/// `ProviderNotConfigured` naming `TileCache`.
+interface OfflineManager {
+    /// Builds the manager over the SDK whose installed tile cache it reads
+    /// and tunes.
+    constructor(MapSdk map_sdk);
+
+    /// Reads the effective raster-tile caching terms of the installed
+    /// cache. Delegates to `MapSdk::raster_tile_cache_terms`.
+    [Throws=SdkError]
+    TileCacheTerms tile_cache_terms();
+
+    /// Overrides the installed raster-tile cache's time-to-live in seconds;
+    /// the provider's declared terms ceiling still clamps what the cache
+    /// stores, and `tile_cache_terms` reports the effective value. Delegates
+    /// to `MapSdk::set_raster_tile_cache_time_to_live`.
+    [Throws=SdkError]
+    void set_tile_time_to_live(u64 time_to_live_seconds);
+};
+
+/// Diagnostics facade over a `MapSdk`'s structured log-event stream and
+/// bounded ring buffers. The members delegate to
+/// `MapSdk::subscribe_to_diagnostic_events` and
+/// `MapSdk::flush_recent_diagnostic_events`; the listeners, severity gates
+/// and flush bounds are exactly those members'.
+interface Diagnostics {
+    /// Builds the facade over the SDK whose diagnostics it observes.
+    constructor(MapSdk map_sdk);
+
+    /// Subscribes the foreign listener to the SDK's structured internal log
+    /// events at `minimum_severity` or above. Delegates to
+    /// `MapSdk::subscribe_to_diagnostic_events` (re-subscribing a listener
+    /// replaces its severity gate).
+    void add_listener(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity);
+
+    /// Drains up to `maximum_count` of the most recent ring events at
+    /// `minimum_severity` or above through the listener, oldest first, and
+    /// answers how many were delivered. Delegates to
+    /// `MapSdk::flush_recent_diagnostic_events`; the flush is
+    /// non-destructive and synchronous.
+    u32 flush_recent(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity, u32 maximum_count);
+};
 </code></pre>
 </details>
 
@@ -1929,7 +2181,7 @@ dictionary ProviderFailureDiagnostic {
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

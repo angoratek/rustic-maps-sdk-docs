@@ -52,7 +52,7 @@
 <a href=#52 id=52 data-nosnippet>52</a>
 <a href=#53 id=53 data-nosnippet>53</a><span class="kw">use </span>tracing::{Event, Id, Level, Metadata, Subscriber, field::Field, field::Visit};
 <a href=#54 id=54 data-nosnippet>54</a>
-<a href=#55 id=55 data-nosnippet>55</a><span class="kw">use </span><span class="kw">crate</span>::records::{DiagnosticLogEvent, SdkLogSeverity};
+<a href=#55 id=55 data-nosnippet>55</a><span class="kw">use </span><span class="kw">crate</span>::records::{LogEvent, SdkLogSeverity};
 <a href=#56 id=56 data-nosnippet>56</a>
 <a href=#57 id=57 data-nosnippet>57</a><span class="doccomment">/// The capacity of each subsystem's diagnostics ring, in events (bounded so
 <a href=#58 id=58 data-nosnippet>58</a>/// a chatty subsystem cannot grow the process's memory unboundedly).
@@ -267,7 +267,7 @@
 <a href=#267 id=267 data-nosnippet>267</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
 <a href=#268 id=268 data-nosnippet>268</a>        minimum_severity: SdkLogSeverity,
 <a href=#269 id=269 data-nosnippet>269</a>        maximum_count: u32,
-<a href=#270 id=270 data-nosnippet>270</a>    ) -&gt; Vec&lt;DiagnosticLogEvent&gt; {
+<a href=#270 id=270 data-nosnippet>270</a>    ) -&gt; Vec&lt;LogEvent&gt; {
 <a href=#271 id=271 data-nosnippet>271</a>        <span class="kw">let </span>minimum_rank = severity_rank(minimum_severity);
 <a href=#272 id=272 data-nosnippet>272</a>        <span class="kw">let </span><span class="kw-2">mut </span>matched_events: Vec&lt;(String, u64, SdkLogSeverity, u64, String)&gt; = {
 <a href=#273 id=273 data-nosnippet>273</a>            <span class="kw">let </span>rings =
@@ -307,7 +307,7 @@
 <a href=#307 id=307 data-nosnippet>307</a>                    <span class="kw">_</span>,
 <a href=#308 id=308 data-nosnippet>308</a>                    message_line,
 <a href=#309 id=309 data-nosnippet>309</a>                )| {
-<a href=#310 id=310 data-nosnippet>310</a>                    DiagnosticLogEvent {
+<a href=#310 id=310 data-nosnippet>310</a>                    LogEvent {
 <a href=#311 id=311 data-nosnippet>311</a>                        timestamp_milliseconds_since_epoch,
 <a href=#312 id=312 data-nosnippet>312</a>                        severity,
 <a href=#313 id=313 data-nosnippet>313</a>                        subsystem_target,
@@ -337,7 +337,7 @@
 <a href=#337 id=337 data-nosnippet>337</a>    /// lock and the callbacks run fire-and-forget, with no lock held across
 <a href=#338 id=338 data-nosnippet>338</a>    /// a callback and the thread's re-entrancy flag dropping listener-emitted
 <a href=#339 id=339 data-nosnippet>339</a>    /// events.
-<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">fn </span>dispatch_live(<span class="kw-2">&amp;</span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>DiagnosticLogEvent) {
+<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">fn </span>dispatch_live(<span class="kw-2">&amp;</span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>LogEvent) {
 <a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(_recording_marker) = EventRecordingMarker::enter() <span class="kw">else </span>{
 <a href=#342 id=342 data-nosnippet>342</a>            <span class="kw">return</span>;
 <a href=#343 id=343 data-nosnippet>343</a>        };
@@ -431,7 +431,7 @@
 <a href=#431 id=431 data-nosnippet>431</a>                message_line: message_line.clone(),
 <a href=#432 id=432 data-nosnippet>432</a>            },
 <a href=#433 id=433 data-nosnippet>433</a>        );
-<a href=#434 id=434 data-nosnippet>434</a>        <span class="self">self</span>.handle.dispatch_live(<span class="kw-2">&amp;</span>DiagnosticLogEvent {
+<a href=#434 id=434 data-nosnippet>434</a>        <span class="self">self</span>.handle.dispatch_live(<span class="kw-2">&amp;</span>LogEvent {
 <a href=#435 id=435 data-nosnippet>435</a>            timestamp_milliseconds_since_epoch,
 <a href=#436 id=436 data-nosnippet>436</a>            severity,
 <a href=#437 id=437 data-nosnippet>437</a>            subsystem_target,
@@ -574,7 +574,7 @@
 <a href=#574 id=574 data-nosnippet>574</a>/// in a message.
 <a href=#575 id=575 data-nosnippet>575</a></span><span class="kw">pub trait </span>SdkDiagnosticEventListener: Send + Sync {
 <a href=#576 id=576 data-nosnippet>576</a>    <span class="doccomment">/// Receives one structured log event of the SDK's internals.
-<a href=#577 id=577 data-nosnippet>577</a>    </span><span class="kw">fn </span>on_diagnostic_event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: DiagnosticLogEvent);
+<a href=#577 id=577 data-nosnippet>577</a>    </span><span class="kw">fn </span>on_diagnostic_event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: LogEvent);
 <a href=#578 id=578 data-nosnippet>578</a>
 <a href=#579 id=579 data-nosnippet>579</a>    <span class="doccomment">/// Internally required by the uniffi foreign-handle machinery (the
 <a href=#580 id=580 data-nosnippet>580</a>    /// foreign-handle probe of the uniffi 0.32 trait-object lowering);
@@ -801,7 +801,7 @@
 <a href=#801 id=801 data-nosnippet>801</a>            received: TestMutex&lt;Vec&lt;String&gt;&gt;,
 <a href=#802 id=802 data-nosnippet>802</a>        }
 <a href=#803 id=803 data-nosnippet>803</a>        <span class="kw">impl </span>SdkDiagnosticEventListener <span class="kw">for </span>RecordingTestListener {
-<a href=#804 id=804 data-nosnippet>804</a>            <span class="kw">fn </span>on_diagnostic_event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: DiagnosticLogEvent) {
+<a href=#804 id=804 data-nosnippet>804</a>            <span class="kw">fn </span>on_diagnostic_event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: LogEvent) {
 <a href=#805 id=805 data-nosnippet>805</a>                <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>received) = <span class="self">self</span>.received.lock() {
 <a href=#806 id=806 data-nosnippet>806</a>                    received.push(event.message_line);
 <a href=#807 id=807 data-nosnippet>807</a>                }
@@ -819,13 +819,13 @@
 <a href=#819 id=819 data-nosnippet>819</a>            Arc::clone(<span class="kw-2">&amp;</span>listener) <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>SdkDiagnosticEventListener&gt;,
 <a href=#820 id=820 data-nosnippet>820</a>            SdkLogSeverity::Info,
 <a href=#821 id=821 data-nosnippet>821</a>        );
-<a href=#822 id=822 data-nosnippet>822</a>        handle.dispatch_live(<span class="kw-2">&amp;</span>DiagnosticLogEvent {
+<a href=#822 id=822 data-nosnippet>822</a>        handle.dispatch_live(<span class="kw-2">&amp;</span>LogEvent {
 <a href=#823 id=823 data-nosnippet>823</a>            timestamp_milliseconds_since_epoch: <span class="number">0</span>,
 <a href=#824 id=824 data-nosnippet>824</a>            severity: SdkLogSeverity::Debug,
 <a href=#825 id=825 data-nosnippet>825</a>            subsystem_target: <span class="string">"map_native_core::tests"</span>.to_string(),
 <a href=#826 id=826 data-nosnippet>826</a>            message_line: <span class="string">"below the subscription"</span>.to_string(),
 <a href=#827 id=827 data-nosnippet>827</a>        });
-<a href=#828 id=828 data-nosnippet>828</a>        handle.dispatch_live(<span class="kw-2">&amp;</span>DiagnosticLogEvent {
+<a href=#828 id=828 data-nosnippet>828</a>        handle.dispatch_live(<span class="kw-2">&amp;</span>LogEvent {
 <a href=#829 id=829 data-nosnippet>829</a>            timestamp_milliseconds_since_epoch: <span class="number">1</span>,
 <a href=#830 id=830 data-nosnippet>830</a>            severity: SdkLogSeverity::Info,
 <a href=#831 id=831 data-nosnippet>831</a>            subsystem_target: <span class="string">"map_native_core::tests"</span>.to_string(),

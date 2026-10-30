@@ -1,338 +1,6 @@
 /* @ts-self-types="./map_web_bindings.d.ts" */
 
 /**
- * Severity classification of a diagnostics event, mirroring the contract's
- * `SdkLogSeverity` at the JavaScript seam (the shared record type cannot
- * itself carry `wasm-bindgen` attributes; the same pattern as
- * [`crate::canvas::CanvasTileResolution`] and friends).
- * @enum {0 | 1 | 2 | 3 | 4}
- */
-export const CanvasSdkLogSeverity = Object.freeze({
-    /**
-     * The finest-grained events (the GPU-hot render path's instrumentation).
-     */
-    Trace: 0, "0": "Trace",
-    /**
-     * Verbose internal events.
-     */
-    Debug: 1, "1": "Debug",
-    /**
-     * Coarse informational events (the idle gate records down to here).
-     */
-    Info: 2, "2": "Info",
-    /**
-     * Warnings.
-     */
-    Warn: 3, "3": "Warn",
-    /**
-     * Errors.
-     */
-    Error: 4, "4": "Error",
-});
-
-/**
- * Tile pixel resolution the GPU canvas fetches and samples, mirroring
- * [`geospatial_types::RasterTileResolution`] at the JavaScript seam: the
- * shared record type cannot itself carry `wasm-bindgen` attributes, so the
- * page passes this enum and the canvas converts it.
- * @enum {0 | 1}
- */
-export const CanvasTileResolution = Object.freeze({
-    /**
-     * One texel per logical tile pixel.
-     */
-    Standard: 0, "0": "Standard",
-    /**
-     * Twice the texels per logical tile pixel (the recorded `@2x` fixtures).
-     */
-    Retina: 1, "1": "Retina",
-});
-
-/**
- * Congestion classification a traffic-flow segment paints with, mirroring
- * [`geospatial_types::TrafficFlowCongestionLevel`] at the JavaScript seam:
- * the shared record type cannot itself carry `wasm-bindgen` attributes, so
- * the page passes this enum and the canvas converts it (the same pattern as
- * [`CanvasTileResolution`]).
- * @enum {0 | 1 | 2 | 3}
- */
-export const CanvasTrafficFlowCongestionLevel = Object.freeze({
-    /**
-     * At or above free-flow speed.
-     */
-    FreeFlow: 0, "0": "FreeFlow",
-    /**
-     * Moderately below free-flow speed.
-     */
-    Slow: 1, "1": "Slow",
-    /**
-     * Stop-and-go traffic.
-     */
-    Congested: 2, "2": "Congested",
-    /**
-     * Roadway effectively closed.
-     */
-    Blocked: 3, "3": "Blocked",
-});
-
-/**
- * The browser GPU map canvas the page owns. Construct it over an
- * `HTMLCanvasElement`, [`GpuMapCanvas::initialize`] it once (acquiring the
- * adapter and device and building the tile pipeline), then call
- * [`GpuMapCanvas::render_frame`] per wanted frame; each call re-schedules
- * the visible tiles and redraws.
- */
-export class GpuMapCanvas {
-    __destroy_into_raw() {
-        const ptr = this.__wbg_ptr;
-        this.__wbg_ptr = 0;
-        GpuMapCanvasFinalization.unregister(this);
-        return ptr;
-    }
-    free() {
-        const ptr = this.__destroy_into_raw();
-        wasm.__wbg_gpumapcanvas_free(ptr, 0);
-    }
-    /**
-     * Clears the location-indicator layer; following frames draw no
-     * indicator until [`GpuMapCanvas::set_location_indicator`] supplies a
-     * new one.
-     */
-    clear_location_indicator() {
-        wasm.gpumapcanvas_clear_location_indicator(this.__wbg_ptr);
-    }
-    /**
-     * Clears the overlay list; following frames draw the tiles alone until
-     * [`GpuMapCanvas::set_overlays`] supplies a new list.
-     */
-    clear_overlays() {
-        wasm.gpumapcanvas_clear_overlays(this.__wbg_ptr);
-    }
-    /**
-     * Acquires the adapter and device, picks the pass-through surface
-     * format, and builds the tile pipeline. Resolves to the adapter
-     * description (graphics backend and adapter name) for the page's status
-     * line, or fails when no WebGPU adapter supports this canvas — the page
-     * then degrades to the 2D tile grid overlay. Never callable twice on
-     * the same canvas.
-     * @returns {Promise<string>}
-     */
-    initialize() {
-        const ret = wasm.gpumapcanvas_initialize(this.__wbg_ptr);
-        return takeObject(ret);
-    }
-    /**
-     * Builds the canvas renderer over the page's canvas element at the
-     * given tile pixel resolution (the page passes retina when its
-     * device-pixel ratio reaches `retinaDevicePixelRatioThreshold()`).
-     * Fails when the element cannot host a GPU surface (for example after
-     * another context already claimed the element). Call
-     * [`GpuMapCanvas::initialize`] before the first
-     * [`GpuMapCanvas::render_frame`].
-     * @param {HTMLCanvasElement} canvas
-     * @param {CanvasTileResolution} tile_resolution
-     */
-    constructor(canvas, tile_resolution) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.gpumapcanvas_new(retptr, addHeapObject(canvas), tile_resolution);
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-            if (r2) {
-                throw takeObject(r1);
-            }
-            this.__wbg_ptr = r0;
-            GpuMapCanvasFinalization.register(this, this.__wbg_ptr, this);
-            return this;
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
-    }
-    /**
-     * Renders one map frame for the camera pose into the canvas, resolving
-     * freshly visible tiles from the same-origin `/tiles` route first.
-     *
-     * Resolves to a statistics object the page's readout consumes:
-     * `requestedTiles` (tiles the camera listed at the fetch zoom),
-     * `drawnTiles` (tiles with pooled imagery over their span this frame),
-     * `drawnFragments` (draw quads after world-copy fragment splitting),
-     * `missingTiles` (requested tiles with no pooled imagery this frame),
-     * `tileZoomLevel` (the fetch zoom, clamped to the recorded fixtures),
-     * `tileResolution` (the resolution the frame's fixtures were
-     * fetched and sampled at) and `overlayTriangles` (solid overlay
-     * triangles drawn over the tiles this frame; zero without overlays).
-     * With the raster tile layer hidden through
-     * [`GpuMapCanvas::set_tile_layer_visible`] the frame skips the whole
-     * tile pipeline and reports `requestedTiles`, `drawnTiles`,
-     * `drawnFragments` and `missingTiles` as zero while still presenting the
-     * overlay and indicator layers.
-     *
-     * The camera binding is consumed by value (the `wasm-bindgen` class
-     * parameter semantics); the page builds a fresh camera per changed
-     * pose, exactly as it already does. Two overlapping calls are a
-     * construction-time borrow violation — the page serializes its frames
-     * behind a busy flag and never overlaps.
-     * @param {MapCamera} camera
-     * @param {number} field_of_view_degrees
-     * @returns {Promise<object>}
-     */
-    render_frame(camera, field_of_view_degrees) {
-        _assertClass(camera, MapCamera);
-        var ptr0 = camera.__destroy_into_raw();
-        const ret = wasm.gpumapcanvas_render_frame(this.__wbg_ptr, ptr0, field_of_view_degrees);
-        return takeObject(ret);
-    }
-    /**
-     * Sets the frame pass's clear color (each channel 0..=1), the background
-     * behind any tiles or overlays that do not cover the surface. The
-     * default is the shared dark clear; the page paints a light clear around
-     * a vector base so the gaps between its fills do not read as a black
-     * map. A channel outside 0..=1 or a non-finite value is refused.
-     * @param {number} red
-     * @param {number} green
-     * @param {number} blue
-     * @param {number} alpha
-     */
-    set_clear_color(red, green, blue, alpha) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.gpumapcanvas_set_clear_color(retptr, this.__wbg_ptr, red, green, blue, alpha);
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            if (r1) {
-                throw takeObject(r0);
-            }
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
-    }
-    /**
-     * Sets the location-indicator layer drawn over the overlays in every
-     * following [`GpuMapCanvas::render_frame`] (the native surface's top
-     * layer, round 10), replacing any earlier layer.
-     *
-     * The state descriptor is `{coordinate: {latitude, longitude},
-     * courseHeadingDegrees?, horizontalAccuracyMeters?}`; the style
-     * descriptor is `{visualKind: "trackingDot" | "guidedCourseArrow",
-     * radiusPixels?, rgbaColor?, showAccuracyRing?}`, where every omitted
-     * style field keeps the documented map-rendering default. Colors are
-     * `{red, green, blue, alpha}` in `0.0..=1.0`; the radius is a positive
-     * finite screen-pixel value. The optional scalars pass through verbatim
-     * (the native indicator state's rule) while the style's own range rules
-     * mirror the native record conversion. Every invalid descriptor rejects
-     * the whole call with a string-valued error and keeps the previous
-     * layer in force; nothing panics.
-     * @param {any} state_value
-     * @param {any} style_value
-     */
-    set_location_indicator(state_value, style_value) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.gpumapcanvas_set_location_indicator(retptr, this.__wbg_ptr, addHeapObject(state_value), addHeapObject(style_value));
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            if (r1) {
-                throw takeObject(r0);
-            }
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
-    }
-    /**
-     * Sets the overlay list drawn over the tiles in every following
-     * [`GpuMapCanvas::render_frame`], replacing any earlier list in order
-     * (later list entries draw over earlier ones); an empty array clears.
-     *
-     * Each entry is a plain JavaScript object describing one overlay shape,
-     * selected by its `kind` field:
-     *
-     * * `{kind: "routePolyline", coordinates: [{latitude, longitude}...],
-     *   color?, widthPixels?}` — a routed path drawn as a thick line,
-     * * `{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...],
-     *   color?}` — an ear-clip triangulated ring fill,
-     * * `{kind: "pointMarkers", positions: [{latitude, longitude}...],
-     *   color?, radiusPixels?}` — screen-facing octagon markers,
-     * * `{kind: "trafficFlow", segments: [{shapeCoordinates:
-     *   [{latitude, longitude}...], congestionLevel:
-     *   CanvasTrafficFlowCongestionLevel}...], widthPixels?}` —
-     *   congestion-colored traffic lines.
-     *
-     * An absent `color`/`widthPixels`/`radiusPixels` override keeps the
-     * documented map-rendering default style; the fields exist exactly where
-     * the native overlay structs have them. Colors are `{red, green, blue,
-     * alpha}` in `0.0..=1.0`; widths and radii are positive finite screen
-     * pixel values. Every invalid descriptor (wrong shape, missing or
-     * wrong-typed field, out-of-range coordinate or channel, unknown `kind`
-     * or congestion value) rejects the whole call with a string-valued
-     * error and keeps the previous list in force; nothing panics.
-     * @param {any[]} overlays
-     */
-    set_overlays(overlays) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            const ptr0 = passArrayJsValueToWasm0(overlays, wasm.__wbindgen_export);
-            const len0 = WASM_VECTOR_LEN;
-            wasm.gpumapcanvas_set_overlays(retptr, this.__wbg_ptr, ptr0, len0);
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            if (r1) {
-                throw takeObject(r0);
-            }
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
-    }
-    /**
-     * Shows or hides the raster tile base layer in every following
-     * [`GpuMapCanvas::render_frame`].
-     *
-     * Hidden frames still clear the surface and draw the overlay and
-     * location-indicator layers, so the page can paint a vector base map
-     * through [`GpuMapCanvas::set_overlays`] while this raster layer is
-     * hidden. A hidden frame skips the tile listing, same-origin fetches,
-     * scheduler warm/resolve, texture uploads and tile draws, and reports
-     * `requestedTiles: 0`, `drawnTiles: 0` and `missingTiles: 0` while
-     * keeping the current `tileZoomLevel`, `tileResolution` and
-     * `overlayTriangles` statistics. Showing the layer again resolves tiles
-     * normally on the next frame (the texture cache survives hidden frames).
-     * @param {boolean} visible
-     */
-    set_tile_layer_visible(visible) {
-        wasm.gpumapcanvas_set_tile_layer_visible(this.__wbg_ptr, visible);
-    }
-    /**
-     * Stages a deliberate parent-fallback for one requested tile, mirroring
-     * the native golden image harness (`fill_pool_and_prepare` in
-     * `map-rendering`'s golden test): the fallback tile is evicted from the
-     * pool and marked unavailable forever, and its coarser parent's recorded
-     * fixture is pooled instead, so the scheduler resolves the fallback tile
-     * as `FallsBackTo { parent }` every frame and the frame samples the
-     * parent texture. The committed golden frames were produced with the
-     * last visible scene tile resolved exactly this way, so the browser
-     * golden-compare page calls this before rendering a golden scene to
-     * reproduce the reference imagery byte-for-byte.
-     *
-     * Fetches the parent fixture from the same-origin `/tiles` route. A
-     * missing or undecodable parent fixture is an error, not a silent skip:
-     * the caller wants the fallback imagery or nothing. The parent coordinates
-     * must describe the fallback tile's direct parent.
-     * @param {number} fallback_tile_x
-     * @param {number} fallback_tile_y
-     * @param {number} fallback_zoom_level
-     * @param {number} parent_tile_x
-     * @param {number} parent_tile_y
-     * @param {number} parent_zoom_level
-     * @returns {Promise<void>}
-     */
-    stage_tile_parent_fallback(fallback_tile_x, fallback_tile_y, fallback_zoom_level, parent_tile_x, parent_tile_y, parent_zoom_level) {
-        const ret = wasm.gpumapcanvas_stage_tile_parent_fallback(this.__wbg_ptr, fallback_tile_x, fallback_tile_y, fallback_zoom_level, parent_tile_x, parent_tile_y, parent_zoom_level);
-        return takeObject(ret);
-    }
-}
-if (Symbol.dispose) GpuMapCanvas.prototype[Symbol.dispose] = GpuMapCanvas.prototype.free;
-
-/**
  * Anchored map camera (geographic center, zoom, bearing, pitch) mirroring
  * the native [`map_rendering::MapCamera`]. The ground point under the
  * center always sits at the viewport center.
@@ -359,10 +27,10 @@ export class MapCamera {
      * @param {number} field_of_view_degrees
      * @returns {number}
      */
-    ground_meters_per_screen_pixel(width_pixels, height_pixels, field_of_view_degrees) {
+    groundMetersPerScreenPixel(width_pixels, height_pixels, field_of_view_degrees) {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.mapcamera_ground_meters_per_screen_pixel(retptr, this.__wbg_ptr, width_pixels, height_pixels, field_of_view_degrees);
+            wasm.mapcamera_groundMetersPerScreenPixel(retptr, this.__wbg_ptr, width_pixels, height_pixels, field_of_view_degrees);
             var r0 = getDataViewMemory0().getFloat64(retptr + 8 * 0, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
             var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
@@ -401,6 +69,36 @@ export class MapCamera {
         }
     }
     /**
+     * Pans the camera by a pointer travel of `delta_x_pixels` x
+     * `delta_y_pixels` (screen pixels): the ground point the pointer just
+     * moved over becomes the new camera center, so map content tracks the
+     * pointer exactly. Answers the input camera pose unchanged when the
+     * delta's ray misses the ground plane, as the contract member
+     * documents. The free `panCameraByScreenPixels` helper stays as an
+     * alias for the M3 demo call sites.
+     * @param {number} delta_x_pixels
+     * @param {number} delta_y_pixels
+     * @param {number} width_pixels
+     * @param {number} height_pixels
+     * @param {number} field_of_view_degrees
+     * @returns {object}
+     */
+    panByScreenPixels(delta_x_pixels, delta_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapcamera_panByScreenPixels(retptr, this.__wbg_ptr, delta_x_pixels, delta_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Projects a coordinate to viewport pixels (origin top-left, y down),
      * as `{x, y}`. Fails with a message when the point lies behind the
      * camera.
@@ -411,10 +109,39 @@ export class MapCamera {
      * @param {number} field_of_view_degrees
      * @returns {object}
      */
-    project_to_screen(latitude, longitude, width_pixels, height_pixels, field_of_view_degrees) {
+    projectToScreen(latitude, longitude, width_pixels, height_pixels, field_of_view_degrees) {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.mapcamera_project_to_screen(retptr, this.__wbg_ptr, latitude, longitude, width_pixels, height_pixels, field_of_view_degrees);
+            wasm.mapcamera_projectToScreen(retptr, this.__wbg_ptr, latitude, longitude, width_pixels, height_pixels, field_of_view_degrees);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Rotates the camera bearing by `delta_bearing_degrees` (degrees
+     * clockwise, wrapping into `[0, 360)`) keeping the world point under
+     * `focal_x_pixels`/`focal_y_pixels` fixed under that pixel; the
+     * uncorrected rotation answers when the focal ray misses the ground
+     * plane.
+     * @param {number} delta_bearing_degrees
+     * @param {number} focal_x_pixels
+     * @param {number} focal_y_pixels
+     * @param {number} width_pixels
+     * @param {number} height_pixels
+     * @param {number} field_of_view_degrees
+     * @returns {object}
+     */
+    rotateByDegreesAroundScreenPoint(delta_bearing_degrees, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapcamera_rotateByDegreesAroundScreenPoint(retptr, this.__wbg_ptr, delta_bearing_degrees, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -437,10 +164,10 @@ export class MapCamera {
      * @param {number} field_of_view_degrees
      * @returns {object}
      */
-    screen_to_ground_coordinate(screen_x, screen_y, width_pixels, height_pixels, field_of_view_degrees) {
+    screenToGroundCoordinate(screen_x, screen_y, width_pixels, height_pixels, field_of_view_degrees) {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.mapcamera_screen_to_ground_coordinate(retptr, this.__wbg_ptr, screen_x, screen_y, width_pixels, height_pixels, field_of_view_degrees);
+            wasm.mapcamera_screenToGroundCoordinate(retptr, this.__wbg_ptr, screen_x, screen_y, width_pixels, height_pixels, field_of_view_degrees);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -457,8 +184,8 @@ export class MapCamera {
      * mirroring the native `tile_zoom_level`.
      * @returns {number}
      */
-    tile_zoom_level() {
-        const ret = wasm.mapcamera_tile_zoom_level(this.__wbg_ptr);
+    tileZoomLevel() {
+        const ret = wasm.mapcamera_tileZoomLevel(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -471,10 +198,38 @@ export class MapCamera {
      * @param {number} tile_zoom_level
      * @returns {Array<any>}
      */
-    visible_tile_keys(width_pixels, height_pixels, field_of_view_degrees, tile_zoom_level) {
+    visibleTileKeys(width_pixels, height_pixels, field_of_view_degrees, tile_zoom_level) {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.mapcamera_visible_tile_keys(retptr, this.__wbg_ptr, width_pixels, height_pixels, field_of_view_degrees, tile_zoom_level);
+            wasm.mapcamera_visibleTileKeys(retptr, this.__wbg_ptr, width_pixels, height_pixels, field_of_view_degrees, tile_zoom_level);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Zooms the camera by `delta_zoom_levels` keeping the world point under
+     * `focal_x_pixels`/`focal_y_pixels` fixed under that pixel; the
+     * camera's own zoom range clamps the answer, and the uncorrected zoom
+     * answers when the focal ray misses the ground plane.
+     * @param {number} delta_zoom_levels
+     * @param {number} focal_x_pixels
+     * @param {number} focal_y_pixels
+     * @param {number} width_pixels
+     * @param {number} height_pixels
+     * @param {number} field_of_view_degrees
+     * @returns {object}
+     */
+    zoomByLevelsAroundScreenPoint(delta_zoom_levels, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapcamera_zoomByLevelsAroundScreenPoint(retptr, this.__wbg_ptr, delta_zoom_levels, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -488,6 +243,517 @@ export class MapCamera {
     }
 }
 if (Symbol.dispose) MapCamera.prototype[Symbol.dispose] = MapCamera.prototype.free;
+
+/**
+ * The browser GPU map canvas the page owns. Construct it over an
+ * `HTMLCanvasElement`, [`MapView::initialize`] it once (acquiring the
+ * adapter and device and building the tile pipeline), then call
+ * [`MapView::render_frame`] per wanted frame; each call re-schedules
+ * the visible tiles and redraws.
+ */
+export class MapView {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        MapViewFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_mapview_free(ptr, 0);
+    }
+    /**
+     * Adds one overlay descriptor to the drawn list and answers the
+     * generated opaque identifier addressing it (`overlay-1`, `overlay-2`,
+     * …; monotonic per view, never reused). Validation is exactly
+     * `set_overlays`' single-descriptor rule: a refused descriptor throws
+     * and adds nothing. The new overlay draws last, over the entries
+     * already in the list.
+     * @param {any} overlay
+     * @returns {string}
+     */
+    addOverlay(overlay) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_addOverlay(retptr, this.__wbg_ptr, addHeapObject(overlay));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
+            var ptr1 = r0;
+            var len1 = r1;
+            if (r3) {
+                ptr1 = 0; len1 = 0;
+                throw takeObject(r2);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_export4(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * Clears the location-indicator layer; following frames draw no
+     * indicator until [`MapView::set_location_indicator`] supplies a
+     * new one.
+     */
+    clearLocationIndicator() {
+        wasm.mapview_clearLocationIndicator(this.__wbg_ptr);
+    }
+    /**
+     * Clears the overlay list; following frames draw the tiles alone until
+     * [`MapView::set_overlays`] or [`MapView::add_overlay`] supplies a new
+     * list. Clears the bulk list and every addressed overlay alike.
+     */
+    clearOverlays() {
+        wasm.mapview_clearOverlays(this.__wbg_ptr);
+    }
+    /**
+     * Acquires the adapter and device, picks the pass-through surface
+     * format, and builds the tile pipeline. Resolves to the adapter
+     * description (graphics backend and adapter name) for the page's status
+     * line, or fails when no WebGPU adapter supports this canvas — the page
+     * then degrades to the 2D tile grid overlay. Never callable twice on
+     * the same canvas.
+     * @returns {Promise<string>}
+     */
+    initialize() {
+        const ret = wasm.mapview_initialize(this.__wbg_ptr);
+        return takeObject(ret);
+    }
+    /**
+     * Builds the canvas renderer over the page's canvas element, bound to
+     * the SDK root it was created with (`new MapView(canvas, maps)`). The
+     * tile pixel resolution is optional: omitted, it follows the same
+     * device-pixel-ratio rule as `retinaDevicePixelRatioThreshold()`;
+     * supplied, it is honoured verbatim (the golden harness pins it). Fails
+     * when the element cannot host a GPU surface (for example after another
+     * context already claimed the element). Call [`MapView::initialize`]
+     * before the first [`MapView::render_frame`].
+     * @param {HTMLCanvasElement} canvas
+     * @param {MapsSdk} maps
+     * @param {TileResolution | null} [tile_resolution]
+     */
+    constructor(canvas, maps, tile_resolution) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            _assertClass(maps, MapsSdk);
+            wasm.mapview_new(retptr, addHeapObject(canvas), maps.__wbg_ptr, isLikeNone(tile_resolution) ? 2 : tile_resolution);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            this.__wbg_ptr = r0;
+            MapViewFinalization.register(this, this.__wbg_ptr, this);
+            return this;
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Removes the overlay addressed by `identifier`; answers whether the
+     * identifier was present (an unknown identifier is not an error).
+     * @param {string} identifier
+     * @returns {boolean}
+     */
+    removeOverlay(identifier) {
+        const ptr0 = passStringToWasm0(identifier, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.mapview_removeOverlay(this.__wbg_ptr, ptr0, len0);
+        return ret !== 0;
+    }
+    /**
+     * Renders one map frame for the camera pose into the canvas, resolving
+     * freshly visible tiles from the same-origin `/tiles` route first.
+     *
+     * Resolves to a statistics object the page's readout consumes:
+     * `requestedTiles` (tiles the camera listed at the fetch zoom),
+     * `drawnTiles` (tiles with pooled imagery over their span this frame),
+     * `drawnFragments` (draw quads after world-copy fragment splitting),
+     * `missingTiles` (requested tiles with no pooled imagery this frame),
+     * `tileZoomLevel` (the fetch zoom, clamped to the recorded fixtures),
+     * `tileResolution` (the resolution the frame's fixtures were
+     * fetched and sampled at) and `overlayTriangles` (solid overlay
+     * triangles drawn over the tiles this frame; zero without overlays).
+     * With the raster tile layer hidden through
+     * [`MapView::set_tile_layer_visible`] the frame skips the whole
+     * tile pipeline and reports `requestedTiles`, `drawnTiles`,
+     * `drawnFragments` and `missingTiles` as zero while still presenting the
+     * overlay and indicator layers.
+     *
+     * The camera binding is consumed by value (the `wasm-bindgen` class
+     * parameter semantics); the page builds a fresh camera per changed
+     * pose, exactly as it already does. Two overlapping calls are a
+     * construction-time borrow violation — the page serializes its frames
+     * behind a busy flag and never overlaps.
+     * @param {MapCamera} camera
+     * @param {number} field_of_view_degrees
+     * @returns {Promise<object>}
+     */
+    renderFrame(camera, field_of_view_degrees) {
+        _assertClass(camera, MapCamera);
+        var ptr0 = camera.__destroy_into_raw();
+        const ret = wasm.mapview_renderFrame(this.__wbg_ptr, ptr0, field_of_view_degrees);
+        return takeObject(ret);
+    }
+    /**
+     * Compiled version of the SDK root this view was constructed with.
+     * @returns {string}
+     */
+    get sdkCompiledVersion() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_sdkCompiledVersion(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            deferred1_0 = r0;
+            deferred1_1 = r1;
+            return getStringFromWasm0(r0, r1);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_export4(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * Sets the frame pass's clear color (each channel 0..=1), the background
+     * behind any tiles or overlays that do not cover the surface. The
+     * default is the shared dark clear; the page paints a light clear around
+     * a vector base so the gaps between its fills do not read as a black
+     * map. A channel outside 0..=1 or a non-finite value is refused.
+     * @param {number} red
+     * @param {number} green
+     * @param {number} blue
+     * @param {number} alpha
+     */
+    setBackgroundColor(red, green, blue, alpha) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_setBackgroundColor(retptr, this.__wbg_ptr, red, green, blue, alpha);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Shows or hides the raster tile base layer in every following
+     * [`MapView::render_frame`].
+     *
+     * Hidden frames still clear the surface and draw the overlay and
+     * location-indicator layers, so the page can paint a vector base map
+     * through [`MapView::set_overlays`] while this raster layer is
+     * hidden. A hidden frame skips the tile listing, same-origin fetches,
+     * scheduler warm/resolve, texture uploads and tile draws, and reports
+     * `requestedTiles: 0`, `drawnTiles: 0` and `missingTiles: 0` while
+     * keeping the current `tileZoomLevel`, `tileResolution` and
+     * `overlayTriangles` statistics. Showing the layer again resolves tiles
+     * normally on the next frame (the texture cache survives hidden frames).
+     * @param {boolean} visible
+     */
+    setBaseMapVisible(visible) {
+        wasm.mapview_setBaseMapVisible(this.__wbg_ptr, visible);
+    }
+    /**
+     * Sets the location-indicator layer drawn over the overlays in every
+     * following [`MapView::render_frame`] (the native surface's top
+     * layer, round 10), replacing any earlier layer.
+     *
+     * The state descriptor is `{coordinate: {latitude, longitude},
+     * courseHeadingDegrees?, horizontalAccuracyMeters?}`; the style
+     * descriptor is `{visualKind: "trackingDot" | "guidedCourseArrow",
+     * radiusPixels?, rgbaColor?, showAccuracyRing?}`, where every omitted
+     * style field keeps the documented map-rendering default. Colors are
+     * `{red, green, blue, alpha}` in `0.0..=1.0`; the radius is a positive
+     * finite screen-pixel value. The optional scalars pass through verbatim
+     * (the native indicator state's rule) while the style's own range rules
+     * mirror the native record conversion. Every invalid descriptor rejects
+     * the whole call with a string-valued error and keeps the previous
+     * layer in force; nothing panics.
+     * @param {any} state_value
+     * @param {any} style_value
+     */
+    setLocationIndicator(state_value, style_value) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_setLocationIndicator(retptr, this.__wbg_ptr, addHeapObject(state_value), addHeapObject(style_value));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Sets the overlay list drawn over the tiles in every following
+     * [`MapView::render_frame`], replacing any earlier list in order
+     * (later list entries draw over earlier ones); an empty array clears.
+     *
+     * Each entry is a plain JavaScript object describing one overlay shape,
+     * selected by its `kind` field:
+     *
+     * * `{kind: "routePolyline", coordinates: [{latitude, longitude}...],
+     *   color?, widthPixels?}` — a routed path drawn as a thick line,
+     * * `{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...],
+     *   color?}` — an ear-clip triangulated ring fill,
+     * * `{kind: "pointMarkers", positions: [{latitude, longitude}...],
+     *   color?, radiusPixels?}` — screen-facing octagon markers,
+     * * `{kind: "trafficFlow", segments: [{shapeCoordinates:
+     *   [{latitude, longitude}...], congestionLevel:
+     *   CanvasTrafficFlowCongestionLevel}...], widthPixels?}` —
+     *   congestion-colored traffic lines.
+     *
+     * An absent `color`/`widthPixels`/`radiusPixels` override keeps the
+     * documented map-rendering default style; the fields exist exactly where
+     * the native overlay structs have them. Colors are `{red, green, blue,
+     * alpha}` in `0.0..=1.0`; widths and radii are positive finite screen
+     * pixel values. Every invalid descriptor (wrong shape, missing or
+     * wrong-typed field, out-of-range coordinate or channel, unknown `kind`
+     * or congestion value) rejects the whole call with a string-valued
+     * error and keeps the previous list in force; nothing panics.
+     * @param {any[]} overlays
+     */
+    setOverlays(overlays) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passArrayJsValueToWasm0(overlays, wasm.__wbindgen_export);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.mapview_setOverlays(retptr, this.__wbg_ptr, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Sets (or clears, with a blank template) the live raster fallback: a
+     * `{z}/{x}/{y}` URL template from a provider registry descriptor that
+     * the frame fetches when no recorded fixture exists at an address, so a
+     * camera over unrecorded ground still draws imagery. The template must
+     * carry all three placeholders; the maximum zoom level caps the fetch
+     * zoom to what the tile service actually serves.
+     *
+     * The fallback runs only after the recorded-fixture fetch fails, so the
+     * local harness keeps its deterministic fixture demo, and a registered
+     * live provider (a runtime credential) is consulted before the template.
+     * @param {string} url_template
+     * @param {number} maximum_zoom_level
+     */
+    setRasterTileSource(url_template, maximum_zoom_level) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(url_template, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.mapview_setRasterTileSource(retptr, this.__wbg_ptr, ptr0, len0, maximum_zoom_level);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Stages a deliberate parent-fallback for one requested tile, mirroring
+     * the native golden image harness (`fill_pool_and_prepare` in
+     * `map-rendering`'s golden test): the fallback tile is evicted from the
+     * pool and marked unavailable forever, and its coarser parent's recorded
+     * fixture is pooled instead, so the scheduler resolves the fallback tile
+     * as `FallsBackTo { parent }` every frame and the frame samples the
+     * parent texture. The committed golden frames were produced with the
+     * last visible scene tile resolved exactly this way, so the browser
+     * golden-compare page calls this before rendering a golden scene to
+     * reproduce the reference imagery byte-for-byte.
+     *
+     * Fetches the parent fixture from the same-origin `/tiles` route. A
+     * missing or undecodable parent fixture is an error, not a silent skip:
+     * the caller wants the fallback imagery or nothing. The parent coordinates
+     * must describe the fallback tile's direct parent.
+     * @param {number} fallback_tile_x
+     * @param {number} fallback_tile_y
+     * @param {number} fallback_zoom_level
+     * @param {number} parent_tile_x
+     * @param {number} parent_tile_y
+     * @param {number} parent_zoom_level
+     * @returns {Promise<void>}
+     */
+    stageParentTile(fallback_tile_x, fallback_tile_y, fallback_zoom_level, parent_tile_x, parent_tile_y, parent_zoom_level) {
+        const ret = wasm.mapview_stageParentTile(this.__wbg_ptr, fallback_tile_x, fallback_tile_y, fallback_zoom_level, parent_tile_x, parent_tile_y, parent_zoom_level);
+        return takeObject(ret);
+    }
+    /**
+     * Replaces the overlay addressed by `identifier` in its draw position.
+     * An invalid descriptor throws and keeps the previous overlay; an
+     * unknown identifier throws a string-valued error naming it.
+     * @param {string} identifier
+     * @param {any} overlay
+     */
+    updateOverlay(identifier, overlay) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(identifier, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.mapview_updateOverlay(retptr, this.__wbg_ptr, ptr0, len0, addHeapObject(overlay));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+}
+if (Symbol.dispose) MapView.prototype[Symbol.dispose] = MapView.prototype.free;
+
+/**
+ * The browser SDK root (`MapsSdk.create()`): the object a page creates once
+ * and hands to its [`crate::canvas::MapView`], mirroring the native
+ * `MapSdk` construction shape. The wasm runtime is module-global, so this
+ * root carries the readiness result and the compiled version rather than a
+ * second runtime; provider and engine members will hang off it as the wasm
+ * seam grows.
+ */
+export class MapsSdk {
+    static __wrap(ptr) {
+        const obj = Object.create(MapsSdk.prototype);
+        obj.__wbg_ptr = ptr;
+        MapsSdkFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        MapsSdkFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_mapssdk_free(ptr, 0);
+    }
+    /**
+     * The compiled SDK version (the workspace package version).
+     * @returns {string}
+     */
+    get compiledVersion() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapssdk_compiledVersion(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            deferred1_0 = r0;
+            deferred1_1 = r1;
+            return getStringFromWasm0(r0, r1);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_export4(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * Creates the SDK root and resolves once the browser runtime is ready
+     * (the same work the legacy [`start_sdk`] performs). The returned root
+     * is what `new MapView(canvas, maps)` expects.
+     * @returns {Promise<MapsSdk>}
+     */
+    static create() {
+        const ret = wasm.mapssdk_create();
+        return takeObject(ret);
+    }
+}
+if (Symbol.dispose) MapsSdk.prototype[Symbol.dispose] = MapsSdk.prototype.free;
+
+/**
+ * Severity classification of a diagnostics event, mirroring the contract's
+ * `SdkLogSeverity` at the JavaScript seam (the shared record type cannot
+ * itself carry `wasm-bindgen` attributes; the same pattern as
+ * [`crate::canvas::CanvasTileResolution`] and friends).
+ * @enum {0 | 1 | 2 | 3 | 4}
+ */
+export const SdkLogSeverity = Object.freeze({
+    /**
+     * The finest-grained events (the GPU-hot render path's instrumentation).
+     */
+    Trace: 0, "0": "Trace",
+    /**
+     * Verbose internal events.
+     */
+    Debug: 1, "1": "Debug",
+    /**
+     * Coarse informational events (the idle gate records down to here).
+     */
+    Info: 2, "2": "Info",
+    /**
+     * Warnings.
+     */
+    Warn: 3, "3": "Warn",
+    /**
+     * Errors.
+     */
+    Error: 4, "4": "Error",
+});
+
+/**
+ * Tile pixel resolution the GPU canvas fetches and samples, mirroring
+ * [`geospatial_types::RasterTileResolution`] at the JavaScript seam: the
+ * shared record type cannot itself carry `wasm-bindgen` attributes, so the
+ * page passes this enum and the canvas converts it.
+ * @enum {0 | 1}
+ */
+export const TileResolution = Object.freeze({
+    /**
+     * One texel per logical tile pixel.
+     */
+    Standard: 0, "0": "Standard",
+    /**
+     * Twice the texels per logical tile pixel (the recorded `@2x` fixtures).
+     */
+    Retina: 1, "1": "Retina",
+});
+
+/**
+ * Congestion classification a traffic-flow segment paints with, mirroring
+ * [`geospatial_types::TrafficFlowCongestionLevel`] at the JavaScript seam:
+ * the shared record type cannot itself carry `wasm-bindgen` attributes, so
+ * the page passes this enum and the canvas converts it (the same pattern as
+ * [`CanvasTileResolution`]).
+ * @enum {0 | 1 | 2 | 3}
+ */
+export const TrafficFlowCongestionLevel = Object.freeze({
+    /**
+     * At or above free-flow speed.
+     */
+    FreeFlow: 0, "0": "FreeFlow",
+    /**
+     * Moderately below free-flow speed.
+     */
+    Slow: 1, "1": "Slow",
+    /**
+     * Stop-and-go traffic.
+     */
+    Congested: 2, "2": "Congested",
+    /**
+     * Roadway effectively closed.
+     */
+    Blocked: 3, "3": "Blocked",
+});
 
 /**
  * Plans a two-waypoint route through the active live provider (M13),
@@ -508,118 +774,25 @@ if (Symbol.dispose) MapCamera.prototype[Symbol.dispose] = MapCamera.prototype.fr
  * @param {number} destination_longitude
  * @returns {Promise<object>}
  */
-export function calculate_route_live(origin_latitude, origin_longitude, destination_latitude, destination_longitude) {
-    const ret = wasm.calculate_route_live(origin_latitude, origin_longitude, destination_latitude, destination_longitude);
+export function calculateRoute(origin_latitude, origin_longitude, destination_latitude, destination_longitude) {
+    const ret = wasm.calculateRoute(origin_latitude, origin_longitude, destination_latitude, destination_longitude);
     return takeObject(ret);
-}
-
-/**
- * Pans the camera by a pointer travel of `delta_x_pixels` x
- * `delta_y_pixels` (screen pixels): the ground point the pointer just
- * moved over becomes the new camera center, so map content tracks the
- * pointer exactly. Answers the input camera unchanged when the delta's ray
- * misses the ground plane.
- * @param {MapCamera} camera
- * @param {number} delta_x_pixels
- * @param {number} delta_y_pixels
- * @param {number} width_pixels
- * @param {number} height_pixels
- * @param {number} field_of_view_degrees
- * @returns {object}
- */
-export function camera_pan_by_screen_pixels(camera, delta_x_pixels, delta_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        _assertClass(camera, MapCamera);
-        wasm.camera_pan_by_screen_pixels(retptr, camera.__wbg_ptr, delta_x_pixels, delta_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
- * Rotates the camera bearing by `delta_bearing_degrees` (degrees clockwise,
- * wrapping into `[0, 360)`) keeping the world point under
- * `focal_x_pixels`/`focal_y_pixels` fixed under that pixel. Answers the
- * uncorrected rotation when the focal ray misses the ground plane.
- * @param {MapCamera} camera
- * @param {number} delta_bearing_degrees
- * @param {number} focal_x_pixels
- * @param {number} focal_y_pixels
- * @param {number} width_pixels
- * @param {number} height_pixels
- * @param {number} field_of_view_degrees
- * @returns {object}
- */
-export function camera_rotate_by_degrees_around_screen_point(camera, delta_bearing_degrees, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        _assertClass(camera, MapCamera);
-        wasm.camera_rotate_by_degrees_around_screen_point(retptr, camera.__wbg_ptr, delta_bearing_degrees, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
- * Zooms the camera by `delta_zoom_levels` keeping the world point under
- * `focal_x_pixels`/`focal_y_pixels` fixed under that pixel; the camera's
- * own zoom range clamps the answer. Answers the uncorrected zoom when the
- * focal ray misses the ground plane.
- * @param {MapCamera} camera
- * @param {number} delta_zoom_levels
- * @param {number} focal_x_pixels
- * @param {number} focal_y_pixels
- * @param {number} width_pixels
- * @param {number} height_pixels
- * @param {number} field_of_view_degrees
- * @returns {object}
- */
-export function camera_zoom_by_levels_around_screen_point(camera, delta_zoom_levels, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        _assertClass(camera, MapCamera);
-        wasm.camera_zoom_by_levels_around_screen_point(retptr, camera.__wbg_ptr, delta_zoom_levels, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
 }
 
 /**
  * Addition-only alias for the pre-M15 vendor-named export: clears the active
  * registration.
  */
-export function clear_mapquest_providers() {
-    wasm.clear_mapquest_providers();
+export function clearMapquestProviders() {
+    wasm.clearMapquestProviders();
 }
 
 /**
  * Clears the active registration (the settings surface's Clear act; the
  * running page keeps nothing afterwards).
  */
-export function clear_provider() {
-    wasm.clear_provider();
+export function clearProvider() {
+    wasm.clearProvider();
 }
 
 /**
@@ -630,10 +803,10 @@ export function clear_provider() {
  * @param {number} longitude
  * @returns {object}
  */
-export function coordinate_to_normalized_world(latitude, longitude) {
+export function coordinateToNormalizedWorld(latitude, longitude) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.coordinate_to_normalized_world(retptr, latitude, longitude);
+        wasm.coordinateToNormalizedWorld(retptr, latitude, longitude);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -644,6 +817,19 @@ export function coordinate_to_normalized_world(latitude, longitude) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
+}
+
+/**
+ * Reports the device-pixel ratio from which the playground's JavaScript
+ * chooses between [`CanvasTileResolution::Retina`] and
+ * [`CanvasTileResolution::Standard`]: at or above the threshold the page
+ * passes retina. The threshold lives in Rust so the seam stays one source
+ * of truth.
+ * @returns {number}
+ */
+export function devicePixelRatioThreshold() {
+    const ret = wasm.devicePixelRatioThreshold();
+    return ret;
 }
 
 /**
@@ -660,8 +846,8 @@ export function coordinate_to_normalized_world(latitude, longitude) {
  * @param {number} tile_y
  * @returns {Promise<Uint8Array>}
  */
-export function fetch_raster_tile_live(zoom_level, tile_x, tile_y) {
-    const ret = wasm.fetch_raster_tile_live(zoom_level, tile_x, tile_y);
+export function fetchRasterTile(zoom_level, tile_x, tile_y) {
+    const ret = wasm.fetchRasterTile(zoom_level, tile_x, tile_y);
     return takeObject(ret);
 }
 
@@ -671,12 +857,12 @@ export function fetch_raster_tile_live(zoom_level, tile_x, tile_y) {
  * of `{timestampMillisecondsSinceEpoch, severity, subsystemTarget,
  * messageLine}` objects. Coordinates in the messages are already rounded to
  * the sink's decimals (the sink's privacy scrub, the native contract rule).
- * @param {CanvasSdkLogSeverity} minimum_severity
+ * @param {SdkLogSeverity} minimum_severity
  * @param {number} maximum_count
  * @returns {Array<any>}
  */
-export function flush_recent_diagnostic_events(minimum_severity, maximum_count) {
-    const ret = wasm.flush_recent_diagnostic_events(minimum_severity, maximum_count);
+export function flushRecentDiagnosticEvents(minimum_severity, maximum_count) {
+    const ret = wasm.flushRecentDiagnosticEvents(minimum_severity, maximum_count);
     return takeObject(ret);
 }
 
@@ -687,10 +873,10 @@ export function flush_recent_diagnostic_events(minimum_severity, maximum_count) 
  * @param {string} query_text
  * @returns {Promise<Array<any>>}
  */
-export function forward_geocode_live(query_text) {
+export function forwardGeocode(query_text) {
     const ptr0 = passStringToWasm0(query_text, wasm.__wbindgen_export, wasm.__wbindgen_export2);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.forward_geocode_live(ptr0, len0);
+    const ret = wasm.forwardGeocode(ptr0, len0);
     return takeObject(ret);
 }
 
@@ -698,12 +884,12 @@ export function forward_geocode_live(query_text) {
  * Semver of the compiled SDK, equal to the workspace package version.
  * @returns {string}
  */
-export function get_sdk_compiled_version() {
+export function getSdkCompiledVersion() {
     let deferred1_0;
     let deferred1_1;
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.get_sdk_compiled_version(retptr);
+        wasm.getSdkCompiledVersion(retptr);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         deferred1_0 = r0;
@@ -713,6 +899,17 @@ export function get_sdk_compiled_version() {
         wasm.__wbindgen_add_to_stack_pointer(16);
         wasm.__wbindgen_export4(deferred1_0, deferred1_1, 1);
     }
+}
+
+/**
+ * Legacy readiness starter: installs the browser runtime, sets the
+ * `window.__sdkReady` flag and resolves to the compiled version. Prefer
+ * `await MapsSdk.create()`; this alias stays for existing harness code.
+ * @returns {Promise<any>}
+ */
+export function initializeSdk() {
+    const ret = wasm.initializeSdk();
+    return takeObject(ret);
 }
 
 /**
@@ -746,10 +943,10 @@ export function get_sdk_compiled_version() {
  * @param {number} end_longitude
  * @returns {Promise<any>}
  */
-export function offline_route_from_archive_bytes(archive_bytes, start_latitude, start_longitude, end_latitude, end_longitude) {
+export function offlineRouteFromArchiveBytes(archive_bytes, start_latitude, start_longitude, end_latitude, end_longitude) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.offline_route_from_archive_bytes(retptr, addHeapObject(archive_bytes), start_latitude, start_longitude, end_latitude, end_longitude);
+        wasm.offlineRouteFromArchiveBytes(retptr, addHeapObject(archive_bytes), start_latitude, start_longitude, end_latitude, end_longitude);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -763,24 +960,30 @@ export function offline_route_from_archive_bytes(archive_bytes, start_latitude, 
 }
 
 /**
- * Addition-only alias for the pre-M15 vendor-named export: registers the
- * MapQuest provider set through the generic dispatch table.
- * @param {string} api_key
- * @param {string | null} [base_url]
+ * Pans the camera by a pointer travel of `delta_x_pixels` x
+ * `delta_y_pixels` (screen pixels), answering the resulting
+ * `{latitude, longitude, zoomLevel, bearingDegrees, pitchDegrees}` pose.
+ * Alias of [`MapCamera::pan_by_screen_pixels`].
+ * @param {MapCamera} camera
+ * @param {number} delta_x_pixels
+ * @param {number} delta_y_pixels
+ * @param {number} width_pixels
+ * @param {number} height_pixels
+ * @param {number} field_of_view_degrees
+ * @returns {object}
  */
-export function register_mapquest_providers(api_key, base_url) {
+export function panCameraByScreenPixels(camera, delta_x_pixels, delta_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(api_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len0 = WASM_VECTOR_LEN;
-        var ptr1 = isLikeNone(base_url) ? 0 : passStringToWasm0(base_url, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        var len1 = WASM_VECTOR_LEN;
-        wasm.register_mapquest_providers(retptr, ptr0, len0, ptr1, len1);
+        _assertClass(camera, MapCamera);
+        wasm.panCameraByScreenPixels(retptr, camera.__wbg_ptr, delta_x_pixels, delta_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        if (r1) {
-            throw takeObject(r0);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
         }
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
@@ -794,7 +997,7 @@ export function register_mapquest_providers(api_key, base_url) {
  * @param {string} credential
  * @param {string | null} [base_url]
  */
-export function register_provider(provider_key, credential, base_url) {
+export function registerProvider(provider_key, credential, base_url) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(provider_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
@@ -803,7 +1006,7 @@ export function register_provider(provider_key, credential, base_url) {
         const len1 = WASM_VECTOR_LEN;
         var ptr2 = isLikeNone(base_url) ? 0 : passStringToWasm0(base_url, wasm.__wbindgen_export, wasm.__wbindgen_export2);
         var len2 = WASM_VECTOR_LEN;
-        wasm.register_provider(retptr, ptr0, len0, ptr1, len1, ptr2, len2);
+        wasm.registerProvider(retptr, ptr0, len0, ptr1, len1, ptr2, len2);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -815,27 +1018,58 @@ export function register_provider(provider_key, credential, base_url) {
 }
 
 /**
- * Reports the device-pixel ratio from which the playground's JavaScript
- * chooses between [`CanvasTileResolution::Retina`] and
- * [`CanvasTileResolution::Standard`]: at or above the threshold the page
- * passes retina. The threshold lives in Rust so the seam stays one source
- * of truth.
- * @returns {number}
+ * Rotates the camera bearing by `delta_bearing_degrees` around the focal
+ * pixel, answering the resulting pose. Alias of
+ * [`MapCamera::rotate_by_degrees_around_screen_point`].
+ * @param {MapCamera} camera
+ * @param {number} delta_bearing_degrees
+ * @param {number} focal_x_pixels
+ * @param {number} focal_y_pixels
+ * @param {number} width_pixels
+ * @param {number} height_pixels
+ * @param {number} field_of_view_degrees
+ * @returns {object}
  */
-export function retina_device_pixel_ratio_threshold() {
-    const ret = wasm.retina_device_pixel_ratio_threshold();
-    return ret;
+export function rotateCameraByDegreesAroundScreenPoint(camera, delta_bearing_degrees, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        _assertClass(camera, MapCamera);
+        wasm.rotateCameraByDegreesAroundScreenPoint(retptr, camera.__wbg_ptr, delta_bearing_degrees, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
 }
 
 /**
- * Installs the panic hook and reports SDK readiness: sets the
- * `window.__sdkReady` flag and resolves to the compiled version once the
- * wasm module finished starting.
- * @returns {Promise<any>}
+ * The contract's single-credential registration spelling (`MapSdk::
+ * set_provider_credential`) on the wasm seam: registers the MapQuest
+ * provider set through the generic dispatch table.
+ * @param {string} api_key
+ * @param {string | null} [base_url]
  */
-export function start_sdk() {
-    const ret = wasm.start_sdk();
-    return takeObject(ret);
+export function setProviderCredential(api_key, base_url) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(api_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        var ptr1 = isLikeNone(base_url) ? 0 : passStringToWasm0(base_url, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        var len1 = WASM_VECTOR_LEN;
+        wasm.setProviderCredential(retptr, ptr0, len0, ptr1, len1);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        if (r1) {
+            throw takeObject(r0);
+        }
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
 }
 
 /**
@@ -846,10 +1080,10 @@ export function start_sdk() {
  * host already installed its own global subscriber (the ring then stays
  * empty and the flush seam answers an empty list — the subscriber's own
  * `enabled` is never consulted).
- * @param {CanvasSdkLogSeverity} minimum_severity
+ * @param {SdkLogSeverity} minimum_severity
  */
-export function subscribe_to_diagnostic_events(minimum_severity) {
-    wasm.subscribe_to_diagnostic_events(minimum_severity);
+export function subscribeToDiagnosticEvents(minimum_severity) {
+    wasm.subscribeToDiagnosticEvents(minimum_severity);
 }
 
 /**
@@ -861,10 +1095,10 @@ export function subscribe_to_diagnostic_events(minimum_severity) {
  * @param {number} zoom_level
  * @returns {object}
  */
-export function tile_key_for_coordinate(latitude, longitude, zoom_level) {
+export function tileKeyForCoordinate(latitude, longitude, zoom_level) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.tile_key_for_coordinate(retptr, latitude, longitude, zoom_level);
+        wasm.tileKeyForCoordinate(retptr, latitude, longitude, zoom_level);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -888,10 +1122,10 @@ export function tile_key_for_coordinate(latitude, longitude, zoom_level) {
  * @param {number} zoom_level
  * @returns {Array<any>}
  */
-export function tiles_covering(south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude, zoom_level) {
+export function tilesCovering(south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude, zoom_level) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.tiles_covering(retptr, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude, zoom_level);
+        wasm.tilesCovering(retptr, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude, zoom_level);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -919,10 +1153,10 @@ export function tiles_covering(south_west_latitude, south_west_longitude, north_
  * @param {number} tile_y
  * @returns {object}
  */
-export function vector_tile_geographic_bounds(tile_zoom_level, tile_x, tile_y) {
+export function vectorTileGeographicBounds(tile_zoom_level, tile_x, tile_y) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.vector_tile_geographic_bounds(retptr, tile_zoom_level, tile_x, tile_y);
+        wasm.vectorTileGeographicBounds(retptr, tile_zoom_level, tile_x, tile_y);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -953,12 +1187,76 @@ export function vector_tile_geographic_bounds(tile_zoom_level, tile_x, tile_y) {
  * @param {number} tile_y
  * @returns {Array<any>}
  */
-export function vector_tile_overlay_descriptors(tile_bytes, tile_zoom_level, tile_x, tile_y) {
+export function vectorTileOverlayDescriptors(tile_bytes, tile_zoom_level, tile_x, tile_y) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(tile_bytes, wasm.__wbindgen_export);
         const len0 = WASM_VECTOR_LEN;
-        wasm.vector_tile_overlay_descriptors(retptr, ptr0, len0, tile_zoom_level, tile_x, tile_y);
+        wasm.vectorTileOverlayDescriptors(retptr, ptr0, len0, tile_zoom_level, tile_x, tile_y);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * The same decode-and-style conversion, painted with the committed style a
+ * style id names (`carto-light`, `carto-dark`, `openmaptiles-light`,
+ * `openmaptiles-dark`). The page joins a registry descriptor's style schema
+ * with the active theme, so one provider can serve a light and a dark base
+ * map without a page-side style table. An unknown style id rejects with the
+ * documented list of known ids.
+ * @param {Uint8Array} tile_bytes
+ * @param {number} tile_zoom_level
+ * @param {number} tile_x
+ * @param {number} tile_y
+ * @param {string} style_id
+ * @returns {Array<any>}
+ */
+export function vectorTileOverlayDescriptorsForStyle(tile_bytes, tile_zoom_level, tile_x, tile_y, style_id) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passArray8ToWasm0(tile_bytes, wasm.__wbindgen_export);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(style_id, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.vectorTileOverlayDescriptorsForStyle(retptr, ptr0, len0, tile_zoom_level, tile_x, tile_y, ptr1, len1);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Zooms the camera by `delta_zoom_levels` around the focal pixel,
+ * answering the resulting pose. Alias of
+ * [`MapCamera::zoom_by_levels_around_screen_point`].
+ * @param {MapCamera} camera
+ * @param {number} delta_zoom_levels
+ * @param {number} focal_x_pixels
+ * @param {number} focal_y_pixels
+ * @param {number} width_pixels
+ * @param {number} height_pixels
+ * @param {number} field_of_view_degrees
+ * @returns {object}
+ */
+export function zoomCameraByLevelsAroundScreenPoint(camera, delta_zoom_levels, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        _assertClass(camera, MapCamera);
+        wasm.zoomCameraByLevelsAroundScreenPoint(retptr, camera.__wbg_ptr, delta_zoom_levels, focal_x_pixels, focal_y_pixels, width_pixels, height_pixels, field_of_view_degrees);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -1411,6 +1709,10 @@ function __wbg_get_imports() {
         __wbg_destroy_637537007d9eaa44: function(arg0) {
             getObject(arg0).destroy();
         },
+        __wbg_devicePixelRatio_7d39e9af5448d3d4: function(arg0) {
+            const ret = getObject(arg0).devicePixelRatio;
+            return ret;
+        },
         __wbg_disableVertexAttribArray_11c9f11bee30c9d8: function(arg0, arg1) {
             getObject(arg0).disableVertexAttribArray(arg1 >>> 0);
         },
@@ -1797,6 +2099,10 @@ function __wbg_get_imports() {
             const ret = getObject(arg0).mapAsync(arg1 >>> 0, arg2, arg3);
             return addHeapObject(ret);
         },
+        __wbg_mapssdk_new: function(arg0) {
+            const ret = MapsSdk.__wrap(arg0);
+            return addHeapObject(ret);
+        },
         __wbg_matchMedia_8a4857f947f11f82: function() { return handleError(function (arg0, arg1, arg2) {
             const ret = getObject(arg0).matchMedia(getStringFromWasm0(arg1, arg2));
             return isLikeNone(ret) ? 0 : addHeapObject(ret);
@@ -1868,7 +2174,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_9504(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_9562(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -2874,28 +3180,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2932, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_9502);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2942, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_9560);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 715, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2093);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 726, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2150);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 715, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2093_40);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 726, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2150_51);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 715, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2093_41);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 726, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2150_52);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 287, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1347);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 298, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1399);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -2969,18 +3275,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_1347(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_1347(arg0, arg1);
+function __wasm_bindgen_func_elem_1399(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_1399(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_9504(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_9504(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_9562(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_9562(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_9502(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_9560(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_9502(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_9560(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -2991,10 +3297,10 @@ function __wasm_bindgen_func_elem_9502(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2093(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_2150(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2093(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_2150(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3005,10 +3311,10 @@ function __wasm_bindgen_func_elem_2093(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2093_40(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_2150_51(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2093_40(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_2150_51(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3019,10 +3325,10 @@ function __wasm_bindgen_func_elem_2093_40(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2093_41(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_2150_52(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2093_41(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_2150_52(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3113,12 +3419,15 @@ const __wbindgen_enum_GpuVertexFormat = ["uint8", "uint8x2", "uint8x4", "sint8",
 
 
 const __wbindgen_enum_GpuVertexStepMode = ["vertex", "instance"];
-const GpuMapCanvasFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => {}, unregister: () => {} }
-    : new FinalizationRegistry(ptr => wasm.__wbg_gpumapcanvas_free(ptr, 1));
 const MapCameraFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_mapcamera_free(ptr, 1));
+const MapViewFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_mapview_free(ptr, 1));
+const MapsSdkFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_mapssdk_free(ptr, 1));
 
 function addHeapObject(obj) {
     if (heap_next === heap.length) heap.push(heap.length + 1);
