@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@ keep their signature and meaning. This page is a curated, public-facing
 summary. The complete development log lives in the source repository.</p>
 <h2 id="imagery-and-caching"><a class="header" href="#imagery-and-caching">Imagery and caching</a></h2>
 <ul>
-<li>All seven MapQuest provider APIs are implemented and fixture-tested.
+<li>All seven MapQuest provider APIs are implemented and covered by recorded-response tests.
 They cover routes with strategies and multiple legs, the route matrix,
 forward and reverse geocoding, search prediction, traffic incidents,
 traffic-flow congestion polylines, and raster tiles in standard and
@@ -265,10 +265,10 @@ bindings from a frozen, addition-only UDL contract. The wasm surface is
 a hand-reviewed TypeScript mirror regression-checked against the same
 UDL. Callback providers (geocoding, tiles) and a navigation controller
 with per-topic subscriptions cross the foreign callbacks seam. Exported
-async methods run through a crate-owned runtime handback, so foreign
+async methods run through an SDK-owned runtime handback, so foreign
 event loops never meet an unserved reactor.</li>
 <li>Reference applications on Android (Compose), iOS (SwiftUI), and the
-web playground implement one shared design language. Each reaches
+browser reference app implement one shared design language. Each reaches
 search → route → simulated turn-by-turn with speech through a
 bottom-sheet home, a five-control cluster (zoom, scale bar,
 my-location, 2D/3D, compass), a follow camera, an offline tile-cache
@@ -304,7 +304,7 @@ bundles, regenerated third-party notices and changelog-derived notes.</li>
 <li>The same WebAssembly build powers a live, keyless demo at this site’s
 <code>/demo</code> path. Its provider panel can take a runtime key for live
 geocoding, routing and tile probes; the static demo defaults to the
-recorded fixture data.</li>
+bundled demo imagery.</li>
 </ul>
 <h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
 <ul>
@@ -376,7 +376,7 @@ chapter</a>.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

@@ -1,0 +1,1249 @@
+/* Playground stylesheet: the visual language of the browser reference app
+   (docs/ReferenceAppUX.md tokens mirrored as CSS custom properties, the
+   consumer trip card, the settings sheet and the expert panel). */
+      /* ------------------------------------------------------------------
+         Design tokens (docs/ReferenceAppUX.md §2): the canonical token
+         block. Dark theme first (the map canvas is dark), light theme
+         overridden on [data-theme='light']. Colors are semantic roles;
+         nothing on the interactive surface may use a color these tokens
+         do not name.
+      ------------------------------------------------------------------ */
+      :root {
+        --surface-color: rgba(20, 24, 30, 0.86);
+        --surface-elevated-color: rgba(24, 29, 37, 0.99);
+        --surface-border-color: rgba(255, 255, 255, 0.14);
+        --surface-hover-color: rgba(255, 255, 255, 0.055);
+        --surface-pressed-color: rgba(255, 255, 255, 0.10);
+        --text-primary-color: #f2f4f8;
+        --text-secondary-color: #9aa4b2;
+        --accent-color: #4c8dff;
+        /* Accent-colored text sits on tinted fills (the key action's soft
+           accent, a selected chip), so it is lighter than the border accent:
+           both this and the primary fill clear 4.5:1 on the dark surfaces. */
+        --accent-text-color: #8fbaff;
+        /* The fill of a primary action. It is deeper than the accent used for
+           text and outlines so the white label clears 4.5:1 contrast on the
+           dark surface (the brighter accent stays for borders and states). */
+        --accent-fill-color: #2563eb;
+        --accent-fill-hover-color: #1d4ed8;
+        --accent-soft-color: rgba(76, 141, 255, 0.16);
+        /* The text a filled accent surface carries: white on every theme's
+           accent (the light accent is deep enough; the dark accent keeps the
+           conventional white label rather than the dark text the light theme
+           would otherwise inherit). */
+        --on-accent-color: #ffffff;
+        --positive-color: #34c07c;
+        --warning-color: #e0a03a;
+        --danger-color: #e05656;
+        /* The search field's recessed fill: a lift off the panel surface in
+           dark, a paper tint in light. */
+        --field-fill-color: rgba(255, 255, 255, 0.06);
+        --scrim-color: rgba(0, 0, 0, 0.45);
+
+        --type-caption-size: 12px;
+        --type-body-size: 13px;
+        --type-body-strong-weight: 600;
+        --type-title-size: 14px;
+        --type-headline-size: 16px;
+        --type-maneuver-size: 22px;
+        --font-family-control: system-ui, -apple-system, sans-serif;
+        --font-numeric-readout: ui-monospace, 'SF Mono', monospace;
+
+        --gutter-inline: 16px;
+        --gutter-block: 16px;
+        --panel-padding: 14px;
+        --stack-tight: 8px;
+        --stack-group: 12px;
+        --radius-surface: 12px;
+        --radius-control: 8px;
+        --radius-inline: 6px;
+        --elevation-surface: 0 1px 4px rgba(0, 0, 0, 0.25);
+        --elevation-panel: 0 18px 48px rgba(0, 0, 0, 0.42),
+          0 2px 10px rgba(0, 0, 0, 0.28);
+        --control-height: 36px;
+        --control-height-large: 42px;
+        --panel-width: 320px;
+        --panel-maximum-height: min(84vh, 780px);
+        --scrollbar-width: 8px;
+        /* The measured height of the bottom-start dock (error + status +
+           scale bar), published by the page's ResizeObserver. The phone
+           bottom sheet reserves it so no dock ever draws over the sheet. */
+        --bottom-start-dock-height: 72px;
+        /* The map strip the phone sheet must leave visible above itself. */
+        --phone-map-minimum-height: 200px;
+      }
+      :root[data-theme='light'] {
+        --surface-color: rgba(255, 255, 255, 0.92);
+        --surface-elevated-color: rgba(255, 255, 255, 0.99);
+        --surface-border-color: rgba(0, 0, 0, 0.12);
+        --surface-hover-color: rgba(0, 0, 0, 0.045);
+        --surface-pressed-color: rgba(0, 0, 0, 0.08);
+        --text-primary-color: #1c1e21;
+        --text-secondary-color: #565c66;
+        --accent-color: #2563eb;
+        --accent-text-color: #1d4ed8;
+        --accent-fill-color: #2563eb;
+        --accent-fill-hover-color: #1d4ed8;
+        --accent-soft-color: rgba(37, 99, 235, 0.12);
+        --positive-color: #1d8a4e;
+        --warning-color: #a07016;
+        --danger-color: #c22f2f;
+        --field-fill-color: rgba(0, 0, 0, 0.04);
+        --scrim-color: rgba(23, 27, 33, 0.32);
+        --elevation-surface: 0 1px 4px rgba(0, 0, 0, 0.18);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: var(--font-family-control);
+        color: var(--text-primary-color);
+        -webkit-font-smoothing: antialiased;
+      }
+      .visually-hidden {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+      #map-canvas { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; }
+      #map-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        cursor: grab;
+      }
+      #map-overlay.panning { cursor: grabbing; }
+
+      /* Floating translucent control surface (the archetype's primary panel). */
+      #controls {
+        position: fixed;
+        top: var(--gutter-block);
+        left: var(--gutter-inline);
+        width: var(--panel-width);
+        max-height: var(--panel-maximum-height);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: var(--panel-padding);
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-group);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-surface);
+        box-shadow: var(--elevation-panel);
+        backdrop-filter: blur(18px) saturate(1.25);
+        -webkit-backdrop-filter: blur(18px) saturate(1.25);
+        font-size: var(--type-body-size);
+        pointer-events: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--surface-border-color) transparent;
+      }
+      #controls::-webkit-scrollbar {
+        width: var(--scrollbar-width);
+      }
+      #controls::-webkit-scrollbar-track { background: transparent; }
+      #controls::-webkit-scrollbar-thumb {
+        background: var(--text-secondary-color);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        border-radius: 8px;
+      }
+      #controls::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary-color);
+        background-clip: padding-box;
+      }
+      /* Children keep their natural height and the panel scrolls instead of
+         squeezing them: a shrunk `details` clips its own content, which no
+         pointer can reach (the panel would look half empty). */
+      #controls > * { flex: 0 0 auto; }
+      /* The panel's sticky header row: the title, the docs link (only under
+         the docs site's /demo/ path) and the settings control. It stays at the
+         top while the panel scrolls, with the surface color behind it so
+         content never shows through the title. */
+      #controls-header {
+        position: sticky;
+        top: calc(-1 * var(--panel-padding));
+        z-index: 5;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+        margin: calc(-1 * var(--panel-padding)) calc(-1 * var(--panel-padding)) 0;
+        padding: var(--panel-padding) var(--panel-padding) var(--stack-group);
+        background: var(--surface-color);
+        border-radius: var(--radius-surface) var(--radius-surface) 0 0;
+        backdrop-filter: blur(18px) saturate(1.25);
+        -webkit-backdrop-filter: blur(18px) saturate(1.25);
+      }
+      .demo-title { min-width: 0; }
+      /* The page title is quiet chrome: the trip card below is the reading
+         order's first stop, so the card title carries the headline size. */
+      #controls h1 {
+        margin: 0;
+        font-size: var(--type-title-size);
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+      }
+      #controls .demo-title-suffix {
+        font-weight: 400;
+        color: var(--text-secondary-color);
+      }
+      .demo-subtitle {
+        margin: 2px 0 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.35;
+        color: var(--text-secondary-color);
+      }
+      #controls-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+      }
+      /* The docs link is a quiet chip in the accent role, never the browser's
+         default link blue (which vanishes on the dark surface). */
+      #docs-back-link {
+        display: inline-flex;
+        align-items: center;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--accent-text-color);
+        text-decoration: none;
+        padding: 5px 8px;
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        white-space: nowrap;
+      }
+      #docs-back-link:hover { border-color: var(--accent-color); }
+      #docs-back-link:focus-visible,
+      #settings-control:focus-visible {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 1px;
+      }
+      #docs-back-link[hidden] { display: none; }
+      #settings-control {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        color: var(--text-secondary-color);
+        border-radius: 50%;
+      }
+      #settings-control:hover {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+        background: var(--surface-hover-color);
+      }
+      #settings-control svg { width: 17px; height: 17px; display: block; }
+      /* An unset provider key earns a small accent dot: the gear is the second
+         entry point, and the dot makes it discoverable without a label. */
+      #settings-control.needs-attention::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        box-shadow: 0 0 0 2px var(--surface-color);
+      }
+      .control-group {
+        margin: 0;
+        padding: var(--panel-padding);
+        background: transparent;
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+        min-width: 0;
+      }
+      #controls .group-label,
+      .control-group legend,
+      #navigation-demo-panel summary {
+        display: block;
+        margin: 0 0 var(--stack-tight);
+        padding: 0;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-secondary-color);
+      }
+      #trip-planner .group-label { text-transform: none; letter-spacing: 0; }
+      .control-group legend { padding: 0 4px; font-size: var(--type-body-size); }
+      #control-hint {
+        margin: 0;
+        padding: 0 2px;
+        color: var(--text-secondary-color);
+        font-size: var(--type-caption-size);
+        line-height: 1.45;
+      }
+
+      label { display: block; margin-top: var(--stack-tight); font-weight: var(--type-body-strong-weight); }
+      .value-line {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 400;
+        color: var(--text-secondary-color);
+      }
+      input[type='range'] { width: 100%; accent-color: var(--accent-color); }
+
+      /* Buttons: subtle secondary form; the one primary action per group
+         takes the accent. */
+      button {
+        font-family: inherit;
+        font-size: var(--type-body-size);
+        font-weight: 500;
+        color: var(--text-primary-color);
+        background: transparent;
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+        min-height: 32px;
+        padding: 4px 12px;
+        cursor: pointer;
+        transition: background-color 120ms ease, border-color 120ms ease,
+          color 120ms ease, transform 80ms ease;
+      }
+      button:hover {
+        border-color: var(--accent-color);
+        background: var(--surface-hover-color);
+      }
+      button:active { transform: translateY(1px); }
+      button.primary {
+        color: var(--on-accent-color);
+        background: var(--accent-fill-color);
+        border-color: var(--accent-fill-color);
+        font-weight: var(--type-body-strong-weight);
+      }
+      button.primary:hover {
+        background: var(--accent-fill-hover-color);
+        border-color: var(--accent-fill-hover-color);
+      }
+      button.quiet {
+        color: var(--text-secondary-color);
+        border-color: transparent;
+        background: transparent;
+      }
+      button.quiet:hover {
+        color: var(--accent-text-color);
+        border-color: var(--surface-border-color);
+        background: var(--surface-hover-color);
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+        transform: none;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+      }
+      #camera-preset-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--stack-tight);
+        margin-top: var(--stack-tight);
+      }
+      #camera-preset-controls button.selected { color: var(--accent-text-color); border-color: var(--accent-color); }
+      #theme-toggle-control { margin-top: var(--stack-tight); }
+      fieldset:disabled label { color: var(--text-secondary-color); }
+      fieldset:disabled button { cursor: not-allowed; }
+
+      /* Toggle rows. */
+      .toggle-row { display: flex; gap: var(--stack-tight); align-items: center; font-weight: 400; }
+      input[type='checkbox'] { accent-color: var(--accent-color); }
+
+      /* Reason strips: the disabled-with-reason pattern's visible why
+         (warning-colored, caption size). */
+      .reason-strip {
+        margin: var(--stack-tight) 0 0;
+        color: var(--warning-color);
+        font-size: var(--type-caption-size);
+      }
+
+      /* Status line: one line at the bottom-start edge, a readiness dot in
+         front of the text, readiness colored via data-readiness. */
+      #status-line::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 4px;
+        vertical-align: baseline;
+        background: var(--text-secondary-color);
+      }
+      /* The map's bottom-start control stack (§1/§4.2): the error strip, the
+         status line and the scale bar share one bottom-anchored column, so no
+         floating line ever collides with another. Children carry their own
+         pointer behavior; the column itself lets map gestures through the
+         gaps. The attribution control lives in the matching bottom-end
+         column, opposite the scale bar. */
+      #bottom-start-dock {
+        position: fixed;
+        bottom: var(--stack-tight);
+        left: var(--gutter-inline);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--stack-tight);
+        max-width: calc(100vw - 2 * var(--gutter-inline));
+        pointer-events: none;
+      }
+      #bottom-start-dock > * { pointer-events: auto; }
+      #status-line {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.25;
+        font-weight: var(--type-body-strong-weight);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: 6px 12px;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        /* One line, capped so it never runs into the readout's dock; the
+           full detail stays available in the error report and diagnostics. */
+        max-width: min(480px, calc(100vw - var(--gutter-inline) - 360px));
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #status-line[data-readiness='loading']::before {
+        background: var(--accent-color);
+        animation: readiness-pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes readiness-pulse {
+        0%, 100% { opacity: 0.35; }
+        50% { opacity: 1; }
+      }
+      #status-line[data-readiness='ready']::before { background: var(--positive-color); }
+      #status-line[data-readiness='degraded'] { color: var(--warning-color); }
+      #status-line[data-readiness='degraded']::before { background: var(--warning-color); }
+      #status-line[data-readiness='failed'] { color: var(--danger-color); }
+      #status-line[data-readiness='failed']::before { background: var(--danger-color); }
+      #readout {
+        position: fixed;
+        right: var(--gutter-inline);
+        top: var(--gutter-block);
+        font-size: var(--type-caption-size);
+        font-family: var(--font-numeric-readout);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) 12px;
+        /* pre keeps the line structure; long degradation details wrap inside
+           a capped box instead of spilling leftward over the primary panel. */
+        max-width: min(460px, calc(100vw - 2 * var(--gutter-inline)));
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 50vh;
+        overflow-y: auto;
+        box-shadow: var(--elevation-surface);
+      }
+      /* Developer chrome is opt-in (Advanced → Debug): the element keeps
+         updating its text while hidden, so enabling it is always current. */
+      #readout[hidden] { display: none; }
+      /* Provider-echoing error report (docs/ReferenceAppUX.md §6.3): above
+         the status line in the bottom-start column, danger-flagged, detail
+         echoed verbatim. */
+      #error-report {
+        margin: 0;
+        max-width: min(420px, calc(100vw - 2 * var(--gutter-inline)));
+        max-height: 40vh;
+        overflow-y: auto;
+        font-size: var(--type-caption-size);
+        line-height: 1.45;
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--danger-color);
+        border-left-width: 3px;
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) 12px;
+        box-shadow: var(--elevation-surface);
+        word-break: break-word;
+      }
+      /* The attribution info control (§1/§4.2, PRD §5): a compact circular
+         "ⓘ" at the bottom-start beside the scale bar; tapping it toggles the
+         attribution-and-terms panel above it, so the compliance text no
+         longer claims a permanent line across the map. */
+      #attribution-control {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--stack-tight);
+      }
+      #bottom-end-dock {
+        position: fixed;
+        bottom: var(--stack-tight);
+        right: var(--gutter-inline);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--stack-tight);
+        max-width: calc(100vw - 2 * var(--gutter-inline));
+        pointer-events: none;
+      }
+      #bottom-end-dock > * { pointer-events: auto; }
+      #attribution-control {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--stack-tight);
+      }
+      #attribution-info-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+        padding: 0;
+        font-size: 16px;
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: 50%;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        cursor: pointer;
+      }
+      #attribution-info-control:hover {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
+      #attribution-info-control[aria-expanded='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
+      #attribution-info-control[hidden] { display: none; }
+      #attribution-panel {
+        max-width: min(320px, calc(100vw - 2 * var(--gutter-inline)));
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) var(--stack-group);
+        box-shadow: var(--elevation-surface);
+        color: var(--text-primary-color);
+        font-size: var(--type-caption-size);
+      }
+      #attribution-panel[hidden] { display: none; }
+      #attribution-panel .attribution-panel-title {
+        margin: 0 0 4px;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      #attribution-notice {
+        margin: 0 0 var(--stack-tight);
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      #attribution-panel .attribution-terms-note {
+        margin: 0 0 var(--stack-tight);
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      #attribution-panel .attribution-terms-note:last-child { margin-bottom: 0; }
+
+      /* Settings (M13/M15): the runtime credential surface moved off the map
+         panel behind one gear control. A native modal dialog gives the focus
+         trap, Escape handling and the backdrop for free; the sheet inside
+         carries the appearance switch and the provider rows. */
+      #settings-dialog {
+        width: min(440px, calc(100vw - 2 * var(--gutter-inline)));
+        max-height: min(680px, calc(100vh - 2 * var(--gutter-block)));
+        padding: 0;
+        color: var(--text-primary-color);
+        background: var(--surface-elevated-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-surface);
+        box-shadow: var(--elevation-panel);
+        overflow: hidden;
+      }
+      #settings-dialog::backdrop {
+        background: var(--scrim-color);
+        backdrop-filter: blur(2px);
+      }
+      .settings-sheet {
+        display: flex;
+        flex-direction: column;
+        max-height: inherit;
+      }
+      .settings-header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--panel-padding) var(--gutter-block);
+        background: var(--surface-elevated-color);
+        border-bottom: 1px solid var(--surface-border-color);
+      }
+      .settings-header h2 {
+        margin: 0;
+        font-size: var(--type-headline-size);
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+      }
+      #settings-close-control {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        min-height: 32px;
+        padding: 0;
+        font-size: 20px;
+        line-height: 1;
+        color: var(--text-secondary-color);
+        border-radius: 50%;
+      }
+      .settings-body {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        padding: var(--gutter-block);
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .settings-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-tight);
+      }
+      .settings-section + .settings-section {
+        padding-top: 20px;
+        border-top: 1px solid var(--surface-border-color);
+      }
+      .settings-section-title {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary-color);
+      }
+      .settings-subsection-title {
+        margin: 0;
+        font-size: var(--type-body-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      .settings-note {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.5;
+        color: var(--text-secondary-color);
+      }
+      #theme-toggle-control { align-self: flex-start; height: var(--control-height); padding: 0 14px; }
+      .settings-toggle { margin-top: var(--stack-tight); }
+      .settings-probe {
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-tight);
+        margin-top: var(--stack-tight);
+        padding-top: var(--stack-group);
+        border-top: 1px solid var(--surface-border-color);
+      }
+      .provider-credential-row {
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-tight);
+        padding: var(--stack-group);
+        background: var(--field-fill-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+      }
+      .provider-credential-row + .provider-credential-row { margin-top: var(--stack-tight); }
+      .provider-credential-label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+      }
+      .provider-credential-row label {
+        margin: 0;
+        font-size: var(--type-body-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      .provider-applied-chip {
+        flex: 0 0 auto;
+        padding: 2px 8px;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--positive-color);
+        background: color-mix(in srgb, var(--positive-color) 14%, transparent);
+        border-radius: 999px;
+      }
+      .provider-applied-chip[hidden] { display: none; }
+      .provider-credential-field { position: relative; display: flex; }
+      .provider-credential-row input {
+        width: 100%;
+        height: var(--control-height);
+        padding: 0 64px 0 10px;
+        font: inherit;
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+      }
+      .provider-credential-row input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px var(--accent-soft-color);
+      }
+      .provider-credential-visibility {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        min-height: 28px;
+        height: 28px;
+        padding: 0 10px;
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+        border-color: transparent;
+        background: transparent;
+      }
+      .provider-credential-visibility:hover {
+        color: var(--accent-text-color);
+        border-color: var(--surface-border-color);
+        background: var(--surface-hover-color);
+      }
+      .provider-credential-actions { display: flex; gap: var(--stack-tight); }
+      .provider-credential-actions button { min-height: var(--control-height); }
+      .provider-hint,
+      .provider-credential-row .provider-terms-note {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.45;
+        color: var(--text-secondary-color);
+      }
+      .provider-hint[hidden] { display: none; }
+      #provider-tile-control { align-self: flex-start; }
+      #provider-tile-canvas {
+        margin-top: var(--stack-tight);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+      }
+
+      /* Simulated navigation card set (docs/ReferenceAppUX.md §7),
+         spec-driven layout preview until the wasm contract wave. */
+      #navigation-demo-panel summary { cursor: pointer; }
+      /* The base-map switch (M9): one pressed choice per provider-declared
+         base layer; the pressed state is the accent. */
+      #base-map-toggle { display: flex; flex-wrap: wrap; gap: var(--stack-tight); }
+      #base-map-toggle button[aria-pressed="true"] {
+        border-color: var(--accent-color);
+        color: var(--accent-text-color);
+      }
+      /* The trip planner (the playground's consumer surface): a search field,
+         suggestion chips, result rows and the two trip actions on one
+         eight-point rhythm. Every spacing value is a token; the field and
+         button heights are layout metrics named here. */
+      #trip-planner {
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-group);
+        padding: var(--gutter-block);
+        background: var(--surface-elevated-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-surface);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+      #trip-planner .group-label {
+        margin: 0;
+        font-size: var(--type-headline-size);
+        letter-spacing: -0.01em;
+        color: var(--text-primary-color);
+      }
+      .trip-subtitle {
+        margin: calc(-1 * var(--stack-group) + 6px) 0 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.4;
+        color: var(--text-secondary-color);
+      }
+      .trip-search { position: relative; display: flex; align-items: center; }
+      .trip-search-icon {
+        position: absolute;
+        left: 12px;
+        width: 16px;
+        height: 16px;
+        color: var(--text-secondary-color);
+        pointer-events: none;
+      }
+      #provider-search-input {
+        width: 100%;
+        height: 44px;
+        padding: 0 86px 0 36px;
+        font: inherit;
+        color: var(--text-primary-color);
+        background: var(--field-fill-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+        appearance: none;
+      }
+      #provider-search-input::placeholder {
+        color: var(--text-secondary-color);
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      /* The field carries its own Search button; the native clear affordance
+         would sit underneath it. */
+      #provider-search-input::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      #provider-search-input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px var(--accent-soft-color);
+      }
+      #provider-search-control {
+        position: absolute;
+        right: 5px;
+        height: 34px;
+        padding: 0 14px;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--accent-text-color);
+        background: var(--accent-soft-color);
+        border-color: transparent;
+        border-radius: var(--radius-inline);
+      }
+      #provider-search-control:hover {
+        color: var(--on-accent-color);
+        background: var(--accent-fill-color);
+        border-color: var(--accent-fill-color);
+      }
+      /* Quick picks: a wrapping chip row keeps every demo-place label whole
+         (no mid-word clipping at narrow panel widths) without becoming a grid
+         that pushes the trip actions too far down. */
+      .trip-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: calc(-1 * var(--stack-group) + 6px);
+      }
+      .trip-suggestion-chip {
+        flex: 0 0 auto;
+        max-width: 100%;
+        padding: 4px 10px;
+        font-size: var(--type-caption-size);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text-secondary-color);
+        background: var(--field-fill-color);
+        border-radius: 999px;
+      }
+      .trip-suggestion-chip:hover {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
+      #provider-search-results {
+        list-style: none;
+        margin: 0;
+        padding: 2px;
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+        background: var(--field-fill-color);
+        max-height: 176px;
+        overflow-y: auto;
+      }
+      #provider-search-results[hidden] { display: none; }
+      #provider-search-results li { margin: 0; }
+      #provider-search-results li + li { border-top: 1px solid var(--surface-border-color); }
+      .trip-result-button {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        width: 100%;
+        text-align: start;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: 0;
+        font-weight: var(--type-body-strong-weight);
+      }
+      .trip-result-button:hover { background: var(--field-fill-color); }
+      .trip-result-note {
+        font-size: var(--type-caption-size);
+        font-weight: 400;
+        color: var(--text-secondary-color);
+      }
+      /* The status line: informational by default, warning only when the
+         message is a refusal (data-tone), so the keyless note no longer
+         dresses an ordinary state in the warning color. */
+      .trip-status {
+        margin: 0;
+        min-height: 17px;
+        font-size: var(--type-caption-size);
+        line-height: 1.4;
+        color: var(--text-secondary-color);
+      }
+      .trip-status[data-tone='warning'] { color: var(--warning-color); }
+      .trip-status[data-tone='success'] { color: var(--positive-color); }
+      /* Key onboarding: the honest keyless state and its one action sit
+         together, so a first-time visitor never has to hunt for the gear. */
+      .trip-credential {
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-tight);
+      }
+      .credential-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--stack-tight);
+        width: 100%;
+        min-height: var(--control-height);
+        padding: 0 12px;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--accent-text-color);
+        background: var(--accent-soft-color);
+        border-color: transparent;
+        border-radius: var(--radius-control);
+      }
+      .credential-action svg { width: 15px; height: 15px; flex: 0 0 auto; }
+      .credential-action:hover {
+        color: var(--on-accent-color);
+        background: var(--accent-fill-color);
+        border-color: var(--accent-fill-color);
+      }
+      .credential-action[data-state='applied'] {
+        color: var(--positive-color);
+        background: color-mix(in srgb, var(--positive-color) 12%, transparent);
+      }
+      .credential-action[data-state='applied']:hover {
+        color: var(--positive-color);
+        background: color-mix(in srgb, var(--positive-color) 20%, transparent);
+        border-color: var(--positive-color);
+      }
+      .trip-route-result {
+        margin: 0;
+        padding: 8px 10px;
+        font-size: var(--type-caption-size);
+        line-height: 1.45;
+        color: var(--text-primary-color);
+        background: var(--field-fill-color);
+        border-left: 3px solid var(--accent-color);
+        border-radius: var(--radius-inline);
+      }
+      .trip-route-result[hidden] { display: none; }
+      .trip-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--stack-tight);
+      }
+      .trip-actions button { width: 100%; height: var(--control-height-large); }
+      .trip-actions button.primary {
+        height: 46px;
+        font-weight: var(--type-body-strong-weight);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32);
+      }
+      .trip-footnote {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.4;
+        color: var(--text-secondary-color);
+      }
+
+      /* The Advanced disclosure: one quiet row, then the expert groups as
+         borderless sections separated by hairlines (no box-in-box stack). */
+      #advanced-panel {
+        padding: 0;
+        overflow: hidden;
+        background: var(--field-fill-color);
+      }
+      #advanced-panel > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 40px;
+        padding: 10px var(--panel-padding);
+        cursor: pointer;
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-secondary-color);
+        list-style: none;
+        transition: color 120ms ease, background-color 120ms ease;
+      }
+      #advanced-panel > summary:hover {
+        color: var(--text-primary-color);
+        background: var(--surface-hover-color);
+      }
+      #advanced-panel > summary::-webkit-details-marker { display: none; }
+      #advanced-panel > summary::after {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-right: 1.6px solid currentColor;
+        border-bottom: 1.6px solid currentColor;
+        transform: translateY(-2px) rotate(45deg);
+        transition: transform 120ms ease;
+      }
+      #advanced-panel[open] > summary {
+        color: var(--text-primary-color);
+        border-bottom: 1px solid var(--surface-border-color);
+      }
+      #advanced-panel[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+      #advanced-content { display: flex; flex-direction: column; }
+      #advanced-content > .control-group,
+      #advanced-content > fieldset.control-group {
+        margin: 0;
+        padding: var(--stack-group) var(--panel-padding);
+        border: 0;
+        border-radius: 0;
+      }
+      #advanced-content > .control-group + .control-group,
+      #advanced-content > fieldset.control-group + .control-group { border-top: 1px solid var(--surface-border-color); }
+      .navigation-phase { margin: var(--stack-tight) 0 0; display: flex; gap: var(--stack-tight); align-items: center; }
+      .navigation-chip {
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: 1px 8px;
+        font-weight: var(--type-body-strong-weight);
+      }
+      .turn-banner {
+        margin-top: var(--stack-tight);
+        border-left: 3px solid var(--accent-color);
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) 12px;
+        background: var(--surface-color);
+      }
+      .turn-banner-distance { margin: 0; font-size: var(--type-maneuver-size); color: var(--text-secondary-color); }
+      .turn-banner-text { margin: 0 0 var(--stack-tight); font-size: var(--type-maneuver-size); font-weight: var(--type-body-strong-weight); }
+      .then-line { margin: var(--stack-tight) 0 0; color: var(--text-secondary-color); }
+      .navigation-progress {
+        margin: var(--stack-tight) 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .navigation-progress li {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+        margin-top: 4px;
+      }
+      .progress-label { color: var(--text-secondary-color); font-weight: 400; }
+      #deviation-alert-preview {
+        margin: var(--stack-tight) 0 0;
+        color: var(--warning-color);
+        border: 1px solid var(--warning-color);
+        border-radius: var(--radius-inline);
+        padding: 4px 10px;
+        font-size: var(--type-caption-size);
+      }
+
+      /* --- Round 11: the map control cluster (docs/ReferenceAppUX.md
+             §4.2), the scale bar, the follow demo and the diagnostics
+             readout. The cluster docks on the map's end edge as one
+             column; the compass rides the column's top (the §4.2 top-end
+             slot is the playground's readout dock at this breakpoint, so
+             the compass joins the cluster here instead). Circular button
+             dimensions are the layout constants (48 dp circle on native);
+             they are literal here — CSS cannot reference the JS mirror. */
+      #map-control-cluster {
+        position: fixed;
+        top: 50%;
+        right: var(--gutter-inline);
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-tight);
+        align-items: center;
+        pointer-events: auto;
+      }
+      .map-control-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        min-height: 48px;
+        padding: 0;
+        font-size: 20px;
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: 50%;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        cursor: pointer;
+        touch-action: none;
+      }
+      .map-control-button:hover {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+        background: var(--surface-color);
+      }
+      /* The engaged plane toggle takes the cluster's primary look: the
+         generic `button.primary` accent fill applies (readable on-accent
+         text), so only the caption sizing is id-specific. */
+      #plane-toggle-control { font-size: var(--type-caption-size); }
+      #compass-north-letter { display: inline-block; pointer-events: none; }
+      #my-location-control { color: var(--accent-text-color); }
+      /* While a gesture-broken follow waits for the my-location control, the
+         control takes the cluster's active look (the accent fill), the
+         re-center affordance (§4.2/§5.3). */
+      #my-location-control.recentering {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: var(--text-primary-color);
+      }
+      .map-control-button { user-select: none; }
+      /* The compass hides via the `hidden` attribute (its refresh sets it
+         every frame); the class's own `display` would win over the UA's
+         attribute style, so restate the hidden behavior explicitly. */
+      .map-control-button[hidden] { display: none; }
+
+      /* The scale bar (§4.2): bottom-start, above the attribution info
+         control in the bottom-start column; the hairline bar draws above its
+         label. */
+      #scale-bar-overlay {
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: 4px 10px 5px;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      #scale-bar-overlay .scale-bar-line {
+        height: 2px;
+        margin-top: 2px;
+        background: currentColor;
+        border-radius: 1px;
+      }
+
+      /* The follow demo's live line and the 3D-plane badge of the cluster. */
+      #follow-demo-live-line { margin: var(--stack-tight) 0 0; color: var(--text-secondary-color); font-size: var(--type-caption-size); }
+
+      /* The diagnostics readout (§4.1's diagnostics sheet, round-10 shape on
+         the web surface): bounded monospace lines, SDK jargon verbatim. */
+      #diagnostics-facts-lines,
+      #diagnostics-event-lines {
+        margin: var(--stack-tight) 0 0;
+        max-height: 180px;
+        overflow-y: auto;
+        background: transparent;
+        border: 0;
+        padding: 0;
+        font-size: var(--type-caption-size);
+        font-family: var(--font-numeric-readout);
+        color: var(--text-secondary-color);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      /* Phone-width layout (docs/ReferenceAppUX.md §1): the panels span
+         start-end with a reduced gutter; no horizontal scrolling ever.
+         The breakpoint literal mirrors PHONE_WIDTH_BREAKPOINT_PIXELS.
+         (Media-query preconditions cannot read custom properties.) */
+      @media (max-width: 560px) {
+        :root {
+          --gutter-inline: 8px;
+          --gutter-block: 8px;
+        }
+        /* The readout compresses to its first line (mode + center; see the
+           update_readout compact branch) and docks below the control row so
+           the two never overlap. */
+        #readout {
+          top: calc(var(--gutter-block) + 48px + var(--stack-tight));
+          left: var(--gutter-inline);
+          right: var(--gutter-inline);
+          max-width: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        /* The consumer panel becomes a bottom sheet: the map keeps the top of
+           the screen, the sheet scrolls inside itself, and the status,
+           scale-bar and attribution docks stay clear below it. The bottom
+           offset and the height cap both use the measured dock height, so a
+           growing error strip pushes the sheet up instead of drawing over it. */
+        #controls {
+          top: auto;
+          left: var(--gutter-inline);
+          right: var(--gutter-inline);
+          bottom: calc(
+            var(--gutter-block) + var(--bottom-start-dock-height) + var(--stack-tight)
+          );
+          width: auto;
+          max-height: calc(
+            100vh - var(--gutter-block) - var(--bottom-start-dock-height)
+              - var(--stack-tight) - var(--phone-map-minimum-height)
+          );
+          padding: var(--stack-group);
+          border-radius: var(--radius-surface);
+        }
+        /* On the sheet the subtitle would cost the row that keeps the whole
+           trip card and Advanced visible at phone height. */
+        .trip-subtitle { display: none; }
+        /* A representative error fits inside the space the sheet leaves. */
+        #error-report { max-height: 20vh; }
+        #controls-header {
+          top: calc(-1 * var(--stack-group));
+          margin: calc(-1 * var(--stack-group)) calc(-1 * var(--stack-group)) 0;
+          padding: var(--stack-group);
+        }
+        /* The cluster becomes one horizontal row along the map's top edge:
+           a vertical column would run into the sheet header and its gear. */
+        #map-control-cluster {
+          top: var(--gutter-block);
+          right: var(--gutter-inline);
+          transform: none;
+          flex-direction: row;
+        }
+        /* The status line leaves room for the attribution control at the
+           opposite dock, so the two never overlap. */
+        #status-line {
+          max-width: calc(100vw - 2 * var(--gutter-inline) - 52px);
+        }
+        /* The settings sheet docks to the bottom edge like the map panel. */
+        #settings-dialog {
+          width: calc(100vw - 2 * var(--gutter-inline));
+          max-height: calc(100vh - var(--gutter-block) * 2);
+          margin: auto auto var(--gutter-block);
+        }
+        .settings-body { padding: var(--stack-group); }
+        #attribution-panel {
+          max-width: min(300px, calc(100vw - 2 * var(--gutter-inline)));
+        }
+      }
+      @media (max-width: 380px) {
+        .demo-subtitle { display: none; }
+      }
+
+      /* Short viewports (the harness's 640x480 window and small laptop
+         splits): a multi-line readout dock grows down into the vertically
+         centered cluster column and occludes the compass. The readout
+         compresses to its first line like the phone branch above; the
+         height literal mirrors SHORT_VIEWPORT_COMPACT_HEIGHT_PIXELS. */
+      @media (max-height: 560px) {
+        #readout {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }

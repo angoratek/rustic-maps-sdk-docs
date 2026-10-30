@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -179,7 +179,7 @@
 <p>Install the SDK, register a map provider with your API key, and draw a
 first rendered map surface. Choose your platform’s tab and follow its
 steps top to bottom; every snippet is a complete step and compiles
-against the <a href="udl-contract.html">frozen FFI contract</a>.</p>
+against the <a href="udl-contract.html">FFI contract</a>.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -211,10 +211,10 @@ exact.</p>
 <h3 id="build-the-sdk-and-register-the-provider"><a class="header" href="#build-the-sdk-and-register-the-provider">Build the SDK and register the provider</a></h3>
 <p>Construct the SDK object and install the map-platform provider set in
 one call, as the reference application does at startup:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.MapSdk
+<pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
 
 val mapSdk = MapSdk()
-mapSdk.registerMapquestProviders(mapQuestApiKey)
+mapSdk.setProviderCredential(mapQuestApiKey)
 </code></pre>
 <p>The call throws verbatim when the key is refused, so surface it in your
 error state rather than continuing.</p>
@@ -229,7 +229,7 @@ itself is explicit, as shown.</p>
 <li>
 <p>A small JNI shim that hands the SDK the <code>ANativeWindow*</code> pointer of
 your surface (the pointer has no public Kotlin API):</p>
-<pre><code class="language-kotlin">// src/main/cpp/native_window_shim.c — the whole shim:
+<pre><code class="language-c">// src/main/cpp/native_window_shim.c — the whole shim:
 #include &lt;android/bitmap.h&gt;
 #include &lt;android/native_window.h&gt;
 #include &lt;android/native_window_jni.h&gt;
@@ -251,16 +251,17 @@ Java_com_example_map_nativeWindowPointerFromSurface(JNIEnv* env, jobject, jobjec
 <p>The surface host: construct the view over the SDK, attach once the
 surface exists, then pump one <code>draw</code> per composed frame:</p>
 <pre><code class="language-kotlin">import kotlinx.coroutines.withFrameNanos
-import uniffi.map_native_core.MapCamera
-import uniffi.map_native_core.MapSurfaceTargetHandle
-import uniffi.map_native_core.MapSurfaceView
+import uniffi.rustic_maps.GeographicCoordinate
+import uniffi.rustic_maps.MapCamera
+import uniffi.rustic_maps.SurfaceHandle
+import uniffi.rustic_maps.MapView
 
-val mapSurface = MapSurfaceView(mapSdk)
+val mapSurface = MapView(mapSdk)
 
 // On the platform surface's created callback (once):
 val nativeWindowPointer = nativeWindowPointerFromSurface(surface)
 mapSurface.attach(
-    MapSurfaceTargetHandle(
+    SurfaceHandle(
         appkitViewPointer = null,
         iosViewPointer = null,
         androidNativeWindowPointer = nativeWindowPointer.toULong(),
@@ -269,12 +270,14 @@ mapSurface.attach(
     heightPixels = surfaceHeightPixels.toUInt(),
 )
 
-// The per-frame pump (the SDK deliberately has no render loop):
+// The per-frame pump (the SDK deliberately has no render loop). This is
+// the shared demo camera on every platform: Capitol Park, Sacramento at
+// zoom 12, north-up and top-down.
 withFrameNanos { _ -&gt;
     try {
         mapSurface.draw(
             MapCamera(
-                center,
+                GeographicCoordinate(38.5766, -121.4944),
                 zoomLevel = 12.0,
                 bearingDegrees = 0.0,
                 pitchDegrees = 0.0,
@@ -289,28 +292,67 @@ withFrameNanos { _ -&gt;
 </ol>
 <p>Call <code>mapSurface.resize(width, height)</code> from your surface-changed
 callback and <code>mapSurface.detach()</code> on surface-destroyed.</p>
+<h3 id="pan-the-camera-from-a-gesture"><a class="header" href="#pan-the-camera-from-a-gesture">Pan the camera from a gesture</a></h3>
+<p>Gesture recognition stays in your platform view; the camera algebra is the
+SDK’s. Forward the drag delta to the camera member and keep the pose it
+answers (the ground point the pointer grabbed becomes the new center):</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.ViewportSize
+
+val pannedCamera = camera.panByScreenPixels(
+    deltaXPixels = dragDeltaXPixels,
+    deltaYPixels = dragDeltaYPixels,
+    viewport = ViewportSize(
+        widthPixels = surfaceWidthPixels.toDouble(),
+        heightPixels = surfaceHeightPixels.toDouble(),
+    ),
+    fieldOfViewDegrees = 60.0,
+)
+center = pannedCamera.center()
+</code></pre>
+<p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
+the pinch and twist deltas with the same focal-point correction, so every
+platform computes identical results.</p>
 <h3 id="add-your-first-overlay"><a class="header" href="#add-your-first-overlay">Add your first overlay</a></h3>
 <p>Draw more than tiles by setting the overlay list the surface draws every
-frame. A route polyline over two points:</p>
-<pre><code class="language-kotlin">import uniffi.map_native_core.GeographicCoordinate
-import uniffi.map_native_core.MapOverlayDescriptor
-import uniffi.map_native_core.MapOverlayKind
-import uniffi.map_native_core.OverlayColor
+frame. A route polyline over the demo’s two waypoints (Capitol Park to
+Tower Bridge):</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
+import uniffi.rustic_maps.MapOverlay
+import uniffi.rustic_maps.MapOverlayKind
+import uniffi.rustic_maps.OverlayColor
 
 mapSurface.setOverlays(
     listOf(
-        MapOverlayDescriptor(
+        MapOverlay(
             kind = MapOverlayKind.ROUTE_POLYLINE,
             coordinates = listOf(
-                GeographicCoordinate(latitude = 47.3769, longitude = 8.5417),
-                GeographicCoordinate(latitude = 47.3774, longitude = 8.5411),
+                GeographicCoordinate(38.5766, -121.4944),
+                GeographicCoordinate(38.5802, -121.5083),
             ),
             rgbaColor = OverlayColor(red = 0.2, green = 0.4, blue = 0.9, alpha = 0.9),
             widthPixels = 3.0,
+            // The other payload fields stay null for this kind.
+            ringCoordinates = null,
+            pointMarkerPositions = null,
+            pointMarkerRadiusPixels = null,
+            trafficFlowSegments = null,
         ),
     ),
 )
 </code></pre>
+<p><code>setOverlays</code> is the bulk call for a list you own whole: it replaces the
+drawn list in one go. For overlays you keep across frames, address them
+individually — <code>addOverlay</code> answers an opaque identifier, <code>updateOverlay</code>
+replaces that entry in its draw position, and <code>removeOverlay</code> answers
+whether it was present:</p>
+<pre><code class="language-kotlin">val routeOverlayId = mapSurface.addOverlay(routePolylineOverlay)
+// ...later, when the route changes:
+mapSurface.updateOverlay(routeOverlayId, replacementPolylineOverlay)
+// ...and when it is dismissed:
+mapSurface.removeOverlay(routeOverlayId)
+</code></pre>
+<p>Identifiers are monotonic per view and never reused; <code>clearOverlays()</code>
+clears both the bulk list and the addressed overlays.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="ios">
@@ -346,7 +388,7 @@ tree consumes the local unzipped framework the same way; follow its
 <pre><code class="language-swift">import RusticMapsSDK
 
 let mapSdk = MapSdk()
-try mapSdk.registerMapquestProviders(mapQuestApiKey)
+try mapSdk.setProviderCredential(credential: mapQuestApiKey)
 </code></pre>
 <p>The call throws verbatim when the key is refused.</p>
 <p>Pass a key read at <strong>runtime</strong> (app settings, a secure configuration store,
@@ -355,26 +397,33 @@ or to an xcconfig that ships in the app; the reference app’s settings sheet
 takes it at runtime.</p>
 <h3 id="draw-a-map-surface-1"><a class="header" href="#draw-a-map-surface-1">Draw a map surface</a></h3>
 <p>The SDK renders onto a Metal-backed <code>UIView</code> you own:</p>
-<pre><code class="language-swift">let mapSurface = MapSurfaceView(mapSdk: mapSdk)
+<pre><code class="language-swift">let mapSurface = MapView(mapSdk: mapSdk)
 
 // Once the view is laid out and backed by a Metal layer:
-let surfaceHandle = MapSurfaceTargetHandle(
+let surfaceHandle = SurfaceHandle(
     appkitViewPointer: nil,
     iosViewPointer: unsafeBitCast(metalBackedView, to: UInt64.self),
     androidNativeWindowPointer: nil
 )
 try mapSurface.attach(
-    surfaceHandle,
+    surfaceHandle: surfaceHandle,
     widthPixels: UInt32(pixelExtent.width),
     heightPixels: UInt32(pixelExtent.height)
 )
 </code></pre>
 <p>The reference application drives frames from its own <code>CADisplayLink</code>;
-the SDK deliberately has no render loop:</p>
-<pre><code class="language-swift">let drawTask = Task { [mapSurface] in
+the SDK deliberately has no render loop. This is the same shared demo
+camera every platform starts from:</p>
+<pre><code class="language-swift">let firstCamera = try MapCamera(
+    center: GeographicCoordinate(latitude: 38.5766, longitude: -121.4944),
+    zoomLevel: 12.0,
+    bearingDegrees: 0.0,
+    pitchDegrees: 0.0
+)
+
+let drawTask = Task { [mapSurface] in
     while true {
-        let camera = currentCamera()   // build MapCamera per frame
-        let statistics = try await mapSurface.draw(camera: camera)
+        let statistics = try await mapSurface.draw(camera: firstCamera)
         updateReadouts(statistics: statistics)
         try await Task.sleep(nanoseconds: frameIntervalNanoseconds)
     }
@@ -382,16 +431,29 @@ the SDK deliberately has no render loop:</p>
 </code></pre>
 <p>Call <code>mapSurface.resize(width:height:)</code> from your layout callback and
 <code>mapSurface.detach()</code> when the view leaves the hierarchy. Check
-<code>frameSettled(camera:)</code> in the pump to skip a redraw when nothing
+<code>isFrameSettled(camera:)</code> in the pump to skip a redraw when nothing
 changed.</p>
+<h3 id="pan-the-camera-from-a-gesture-1"><a class="header" href="#pan-the-camera-from-a-gesture-1">Pan the camera from a gesture</a></h3>
+<p>Keep the gesture recognizers in your view and forward their deltas to the
+camera member (the ground point the finger grabbed becomes the new center):</p>
+<pre><code class="language-swift">let pannedCamera = try camera.panByScreenPixels(
+    deltaXPixels: dragDeltaPixels.width,
+    deltaYPixels: dragDeltaPixels.height,
+    viewport: viewport,
+    fieldOfViewDegrees: fieldOfViewDegrees
+)
+let pannedCenter = pannedCamera.center()
+</code></pre>
+<p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
+pinch and twist deltas with the same focal-point correction.</p>
 <h3 id="fit-the-map-to-what-you-show"><a class="header" href="#fit-the-map-to-what-you-show">Fit the map to what you show</a></h3>
 <p>For a bounded region, let the camera fit the box instead of hand-tuning
 zoom, exactly as the route-preview flow does:</p>
 <pre><code class="language-swift">let fittedCamera = try MapCamera.fitBounds(
     boundingBox: regionBox,
     viewport: viewport,
-    edgeInsets: EdgeInsetsPixels(
-        left: 48, top: 48, right: 48, bottom: 96
+    edgeInsets: EdgeInsets(
+        left: 224, top: 48, right: 48, bottom: 96
     ),
     maximumZoomLevel: 22
 )
@@ -418,7 +480,7 @@ register the provider set:</p>
 
 export async function createMapSdk(mapQuestApiKey) {
   const mapSdk = await new MapSdk();
-  await mapSdk.registerMapquestProviders(mapQuestApiKey);
+  await mapSdk.setProviderCredential(mapQuestApiKey);
   return mapSdk;
 }
 </code></pre>
@@ -428,23 +490,70 @@ launch environment for automated tests. Do not bake it into the JS bundle
 or a native build file; the reference app reads it from its settings
 surface and keeps it only when the user opts in.</p>
 <h3 id="draw-a-map-surface-2"><a class="header" href="#draw-a-map-surface-2">Draw a map surface</a></h3>
-<p>The React Native artifact exposes the contract surface; the rendered
-surface lifecycle (native view, attach, per-frame draw) is a native
-view the host application composes. The reference app shell wires it
-through its own bridge module and drives the demo from there, which is
-the recommended starting point for a first integration: read its
-controller’s lifecycle (create the SDK, register providers, attach the
-surface, pump camera frames) and copy the sequence, not the demo UI.</p>
+<p>The package ships a typed <code>&lt;MapView&gt;</code> component over the native widget
+(Android <code>SurfaceView</code>, iOS <code>CAMetalLayer</code>): it owns the surface
+lifecycle, frame pump, gestures, camera verbs, id-addressed overlays and
+the callback set, so the host application only composes it. The package
+also owns the one native SDK instance — construct it through
+<code>MapsSdk</code> and hand it to the view.</p>
+<!-- docs-snippet: skip — the component's props, handle and callbacks are
+type-checked by the RN package's own typed-parity test; the docs checks have
+no React Native/JSX environment. -->
+<pre><code class="language-tsx">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
+import { MapView, type MapViewHandle } from '@angoratek/rustic-maps-sdk/MapView';
+
+const maps = await MapsSdk.initialize();   // one native SDK per process
+await maps.setProviderCredential(mapQuestApiKey);
+
+&lt;MapView
+  ref={mapViewRef}
+  maps={maps}
+  style={{ flex: 1 }}
+  onMapReady={() =&gt; { /* frame the first camera */ }}
+  onCameraChanged={(camera) =&gt; { /* reflect the pose in your UI */ }}
+  onError={(failure) =&gt; { /* the contract's error detail, verbatim */ }}
+/&gt;;
+</code></pre>
+<p>The generated contract classes from the package root remain available for
+advanced use (for example a custom host view), but the component is the
+documented path: it keeps one SDK instance and one frame pump.</p>
 <p>Check the installation with the compiled-version probe:</p>
 <pre><code class="language-js">import { getSdkCompiledVersion } from '@angoratek/rustic-maps-sdk';
 
 getSdkCompiledVersion();
 // → "0.1.0": the Rust core loaded and answered through the TurboModule.
 </code></pre>
+<h3 id="set-the-first-camera"><a class="header" href="#set-the-first-camera">Set the first camera</a></h3>
+<p>The generated <code>MapCamera</code> is the same value the other tabs construct. Hand
+it, and every later pose, to the component’s handle
+(<code>mapViewRef.current?.setCamera(firstCamera)</code>):</p>
+<pre><code class="language-js">import { MapCamera } from '@angoratek/rustic-maps-sdk';
+
+const firstCamera = new MapCamera(
+  { latitude: 38.5766, longitude: -121.4944 },   // Capitol Park, Sacramento
+  12.0,                                          // launch zoom
+  0.0,                                           // north-up
+  0.0,                                           // top-down
+);
+</code></pre>
+<h3 id="pan-the-camera-from-a-gesture-2"><a class="header" href="#pan-the-camera-from-a-gesture-2">Pan the camera from a gesture</a></h3>
+<p>The generated <code>MapCamera</code> carries the same gesture members on the
+JavaScript side, so a native view’s drag delta becomes one call (the shell’s
+own view controller does exactly this):</p>
+<pre><code class="language-js">const pannedCamera = camera.panByScreenPixels(
+  dragDeltaXPixels,
+  dragDeltaYPixels,
+  viewport,
+  fieldOfViewDegrees,
+);
+const pannedCenter = pannedCamera.center();
+</code></pre>
+<p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
+pinch and twist deltas with the same focal-point correction.</p>
 <h3 id="where-to-continue"><a class="header" href="#where-to-continue">Where to continue</a></h3>
 <p>With the SDK installed, continue in <a href="search-and-routing.html">Search and
 routing</a>; the navigation tutorial’s <a href="navigation-simulation.html">React
-Native</a> tab shows the full guided-walk demo
+Native</a> tab shows the full simulated-trip demo
 flow over this same surface.</p>
 </div>
 
@@ -465,44 +574,48 @@ node ./web/server.js   # your own static server; localhost is fine
 &lt;script type="module"&gt;
   import {
     init,
-    start_sdk,
+    initializeSdk,
   } from './web/map_web_bindings.js';
 &lt;/script&gt;
 </code></pre>
-<p>The page’s entry, exactly as the reference harness does it:</p>
+<p>The page’s entry, exactly as the reference application does it:</p>
 <pre><code class="language-js">import init, {
   MapCamera,
-  GpuMapCanvas,
-  CanvasTileResolution,
-  retinaDevicePixelRatioThreshold,
-  start_sdk,
-  get_sdk_compiled_version,
+  MapView,
+  TileResolution,
+  devicePixelRatioThreshold,
+  initializeSdk,
+  getSdkCompiledVersion,
 } from './web/map_web_bindings.js';
 
-const compiledVersion = await init().then(() =&gt; start_sdk());
-console.log(`Maps SDK ready (version ${compiledVersion})`);
+const maps = await MapsSdk.create();
+console.log(`Maps SDK ready (version ${maps.compiledVersion})`);
 </code></pre>
 <p>The status probe answers the same version string the native surfaces
 do.</p>
 <h3 id="draw-a-map-surface-3"><a class="header" href="#draw-a-map-surface-3">Draw a map surface</a></h3>
-<p>The GPU canvas claims the canvas element, acquires the WebGPU device,
-and renders tiles fetched from a same-origin path you host:</p>
-<pre><code class="language-js">const canvas = document.querySelector('#map-canvas');
-const tileResolution = window.devicePixelRatio
-  &gt;= retinaDevicePixelRatioThreshold()
-  ? CanvasTileResolution.Retina
-  : CanvasTileResolution.Standard;
-const gpuCanvas = new GpuMapCanvas(canvas, tileResolution);
-const adapterDescription = await gpuCanvas.initialize();
+<p><code>MapView</code> claims the canvas element, acquires the WebGPU device, and
+renders tiles fetched from a same-origin path you host:</p>
+<pre><code class="language-js">const canvas = /** @type {HTMLCanvasElement} */ (
+  document.querySelector('#map-canvas')
+);
+// A page creates one SDK root and hands it to every view; the view's tile
+// resolution follows the device pixel ratio (a screenshot or capture tool
+// can pin it with the optional third argument: `new MapView(canvas, maps,
+// TileResolution.Retina)`).
+const maps = await MapsSdk.create();
+const mapView = new MapView(canvas, maps);
+const adapterDescription = await mapView.initialize();
 console.log(`rendering on ${adapterDescription}`);
 
 // The canvas fetches its raster tiles from the same-origin
 // /tiles/{zoom}_{tileX}_{tileY}.png path; record or serve imagery there.
 
-// The render frame: build the camera, present, repeat on change.
+// The render frame: build the shared demo camera, present, repeat on
+// change. This is the same pose every platform starts from.
 const fieldOfViewDegrees = 60;
-const camera = new MapCamera(47.3769, 8.5417, 14.0, 0.0, 0.0);
-const frameStatistics = await gpuCanvas.render_frame(camera, fieldOfViewDegrees);
+const camera = new MapCamera(38.5766, -121.4944, 12.0, 0.0, 0.0);
+const frameStatistics = await mapView.renderFrame(camera, fieldOfViewDegrees);
 </code></pre>
 <p>If <code>initialize()</code> fails in a browser without WebGPU, give the page the
 documented degradation message (name <code>navigator.gpu</code> and the missing
@@ -510,12 +623,45 @@ capability; link the MDN compatibility table) — never a user-agent
 sniff.</p>
 <h3 id="project-and-unproject"><a class="header" href="#project-and-unproject">Project and unproject</a></h3>
 <p>The same camera answers screen mappings without rendering:</p>
-<pre><code class="language-js">const screenPoint = camera.project_to_screen(coordinate, viewport, fieldOfView);
-const groundCoordinate = camera.screen_to_ground_coordinate(screenPoint, viewport, fieldOfView);
-const tileKeys = camera.visible_tile_keys(viewport, fieldOfView, tileZoom);
+<pre><code class="language-js">const screenPoint = camera.projectToScreen(
+  latitudeDegrees,
+  longitudeDegrees,
+  canvas.width,
+  canvas.height,
+  fieldOfViewDegrees,
+);
+const groundCoordinate = camera.screenToGroundCoordinate(
+  screenPoint.x,
+  screenPoint.y,
+  canvas.width,
+  canvas.height,
+  fieldOfViewDegrees,
+);
+const tileKeys = camera.visibleTileKeys(
+  canvas.width,
+  canvas.height,
+  fieldOfViewDegrees,
+  tileZoom,
+);
 </code></pre>
 <p>The TypeScript types of these value shapes are mirrored in the package’s
 hand-reviewed type surface; field names are lower camel case.</p>
+<h3 id="pan-the-camera-from-a-gesture-3"><a class="header" href="#pan-the-camera-from-a-gesture-3">Pan the camera from a gesture</a></h3>
+<p>Keep pointer capture and delta shaping in your page and forward the travel
+to the camera member; it answers the resulting pose (the ground point the
+pointer grabbed becomes the new center):</p>
+<pre><code class="language-js">const pannedPose = camera.panByScreenPixels(
+  deltaXPixels,
+  deltaYPixels,
+  canvas.width,
+  canvas.height,
+  fieldOfViewDegrees,
+);
+// { latitude, longitude, zoomLevel, bearingDegrees, pitchDegrees }
+</code></pre>
+<p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
+pinch and twist deltas with the same focal-point correction; the older free
+helpers (<code>panCameraByScreenPixels</code>, …) remain as aliases.</p>
 </div>
 
 </div>
@@ -577,7 +723,7 @@ generated <a href="api-reference.html">API reference</a> documents them.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

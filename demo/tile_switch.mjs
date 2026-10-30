@@ -32,6 +32,18 @@ export const DEFAULT_TILE_RADIUS = 1;
 /** Registry field carrying a provider's vector-tile URL template. */
 export const VECTOR_TILE_URL_TEMPLATE_FIELD = 'url_template';
 
+/** Registry field carrying a provider's highest served tile zoom level. */
+export const VECTOR_TILE_MAXIMUM_ZOOM_LEVEL_FIELD = 'maximum_zoom_level';
+
+/** Registry field naming the tile schema's committed style family. */
+export const VECTOR_STYLE_SCHEMA_FIELD = 'vector_style';
+
+/** The style schema a descriptor without the field paints. */
+export const DEFAULT_VECTOR_STYLE_SCHEMA = 'carto';
+
+/** The theme a caller without an active theme paints. */
+export const DEFAULT_VECTOR_STYLE_THEME = 'light';
+
 /** Template placeholder replaced with the tile's zoom level. */
 const ZOOM_PLACEHOLDER = '{z}';
 /** Template placeholder replaced with the tile's column. */
@@ -103,11 +115,14 @@ function clamped_tile_index(tile_index, tile_count) {
 }
 
 // Nearest whole zoom level of the tile grid: the native camera rounds a
-// fractional zoom to the grid that best matches the on-screen scale.
-function integer_tile_zoom_level(camera_zoom) {
+// fractional zoom to the grid that best matches the on-screen scale, then the
+// level is clamped to the provider's declared ceiling (a service that ends at
+// zoom 15 keeps serving its zoom-15 tiles to a closer camera instead of the
+// page requesting addresses the provider 404s).
+function integer_tile_zoom_level(camera_zoom, maximum_zoom_level) {
   return Math.min(
     Math.max(Math.round(camera_zoom), MINIMUM_TILE_ZOOM_LEVEL),
-    MAXIMUM_TILE_ZOOM_LEVEL,
+    Math.min(MAXIMUM_TILE_ZOOM_LEVEL, maximum_zoom_level),
   );
 }
 
@@ -160,17 +175,23 @@ function tile_address_for_coordinate(latitude, longitude, zoom_level) {
  * @param {{latitude: number, longitude: number, zoom: number}} options.cameraState
  * @param {number} [options.tileSizePixels]
  * @param {number} [options.tileRadius]
+ * @param {number} [options.maximumZoomLevel] the provider's highest served
+ *   zoom level (defaults to the grid's own ceiling)
  * @returns {{zoomLevel: number, tileX: number, tileY: number}[]}
  */
 export function vectorTileAddressesAroundCenter({
   cameraState,
   tileSizePixels = DEFAULT_TILE_SIZE_PIXELS,
   tileRadius = DEFAULT_TILE_RADIUS,
+  maximumZoomLevel = MAXIMUM_TILE_ZOOM_LEVEL,
 }) {
   validated_tile_size_pixels(tileSizePixels);
   const validated_radius = validated_tile_radius(tileRadius);
   const validated_state = validated_camera_state(cameraState);
-  const zoom_level = integer_tile_zoom_level(validated_state.zoom);
+  const zoom_level = integer_tile_zoom_level(
+    validated_state.zoom,
+    maximumZoomLevel,
+  );
   const center_address = tile_address_for_coordinate(
     validated_state.latitude,
     validated_state.longitude,
@@ -228,10 +249,29 @@ export function vectorTileUrlForDescriptor({
 }
 
 /**
+ * The committed style id a descriptor paints in one theme: the registry's
+ * schema half joined with the active theme (`carto-light`,
+ * `openmaptiles-dark`, …). A descriptor that names no schema paints the
+ * default family, so an older registry entry keeps working.
+ *
+ * @param {object} descriptor the provider registry descriptor
+ * @param {string} [styleTheme] the active theme name (`light` or `dark`)
+ * @returns {string}
+ */
+export function vectorStyleIdForDescriptor(descriptor, styleTheme) {
+  const schema = descriptor?.[VECTOR_STYLE_SCHEMA_FIELD];
+  const validated_schema = typeof schema === 'string' && schema.trim() !== ''
+    ? schema.trim()
+    : DEFAULT_VECTOR_STYLE_SCHEMA;
+  return `${validated_schema}-${styleTheme ?? DEFAULT_VECTOR_STYLE_THEME}`;
+}
+
+/**
  * Fetches and decodes every vector tile around the camera center and hands
- * the flattened overlay descriptors to the canvas' `set_overlays`, which
+ * the flattened overlay descriptors to the canvas' `setOverlays`, which
  * replaces any earlier list. Each descriptor in `descriptors` contributes its
- * own tiles (the registry is the source of the URL template).
+ * own tiles (the registry is the source of the URL template) and paints in
+ * the style variant its schema names for `styleTheme`.
  *
  * Error-honest: one tile's fetch or decode failure becomes an entry in
  * `failures` and the rest still draw; the call never throws for a bad tile. A
@@ -240,13 +280,16 @@ export function vectorTileUrlForDescriptor({
  * camera pose's overlays land on the canvas.
  *
  * @param {object} options
- * @param {{set_overlays: function}} options.canvas the wasm `GpuMapCanvas`
+ * @param {{setOverlays: function}} options.canvas the wasm `MapView`
  * @param {object[]} options.descriptors provider registry descriptors
  * @param {{latitude: number, longitude: number, zoom: number}} options.cameraState
  * @param {number} [options.tileSizePixels]
  * @param {number} [options.tileRadius]
  * @param {function} options.fetchAndBuildVectorOverlays injected decoder
- * @returns {Promise<{overlayCount: number, failures: object[]}>}
+ * @returns {Promise<{overlayCount: number, failures: object[],
+ *   superseded: boolean}>} `superseded` is true when a newer call replaced
+ *   this one before it applied its list; the caller must not publish such a
+ *   result as the current base layer.
  */
 export async function loadVectorBaseOverlays({
   canvas,
@@ -254,6 +297,7 @@ export async function loadVectorBaseOverlays({
   cameraState,
   tileSizePixels = DEFAULT_TILE_SIZE_PIXELS,
   tileRadius = DEFAULT_TILE_RADIUS,
+  styleTheme = DEFAULT_VECTOR_STYLE_THEME,
   fetchAndBuildVectorOverlays,
 }) {
   if (!Array.isArray(descriptors)) {
@@ -266,17 +310,27 @@ export async function loadVectorBaseOverlays({
   }
   const load_generation = active_load_generation + 1;
   active_load_generation = load_generation;
+  // The listing asks for the closest zoom every descriptor still serves; a
+  // provider that caps its tiles lower keeps the nearer camera on its
+  // highest tiles instead of requesting addresses it does not serve.
+  const maximum_zoom_level = Math.min(
+    ...descriptors.map((descriptor) =>
+      Number.isInteger(descriptor?.[VECTOR_TILE_MAXIMUM_ZOOM_LEVEL_FIELD])
+        ? descriptor[VECTOR_TILE_MAXIMUM_ZOOM_LEVEL_FIELD]
+        : MAXIMUM_TILE_ZOOM_LEVEL),
+  );
   const tile_addresses = vectorTileAddressesAroundCenter({
     cameraState,
     tileSizePixels,
     tileRadius,
+    maximumZoomLevel: maximum_zoom_level,
   });
   const failures = [];
   const overlays = [];
   for (const descriptor of descriptors) {
     for (const address of tile_addresses) {
       if (load_generation !== active_load_generation) {
-        return { overlayCount: 0, failures };
+        return { overlayCount: 0, failures, superseded: true };
       }
       let tile_url = null;
       try {
@@ -287,6 +341,7 @@ export async function loadVectorBaseOverlays({
           tileX: address.tileX,
           tileY: address.tileY,
           tileSizePixels,
+          styleId: vectorStyleIdForDescriptor(descriptor, styleTheme),
         });
         overlays.push(...tile_overlays);
       } catch (tile_failure) {
@@ -303,10 +358,10 @@ export async function loadVectorBaseOverlays({
   // A newer load started while this one was fetching: drop this list rather
   // than painting a stale camera pose.
   if (load_generation !== active_load_generation) {
-    return { overlayCount: 0, failures };
+    return { overlayCount: 0, failures, superseded: true };
   }
-  canvas.set_overlays(overlays);
-  return { overlayCount: overlays.length, failures };
+  canvas.setOverlays(overlays);
+  return { overlayCount: overlays.length, failures, superseded: false };
 }
 
 /**
@@ -314,7 +369,7 @@ export async function loadVectorBaseOverlays({
  * imagery, `vector` hides it so the overlay layer can paint a vector base.
  *
  * @param {object} options
- * @param {{set_tile_layer_visible: function}} options.canvas the wasm `GpuMapCanvas`
+ * @param {{setBaseMapVisible: function}} options.canvas the wasm `MapView`
  * @param {'raster'|'vector'} options.mode
  */
 export function applyTileLayerMode({ canvas, mode }) {
@@ -324,5 +379,5 @@ export function applyTileLayerMode({ canvas, mode }) {
         `${TILE_LAYER_MODES.raster} or ${TILE_LAYER_MODES.vector}`,
     );
   }
-  canvas.set_tile_layer_visible(mode === TILE_LAYER_MODES.raster);
+  canvas.setBaseMapVisible(mode === TILE_LAYER_MODES.raster);
 }

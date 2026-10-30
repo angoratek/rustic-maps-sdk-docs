@@ -2,10 +2,10 @@
 <a href=#2 id=2 data-nosnippet>2</a>//! contract: rate-limited binary tile GETs against the Sourdough tileset.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span><span class="kw">crate</span>::http::{OpenStreetMapUsTileHttpClient, OpenStreetMapUsVectorTileConfiguration};
-<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span><span class="kw">crate</span>::rate_limit::TokenBucketRateLimiter;
-<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span>async_trait::async_trait;
-<a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>geospatial_traits::{VectorTileProvider, VectorTileSourceDescriptor};
-<a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>geospatial_types::{SDKError, VectorTileData};
+<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span>async_trait::async_trait;
+<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span>geospatial_traits::{VectorTileProvider, VectorTileSourceDescriptor};
+<a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>geospatial_types::{SDKError, VectorTileData};
+<a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>provider_transport::TokenBucketRateLimiter;
 <a href=#9 id=9 data-nosnippet>9</a>
 <a href=#10 id=10 data-nosnippet>10</a><span class="doccomment">/// Public base URL of the OpenStreetMap US tileservice.
 <a href=#11 id=11 data-nosnippet>11</a></span><span class="kw">pub const </span>OSMUS_TILESERVICE_BASE_URL: <span class="kw-2">&amp;</span>str = <span class="string">"https://tiles.openstreetmap.us"</span>;

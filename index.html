@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -195,7 +195,7 @@ in a browser with WebGPU.</p>
 <div class="feature-grid">
 <div class="feature-card">
 <h3 id="one-contract-four-platforms"><a class="header" href="#one-contract-four-platforms">One contract, four platforms</a></h3>
-<p>The FFI surface is a single frozen UniFFI UDL file. The Kotlin, Swift, and
+<p>The FFI surface is a single UniFFI interface definition. The Kotlin, Swift, and
 React Native Turbo Module bindings are generated from it, and the
 WebAssembly TypeScript mirror is regression-checked against it. The
 contract changes addition-only: existing members keep their signature and
@@ -233,8 +233,8 @@ hands deviation handling and reroute policy to you at clear seams.</p>
 <h3 id="offline-maps"><a class="header" href="#offline-maps">Offline maps</a></h3>
 <p>A deterministic compiler turns an OpenStreetMap PBF extract into a compact
 self-describing routing archive. An offline routing provider answers
-routes over the memory-mapped graph, honoring recorded turn restrictions,
-and wraps the online provider as an automatic fallback.</p>
+routes over the memory-mapped graph with recorded turn restrictions, and
+a fallback decorator wraps your online provider when you opt into it.</p>
 </div>
 
 <div class="feature-card">
@@ -251,24 +251,21 @@ screen in your product can show exactly what the SDK is doing.</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Layer</th><th>What it is</th></tr>
+<tr><th>Layer</th><th>What it does</th></tr>
 </thead>
 <tbody>
-<tr><td><code>geospatial-types</code></td><td>The record and math layer: coordinates, bounding boxes, routes, places, traffic, tiles, and the typed error model</td></tr>
-<tr><td><code>geospatial-traits</code></td><td>The ten provider contracts every provider implementation fulfills</td></tr>
-<tr><td><code>map-core</code>, <code>map-cache</code></td><td>Provider resolution with cache-then-network behavior, backed by a SQLite response cache with per-category time-to-live and byte-budget eviction</td></tr>
-<tr><td><code>mapquest-provider</code></td><td>The map-platform provider implementation (rate-limited, retry-aware, fixture-tested)</td></tr>
-<tr><td><code>map-rendering</code></td><td>Projection, camera, tile scheduler, texture pool, and the <code>wgpu</code> renderer</td></tr>
-<tr><td><code>map-navigation</code></td><td>The turn-by-turn trip-state machine and its instruction composition</td></tr>
-<tr><td><code>map-offline-graph-compiler</code>, <code>map-offline-graph-archive</code></td><td>OpenStreetMap extracts compiled into the offline routing archive and its memory-mapped reader</td></tr>
-<tr><td><code>map-native-core</code></td><td>The UniFFI binding crate: the frozen UDL contract is the single source of truth</td></tr>
-<tr><td><code>map-web-bindings</code></td><td>The wasm-bindgen surface for the browser</td></tr>
+<tr><td>Records and types</td><td>Coordinates, bounding boxes, routes, places, traffic, tiles and the typed error model</td></tr>
+<tr><td>Provider contracts</td><td>The ten capabilities (<em>geocoding, routing, matrix, search, traffic, tiles</em>, …) a provider implementation fulfills</td></tr>
+<tr><td>Resolution and cache</td><td>Provider lookup with cache-then-network behavior, backed by a disk response cache with per-category time-to-live and byte-budget eviction</td></tr>
+<tr><td>Rendering</td><td>Projection, camera, tile scheduling, texture pooling and the GPU renderer</td></tr>
+<tr><td>Navigation</td><td>The turn-by-turn trip state machine and its instruction composition</td></tr>
+<tr><td>Offline routing</td><td>OpenStreetMap extracts compiled into a routing archive, plus its memory-mapped reader</td></tr>
+<tr><td>Bindings</td><td>The generated Kotlin, Swift, React Native and WebAssembly surfaces over one contract</td></tr>
 </tbody>
 </table>
 </div>
-<p>The full call surface these crates expose across the FFI is the <a href="udl-contract.html">FFI
-contract</a>; each member’s documentation lives in the
-generated <a href="api-reference.html">API reference</a>.</p>
+<p>The full call surface is the <a href="udl-contract.html">FFI contract</a>; each member’s
+documentation lives in the generated <a href="api-reference.html">API reference</a>.</p>
 <h2 id="requirements-at-a-glance"><a class="header" href="#requirements-at-a-glance">Requirements at a glance</a></h2>
 <ul>
 <li><strong>Android</strong>: API level 24 or higher. The release AAR is 16 MiB across
@@ -350,7 +347,7 @@ and license table, and keep the attribution visible in your application.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-93999ecd.js";
+            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bd7ef106.js"></script>
+        <script src="toc-b255da14.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,10 +176,10 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h1>
-<p>The SDK is one Rust core behind a frozen interface. This page explains the
+<p>The SDK is one Rust core behind a single generated interface. This page explains the
 concepts that interface exposes, so the tutorials’ calls read as
 applications of them rather than recipes to copy. Every concept below is
-part of the <a href="udl-contract.html">frozen FFI contract</a>.</p>
+part of the <a href="udl-contract.html">FFI contract</a>.</p>
 <h2 id="coordinates-and-the-camera"><a class="header" href="#coordinates-and-the-camera">Coordinates and the camera</a></h2>
 <p>A position is a <code>GeographicCoordinate</code>: latitude and longitude in decimal
 degrees on the WGS 84 ellipsoid. A region is a <code>BoundingBox</code> between a
@@ -209,18 +209,18 @@ you give it: top-down, north-up, zoomed to the largest level that keeps
 the whole box visible, and anchored on the inset region’s center. Insets
 are the pixels your own overlays keep clear, so route cards and
 attribution never hide the destination.</p>
-<p>The camera answers screen mappings without drawing. <code>project_to_screen</code>
-and <code>screen_to_ground_coordinate</code> convert between a coordinate and
-viewport pixels, <code>visible_tile_keys</code> lists the tiles the view covers, and
-<code>ground_meters_per_screen_pixel</code> sizes a scale bar.</p>
+<p>The camera answers screen mappings without drawing. <code>projectToScreen</code>
+and <code>screenToGroundCoordinate</code> convert between a coordinate and
+viewport pixels, <code>visibleTileKeys</code> lists the tiles the view covers, and
+<code>groundMetersPerScreenPixel</code> sizes a scale bar.</p>
 <h2 id="zoom-levels-and-tiles"><a class="header" href="#zoom-levels-and-tiles">Zoom levels and tiles</a></h2>
-<p>A tile is one payload at a fixed zoom, addressed by a <code>TileKeyRecord</code>: a
+<p>A tile is one payload at a fixed zoom, addressed by a <code>TileKey</code>: a
 column, a row counted from the north, and the zoom level. The addressing
 is the web-mercator XYZ scheme. At zoom 0 the world is one tile, and each
 level doubles the columns and rows.</p>
 <p>The camera’s zoom is continuous, so it answers two different questions.
-<code>tile_zoom_level</code> gives the nearest whole level a tile fetch should use.
-<code>visible_tile_keys</code> gives every tile at a chosen level that intersects
+<code>tileZoomLevel</code> gives the nearest whole level a tile fetch should use.
+<code>visibleTileKeys</code> gives every tile at a chosen level that intersects
 the visible ground, sorted row-major from the north.</p>
 <p>A raster tile is a pre-rendered image. The contract carries it as
 <code>RasterTileData</code> with its encoded bytes, an image format (PNG or JPEG),
@@ -228,6 +228,44 @@ and a resolution: <code>Standard</code>, or <code>Retina</code> for the doubled-
 form. A vector tile carries geometry and style separately from the
 pixels and is rendered on the device. The shipped renderer draws raster
 imagery, and vector rendering is a later path.</p>
+<h2 id="the-architecture-at-a-glance"><a class="header" href="#the-architecture-at-a-glance">The architecture at a glance</a></h2>
+<pre><code class="language-text">your application
+      │  Kotlin / Swift / TypeScript / JavaScript
+      ▼
+generated bindings  ── the UniFFI UDL contract (one surface, four platforms)
+      │
+      ▼
+Rust core
+  ├── provider registry   provider lookup and capability routing
+  ├── provider adapters   vendor URLs, credentials, status mapping, attribution
+  ├── camera + renderer   camera math, tile scheduling, GPU raster + vector paint
+  ├── navigation          turn-by-turn reducer (pure, event-driven)
+  ├── tile cache          disk response cache (SQLite, LRU byte budget)
+  └── offline routing     archive reader + A* routing + tile pack manager
+</code></pre>
+<p>The browser build compiles the same core modules to WebAssembly and adds one
+layer the native targets do not need: a canvas binding that owns the WebGPU
+device and a fetch transport that replaces the native HTTP stack. Everything
+above that layer — camera math, tile scheduling, routing, navigation — is the
+same code the phone builds run.</p>
+<h2 id="threading-and-lifecycle"><a class="header" href="#threading-and-lifecycle">Threading and lifecycle</a></h2>
+<p>The SDK has no render loop of its own: you decide when a frame is drawn, which
+is what lets a map sit still without burning battery.</p>
+<ul>
+<li><strong>Async calls</strong> (<code>search</code>, <code>forwardGeocode</code>, <code>calculateRoute</code>, tile
+fetches) suspend and
+resume on the platform’s own async runtime — Kotlin coroutines, Swift
+concurrency, JavaScript promises. They are safe to call from the main thread.</li>
+<li><strong>Navigation callbacks</strong> are delivered in registration order on the runtime
+that produced the location update. Do no blocking work in them; hand results
+to your UI layer.</li>
+<li><strong>Drawing</strong> is single-flight: one <code>draw</code> may be in flight per surface, and a
+second call while it runs reports <code>RenderingSurfaceUnavailable</code>. A render
+pump should skip a frame when <code>isFrameSettled</code> reports nothing changed.</li>
+<li><strong>Surface lifecycle</strong> is attach → resize → draw… → detach. Attach before the
+surface exists throws; detach before the platform view goes away. Re-attach
+after a credential is applied (a keyless start cannot draw provider imagery).</li>
+</ul>
 <h2 id="the-provider-registry"><a class="header" href="#the-provider-registry">The provider registry</a></h2>
 <p>Provider-backed capability reaches you through <code>MapSdk</code>, an object with
 no providers at construction. You register implementations, then call
@@ -239,7 +277,7 @@ contract, and the elevation contract has no registered implementation
 today.</p>
 <p>There are two registration paths:</p>
 <ul>
-<li><code>register_mapquest_providers</code> installs the whole map-platform provider
+<li><code>setProviderCredential</code> installs the whole map-platform provider
 set from one API key, with the SDK defaults for rate limiting and
 retries.</li>
 <li><code>register_geocoding_provider_from_foreign</code> and
@@ -249,8 +287,30 @@ and <code>RasterTileProvider</code> interfaces.</li>
 </ul>
 <p>Registration is per object, and re-registration replaces every slot. A
 second <code>MapSdk</code> object needs its own registration.</p>
+<h2 id="supported-providers"><a class="header" href="#supported-providers">Supported providers</a></h2>
+<p>Capability comes from whichever provider you register. These ship today:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>What it answers</th><th>Credential</th></tr>
+</thead>
+<tbody>
+<tr><td>MapQuest</td><td>geocoding, reverse geocoding, routing, distance matrix, place search, traffic incidents, traffic flow, raster tiles</td><td>API key</td></tr>
+<tr><td>OpenStreetMap US (Sourdough)</td><td>vector tiles</td><td>none</td></tr>
+<tr><td>OpenFreeMap</td><td>vector tiles</td><td>none</td></tr>
+<tr><td>OpenStreetMap</td><td>raster tiles</td><td>none</td></tr>
+</tbody>
+</table>
+</div>
+<p>The keyless vector and raster sources back the live demo’s base map; they
+carry their own attribution and usage terms, which the SDK surfaces alongside
+the imagery. Elevation is part of the contract and has no implementation, so
+call it only after you register a provider for it — otherwise the call throws
+<code>ProviderNotConfigured</code> naming the capability.</p>
+<p>Adding a provider is a provider implementation plus a registration; nothing in
+your application code names a vendor beyond the key you pass.</p>
 <h2 id="the-cache-path"><a class="header" href="#the-cache-path">The cache path</a></h2>
-<p><code>register_mapquest_providers_with_tile_cache</code> installs the same provider
+<p><code>set_provider_credential_with_tile_cache</code> installs the same provider
 set and wraps the raster-tile contract in a disk response cache: a SQLite
 database at a path you own, under an absolute byte budget. A cache hit
 answers from disk, and a cache miss goes to the network and back-fills.</p>
@@ -265,12 +325,12 @@ registering again, and a fresh registration starts at the category
 default.</p>
 <p>Raster imagery is the layer the cache holds. Offline routing is a
 separate layer with its own archive (see below).</p>
-<h2 id="the-frozen-contract-and-four-platforms"><a class="header" href="#the-frozen-contract-and-four-platforms">The frozen contract and four platforms</a></h2>
+<h2 id="one-contract-four-platforms"><a class="header" href="#one-contract-four-platforms">One contract, four platforms</a></h2>
 <p>One UniFFI UDL file defines the surface, and it is the single source of
-truth. The Kotlin, Swift, and React Native bindings are generated from
-it, and the WebAssembly TypeScript mirror is regression-checked against
-it. The contract changes addition-only: existing members keep their
-signature and meaning, and new capability arrives as new members.</p>
+truth: the Kotlin, Swift, React Native and WebAssembly bindings are all
+generated from it. The contract is pre-1.0, so a release may rename or
+replace members while the API settles; each change ships with its
+migration note in the <a href="changelog.html">changelog</a>.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -280,23 +340,46 @@ signature and meaning, and new capability arrives as new members.</p>
 <tr><td>Android (Kotlin)</td><td>Suspend functions and typed records; failures are the contract’s <code>SdkError</code> variants</td></tr>
 <tr><td>iOS (Swift)</td><td>Async throwing methods and records</td></tr>
 <tr><td>React Native</td><td>Promise-returning TurboModule methods with lower camel case field names</td></tr>
-<tr><td>WebAssembly</td><td>A hand-reviewed TypeScript mirror over <code>wasm-bindgen</code>, covering the camera, rendering, and offline-routing slice</td></tr>
+<tr><td>WebAssembly</td><td>TypeScript classes and records over the wasm module; the same names and field spellings as the native bindings, lower camel case</td></tr>
 </tbody>
 </table>
 </div>
 <p>Plain data crosses as records and enums. The error model crosses as the
 <code>SdkError</code> variants the failing call can produce, with verbatim detail
-text. <code>get_sdk_compiled_version</code> on every surface answers the compiled
+text. <code>getSdkCompiledVersion</code> on every surface answers the compiled
 SDK version, so a diagnostics screen can compare the loaded core with the
 artifacts your application shipped.</p>
+<h2 id="the-error-model"><a class="header" href="#the-error-model">The error model</a></h2>
+<p>Every failure crosses the contract as one <code>SdkError</code> variant carrying a
+verbatim detail string. Two families behave differently:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Meaning</th><th>Retry?</th></tr>
+</thead>
+<tbody>
+<tr><td><code>NetworkRequestFailed</code></td><td>the transport failed</td><td>yes, with backoff</td></tr>
+<tr><td><code>RateLimitExhausted</code></td><td>your own token bucket is empty</td><td>yes, after the next refill</td></tr>
+<tr><td><code>ProviderRequestRejected</code></td><td>the provider refused the request (quota, bad input)</td><td>no — fix the request or the plan</td></tr>
+<tr><td><code>ResponseParsingFailure</code></td><td>the provider answered something unusable</td><td>no — report it verbatim</td></tr>
+<tr><td><code>ProviderNotConfigured</code></td><td>no implementation is registered for that capability</td><td>no — register one</td></tr>
+<tr><td><code>InvalidCoordinateInput</code></td><td>a coordinate, viewport or box failed validation</td><td>no — fix the input</td></tr>
+<tr><td><code>InvalidRenderInput</code></td><td>an overlay or surface input is unusable</td><td>no — fix the input</td></tr>
+<tr><td><code>RenderingSurfaceUnavailable</code></td><td>the surface could not draw this frame</td><td>yes, on the next frame</td></tr>
+<tr><td><code>InvalidNavigationInput</code></td><td>a route or navigation policy failed validation</td><td>no — fix the input</td></tr>
+</tbody>
+</table>
+</div>
+<p>Surface the detail string as it arrives: it names the provider’s own reason and
+is the text support asks for. Never retry a non-retryable variant unchanged.</p>
 <h2 id="navigation-state"><a class="header" href="#navigation-state">Navigation state</a></h2>
-<p>Routing returns a <code>RouteData</code>: legs between consecutive waypoints, and
+<p>Routing returns a <code>Route</code>: legs between consecutive waypoints, and
 steps inside each leg, each carrying its distance, duration, maneuver
 label, and instruction texts. Navigation consumes that value rather than
 extending it.</p>
-<p><code>MapNavigationController</code> holds a trip. You start one with
-<code>start_trip(route, unit_system, step_advance_policy, deviation_policy)</code>
-and deliver one position fix at a time with <code>provide_location_update</code>.
+<p><code>Navigator</code> holds a trip. You start one with
+<code>start_navigation(route, unit_system, step_advance_policy, deviation_policy)</code>
+and deliver one position fix at a time with <code>update_location</code>.
 The controller publishes four topics: banner instructions, speech
 triggers, deviation status, and phase changes. A subscription is
 cancelled explicitly through its handle.</p>
@@ -321,7 +404,7 @@ and supplies the text verbatim. Your application owns playback and
 synthesis, and <code>utterance_id</code> is a stable identity for deduplication.</p>
 <p>A deviation asks for a replacement route through a small gate.
 <code>begin_reroute_calculation</code> answers true when the request passes the
-in-flight, cooldown, and movement checks, <code>provide_reroute</code> applies the
+in-flight, cooldown, and movement checks, <code>apply_reroute</code> applies the
 replacement, and <code>cancel_reroute_calculation</code> abandons it. The trip
 state’s <code>is_calculating_new_route</code> reports the in-flight fact.</p>
 <h2 id="offline-routing"><a class="header" href="#offline-routing">Offline routing</a></h2>
@@ -331,9 +414,9 @@ self-describing. It answers routes with an A* search over a
 memory-mapped graph and honors recorded turn restrictions. Maneuver text
 derives from the geometry where the extract carries no street names.</p>
 <p>The archive’s direct route call joins the native contract in a later
-slice. Today it answers the automatic fallback when the online provider
-fails and the WebAssembly surface’s offline route seam, and one compiled
-archive serves every target.</p>
+release. Today it answers the WebAssembly surface’s offline route seam, and
+the offline routing decorator wraps your online provider when you choose
+to fall back; one compiled archive serves every target.</p>
 <h2 id="where-to-go-next"><a class="header" href="#where-to-go-next">Where to go next</a></h2>
 <p>The tutorials apply these concepts in order: <a href="first-map.html">Your first
 map</a>, <a href="search-and-routing.html">Search and routing</a>,
@@ -391,7 +474,7 @@ maps</a>.</p>
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="additional-js/platform-tabs-48da3f42.js"></script>
+        <script src="additional-js/platform-tabs-6e1feef7.js"></script>
 
 
 

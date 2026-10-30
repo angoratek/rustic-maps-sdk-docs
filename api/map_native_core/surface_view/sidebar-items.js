@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["MapSurfaceView"]};
+window.SIDEBAR_ITEMS = {"struct":["MapView"]};
