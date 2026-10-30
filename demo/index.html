@@ -173,11 +173,11 @@
         background: var(--text-secondary-color);
       }
       /* The map's bottom-start control stack (§1/§4.2): the error strip, the
-         status line, the scale bar and the attribution info control share one
-         bottom-anchored column, so no floating line ever collides with
-         another and the attribution stops occupying the bottom-end edge.
-         Children carry their own pointer behavior; the column itself lets
-         map gestures through the gaps. */
+         status line and the scale bar share one bottom-anchored column, so no
+         floating line ever collides with another. Children carry their own
+         pointer behavior; the column itself lets map gestures through the
+         gaps. The attribution control lives in the matching bottom-end
+         column, opposite the scale bar. */
       #bottom-start-dock {
         position: fixed;
         bottom: var(--stack-tight);
@@ -249,14 +249,32 @@
         align-items: flex-start;
         gap: var(--stack-tight);
       }
+      #bottom-end-dock {
+        position: fixed;
+        bottom: var(--stack-tight);
+        right: var(--gutter-inline);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--stack-tight);
+        max-width: calc(100vw - 2 * var(--gutter-inline));
+        pointer-events: none;
+      }
+      #bottom-end-dock > * { pointer-events: auto; }
+      #attribution-control {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--stack-tight);
+      }
       #attribution-info-control {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: 34px;
+        height: 34px;
         padding: 0;
-        font-size: 20px;
+        font-size: 16px;
         font-weight: var(--type-body-strong-weight);
         color: var(--text-primary-color);
         background: var(--surface-color);
@@ -270,19 +288,19 @@
       }
       #attribution-info-control[hidden] { display: none; }
       #attribution-panel {
-        max-width: min(420px, calc(100vw - 2 * var(--gutter-inline)));
+        max-width: min(320px, calc(100vw - 2 * var(--gutter-inline)));
         background: var(--surface-color);
         border: 1px solid var(--surface-border-color);
-        border-radius: var(--radius-surface);
-        padding: var(--panel-padding);
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) var(--stack-group);
         box-shadow: var(--elevation-surface);
         color: var(--text-primary-color);
-        font-size: var(--type-body-size);
+        font-size: var(--type-caption-size);
       }
       #attribution-panel[hidden] { display: none; }
       #attribution-panel .attribution-panel-title {
-        margin: 0 0 var(--stack-tight);
-        font-size: var(--type-title-size);
+        margin: 0 0 4px;
+        font-size: var(--type-caption-size);
         font-weight: var(--type-body-strong-weight);
       }
       #attribution-notice {
@@ -626,9 +644,8 @@
               aria-label="Toggle the 2D and 3D camera planes">2D</button>
     </div>
     <!-- The map's bottom-start control column (§1/§4.2): the error strip, the
-         status line, the scale bar and the attribution info control. One
-         column keeps the floating lines from colliding, and the compact
-         attribution control frees the bottom-end edge. -->
+         status line and the scale bar. One column keeps the floating lines
+         from colliding. -->
     <div id="bottom-start-dock">
       <p id="error-report" hidden></p>
       <p id="status-line" data-readiness="loading">initializing…</p>
@@ -636,6 +653,11 @@
         <span id="scale-bar-label-text"></span>
         <div class="scale-bar-line" id="scale-bar-line"></div>
       </div>
+    </div>
+    <!-- The bottom-end attribution control (§1/§4.2): a small info button at
+         the map's end edge, clear of the scale bar and the search dock; its
+         panel opens upward, right-aligned, at a compact width. -->
+    <div id="bottom-end-dock">
       <div id="attribution-control">
         <section id="attribution-panel" hidden aria-label="Map attribution and terms">
           <h2 class="attribution-panel-title">Map attribution and terms</h2>
