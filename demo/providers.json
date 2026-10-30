@@ -40,6 +40,29 @@
           "retina_size_segment": "256@2x"
         }
       ]
+    },
+    {
+      "provider_key": "osmus",
+      "display_name": "OpenStreetMap US",
+      "credential_label": "",
+      "registration_available": {
+        "android": false,
+        "ios": false,
+        "react_native": false,
+        "wasm": false
+      },
+      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US",
+      "terms_note": "OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.",
+      "settings_hint": "",
+      "wasm_registration": null,
+      "fixture_routes": [
+        {
+          "purpose": "vector_tiles",
+          "method": "GET",
+          "path_pattern": "^vector/sourdough/6/18/27\\.mvt$",
+          "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt"
+        }
+      ]
     }
   ]
 }
