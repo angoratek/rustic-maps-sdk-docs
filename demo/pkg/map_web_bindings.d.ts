@@ -126,6 +126,11 @@ export class GpuMapCanvas {
      * `tileResolution` (the resolution the frame's fixtures were
      * fetched and sampled at) and `overlayTriangles` (solid overlay
      * triangles drawn over the tiles this frame; zero without overlays).
+     * With the raster tile layer hidden through
+     * [`GpuMapCanvas::set_tile_layer_visible`] the frame skips the whole
+     * tile pipeline and reports `requestedTiles`, `drawnTiles`,
+     * `drawnFragments` and `missingTiles` as zero while still presenting the
+     * overlay and indicator layers.
      *
      * The camera binding is consumed by value (the `wasm-bindgen` class
      * parameter semantics); the page builds a fresh camera per changed
@@ -134,6 +139,14 @@ export class GpuMapCanvas {
      * behind a busy flag and never overlaps.
      */
     render_frame(camera: MapCamera, field_of_view_degrees: number): Promise<object>;
+    /**
+     * Sets the frame pass's clear color (each channel 0..=1), the background
+     * behind any tiles or overlays that do not cover the surface. The
+     * default is the shared dark clear; the page paints a light clear around
+     * a vector base so the gaps between its fills do not read as a black
+     * map. A channel outside 0..=1 or a non-finite value is refused.
+     */
+    set_clear_color(red: number, green: number, blue: number, alpha: number): void;
     /**
      * Sets the location-indicator layer drawn over the overlays in every
      * following [`GpuMapCanvas::render_frame`] (the native surface's top
@@ -181,6 +194,21 @@ export class GpuMapCanvas {
      * error and keeps the previous list in force; nothing panics.
      */
     set_overlays(overlays: any[]): void;
+    /**
+     * Shows or hides the raster tile base layer in every following
+     * [`GpuMapCanvas::render_frame`].
+     *
+     * Hidden frames still clear the surface and draw the overlay and
+     * location-indicator layers, so the page can paint a vector base map
+     * through [`GpuMapCanvas::set_overlays`] while this raster layer is
+     * hidden. A hidden frame skips the tile listing, same-origin fetches,
+     * scheduler warm/resolve, texture uploads and tile draws, and reports
+     * `requestedTiles: 0`, `drawnTiles: 0` and `missingTiles: 0` while
+     * keeping the current `tileZoomLevel`, `tileResolution` and
+     * `overlayTriangles` statistics. Showing the layer again resolves tiles
+     * normally on the next frame (the texture cache survives hidden frames).
+     */
+    set_tile_layer_visible(visible: boolean): void;
     /**
      * Stages a deliberate parent-fallback for one requested tile, mirroring
      * the native golden image harness (`fill_pool_and_prepare` in
@@ -421,6 +449,34 @@ export function tile_key_for_coordinate(latitude: number, longitude: number, zoo
  */
 export function tiles_covering(south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number, zoom_level: number): Array<any>;
 
+/**
+ * The geographic bounds of one web-mercator tile, as
+ * `{northWest: {latitude, longitude}, southEast: {latitude, longitude}}`.
+ *
+ * The demo uses this to focus its camera on a fetched tile and the browser
+ * suites use it to check decoded overlay coordinates against the tile they
+ * came from. The conversion is the same
+ * [`tile_local_point_to_coordinate`] the overlay seam applies, so bounds and
+ * geometry share one source of truth. An out-of-grid address rejects with a
+ * string-valued error.
+ */
+export function vector_tile_geographic_bounds(tile_zoom_level: number, tile_x: number, tile_y: number): object;
+
+/**
+ * Decodes and styles one vector tile into the overlay descriptor list the
+ * WebGPU canvas consumes.
+ *
+ * `tile_bytes` is the wire body a provider served — plain MVT protobuf or a
+ * gzip-wrapped body, which is sniffed and unwrapped here — and the tile
+ * address is validated against the zoom grid before decoding. The result is
+ * a plain JavaScript array of `set_overlays` descriptors in style-layer
+ * order (later style layers paint over earlier ones). A malformed payload,
+ * an out-of-grid address, an empty body or an undecompressable gzip envelope
+ * rejects with a string-valued error; nothing throws across the wasm boundary
+ * as a panic.
+ */
+export function vector_tile_overlay_descriptors(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number): Array<any>;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -443,8 +499,10 @@ export interface InitOutput {
     readonly gpumapcanvas_initialize: (a: number) => number;
     readonly gpumapcanvas_new: (a: number, b: number, c: number) => void;
     readonly gpumapcanvas_render_frame: (a: number, b: number, c: number) => number;
+    readonly gpumapcanvas_set_clear_color: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly gpumapcanvas_set_location_indicator: (a: number, b: number, c: number, d: number) => void;
     readonly gpumapcanvas_set_overlays: (a: number, b: number, c: number, d: number) => void;
+    readonly gpumapcanvas_set_tile_layer_visible: (a: number, b: number) => void;
     readonly gpumapcanvas_stage_tile_parent_fallback: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
     readonly mapcamera_ground_meters_per_screen_pixel: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly mapcamera_new: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
@@ -460,12 +518,14 @@ export interface InitOutput {
     readonly subscribe_to_diagnostic_events: (a: number) => void;
     readonly tile_key_for_coordinate: (a: number, b: number, c: number, d: number) => void;
     readonly tiles_covering: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
-    readonly __wasm_bindgen_func_elem_2094: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2094_36: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2094_37: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9483: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9485: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1322: (a: number, b: number) => void;
+    readonly vector_tile_geographic_bounds: (a: number, b: number, c: number, d: number) => void;
+    readonly vector_tile_overlay_descriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly __wasm_bindgen_func_elem_2093: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2093_40: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2093_41: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9502: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9504: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1347: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

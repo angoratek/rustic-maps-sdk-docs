@@ -162,6 +162,11 @@ export class GpuMapCanvas {
      * `tileResolution` (the resolution the frame's fixtures were
      * fetched and sampled at) and `overlayTriangles` (solid overlay
      * triangles drawn over the tiles this frame; zero without overlays).
+     * With the raster tile layer hidden through
+     * [`GpuMapCanvas::set_tile_layer_visible`] the frame skips the whole
+     * tile pipeline and reports `requestedTiles`, `drawnTiles`,
+     * `drawnFragments` and `missingTiles` as zero while still presenting the
+     * overlay and indicator layers.
      *
      * The camera binding is consumed by value (the `wasm-bindgen` class
      * parameter semantics); the page builds a fresh camera per changed
@@ -177,6 +182,30 @@ export class GpuMapCanvas {
         var ptr0 = camera.__destroy_into_raw();
         const ret = wasm.gpumapcanvas_render_frame(this.__wbg_ptr, ptr0, field_of_view_degrees);
         return takeObject(ret);
+    }
+    /**
+     * Sets the frame pass's clear color (each channel 0..=1), the background
+     * behind any tiles or overlays that do not cover the surface. The
+     * default is the shared dark clear; the page paints a light clear around
+     * a vector base so the gaps between its fills do not read as a black
+     * map. A channel outside 0..=1 or a non-finite value is refused.
+     * @param {number} red
+     * @param {number} green
+     * @param {number} blue
+     * @param {number} alpha
+     */
+    set_clear_color(red, green, blue, alpha) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.gpumapcanvas_set_clear_color(retptr, this.__wbg_ptr, red, green, blue, alpha);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
     }
     /**
      * Sets the location-indicator layer drawn over the overlays in every
@@ -253,6 +282,24 @@ export class GpuMapCanvas {
         } finally {
             wasm.__wbindgen_add_to_stack_pointer(16);
         }
+    }
+    /**
+     * Shows or hides the raster tile base layer in every following
+     * [`GpuMapCanvas::render_frame`].
+     *
+     * Hidden frames still clear the surface and draw the overlay and
+     * location-indicator layers, so the page can paint a vector base map
+     * through [`GpuMapCanvas::set_overlays`] while this raster layer is
+     * hidden. A hidden frame skips the tile listing, same-origin fetches,
+     * scheduler warm/resolve, texture uploads and tile draws, and reports
+     * `requestedTiles: 0`, `drawnTiles: 0` and `missingTiles: 0` while
+     * keeping the current `tileZoomLevel`, `tileResolution` and
+     * `overlayTriangles` statistics. Showing the layer again resolves tiles
+     * normally on the next frame (the texture cache survives hidden frames).
+     * @param {boolean} visible
+     */
+    set_tile_layer_visible(visible) {
+        wasm.gpumapcanvas_set_tile_layer_visible(this.__wbg_ptr, visible);
     }
     /**
      * Stages a deliberate parent-fallback for one requested tile, mirroring
@@ -845,6 +892,73 @@ export function tiles_covering(south_west_latitude, south_west_longitude, north_
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         wasm.tiles_covering(retptr, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude, zoom_level);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * The geographic bounds of one web-mercator tile, as
+ * `{northWest: {latitude, longitude}, southEast: {latitude, longitude}}`.
+ *
+ * The demo uses this to focus its camera on a fetched tile and the browser
+ * suites use it to check decoded overlay coordinates against the tile they
+ * came from. The conversion is the same
+ * [`tile_local_point_to_coordinate`] the overlay seam applies, so bounds and
+ * geometry share one source of truth. An out-of-grid address rejects with a
+ * string-valued error.
+ * @param {number} tile_zoom_level
+ * @param {number} tile_x
+ * @param {number} tile_y
+ * @returns {object}
+ */
+export function vector_tile_geographic_bounds(tile_zoom_level, tile_x, tile_y) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.vector_tile_geographic_bounds(retptr, tile_zoom_level, tile_x, tile_y);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Decodes and styles one vector tile into the overlay descriptor list the
+ * WebGPU canvas consumes.
+ *
+ * `tile_bytes` is the wire body a provider served — plain MVT protobuf or a
+ * gzip-wrapped body, which is sniffed and unwrapped here — and the tile
+ * address is validated against the zoom grid before decoding. The result is
+ * a plain JavaScript array of `set_overlays` descriptors in style-layer
+ * order (later style layers paint over earlier ones). A malformed payload,
+ * an out-of-grid address, an empty body or an undecompressable gzip envelope
+ * rejects with a string-valued error; nothing throws across the wasm boundary
+ * as a panic.
+ * @param {Uint8Array} tile_bytes
+ * @param {number} tile_zoom_level
+ * @param {number} tile_x
+ * @param {number} tile_y
+ * @returns {Array<any>}
+ */
+export function vector_tile_overlay_descriptors(tile_bytes, tile_zoom_level, tile_x, tile_y) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passArray8ToWasm0(tile_bytes, wasm.__wbindgen_export);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.vector_tile_overlay_descriptors(retptr, ptr0, len0, tile_zoom_level, tile_x, tile_y);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -1754,7 +1868,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_9485(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_9504(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -2760,28 +2874,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2921, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_9483);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2932, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_9502);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 710, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2094);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 715, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2093);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 710, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2094_36);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 715, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2093_40);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 710, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2094_37);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 715, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2093_41);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 281, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1322);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 287, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1347);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -2855,18 +2969,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_1322(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_1322(arg0, arg1);
+function __wasm_bindgen_func_elem_1347(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_1347(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_9485(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_9485(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_9504(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_9504(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_9483(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_9502(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_9483(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_9502(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -2877,10 +2991,10 @@ function __wasm_bindgen_func_elem_9483(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2094(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_2093(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2094(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_2093(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -2891,10 +3005,10 @@ function __wasm_bindgen_func_elem_2094(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2094_36(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_2093_40(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2094_36(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_2093_40(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -2905,10 +3019,10 @@ function __wasm_bindgen_func_elem_2094_36(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2094_37(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_2093_41(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2094_37(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_2093_41(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3254,6 +3368,13 @@ function makeMutClosure(arg0, arg1, f) {
     };
     CLOSURE_DTORS.register(real, state, state);
     return real;
+}
+
+function passArray8ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 1, 1) >>> 0;
+    getUint8ArrayMemory0().set(arg, ptr / 1);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
 }
 
 function passArrayJsValueToWasm0(array, malloc) {

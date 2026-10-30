@@ -186,8 +186,40 @@
       },
       "deviation_alert_preview": {
         "status_change_kind": "OffRoute",
-        "text": "Off route entered — 12.4 m from the route line; guidance is frozen (deviation-alert styling sample)"
+        "text": "Off route entered \u2014 12.4 m from the route line; guidance is frozen (deviation-alert styling sample)"
       }
     }
-  }
+  },
+  "demo_places": [
+    {
+      "name": "Capitol Park",
+      "latitude_degrees": 38.57693,
+      "longitude_degrees": -121.49492,
+      "note": "The recorded demo route's start, beside the State Capitol."
+    },
+    {
+      "name": "Tower Bridge",
+      "latitude_degrees": 38.578739,
+      "longitude_degrees": -121.507447,
+      "note": "The recorded demo route's destination at the Sacramento River."
+    },
+    {
+      "name": "Old Sacramento",
+      "latitude_degrees": 38.5827,
+      "longitude_degrees": -121.5042,
+      "note": "The historic waterfront district."
+    },
+    {
+      "name": "Golden 1 Center",
+      "latitude_degrees": 38.5804,
+      "longitude_degrees": -121.4997,
+      "note": "The downtown arena at K and 5th."
+    },
+    {
+      "name": "Sutter's Fort",
+      "latitude_degrees": 38.5722,
+      "longitude_degrees": -121.4713,
+      "note": "The 1839 fort and state historic park."
+    }
+  ]
 }
