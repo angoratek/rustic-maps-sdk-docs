@@ -440,6 +440,9 @@
     <canvas id="map-canvas"></canvas>
     <canvas id="map-overlay"></canvas>
     <aside id="controls">
+      <nav id="demo-nav">
+        <a id="docs-back-link" href="../" hidden>&larr; Documentation</a>
+      </nav>
       <h1>Rustic Maps SDK playground</h1>
       <section class="control-group" id="appearance-controls">
         <h2 class="group-label">Appearance</h2>
@@ -497,11 +500,10 @@
         </div>
         <p id="follow-demo-live-line">The demo drives the artifact's route scene polyline with the §5.3 follow camera.</p>
       </section>
-      <details id="provider-credentials-panel" class="control-group">
-        <summary>Provider credentials</summary>
+      <details id="provider-credentials-panel" class="control-group" open>
+        <summary>Search, routing and live data</summary>
         <p id="provider-credential-status" class="reason-strip">No live provider key is set; the demo uses the recorded fixture data.</p>
-        <div id="provider-credential-rows"></div>
-        <label>Live search probe
+        <label>Search places
           <input id="provider-search-input" type="text" placeholder="Sacramento,California" />
         </label>
         <button id="provider-search-control" type="button">Search live</button>
@@ -512,9 +514,12 @@
         <p id="provider-tile-result" class="reason-strip"></p>
         <canvas id="provider-tile-canvas" width="128" height="128" hidden
                 aria-label="Fetched tile preview"></canvas>
+        <h3 class="group-label">Provider credentials</h3>
+        <div id="provider-credential-rows"></div>
       </details>
       <section class="control-group" id="diagnostics-controls">
-        <h2 class="group-label">Diagnostics</h2>
+        <h2 class="group-label">Performance and diagnostics</h2>
+        <p id="performance-strip" class="reason-strip" hidden></p>
         <button id="diagnostics-refresh-control" type="button">Refresh recent SDK events</button>
         <pre id="diagnostics-facts-lines"></pre>
         <pre id="diagnostics-event-lines" aria-live="off"></pre>
@@ -524,10 +529,10 @@
     <div id="map-control-cluster" role="group" aria-label="Map control cluster">
       <button id="compass-control" class="map-control-button" type="button" hidden
               aria-label="Ease the camera north up"><span id="compass-north-letter">N</span></button>
-      <button id="zoom-out-control" class="map-control-button" type="button"
-              aria-label="Zoom out one map-control step">−</button>
       <button id="zoom-in-control" class="map-control-button" type="button"
               aria-label="Zoom in one map-control step">+</button>
+      <button id="zoom-out-control" class="map-control-button" type="button"
+              aria-label="Zoom out one map-control step">−</button>
       <button id="my-location-control" class="map-control-button" type="button"
               aria-label="Center on my location">&#9679;</button>
       <button id="plane-toggle-control" class="map-control-button" type="button"
@@ -639,6 +644,18 @@
       // frame fact.
       const SETTLED_PUMP_MAXIMUM_RETRY_RENDERS = 12;
       const SETTLED_PUMP_RETRY_DELAY_MILLISECONDS = 100;
+      // The demo's performance monitor (owner ask, round 26): the page names
+      // its own frame budget instead of leaving a slow interaction unexplained.
+      // The window holds the last N GPU frames; a frame is slow when its
+      // measured render time exceeds the 30-fps budget, or when frames keep
+      // arriving below 30 fps while the page is actively animating. The
+      // report always carries the observed cause (missing tiles, no WebGPU,
+      // GPU-bound frame, throttled tab) so the fix is actionable.
+      const PERFORMANCE_SAMPLE_WINDOW_FRAMES = 120;
+      const SLOW_FRAME_MILLISECONDS = 33;
+      const SLOW_FRAMES_PER_SECOND = 30;
+      const ACTIVE_ANIMATION_MINIMUM_FRAMES = 8;
+      const ACTIVE_ANIMATION_WINDOW_MILLISECONDS = 1000;
       // Diagnostics readout (§4.1): the gate drops to Debug here because the
       // wasm closure's own events (map-rendering's tile-fetch tracing) are
       // debug-severity; the native readouts subscribe at Info. The readout
@@ -709,7 +726,12 @@
         providers_registry = { fixture_base_path: '/providers', providers: [] };
       }
       const attribution_notice = document.getElementById('attribution-notice');
+      // Only a provider this build actually registers contributes its
+      // attribution line: a descriptor without a wasm registration is
+      // excluded, so the notice never claims a provider the page cannot use.
       const descriptor_attribution_texts = providers_registry.providers
+        .filter((provider_descriptor) =>
+          provider_descriptor.wasm_registration != null)
         .map((provider_descriptor) => provider_descriptor.attribution_text)
         .filter((attribution_text) => typeof attribution_text === 'string'
           && attribution_text.trim() !== '');
@@ -758,6 +780,12 @@
         provider_credential_rows.textContent = '';
         provider_credential_controls_by_key.clear();
         for (const provider_descriptor of providers_registry.providers) {
+          // A keyless descriptor (no credential label) renders no settings
+          // row, so a provider registered elsewhere never paints an empty row.
+          if (typeof provider_descriptor.credential_label !== 'string'
+            || provider_descriptor.credential_label.trim() === '') {
+            continue;
+          }
           const row_element = document.createElement('div');
           row_element.className = 'provider-credential-row';
           row_element.dataset.providerKey = provider_descriptor.provider_key;
@@ -958,6 +986,15 @@
       }
       const theme_toggle_control = document.getElementById('theme-toggle-control');
       apply_theme('dark');
+
+      // The docs back-link: shown only when the harness is served from the
+      // documentation site's `/demo/` path, so the local dev server's root
+      // page never grows a dead "up" link. It closes the demo → docs loop in
+      // one click.
+      const docs_back_link = document.getElementById('docs-back-link');
+      if (window.location.pathname.includes('/demo/')) {
+        docs_back_link.hidden = false;
+      }
       theme_toggle_control.addEventListener('click', () => {
         apply_theme(THEME_NAMES_CYCLING[current_theme_name()]);
         schedule_render();
@@ -1179,6 +1216,111 @@
       let frame_draw_count = 0;
       let settled_pump_rerender_count = 0;
       let consecutive_missing_tile_renders = 0;
+      // The performance monitor's rolling window of completed GPU frames:
+      // each entry records when the frame finished, how long the GPU call took
+      // and what the frame reported, so the summary can name the cause.
+      const frame_performance_samples = [];
+      let performance_strip_element = null;
+
+      /**
+       * The average of the window's numeric field (null for an empty window).
+       */
+      function average_of_values(values) {
+        if (values.length === 0) return null;
+        return values.reduce((sum, value) => sum + value, 0) / values.length;
+      }
+
+      /**
+       * The performance summary the diagnostics readout and the warning strip
+       * share: the rolling render time, the observed frame rate while the page
+       * is animating, the slow verdict and its named cause.
+       */
+      function performance_summary() {
+        if (frame_performance_samples.length === 0) {
+          return {
+            status: 'waiting',
+            sampleCount: 0,
+            averageRenderMilliseconds: null,
+            framesPerSecond: null,
+            isSlow: false,
+            causeText: null,
+          };
+        }
+        const render_milliseconds = frame_performance_samples.map(
+          (sample) => sample.renderMilliseconds);
+        const average_render_milliseconds = average_of_values(render_milliseconds);
+        const first_sample = frame_performance_samples[0];
+        const last_sample = frame_performance_samples[frame_performance_samples.length - 1];
+        const window_milliseconds = last_sample.atMilliseconds - first_sample.atMilliseconds;
+        const frames_per_second = window_milliseconds > 0
+          ? ((frame_performance_samples.length - 1) * 1000) / window_milliseconds
+          : null;
+        const is_actively_animating =
+          frame_performance_samples.length >= ACTIVE_ANIMATION_MINIMUM_FRAMES &&
+          window_milliseconds <= ACTIVE_ANIMATION_WINDOW_MILLISECONDS;
+        const is_render_over_budget =
+          average_render_milliseconds > SLOW_FRAME_MILLISECONDS;
+        const is_frame_rate_under_budget =
+          is_actively_animating && frames_per_second !== null &&
+          frames_per_second < SLOW_FRAMES_PER_SECOND;
+        const is_slow = is_render_over_budget || is_frame_rate_under_budget;
+        let cause_text = null;
+        if (is_slow) {
+          if (last_sample.missingTiles > 0) {
+            cause_text = `${last_sample.missingTiles} tiles are still loading; ` +
+              'the demo repaints until they arrive, so waiting is cheaper than interacting.';
+          } else if (renderer_mode !== 'gpu') {
+            cause_text = 'WebGPU is unavailable, so the 2D fallback redraws whole frames; ' +
+              'use a Chromium-based browser or Safari 26 for GPU frames.';
+          } else if (is_render_over_budget) {
+            cause_text = `the GPU frame averages ${average_render_milliseconds.toFixed(1)} ms ` +
+              `(budget ${SLOW_FRAME_MILLISECONDS} ms); lower the pitch or zoom, or close other GPU tabs.`;
+          } else {
+            cause_text = `frames arrive at ${frames_per_second.toFixed(0)} fps ` +
+              `(target ${SLOW_FRAMES_PER_SECOND} fps); the device or tab is throttled.`;
+          }
+        }
+        return {
+          status: is_slow ? 'slow' : 'ok',
+          sampleCount: frame_performance_samples.length,
+          averageRenderMilliseconds: number_or_null(average_render_milliseconds),
+          framesPerSecond: number_or_null(frames_per_second),
+          isSlow: is_slow,
+          causeText: cause_text,
+        };
+      }
+
+      /** A finite number, or null when the sample is missing or not finite. */
+      function number_or_null(value) {
+        return value === null || !Number.isFinite(value) ? null : value;
+      }
+
+      /** Records one completed GPU frame; keeps the rolling window bounded. */
+      function record_frame_performance(frame_statistics, render_milliseconds) {
+        frame_performance_samples.push({
+          atMilliseconds: performance.now(),
+          renderMilliseconds: render_milliseconds,
+          drawnTiles: frame_statistics?.drawnTiles ?? 0,
+          missingTiles: frame_statistics?.missingTiles ?? 0,
+        });
+        if (frame_performance_samples.length > PERFORMANCE_SAMPLE_WINDOW_FRAMES) {
+          frame_performance_samples.shift();
+        }
+      }
+
+      /** Renders the warning strip and publishes the readout the tests read. */
+      function refresh_performance_readout() {
+        if (performance_strip_element === null) {
+          performance_strip_element = document.getElementById('performance-strip');
+        }
+        const summary = performance_summary();
+        if (performance_strip_element !== null) {
+          performance_strip_element.hidden = summary.causeText === null;
+          performance_strip_element.textContent = summary.causeText ?? '';
+        }
+      }
+
+      window.mapPerformance = () => performance_summary();
       // The follow demo's live state (the §5.3 machine mirrored as plain
       // page glue; the wasm seam carries no navigation object — §12).
       const FOLLOW_DEMO_PHASE_DISENGAGED = 'disengaged';
@@ -1396,8 +1538,13 @@
           if (renderer_mode === 'gpu' && gpu_map_canvas) {
             // The GPU binding consumes its camera by value, so the frame
             // builds its own camera from the current state.
+            const frame_start_milliseconds = performance.now();
             last_frame_statistics = await gpu_map_canvas.render_frame(
               build_camera(), FIELD_OF_VIEW_DEGREES);
+            record_frame_performance(
+              last_frame_statistics,
+              performance.now() - frame_start_milliseconds,
+            );
             frame_draw_count += 1;
             pump_toward_settled_frame(last_frame_statistics);
           }
@@ -1407,6 +1554,7 @@
           paint_center_mark();
           refresh_compass_control();
           update_readout(camera);
+          refresh_performance_readout();
           diagnostics_facts_element.textContent = diagnostics_facts_text();
         } finally {
           render_busy = false;
@@ -1766,12 +1914,27 @@
             `missing ${last_frame_statistics.missingTiles} / ` +
             `fragments ${last_frame_statistics.drawnFragments}`
           : 'tiles no GPU frame settled yet';
+        const performance_summary_lines = (() => {
+          const summary = performance_summary();
+          if (summary.status === 'waiting') {
+            return 'performance no GPU frame sampled yet';
+          }
+          const render_text = summary.averageRenderMilliseconds === null
+            ? 'render n/a'
+            : `render avg ${summary.averageRenderMilliseconds.toFixed(1)} ms`;
+          const rate_text = summary.framesPerSecond === null
+            ? 'rate n/a'
+            : `${summary.framesPerSecond.toFixed(0)} fps`;
+          return `performance ${summary.status} — ${render_text} / ${rate_text} ` +
+            `(${summary.sampleCount} frames sampled)`;
+        })();
         return [
           `mode ${renderer_mode} — ${renderer_detail}`,
           `center ${camera_state.latitude.toFixed(5)}, ${camera_state.longitude.toFixed(5)}` +
             ` zoom ${camera_state.zoom.toFixed(1)}` +
             ` bearing ${camera_state.bearing.toFixed(0)}° pitch ${camera_state.pitch.toFixed(0)}°`,
           frame_statistics_lines,
+          performance_summary_lines,
           `frames drawn ${frame_draw_count} (settled pump re-rendered ${settled_pump_rerender_count})`,
         ].join('\n');
       }
