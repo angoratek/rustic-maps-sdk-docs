@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-83cfa99b.js";
+            window.path_to_searchindex_js = "searchindex-6ab1aa53.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-d9eadc08.js"></script>
+        <script src="toc-bd7ef106.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -185,7 +185,7 @@ offline maps from one Rust core, delivered to <strong>Android (Kotlin)</strong>,
 <strong>WebAssembly is a first-class target</strong>, so the same core renders map tiles
 in a browser with WebGPU.</p>
 <p class="landing-cta">
-<a href="#live-demo">Open the live wasm demo</a>
+<a href="demo">Open the live wasm demo</a>
 <a href="#your-first-map">Start building</a>
 <a href="#downloads">Downloads</a>
 </p>
@@ -312,9 +312,6 @@ project; it publishes through no package registry. This page lists what
 each platform needs to build against the SDK, what the artifacts weigh,
 and how versions are stamped. The <a href="#downloads">Downloads</a> page names
 the released files.</p>
-<!-- The package identities below are the M10 target identities
-     (@angoratek npm scope, the com.angoratek:rustic-maps-sdk Maven coordinate, RusticMapsSDK Swift
-     product). M10's package-identity rename must agree with them. -->
 <h2 id="android"><a class="header" href="#android">Android</a></h2>
 <div class="table-wrapper">
 <table>
@@ -712,10 +709,6 @@ maps</a>.</p>
 first rendered map surface. Choose your platform’s tab and follow its
 steps top to bottom; every snippet is a complete step and compiles
 against the <a href="#the-ffi-contract">frozen FFI contract</a>.</p>
-<!-- The package identities in these tutorials are the M10 target
-     identities (@angoratek npm scope, the com.angoratek:rustic-maps-sdk Maven coordinate,
-     RusticMapsSDK Swift product). M10's package-identity rename must
-     agree with them. -->
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -1761,6 +1754,31 @@ the checksummed zip for the Swift Package Manager binary target, and the
 <code>pkg/</code> archive for the wasm package. The npm packages ship the same
 generated trees with a manifest, licenses and notices; the React Native
 package is source-only until its native payload joins the release pipeline.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="screenshots"><a class="header" href="#screenshots">Screenshots</a></h1>
+<p>Every screenshot on this page was captured from the reference applications
+at the same source revision on a standing test device or in the browser
+loop. Provider credentials were supplied at runtime through each app’s
+settings surface or its documented automation seam; no build on this page
+embeds a credential.</p>
+<h2 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h2>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application drawing downtown Sacramento, with the readiness chip, map controls, scale bar, attribution and the search dock"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application drawing downtown Sacramento, with the readiness chip, map controls, scale bar, attribution and the search dock"></span></label></p>
+<h2 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h2>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application drawing downtown Sacramento, with the readiness chip, settings control, map controls, scale bar, attribution and the plan dock"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application drawing downtown Sacramento, with the readiness chip, settings control, map controls, scale bar, attribution and the plan dock"></span></label></p>
+<h2 id="webassembly--the-browser-playground"><a class="header" href="#webassembly--the-browser-playground">WebAssembly — the browser playground</a></h2>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-reference-app.png" alt="The wasm playground rendering the same Sacramento camera on a WebGPU canvas, with the camera panel, diagnostics readout, map controls and attribution"><span class="img-wrapper"><img src="img/wasm-reference-app.png" alt="The wasm playground rendering the same Sacramento camera on a WebGPU canvas, with the camera panel, diagnostics readout, map controls and attribution"></span></label></p>
+<p>The browser build runs the SDK’s own wasm module and draws through WebGPU,
+so the playground is the same core rather than a simulation. It is served
+keyless at <a href="#live-demo">the live demo</a> and renders the committed fixture
+imagery.</p>
+<h2 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h2>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application rendering downtown Sacramento inside the shared JS shell, with the readiness chip, map controls and the search dock"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application rendering downtown Sacramento inside the shared JS shell, with the readiness chip, map controls and the search dock"></span></label></p>
+<h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
+<p>The four captures share one camera, one design language (the reference-app
+UX tokens) and one demo artifact. Differences are the platform’s own chrome: Compose’s Material
+surface on Android, SwiftUI’s safe-area handling on iOS, the React Native
+bridge’s host view, and the browser’s WebGPU canvas. The map content, the
+control cluster, the scale ladder and the attribution line are the same.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="versions-and-support"><a class="header" href="#versions-and-support">Versions and support</a></h1>
 <p>This page states how versions are chosen, what a released version line
