@@ -172,18 +172,32 @@
         vertical-align: baseline;
         background: var(--text-secondary-color);
       }
-      #status-line {
+      /* The map's bottom-start control stack (§1/§4.2): the error strip, the
+         status line, the scale bar and the attribution info control share one
+         bottom-anchored column, so no floating line ever collides with
+         another and the attribution stops occupying the bottom-end edge.
+         Children carry their own pointer behavior; the column itself lets
+         map gestures through the gaps. */
+      #bottom-start-dock {
         position: fixed;
         bottom: var(--stack-tight);
         left: var(--gutter-inline);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--stack-tight);
+        max-width: calc(100vw - 2 * var(--gutter-inline));
+        pointer-events: none;
+      }
+      #bottom-start-dock > * { pointer-events: auto; }
+      #status-line {
         font-size: var(--type-caption-size);
         background: var(--surface-color);
         border: 1px solid var(--surface-border-color);
         border-radius: var(--radius-inline);
         padding: 4px 10px;
-        /* One line, capped so it never runs under the docked attribution
-           notice; the full detail stays available in the readout and the
-           error report. */
+        /* One line, capped so it never runs into the readout's dock; the
+           full detail stays available in the readout and the error report. */
         max-width: min(480px, calc(100vw - var(--gutter-inline) - 360px));
         white-space: nowrap;
         overflow: hidden;
@@ -213,11 +227,9 @@
         overflow-y: auto;
       }
       /* Provider-echoing error report (docs/ReferenceAppUX.md §6.3): above
-         the status line, danger-flagged, detail echoed verbatim. */
+         the status line in the bottom-start column, danger-flagged, detail
+         echoed verbatim. */
       #error-report {
-        position: fixed;
-        bottom: 44px;
-        left: var(--gutter-inline);
         margin: 0;
         max-width: 320px;
         font-size: var(--type-caption-size);
@@ -227,22 +239,74 @@
         border-radius: var(--radius-inline);
         padding: var(--stack-tight) 10px;
       }
-      #attribution-notice {
-        position: fixed;
-        bottom: var(--stack-tight);
-        right: var(--gutter-inline);
-        margin: 0;
-        font-size: var(--type-caption-size);
-        color: var(--text-secondary-color);
+      /* The attribution info control (§1/§4.2, PRD §5): a compact circular
+         "ⓘ" at the bottom-start beside the scale bar; tapping it toggles the
+         attribution-and-terms panel above it, so the compliance text no
+         longer claims a permanent line across the map. */
+      #attribution-control {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--stack-tight);
+      }
+      #attribution-info-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        font-size: 20px;
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-primary-color);
         background: var(--surface-color);
         border: 1px solid var(--surface-border-color);
-        border-radius: var(--radius-inline);
-        padding: 4px 10px;
+        border-radius: 50%;
+        cursor: pointer;
       }
+      #attribution-info-control[aria-expanded='true'] {
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+      #attribution-info-control[hidden] { display: none; }
+      #attribution-panel {
+        max-width: min(420px, calc(100vw - 2 * var(--gutter-inline)));
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-surface);
+        padding: var(--panel-padding);
+        box-shadow: var(--elevation-surface);
+        color: var(--text-primary-color);
+        font-size: var(--type-body-size);
+      }
+      #attribution-panel[hidden] { display: none; }
+      #attribution-panel .attribution-panel-title {
+        margin: 0 0 var(--stack-tight);
+        font-size: var(--type-title-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      #attribution-notice {
+        margin: 0 0 var(--stack-tight);
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      #attribution-panel .attribution-terms-note {
+        margin: 0 0 var(--stack-tight);
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      #attribution-panel .attribution-terms-note:last-child { margin-bottom: 0; }
 
       /* Simulated navigation card set (docs/ReferenceAppUX.md §7),
          spec-driven layout preview until the wasm contract wave. */
       #navigation-demo-panel summary { cursor: pointer; }
+      /* The base-map switch (M9): one pressed choice per provider-declared
+         base layer; the pressed state is the accent. */
+      #base-map-toggle { display: flex; flex-wrap: wrap; gap: var(--stack-tight); }
+      #base-map-toggle button[aria-pressed="true"] {
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+      }
       /* The provider-credentials panel (M13): a runtime key for the live
          provider set; the key is never echoed back or persisted. */
       #provider-credentials-panel summary { cursor: pointer; }
@@ -254,6 +318,15 @@
         color: var(--text-secondary-color);
       }
       #provider-search-results { list-style: none; padding-left: 0; margin: 0; }
+      #provider-search-results li { margin: 0; }
+      .trip-actions { display: flex; flex-wrap: wrap; gap: var(--stack-tight); }
+      #trip-planner > label { display: block; }
+      #trip-planner input { width: 100%; }
+      .trip-result-button {
+        width: 100%;
+        text-align: start;
+        padding: var(--stack-tight);
+      }
       #provider-search-results li { font-size: 0.85em; padding: 2px 0; }
       .navigation-phase { margin: var(--stack-tight) 0 0; display: flex; gap: var(--stack-tight); align-items: center; }
       .navigation-chip {
@@ -334,19 +407,24 @@
       #plane-toggle-control { font-size: var(--type-caption-size); }
       #compass-north-letter { display: inline-block; pointer-events: none; }
       #my-location-control { color: var(--accent-color); }
+      /* While a gesture-broken follow waits for the my-location control, the
+         control takes the cluster's active look (the accent fill), the
+         re-center affordance (§4.2/§5.3). */
+      #my-location-control.recentering {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: var(--text-primary-color);
+      }
       .map-control-button { user-select: none; }
       /* The compass hides via the `hidden` attribute (its refresh sets it
          every frame); the class's own `display` would win over the UA's
          attribute style, so restate the hidden behavior explicitly. */
       .map-control-button[hidden] { display: none; }
 
-      /* The scale bar (§4.2): bottom-start, above the status line (whose
-         one-line dock is 44px tall at its offset, mirroring
-         #error-report's row; the hairline bar draws above its label). */
+      /* The scale bar (§4.2): bottom-start, above the attribution info
+         control in the bottom-start column; the hairline bar draws above its
+         label. */
       #scale-bar-overlay {
-        position: fixed;
-        bottom: 52px;
-        left: var(--gutter-inline);
         font-size: var(--type-caption-size);
         color: var(--text-primary-color);
         background: var(--surface-color);
@@ -402,19 +480,9 @@
           text-overflow: ellipsis;
         }
         #controls { top: calc(var(--gutter-block) + 44px); max-height: calc(100vh * 0.72); }
-        /* The bottom edge stacks: attribution fully docked at the bottom, the
-           status line above it — both still single lines. */
-        #attribution-notice {
-          bottom: var(--gutter-block);
-          left: var(--gutter-inline);
-          right: var(--gutter-inline);
-          max-width: none;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
+        /* The bottom-start column keeps its order at phone width; the status
+           line takes the full width so its one-line ellipsis has room. */
         #status-line {
-          bottom: calc(var(--gutter-block) + 40px);
           max-width: calc(100vw - 2 * var(--gutter-inline));
         }
       }
@@ -444,11 +512,39 @@
         <a id="docs-back-link" href="../" hidden>&larr; Documentation</a>
       </nav>
       <h1>Rustic Maps SDK playground</h1>
-      <section class="control-group" id="appearance-controls">
+
+      <section class="control-group" id="trip-planner" aria-describedby="provider-credential-status">
+        <h2 class="group-label">Plan a trip</h2>
+        <label>Where to?
+          <input id="provider-search-input" type="text" placeholder="Try &ldquo;Capitol Park&rdquo;"
+                 autocomplete="off" />
+        </label>
+        <div class="trip-actions">
+          <button id="provider-search-control" type="button" class="primary">Search</button>
+          <button id="provider-route-control" type="button">Plan route</button>
+        </div>
+        <ul id="provider-search-results"></ul>
+        <p id="provider-credential-status" class="reason-strip">No live provider key is set; search uses the shared demo places.</p>
+        <p id="provider-route-result" class="reason-strip" hidden></p>
+        <button id="follow-demo-start-control" type="button" class="primary">Start simulated trip</button>
+        <p id="follow-demo-live-line">The recorded Capitol Park &harr; Tower Bridge route drives the follow camera.</p>
+      </section>
+
+      <details id="advanced-panel" class="control-group">
+        <summary>Advanced</summary>
+
+<section class="control-group" id="base-map-controls" aria-describedby="base-map-status">
+        <h2 class="group-label">Base map</h2>
+        <div id="base-map-toggle" role="group" aria-label="Base map tiles"></div>
+        <p id="base-map-status" class="reason-strip" hidden></p>
+      </section>
+
+<section class="control-group" id="appearance-controls">
         <h2 class="group-label">Appearance</h2>
         <button id="theme-toggle-control" type="button" aria-live="polite">Switch to light theme</button>
       </section>
-      <section class="control-group" id="camera-controls">
+
+<section class="control-group" id="camera-controls">
         <h2 class="group-label">Camera</h2>
         <label>Zoom <span class="value-line"><span id="zoom-value"></span><span>0–20</span></span>
           <input id="zoom-control" type="range" min="0" max="20" step="0.1" value="14" aria-label="Zoom level" />
@@ -461,20 +557,23 @@
         </label>
         <div id="camera-preset-controls" role="group" aria-label="Camera presets"></div>
       </section>
-      <section class="control-group" id="debug-controls">
+
+<section class="control-group" id="debug-controls">
         <h2 class="group-label">Debug</h2>
         <label class="toggle-row">
           <input id="overlay-control" type="checkbox" aria-label="Tile grid overlay" />
           tile grid overlay (debug)
         </label>
       </section>
-      <fieldset id="scene-overlay-controls" class="control-group" aria-describedby="scene-overlay-reason">
+
+<fieldset id="scene-overlay-controls" class="control-group" aria-describedby="scene-overlay-reason">
         <legend>Scene overlays (GPU only)</legend>
         <div id="overlay-scene-toggles"></div>
         <button id="clear-overlays-control" type="button" class="primary">Clear overlays</button>
         <p id="scene-overlay-reason" class="reason-strip" hidden></p>
       </fieldset>
-      <details id="navigation-demo-panel" class="control-group" aria-describedby="navigation-demo-reason">
+
+<details id="navigation-demo-panel" class="control-group" aria-describedby="navigation-demo-reason">
         <summary>Simulated navigation</summary>
         <p id="navigation-demo-reason" class="reason-strip"></p>
         <div id="navigation-demo-card">
@@ -493,23 +592,9 @@
           <p id="navigation-demo-preview-notice" class="reason-strip"></p>
         </div>
       </details>
-      <section class="control-group" id="follow-demo-controls">
-        <h2 class="group-label">Follow camera demo</h2>
-        <div>
-          <button id="follow-demo-start-control" type="button" class="primary">Simulate the trip</button>
-        </div>
-        <p id="follow-demo-live-line">The demo drives the artifact's route scene polyline with the §5.3 follow camera.</p>
-      </section>
-      <details id="provider-credentials-panel" class="control-group" open>
-        <summary>Search, routing and live data</summary>
-        <p id="provider-credential-status" class="reason-strip">No live provider key is set; the demo uses the recorded fixture data.</p>
-        <label>Search places
-          <input id="provider-search-input" type="text" placeholder="Sacramento,California" />
-        </label>
-        <button id="provider-search-control" type="button">Search live</button>
-        <ul id="provider-search-results"></ul>
-        <button id="provider-route-control" type="button">Plan a demo route</button>
-        <p id="provider-route-result" class="reason-strip"></p>
+
+<details id="provider-credentials-panel" class="control-group" open>
+        <summary>Provider credentials and live probes</summary>
         <button id="provider-tile-control" type="button">Fetch one tile</button>
         <p id="provider-tile-result" class="reason-strip"></p>
         <canvas id="provider-tile-canvas" width="128" height="128" hidden
@@ -517,7 +602,8 @@
         <h3 class="group-label">Provider credentials</h3>
         <div id="provider-credential-rows"></div>
       </details>
-      <section class="control-group" id="diagnostics-controls">
+
+<section class="control-group" id="diagnostics-controls">
         <h2 class="group-label">Performance and diagnostics</h2>
         <p id="performance-strip" class="reason-strip" hidden></p>
         <button id="diagnostics-refresh-control" type="button">Refresh recent SDK events</button>
@@ -525,6 +611,7 @@
         <pre id="diagnostics-event-lines" aria-live="off"></pre>
       </section>
       <p id="control-hint">Drag to pan, scroll to zoom. Scenes and presets come from the shared reference-scene artifact.</p>
+      </details>
     </aside>
     <div id="map-control-cluster" role="group" aria-label="Map control cluster">
       <button id="compass-control" class="map-control-button" type="button" hidden
@@ -538,15 +625,31 @@
       <button id="plane-toggle-control" class="map-control-button" type="button"
               aria-label="Toggle the 2D and 3D camera planes">2D</button>
     </div>
-    <div id="scale-bar-overlay" hidden>
-      <span id="scale-bar-label-text"></span>
-      <div class="scale-bar-line" id="scale-bar-line"></div>
+    <!-- The map's bottom-start control column (§1/§4.2): the error strip, the
+         status line, the scale bar and the attribution info control. One
+         column keeps the floating lines from colliding, and the compact
+         attribution control frees the bottom-end edge. -->
+    <div id="bottom-start-dock">
+      <p id="error-report" hidden></p>
+      <p id="status-line" data-readiness="loading">initializing…</p>
+      <div id="scale-bar-overlay" hidden>
+        <span id="scale-bar-label-text"></span>
+        <div class="scale-bar-line" id="scale-bar-line"></div>
+      </div>
+      <div id="attribution-control">
+        <section id="attribution-panel" hidden aria-label="Map attribution and terms">
+          <h2 class="attribution-panel-title">Map attribution and terms</h2>
+          <!-- The id stays on the element carrying the compliance text: the
+               Playwright suites read it (docs/ReferenceAppUX.md §10.1). -->
+          <p id="attribution-notice"></p>
+        </section>
+        <button id="attribution-info-control" type="button"
+                aria-label="Map attribution and terms" aria-expanded="false"
+                aria-controls="attribution-panel">&#9432;</button>
+      </div>
     </div>
     <div id="readout"></div>
     <p id="harness-status">Loading the wasm SDK core…</p>
-    <p id="status-line" data-readiness="loading">initializing…</p>
-    <p id="error-report" hidden></p>
-    <p id="attribution-notice">Map data © OpenStreetMap contributors (ODbL)</p>
     <script type="module" src="./main.mjs"></script>
     <script type="module">
       // Manual playground / web refapp of record: drives the wasm MapCamera
@@ -561,6 +664,13 @@
         SACRAMENTO_OVERLAY_SCENE_LABELS,
         REFERENCE_SCENE_ARTIFACT,
       } from './overlay_scenes.mjs';
+      import { fetchAndBuildVectorOverlays } from './vector_layer.mjs';
+      import {
+        TILE_LAYER_MODES,
+        DEFAULT_TILE_SIZE_PIXELS,
+        applyTileLayerMode,
+        loadVectorBaseOverlays,
+      } from './tile_switch.mjs';
 
       // The round-11 control-cluster / follow-camera glue: the §2.4 token
       // rows and the pure helpers live in the shared platform-glue module
@@ -574,6 +684,7 @@
         NAVIGATION_FOLLOW_PITCH_3D_DEGREES,
         COURSE_SMOOTHING_WINDOW_FIXES,
         FOLLOW_BEARING_CHASE_TIME_CONSTANT_MILLISECONDS,
+        FOLLOW_BEARING_SNAP_DISTANCE_DEGREES,
         FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR,
         FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS,
         FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
@@ -656,6 +767,13 @@
       const SLOW_FRAMES_PER_SECOND = 30;
       const ACTIVE_ANIMATION_MINIMUM_FRAMES = 8;
       const ACTIVE_ANIMATION_WINDOW_MILLISECONDS = 1000;
+      // The first GPU frames pay one-time costs (pipeline creation, shader
+      // warm-up, the initial upload burst) that say nothing about steady
+      // state; they are excluded, and a verdict needs enough samples to be
+      // meaningful. The steady-state figure is the median, so one hitched
+      // frame never paints the whole session slow.
+      const PERFORMANCE_WARMUP_FRAMES = 3;
+      const PERFORMANCE_MINIMUM_SAMPLES_FOR_VERDICT = 5;
       // Diagnostics readout (§4.1): the gate drops to Debug here because the
       // wasm closure's own events (map-rendering's tile-fetch tracing) are
       // debug-severity; the native readouts subscribe at Info. The readout
@@ -725,19 +843,60 @@
       } catch {
         providers_registry = { fixture_base_path: '/providers', providers: [] };
       }
+      const attribution_control = document.getElementById('attribution-control');
+      const attribution_info_control = document.getElementById('attribution-info-control');
+      const attribution_panel = document.getElementById('attribution-panel');
       const attribution_notice = document.getElementById('attribution-notice');
       // Only a provider this build actually registers contributes its
       // attribution line: a descriptor without a wasm registration is
-      // excluded, so the notice never claims a provider the page cannot use.
-      const descriptor_attribution_texts = providers_registry.providers
+      // excluded, so the panel never claims a provider the page cannot use.
+      const registered_provider_descriptors = providers_registry.providers
         .filter((provider_descriptor) =>
-          provider_descriptor.wasm_registration != null)
+          provider_descriptor.wasm_registration != null);
+      const descriptor_attribution_texts = registered_provider_descriptors
         .map((provider_descriptor) => provider_descriptor.attribution_text)
         .filter((attribution_text) => typeof attribution_text === 'string'
           && attribution_text.trim() !== '');
       if (descriptor_attribution_texts.length > 0) {
         attribution_notice.textContent = descriptor_attribution_texts.join(' · ');
+      } else {
+        // No descriptor line: the control does not present an empty panel
+        // (never a guess).
+        attribution_info_control.hidden = true;
       }
+      // The descriptors' terms notes join the panel (deduplicated like the
+      // attribution lines); the panel is the compliance text's home, so no
+      // always-visible line is needed on the map.
+      const descriptor_terms_notes = registered_provider_descriptors
+        .map((provider_descriptor) => provider_descriptor.terms_note)
+        .filter((terms_note) => typeof terms_note === 'string'
+          && terms_note.trim() !== '');
+      for (const terms_note of Array.from(new Set(descriptor_terms_notes))) {
+        const terms_note_element = document.createElement('p');
+        terms_note_element.className = 'attribution-terms-note';
+        terms_note_element.textContent = terms_note;
+        attribution_panel.appendChild(terms_note_element);
+      }
+      function set_attribution_panel_open(is_open) {
+        attribution_panel.hidden = !is_open;
+        attribution_info_control.setAttribute('aria-expanded', String(is_open));
+      }
+      attribution_info_control.addEventListener('click', () => {
+        set_attribution_panel_open(attribution_panel.hidden);
+      });
+      // The panel closes on Escape and on a tap outside the control.
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !attribution_panel.hidden) {
+          set_attribution_panel_open(false);
+          attribution_info_control.focus();
+        }
+      });
+      document.addEventListener('pointerdown', (event) => {
+        if (attribution_panel.hidden) return;
+        if (!attribution_control.contains(event.target)) {
+          set_attribution_panel_open(false);
+        }
+      }, true);
 
       const provider_credential_rows = document.getElementById('provider-credential-rows');
       const provider_credential_status = document.getElementById('provider-credential-status');
@@ -752,6 +911,9 @@
       // The live-route probe's demo waypoints: the recorded Directions
       // fixture's own trip (1315 10th St → Front St, Sacramento), so a keyed
       // demo and the fixture-backed test describe the same route.
+      // The trip selection's minimum framing zoom: close enough to read the
+      // destination block without losing the city context.
+      const TRIP_SELECTION_ZOOM_LEVEL = 15;
       const PROVIDER_ROUTE_DEMO_ORIGIN = { latitude: 38.57693, longitude: -121.49492 };
       const PROVIDER_ROUTE_DEMO_DESTINATION = { latitude: 38.578739, longitude: -121.507447 };
       // The live-tile probe's address: the Sacramento tile at the playground's
@@ -776,6 +938,9 @@
       // credential label, masked input, Apply/Clear, terms note. A provider
       // the wasm build reports unavailable renders disabled with its reason.
       const provider_credential_controls_by_key = new Map();
+      // The provider keys applied in this session: the trip planner uses live
+      // search/routing only when at least one registration succeeded.
+      const applied_provider_keys = new Set();
       function render_provider_credential_rows() {
         provider_credential_rows.textContent = '';
         provider_credential_controls_by_key.clear();
@@ -865,6 +1030,7 @@
                 base_url,
               );
               input_element.value = '';
+              applied_provider_keys.add(provider_descriptor.provider_key);
               set_provider_status('Applied — live providers ready.');
             } catch (error) {
               set_provider_status(`Refused: ${String(error)}`);
@@ -872,29 +1038,79 @@
           });
           clear_element.addEventListener('click', () => {
             window.mapTest.clear_provider();
+            applied_provider_keys.clear();
             input_element.value = '';
             clear_provider_probe_results();
             set_provider_status(provider_keyless_status_text);
           });
         }
+        // The trip planner's destination: a demo place (keyless) or a live
+        // geocoding result (keyed). Selecting one centers the map and arms
+        // the route action; nothing is invented when nothing matched.
+        const demo_places = REFERENCE_SCENE_ARTIFACT.demo_places ?? [];
+        let selected_trip_place = null;
+        function select_trip_place(trip_place) {
+          selected_trip_place = trip_place;
+          camera_state.latitude = trip_place.latitude;
+          camera_state.longitude = trip_place.longitude;
+          camera_state.zoom = Math.max(camera_state.zoom, TRIP_SELECTION_ZOOM_LEVEL);
+          controls.zoom.value = camera_state.zoom;
+          for (const preset_button of camera_preset_controls.children) {
+            preset_button.classList.remove('selected');
+          }
+          schedule_render();
+          set_provider_status(
+            `Selected ${trip_place.name}. Plan the route, then start the trip.`);
+        }
+        function render_trip_results(result_rows) {
+          provider_search_results.textContent = '';
+          for (const result_row of result_rows) {
+            const result_item = document.createElement('li');
+            const result_button = document.createElement('button');
+            result_button.type = 'button';
+            result_button.className = 'trip-result-button';
+            result_button.textContent = result_row.label;
+            result_button.addEventListener('click', () => select_trip_place(result_row));
+            result_item.appendChild(result_button);
+            provider_search_results.appendChild(result_item);
+          }
+        }
         provider_search_control.addEventListener('click', async () => {
           const query_text = provider_search_input.value.trim();
           if (query_text === '') {
-            set_provider_status('Enter a search query first.');
+            set_provider_status('Enter a place first.');
+            return;
+          }
+          if (applied_provider_keys.size === 0) {
+            const query_lowercase = query_text.toLowerCase();
+            const matching_places = demo_places
+              .filter((demo_place) =>
+                demo_place.name.toLowerCase().includes(query_lowercase))
+              .map((demo_place) => ({
+                name: demo_place.name,
+                label: demo_place.note ? `${demo_place.name} — ${demo_place.note}` : demo_place.name,
+                latitude: demo_place.latitude_degrees,
+                longitude: demo_place.longitude_degrees,
+              }));
+            render_trip_results(matching_places);
+            set_provider_status(
+              matching_places.length > 0
+                ? `Demo places: ${matching_places.length}. Select one to plan the trip.`
+                : 'No demo place matches; apply a provider key under Advanced for live search.',
+            );
             return;
           }
           try {
             const place_rows = await window.mapTest.forward_geocode_live(query_text);
-            provider_search_results.textContent = '';
-            for (const place_row of place_rows) {
-              const result_item = document.createElement('li');
-              result_item.textContent =
-                `${place_row.structuredAddressText} · ${place_row.qualityText}`;
-              provider_search_results.appendChild(result_item);
-            }
+            render_trip_results(place_rows.map((place_row) => ({
+              name: place_row.structuredAddressText,
+              label: `${place_row.structuredAddressText} · ${place_row.qualityText}`,
+              latitude: place_row.latitudeDegrees,
+              longitude: place_row.longitudeDegrees,
+            })));
             set_provider_status(
               place_rows.length > 0
-                ? `Live results: ${place_rows.length}`
+                ? `Live results: ${place_rows.length}. Select one to plan the trip.`
                 : 'The provider returned no results.',
             );
           } catch (error) {
@@ -902,13 +1118,26 @@
           }
         });
         provider_route_control.addEventListener('click', async () => {
+          if (applied_provider_keys.size === 0) {
+            provider_route_result.hidden = false;
+            provider_route_result.textContent =
+              'Keyless demo: the recorded Capitol Park \u21d4 Tower Bridge route is the runnable trip. ' +
+              'Apply a provider key under Advanced and select a place for live routing.';
+            set_provider_status('Recorded demo route ready — start the simulated trip.');
+            return;
+          }
           try {
+            const route_origin = selected_trip_place === null
+              ? { latitude: camera_state.latitude, longitude: camera_state.longitude }
+              : PROVIDER_ROUTE_DEMO_ORIGIN;
+            const route_destination = selected_trip_place ?? PROVIDER_ROUTE_DEMO_DESTINATION;
             const route = await window.mapTest.calculate_route_live(
-              PROVIDER_ROUTE_DEMO_ORIGIN.latitude,
-              PROVIDER_ROUTE_DEMO_ORIGIN.longitude,
-              PROVIDER_ROUTE_DEMO_DESTINATION.latitude,
-              PROVIDER_ROUTE_DEMO_DESTINATION.longitude,
+              route_origin.latitude,
+              route_origin.longitude,
+              route_destination.latitude,
+              route_destination.longitude,
             );
+            provider_route_result.hidden = false;
             const first_maneuver_text = route.legs[0]?.steps[0]?.instructionDisplayText;
             provider_route_result.textContent =
               `${format_distance_text(route.distanceMeters)} · ` +
@@ -986,6 +1215,13 @@
       }
       const theme_toggle_control = document.getElementById('theme-toggle-control');
       apply_theme('dark');
+
+      // The browser suite drives the advanced controls directly: `?advanced`
+      // opens the panel the way a curious user would, without changing what
+      // a visitor sees by default.
+      if (new URLSearchParams(window.location.search).has('advanced')) {
+        document.getElementById('advanced-panel').open = true;
+      }
 
       // The docs back-link: shown only when the harness is served from the
       // documentation site's `/demo/` path, so the local dev server's root
@@ -1120,6 +1356,177 @@
         schedule_render();
       });
 
+      // --- The base-map tile layer switch (M9) -----------------------------
+      // The page offers one base layer per provider-declared tile source: the
+      // raster provider's imagery (the default) and a vector-tile provider
+      // painted as overlay geometry. Provider names and the vector URL shape
+      // come from the shared registry; the page names none.
+      // The clear color behind each base layer: the raster layer covers the
+      // whole surface, so its original dark clear stays; the vector base's
+      // fills leave gaps, which take a light paper color instead of reading
+      // as a black map.
+      const VECTOR_BASE_RASTER_CLEAR_COLOR = Object.freeze(
+        { red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0 });
+      const VECTOR_BASE_CLEAR_COLOR = Object.freeze(
+        { red: 0.94, green: 0.93, blue: 0.90, alpha: 1.0 });
+      const VECTOR_BASE_TILE_SIZE_PIXELS = DEFAULT_TILE_SIZE_PIXELS;
+      const VECTOR_BASE_TILE_RADIUS = 1;
+      const VECTOR_BASE_RELOAD_DEBOUNCE_MILLISECONDS = 180;
+      let current_tile_mode = TILE_LAYER_MODES.raster;
+      let vector_base_reload_timer = null;
+      let vector_base_loaded_center = null;
+      let vector_base_loaded_zoom = null;
+      const base_map_toggle_element = document.getElementById('base-map-toggle');
+      const base_map_status_element = document.getElementById('base-map-status');
+
+      /** The registry descriptor declaring a fixture route for one purpose. */
+      function base_map_descriptor_for_route_purpose(route_purpose) {
+        return providers_registry.providers.find((provider_descriptor) =>
+          Array.isArray(provider_descriptor.fixture_routes)
+          && provider_descriptor.fixture_routes.some(
+            (fixture_route) => fixture_route.purpose === route_purpose));
+      }
+
+      /** Renders one toggle per provider-declared base layer. */
+      function render_base_map_toggle() {
+        const base_layer_rows = [
+          { mode: TILE_LAYER_MODES.raster, purpose: 'raster_tiles', title: 'Raster' },
+          { mode: TILE_LAYER_MODES.vector, purpose: 'vector_tiles', title: 'Vector' },
+        ];
+        base_map_toggle_element.textContent = '';
+        for (const { mode, purpose, title } of base_layer_rows) {
+          const provider_descriptor = base_map_descriptor_for_route_purpose(purpose);
+          if (provider_descriptor === undefined) continue;
+          const toggle_button = document.createElement('button');
+          toggle_button.type = 'button';
+          toggle_button.dataset.tileMode = mode;
+          toggle_button.textContent = `${title} · ${provider_descriptor.display_name}`;
+          toggle_button.setAttribute(
+            'aria-pressed', String(current_tile_mode === mode));
+          toggle_button.addEventListener('click', () => switch_tile_mode(mode));
+          base_map_toggle_element.appendChild(toggle_button);
+        }
+      }
+
+      /** Shows (or clears) the base-map status line. */
+      function set_base_map_status(status_text) {
+        base_map_status_element.hidden = status_text === null;
+        base_map_status_element.textContent = status_text ?? '';
+      }
+
+      /** Re-lists and decodes the vector base for the current camera. */
+      async function refresh_vector_base() {
+        if (current_tile_mode !== TILE_LAYER_MODES.vector
+          || renderer_mode !== 'gpu' || !gpu_map_canvas) {
+          return;
+        }
+        const vector_descriptor = base_map_descriptor_for_route_purpose('vector_tiles');
+        if (vector_descriptor === undefined) return;
+        const camera_snapshot = {
+          latitude: camera_state.latitude,
+          longitude: camera_state.longitude,
+          zoom: camera_state.zoom,
+        };
+        set_base_map_status('Loading the vector base…');
+        let vector_result = null;
+        try {
+          vector_result = await loadVectorBaseOverlays({
+            canvas: gpu_map_canvas,
+            descriptors: [vector_descriptor],
+            cameraState: camera_snapshot,
+            tileSizePixels: VECTOR_BASE_TILE_SIZE_PIXELS,
+            tileRadius: VECTOR_BASE_TILE_RADIUS,
+            fetchAndBuildVectorOverlays,
+          });
+        } catch (vector_failure) {
+          set_base_map_status(`The vector base failed: ${String(vector_failure)}`);
+          return;
+        }
+        if (current_tile_mode !== TILE_LAYER_MODES.vector) return;
+        vector_base_loaded_center = camera_snapshot;
+        vector_base_loaded_zoom = camera_snapshot.zoom;
+        if (vector_result.failures.length === 0) {
+          set_base_map_status(
+            `Vector base: ${vector_result.overlayCount} styled features over ` +
+            `${(2 * VECTOR_BASE_TILE_RADIUS + 1) ** 2} tiles.`);
+        } else {
+          const first_failure = vector_result.failures[0];
+          set_base_map_status(
+            `Vector base: ${vector_result.overlayCount} styled features; ` +
+            `${vector_result.failures.length} tiles failed — ` +
+            `${first_failure?.error ?? 'unknown failure'}`);
+        }
+        schedule_render();
+      }
+
+      /** Debounces a vector-base reload while the camera moves. */
+      function schedule_vector_base_refresh() {
+        if (current_tile_mode !== TILE_LAYER_MODES.vector) return;
+        if (vector_base_reload_timer !== null) {
+          clearTimeout(vector_base_reload_timer);
+        }
+        vector_base_reload_timer = setTimeout(() => {
+          vector_base_reload_timer = null;
+          refresh_vector_base();
+        }, VECTOR_BASE_RELOAD_DEBOUNCE_MILLISECONDS);
+      }
+
+      /** Flips the base layer and keeps the scene overlays honest. */
+      function switch_tile_mode(next_mode) {
+        if (next_mode === current_tile_mode) return;
+        if (next_mode === TILE_LAYER_MODES.vector
+          && (renderer_mode !== 'gpu' || !gpu_map_canvas)) {
+          set_base_map_status(
+            'The vector base needs the GPU renderer; this browser fell back to the 2D grid.');
+          return;
+        }
+        current_tile_mode = next_mode;
+        for (const toggle_button of base_map_toggle_element
+          .querySelectorAll('[data-tile-mode]')) {
+          toggle_button.setAttribute(
+            'aria-pressed',
+            String(toggle_button.dataset.tileMode === next_mode),
+          );
+        }
+        if (next_mode === TILE_LAYER_MODES.raster) {
+          applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.raster });
+          gpu_map_canvas.set_clear_color(
+            VECTOR_BASE_RASTER_CLEAR_COLOR.red,
+            VECTOR_BASE_RASTER_CLEAR_COLOR.green,
+            VECTOR_BASE_RASTER_CLEAR_COLOR.blue,
+            VECTOR_BASE_RASTER_CLEAR_COLOR.alpha,
+          );
+          vector_base_loaded_center = null;
+          vector_base_loaded_zoom = null;
+          set_overlay_controls_enabled(
+            renderer_mode === 'gpu',
+            'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
+          );
+          apply_overlays();
+          set_base_map_status(null);
+        } else {
+          applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.vector });
+          gpu_map_canvas.set_clear_color(
+            VECTOR_BASE_CLEAR_COLOR.red,
+            VECTOR_BASE_CLEAR_COLOR.green,
+            VECTOR_BASE_CLEAR_COLOR.blue,
+            VECTOR_BASE_CLEAR_COLOR.alpha,
+          );
+          set_overlay_controls_enabled(
+            false,
+            'Scene overlays pause while the vector base map draws its own geometry.',
+          );
+          gpu_map_canvas.clear_overlays();
+          refresh_vector_base();
+        }
+        schedule_render();
+      }
+
+      window.mapTileMode = () => current_tile_mode;
+      window.mapVectorBaseStatus = () =>
+        base_map_status_element.hidden ? null : base_map_status_element.textContent;
+      render_base_map_toggle();
+
       // Simulated navigation panel (docs/ReferenceAppUX.md §7.3): until the
       // contract wave ships MapNavigationController on the wasm seam, this
       // is a plainly labeled spec-driven layout preview — the demo
@@ -1223,43 +1630,39 @@
       let performance_strip_element = null;
 
       /**
-       * The average of the window's numeric field (null for an empty window).
-       */
-      function average_of_values(values) {
-        if (values.length === 0) return null;
-        return values.reduce((sum, value) => sum + value, 0) / values.length;
-      }
-
-      /**
        * The performance summary the diagnostics readout and the warning strip
        * share: the rolling render time, the observed frame rate while the page
        * is animating, the slow verdict and its named cause.
        */
       function performance_summary() {
-        if (frame_performance_samples.length === 0) {
+        const steady_state_samples = frame_performance_samples.slice(
+          PERFORMANCE_WARMUP_FRAMES);
+        if (steady_state_samples.length < PERFORMANCE_MINIMUM_SAMPLES_FOR_VERDICT) {
           return {
-            status: 'waiting',
-            sampleCount: 0,
-            averageRenderMilliseconds: null,
+            status: 'warming',
+            sampleCount: steady_state_samples.length,
+            medianRenderMilliseconds: null,
             framesPerSecond: null,
             isSlow: false,
             causeText: null,
           };
         }
-        const render_milliseconds = frame_performance_samples.map(
-          (sample) => sample.renderMilliseconds);
-        const average_render_milliseconds = average_of_values(render_milliseconds);
-        const first_sample = frame_performance_samples[0];
-        const last_sample = frame_performance_samples[frame_performance_samples.length - 1];
+        const render_milliseconds = steady_state_samples
+          .map((sample) => sample.renderMilliseconds)
+          .sort((first, second) => first - second);
+        const median_render_milliseconds =
+          render_milliseconds[Math.floor(render_milliseconds.length / 2)];
+        const first_sample = steady_state_samples[0];
+        const last_sample = steady_state_samples[steady_state_samples.length - 1];
         const window_milliseconds = last_sample.atMilliseconds - first_sample.atMilliseconds;
         const frames_per_second = window_milliseconds > 0
-          ? ((frame_performance_samples.length - 1) * 1000) / window_milliseconds
+          ? ((steady_state_samples.length - 1) * 1000) / window_milliseconds
           : null;
         const is_actively_animating =
-          frame_performance_samples.length >= ACTIVE_ANIMATION_MINIMUM_FRAMES &&
+          steady_state_samples.length >= ACTIVE_ANIMATION_MINIMUM_FRAMES &&
           window_milliseconds <= ACTIVE_ANIMATION_WINDOW_MILLISECONDS;
         const is_render_over_budget =
-          average_render_milliseconds > SLOW_FRAME_MILLISECONDS;
+          median_render_milliseconds > SLOW_FRAME_MILLISECONDS;
         const is_frame_rate_under_budget =
           is_actively_animating && frames_per_second !== null &&
           frames_per_second < SLOW_FRAMES_PER_SECOND;
@@ -1273,7 +1676,7 @@
             cause_text = 'WebGPU is unavailable, so the 2D fallback redraws whole frames; ' +
               'use a Chromium-based browser or Safari 26 for GPU frames.';
           } else if (is_render_over_budget) {
-            cause_text = `the GPU frame averages ${average_render_milliseconds.toFixed(1)} ms ` +
+            cause_text = `the GPU frame's median is ${median_render_milliseconds.toFixed(1)} ms ` +
               `(budget ${SLOW_FRAME_MILLISECONDS} ms); lower the pitch or zoom, or close other GPU tabs.`;
           } else {
             cause_text = `frames arrive at ${frames_per_second.toFixed(0)} fps ` +
@@ -1282,8 +1685,8 @@
         }
         return {
           status: is_slow ? 'slow' : 'ok',
-          sampleCount: frame_performance_samples.length,
-          averageRenderMilliseconds: number_or_null(average_render_milliseconds),
+          sampleCount: steady_state_samples.length,
+          medianRenderMilliseconds: number_or_null(median_render_milliseconds),
           framesPerSecond: number_or_null(frames_per_second),
           isSlow: is_slow,
           causeText: cause_text,
@@ -1329,7 +1732,7 @@
       const FOLLOW_DEMO_LIVE_LINE_TEXTS = {
         disengaged: 'The demo drives the artifact\'s route scene polyline with the §5.3 follow camera.',
         engaged: 'Follow engaged — the camera centers on the guided fix.',
-        brokenByGesture: 'Follow broken by a gesture — the next fix re-engages.',
+        brokenByGesture: 'Follow broken by a gesture — tap the my-location control to re-engage.',
         ended: 'Trip ended — the pre-trip camera is restored.',
         stopped: 'Trip stopped — the pre-trip camera is restored.',
       };
@@ -1341,6 +1744,9 @@
         total_meters: 0,
         fix_interval_id: null,
         target_bearing_degrees: null,
+        // The latest guided fix: the my-location control re-centers on it
+        // when a gesture-broken follow is re-engaged (§5.3).
+        latest_fix: null,
       };
       // The eased moves and the chase of the platform-pump-owned camera:
       // §5.3 eases bearing and pitch in the platform's frame pump; only
@@ -1364,6 +1770,7 @@
           : null;
       window.mapFollowDemoState = () => ({
         phase: follow_demo.phase,
+        isFollowing: follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED,
         travelledMeters: follow_demo.travelled_meters,
         totalMeters: follow_demo.total_meters,
         targetBearingDegrees: follow_demo.target_bearing_degrees,
@@ -1556,6 +1963,13 @@
           update_readout(camera);
           refresh_performance_readout();
           diagnostics_facts_element.textContent = diagnostics_facts_text();
+          if (current_tile_mode === TILE_LAYER_MODES.vector) {
+            const center_or_zoom_changed = vector_base_loaded_center === null
+              || vector_base_loaded_center.latitude !== camera_state.latitude
+              || vector_base_loaded_center.longitude !== camera_state.longitude
+              || vector_base_loaded_zoom !== camera_state.zoom;
+            if (center_or_zoom_changed) schedule_vector_base_refresh();
+          }
         } finally {
           render_busy = false;
         }
@@ -1625,6 +2039,18 @@
         compass_control.hidden =
           off_north_degrees_value < COMPASS_VISIBILITY_BEARING_THRESHOLD_DEGREES;
         compass_north_letter.style.transform = `rotate(${-camera_state.bearing}deg)`;
+      }
+
+      // The my-location control's re-center affordance (§4.2/§5.3): while a
+      // gesture-broken follow waits for an explicit re-engage, the control
+      // takes the cluster's active look and names the act.
+      function refresh_my_location_control() {
+        const is_recentering =
+          follow_demo.phase === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
+        my_location_control.classList.toggle('recentering', is_recentering);
+        my_location_control.setAttribute(
+          'aria-label',
+          is_recentering ? 'Re-center on my location' : 'Center on my location');
       }
 
       // The location indicator (§4.2): the wasm seam draws the layer over
@@ -1740,11 +2166,19 @@
       attach_zoom_control(zoom_out_control, -1);
       attach_zoom_control(zoom_in_control, 1);
 
-      // My-location (§4.2): the playground's standing fix is the camera
-      // center itself, carrying the recorded trace's accuracy (the plain
-      // tracking dot — no course on this fix); during a trip the control
-      // re-engages a follow broken by a gesture (§5.3).
+      // My-location (§4.2): outside a trip the playground's standing fix is
+      // the camera center itself, carrying the recorded trace's accuracy (the
+      // plain tracking dot — no course on this fix); during a trip the
+      // control re-centers on the latest guided fix and re-engages a follow
+      // broken by a gesture (§5.3: a gesture keeps follow broken until the
+      // control re-engages it, never the next fix).
       my_location_control.addEventListener('click', () => {
+        const latest_trip_fix = follow_demo.latest_fix;
+        if (latest_trip_fix !== null &&
+            follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+          camera_state.latitude = latest_trip_fix.latitude;
+          camera_state.longitude = latest_trip_fix.longitude;
+        }
         apply_location_indicator(
           {
             latitude: camera_state.latitude,
@@ -1757,6 +2191,8 @@
         if (follow_demo.phase === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
           follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
           follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
+          follow_bearing_chase.reset();
+          refresh_my_location_control();
           request_pump_step();
         }
         schedule_render();
@@ -1807,8 +2243,10 @@
         follow_demo.fix_interval_id = null;
         follow_demo.phase = FOLLOW_DEMO_PHASE_DISENGAGED;
         follow_demo.target_bearing_degrees = null;
+        follow_demo.latest_fix = null;
         follow_bearing_chase.reset();
         course_median_smoother.reset();
+        refresh_my_location_control();
         const pre_trip_camera = follow_demo.pre_trip_camera;
         follow_demo.pre_trip_camera = null;
         // §5.3: trip end returns the captured pre-trip camera; with it the
@@ -1839,14 +2277,21 @@
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.ended);
           return;
         }
-        // §5.3: a fix always (re-)engages follow and re-targets the camera.
-        follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
         const fix = polyline_fix_at_travelled_meters(
           follow_demo.route_polyline, follow_demo.travelled_meters);
-        camera_state.latitude = fix.latitude;
-        camera_state.longitude = fix.longitude;
-        camera_state.zoom = follow_zoom_toward_trip_end(remaining_distance_fraction);
-        controls.zoom.value = camera_state.zoom;
+        follow_demo.latest_fix = { latitude: fix.latitude, longitude: fix.longitude };
+        // §5.3: a fix retargets the smoothed course and the ramped zoom; the
+        // camera follows only while engaged. A gesture keeps follow broken
+        // until the my-location control re-engages it — a fix never silently
+        // snaps the user's panned view back.
+        const is_following = follow_demo.phase !== FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
+        if (is_following) {
+          follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
+          camera_state.latitude = fix.latitude;
+          camera_state.longitude = fix.longitude;
+          camera_state.zoom = follow_zoom_toward_trip_end(remaining_distance_fraction);
+          controls.zoom.value = camera_state.zoom;
+        }
         course_median_smoother.add(fix.courseHeadingDegrees);
         follow_demo.target_bearing_degrees = course_median_smoother.median();
         apply_location_indicator(
@@ -1863,6 +2308,7 @@
           (FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS / 1000);
         refresh_control_labels();
         refresh_compass_control();
+        refresh_my_location_control();
         schedule_render();
         request_pump_step();
       }
@@ -1882,7 +2328,9 @@
         follow_bearing_chase.reset();
         course_median_smoother.reset();
         follow_demo.target_bearing_degrees = null;
+        follow_demo.latest_fix = null;
         follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
+        refresh_my_location_control();
         camera_state.zoom = follow_zoom_toward_trip_end(1.0);
         camera_state.pitch = is_three_dimensional_camera
           ? NAVIGATION_FOLLOW_PITCH_3D_DEGREES : 0;
@@ -1896,11 +2344,13 @@
       });
 
       // A map-surface gesture (drag or wheel — §5.3) ends ENGAGED follow
-      // immediately; the next fix re-engages.
+      // immediately; it stays broken until the my-location control
+      // re-engages it (never the next fix).
       function follow_demo_note_camera_gesture() {
         if (follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED) {
           follow_demo.phase = FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
           follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.brokenByGesture;
+          refresh_my_location_control();
         }
       }
 
@@ -1916,12 +2366,12 @@
           : 'tiles no GPU frame settled yet';
         const performance_summary_lines = (() => {
           const summary = performance_summary();
-          if (summary.status === 'waiting') {
-            return 'performance no GPU frame sampled yet';
+          if (summary.status === 'warming') {
+            return 'performance warming up — a verdict needs a few GPU frames';
           }
-          const render_text = summary.averageRenderMilliseconds === null
+          const render_text = summary.medianRenderMilliseconds === null
             ? 'render n/a'
-            : `render avg ${summary.averageRenderMilliseconds.toFixed(1)} ms`;
+            : `render median ${summary.medianRenderMilliseconds.toFixed(1)} ms`;
           const rate_text = summary.framesPerSecond === null
             ? 'rate n/a'
             : `${summary.framesPerSecond.toFixed(0)} fps`;
