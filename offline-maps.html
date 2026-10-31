@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fe1bb7a7.js";
+            window.path_to_searchindex_js = "searchindex-6567ea81.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -340,17 +340,35 @@ behalf.</p>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="scope-note"><a class="header" href="#scope-note">Scope note</a></h3>
-<p>The browser has no disk of its own to own, so the offline story differs in
-exactly one place: there is no SQLite tile cache. What the WebAssembly build
-does carry is the routing archive — loaded from bytes you supply — and the
-same provider registration as the native surfaces, so live search, routing and
-raster tiles work from the browser while the disk cache stays native-only.</p>
+<p>A page can persist files, but the SDK owns no browser cache: there is no
+SQLite tile cache, no byte budget and no pack manager on this surface. The
+cache-terms and pre-warm tile steps of the native tabs have no counterpart
+here. What the WebAssembly build carries is the routing archive: archive
+bytes in, contract-shaped route records out, with no provider and no network
+round trip. The same compiled archive serves the native platforms, so one
+compiler run feeds every target.</p>
 <h3 id="route-over-the-archive"><a class="header" href="#route-over-the-archive">Route over the archive</a></h3>
-<p>The <a href="search-and-routing.html">Search and routing</a> tutorial’s
-<a href="search-and-routing.html">WebAssembly</a> tab shows the full offline routing
-call: archive bytes in, contract-shaped route records out, no network.
-The same compiled archive serves the native platforms, so one compiler
-run feeds every target.</p>
+<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/map_web_bindings.js';
+
+const archiveResponse = await fetch('/offline-graph/routing-grid.rmog');
+const archiveBytes = new Uint8Array(await archiveResponse.arrayBuffer());
+
+const plannedRoute = await offlineRouteFromArchiveBytes(
+  archiveBytes,
+  originLatitude,
+  originLongitude,
+  endLatitude,
+  endLongitude,
+);
+</code></pre>
+<p>The answer is the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code> record the live route
+call returns, so the route overlay and framing steps from <a href="search-and-routing.html">Search and
+routing</a> apply unchanged. The call rejects verbatim
+when the bytes fail archive validation, a coordinate falls outside every
+node’s snap tolerance, or the two points are not connected in the graph.</p>
+<p>Where the bytes come from is the page’s decision: ship the archive with the
+app, fetch it once and keep it in the browser’s own storage, or read it from
+<code>&lt;input type="file"&gt;</code> for a local preview.</p>
 </div>
 
 </div>
