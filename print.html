@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-39025aeb.js";
+            window.path_to_searchindex_js = "searchindex-654ed639.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -1094,7 +1094,8 @@ one call, as the reference application does at startup:</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
 
 val mapSdk = MapSdk()
-mapSdk.setProviderCredential(mapQuestApiKey)
+// The key belongs to the provider you registered; see "Choosing a provider".
+mapSdk.setProviderCredential(providerApiKey)
 </code></pre>
 <p>The call throws verbatim when the key is refused, so surface it in your
 error state rather than continuing.</p>
@@ -1242,7 +1243,8 @@ let package = Package(
 <pre><code class="language-swift">import RusticMapsSDK
 
 let mapSdk = MapSdk()
-try mapSdk.setProviderCredential(credential: mapQuestApiKey)
+// The key belongs to the provider you registered; see "Choosing a provider".
+try mapSdk.setProviderCredential(credential: providerApiKey)
 </code></pre>
 <p>The call throws verbatim when the key is refused.</p>
 <p>Pass a key read at <strong>runtime</strong> (app settings, a secure configuration store,
@@ -1321,11 +1323,11 @@ Native version’s normal autolinking (pod install on the iOS side).</p>
 <code>MapsSdk.create()</code> and register the provider’s credential:</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-export async function createMapSdk(providerKey, mapQuestApiKey) {
+export async function createMapSdk(providerKey, providerApiKey) {
   const mapSdk = await MapsSdk.create();
   const registration = await mapSdk.setProviderCredential(
     providerKey,
-    mapQuestApiKey,
+    providerApiKey,
   );
   if (!registration.isApplied) {
     throw new Error(registration.detailText);
@@ -1336,19 +1338,51 @@ export async function createMapSdk(providerKey, mapQuestApiKey) {
 <p>A refused credential resolves with <code>isApplied: false</code> and the provider’s
 verbatim <code>detailText</code>, so surface it in your error state rather than
 continuing.</p>
-<p>Take the key at <strong>runtime</strong> — a settings screen, secure storage, or a
+<h3 id="choosing-a-provider"><a class="header" href="#choosing-a-provider">Choosing a provider</a></h3>
+<p>The credential call is the same on every platform; what changes is <strong>which
+provider</strong> you register and where its key comes from.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>What it serves</th><th>Credential</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>MapQuest</strong></td><td>geocoding, search, routing, matrices, traffic, raster tiles</td><td>an API key from the MapQuest developer console</td></tr>
+<tr><td><strong>A URL-template raster source</strong> (OpenStreetMap, a self-hosted tile server)</td><td>base-map tiles only</td><td>usually none — some ask for a User-Agent instead</td></tr>
+<tr><td><strong>A URL-template vector source</strong> (OpenFreeMap, OpenStreetMap US)</td><td>a styled vector base with labels</td><td>none</td></tr>
+<tr><td><strong>Your own provider</strong></td><td>whichever contracts you implement</td><td>whatever your implementation needs</td></tr>
+</tbody>
+</table>
+</div>
+<p>Register the one you intend to use, then apply its credential:</p>
+<pre><code class="language-kotlin">// MapQuest, with a key the user entered in your settings screen. A keyless
+// URL-template base map needs no credential at all: register the source and
+// the tiles flow.
+mapSdk.setProviderCredential(providerApiKey)
+
+A keyless base map still draws — the demo does exactly that — and search,
+routing and traffic answer only once a provider that serves those contracts
+has a credential. Nothing here ties your app to MapQuest: the providers your
+app registers decide what is available, and the calls above stay the same.
+
+Take the key at **runtime** — a settings screen, secure storage, or a
 launch environment for automated tests. Do not bake it into the JS bundle
 or a native build file; the reference app reads it from its settings
-surface and keeps it only when the user opts in.</p>
-<h3 id="draw-a-map-surface"><a class="header" href="#draw-a-map-surface">Draw a map surface</a></h3>
-<p>The package ships a typed <code>&lt;MapView&gt;</code> component over the native widget
-(Android <code>SurfaceView</code>, iOS <code>CAMetalLayer</code>): it owns the surface
+surface and keeps it only when the user opts in.
+
+
+### Draw a map surface
+
+The package ships a typed `&lt;MapView&gt;` component over the native widget
+(Android `SurfaceView`, iOS `CAMetalLayer`): it owns the surface
 lifecycle, frame pump, gestures, camera verbs, id-addressed overlays and
 the callback set, so the host application only composes it. The package
-also owns the one native SDK instance; create it with <code>MapsSdk.create()</code>
-before you mount the view, which attaches to it as soon as it is available.</p>
-<!-- docs-snippet: skip — a JSX fragment outside the docs checks. -->
-<pre><code class="language-tsx">import { useRef } from 'react';
+also owns the one native SDK instance; create it with `MapsSdk.create()`
+before you mount the view, which attaches to it as soon as it is available.
+
+&lt;!-- docs-snippet: skip — a JSX fragment outside the docs checks. --&gt;
+```tsx
+import { useRef } from 'react';
 import { MapView, type MapViewHandle } from '@angoratek/rustic-maps-sdk/MapView';
 
 // Hold the handle to drive the camera, overlays and location layer.
@@ -2462,7 +2496,7 @@ application’s offline-maps demo runs exactly this:</p>
 val tileCacheBudgetBytes = 16777216UL   // 16 MiB, the demo's absolute budget
 
 mapSdk.setProviderCredentialWithTileCache(
-    mapQuestApiKey,
+    providerApiKey,
     tileCacheDatabaseFile.absolutePath,
     tileCacheBudgetBytes,
 )
@@ -2530,7 +2564,7 @@ carries no street names.</p>
 let tileCacheBudgetBytes: UInt64 = 16_777_216   // 16 MiB
 
 try mapSdk.setProviderCredentialWithTileCache(
-    mapquestApiKey: mapQuestApiKey,
+    mapquestApiKey: providerApiKey,
     tileCacheDatabasePath: tileCacheDatabasePath,
     tileCacheAbsoluteMaximumBytes: tileCacheBudgetBytes
 )
@@ -2577,11 +2611,11 @@ raster-tile contract in the disk response cache. The reference application’s
 offline card reports the registration it installed:</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-async function createMapSdkWithTileCache(providerKey, mapQuestApiKey) {
+async function createMapSdkWithTileCache(providerKey, providerApiKey) {
   const mapSdk = await MapsSdk.create();
   const registration = await mapSdk.setProviderCredentialWithTileCache(
     providerKey,
-    mapQuestApiKey,
+    providerApiKey,
   );
   if (!registration.isApplied) {
     throw new Error(registration.detailText);
