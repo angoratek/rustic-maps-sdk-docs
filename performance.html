@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b2f143ef.js";
+            window.path_to_searchindex_js = "searchindex-2265ed08.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-767d5ab6.js"></script>
+        <script src="toc-2fe6af0c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -179,15 +179,13 @@
 <p>This page is integration guidance: the practices that keep map rendering,
 routing, and navigation responsive, and the readbacks the SDK exposes so
 you can measure your own integration on your own hardware and scenes.</p>
-<p>The one figure the project publishes is the browser frame’s own breakdown,
-measured by a tool in the repository rather than a hand-run profiler. A
-1920 × 1080 vector base over the recorded demo tiles, in a scripted pan on an
-Apple Silicon host with hardware WebGPU, spends about 6 ms a frame at the median
+<p>The one figure the project publishes is the browser frame’s own breakdown. A
+1920 × 1080 vector base over the demo tiles, in a scripted pan on an Apple
+Silicon host with hardware WebGPU, spends about 6 ms a frame at the median
 (6.9 ms at p99), of which 5 ms is overlay tessellation; the raster base on
-the same ground spends 0.1 ms. <code>docs/BrowserRenderPerformance.md</code> states the
-scenario, the method and how to reproduce it with
-<code>node perf/run-frame-budget.mjs</code>. Any other figure you quote should come from
-your own device and your own route mix.</p>
+the same ground spends 0.1 ms. Treat those as a starting point for your own
+measurement, not as a guarantee: any figure you quote should come from your
+own device and your own route mix.</p>
 <h2 id="construct-the-sdk-once"><a class="header" href="#construct-the-sdk-once">Construct the SDK once</a></h2>
 <ul>
 <li>Build one <code>MapSdk</code> object and register your providers once at startup.

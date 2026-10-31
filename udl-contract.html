@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b2f143ef.js";
+            window.path_to_searchindex_js = "searchindex-2265ed08.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-767d5ab6.js"></script>
+        <script src="toc-2fe6af0c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,15 +181,13 @@
 <a href="../udl/map_native_core.udl">download</a>. This file is the single source of
 truth: the Kotlin, Swift, React Native and WebAssembly bindings are
 generated from it, so every platform exposes the same names and records.</p>
-<p>The contract is still pre-1.0: a release may rename or replace members
-while the API settles, and the <a href="changelog.html">changelog</a> records every
-change with its migration note. The <a href="api-reference.html">API reference</a>
-documents the same surface as generated rustdoc; the UDL
-<a href="../udl/map_native_core.udl">download</a> carries the raw form machine
-tooling consumes.</p>
-<p>The pages below show the contract verbatim, byte-equality checked
-against the source file on every publish; an edit to the contract
-propagates to the site through the build or the build fails.</p>
+<p>The contract is pre-1.0, so it grows rather than churns: a release adds
+members and records, and an existing member keeps its signature and its
+meaning. The <a href="changelog.html">changelog</a> records what each release adds, and
+the <a href="api-reference.html">API reference</a> documents the same surface as
+generated reference documentation.</p>
+<p>The listing below is the contract exactly as the bindings are generated
+from it.</p>
 <details>
 <summary>Show the raw UDL contract</summary>
 <pre><code class="language-udl">// FROZEN (M4, slice 1 — 2026-10-27) — the UniFFI contract of the Maps SDK;
@@ -2242,9 +2240,6 @@ interface Diagnostics {
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="coding-conventions.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -2256,9 +2251,6 @@ interface Diagnostics {
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="coding-conventions.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                    </a>
             </nav>
 
         </div>

@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b2f143ef.js";
+            window.path_to_searchindex_js = "searchindex-2265ed08.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-767d5ab6.js"></script>
+        <script src="toc-2fe6af0c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,6 +186,7 @@ offline maps from one Rust core, delivered to <strong>Android (Kotlin)</strong>,
 in a browser with WebGPU.</p>
 <p class="landing-cta">
 <a href="demo">Open the live wasm demo</a>
+<a href="demo/mobile">Run the apps on a hosted device</a>
 <a href="#your-first-map">Start building</a>
 <a href="#downloads">Downloads</a>
 </p>
@@ -294,10 +295,8 @@ demo</a>.</li>
 <h2 id="status-and-license"><a class="header" href="#status-and-license">Status and license</a></h2>
 <p>The SDK is in active development. The canonical short link is
 <strong><a href="https://sdk.mapquest.live">https://sdk.mapquest.live</a></strong>, which serves this site in place (subpaths
-preserved, so the hostname stays in your browser). The rendered site is rebuilt from the
-source repository’s build pipeline; a section appears here only once the
-pipeline that produces it is green, and each page carries the build’s
-provenance stamp.</p>
+preserved, so the hostname stays in your browser). The site is rebuilt for
+each release, so every page describes the version you can download.</p>
 <p>The SDK is dual-licensed under <strong>MIT OR Apache-2.0</strong>. Map imagery ©
 MapQuest; map data © OpenStreetMap contributors (ODbL). See
 <a href="#third-party-notices">third-party notices</a> for the full attribution
@@ -401,15 +400,13 @@ notes of each tag.</p>
 <p>This page is integration guidance: the practices that keep map rendering,
 routing, and navigation responsive, and the readbacks the SDK exposes so
 you can measure your own integration on your own hardware and scenes.</p>
-<p>The one figure the project publishes is the browser frame’s own breakdown,
-measured by a tool in the repository rather than a hand-run profiler. A
-1920 × 1080 vector base over the recorded demo tiles, in a scripted pan on an
-Apple Silicon host with hardware WebGPU, spends about 6 ms a frame at the median
+<p>The one figure the project publishes is the browser frame’s own breakdown. A
+1920 × 1080 vector base over the demo tiles, in a scripted pan on an Apple
+Silicon host with hardware WebGPU, spends about 6 ms a frame at the median
 (6.9 ms at p99), of which 5 ms is overlay tessellation; the raster base on
-the same ground spends 0.1 ms. <code>docs/BrowserRenderPerformance.md</code> states the
-scenario, the method and how to reproduce it with
-<code>node perf/run-frame-budget.mjs</code>. Any other figure you quote should come from
-your own device and your own route mix.</p>
+the same ground spends 0.1 ms. Treat those as a starting point for your own
+measurement, not as a guarantee: any figure you quote should come from your
+own device and your own route mix.</p>
 <h2 id="construct-the-sdk-once"><a class="header" href="#construct-the-sdk-once">Construct the SDK once</a></h2>
 <ul>
 <li>Build one <code>MapSdk</code> object and register your providers once at startup.
@@ -554,49 +551,22 @@ covers the whole loop.</p>
 <p><a href="demo/mobile">Open the mobile demo</a></p>
 </div>
 
-<p>The Android, iOS and React Native reference applications, running on a hosted
-device inside this page. Pick a platform, press <strong>Start demo</strong>, and the app
-streams for three minutes.</p>
-<h2 id="what-it-costs-and-why-it-rests"><a class="header" href="#what-it-costs-and-why-it-rests">What it costs, and why it rests</a></h2>
-<p>The hosted devices run on a free plan that allows <strong>thirty streamed minutes a
-month</strong>, shared by every visitor. That budget is real, so the demo is built
-around it rather than around an optimistic assumption:</p>
-<ul>
-<li>nothing streams until you press Start — loading the page costs nothing;</li>
-<li>a session is capped at <strong>three minutes</strong>;</li>
-<li>at most <strong>two sessions a day</strong> are granted across all visitors, and one per
-visitor;</li>
-<li>when the month’s minutes are gone, the page says so and the demo rests until
-the month turns over.</li>
-</ul>
-<p>Those limits are enforced by a small server-side endpoint, not by the page: a
-browser-side counter would reset with the tab and a crawler would reload
-straight past it. A grant reserves the whole session up front, so a session
-abandoned early can never overrun the budget.</p>
-<h2 id="what-runs-in-the-session"><a class="header" href="#what-runs-in-the-session">What runs in the session</a></h2>
-<p>The builds are the open reference applications from this repository, the same
-ones the tutorials walk through: the map view the package ships, the demo
-scenes, search and route planning, turn-by-turn simulation, the offline card
-and the settings sheet. They run <strong>keyless</strong> against a mock provider, so no API
-key is embedded in a build and none is visible in the page.</p>
+<p>The Android and iOS sample applications, running on a hosted device. Pick a
+platform, press <strong>Start demo</strong>, and the session opens in its own browser tab
+for three minutes.</p>
+<h2 id="what-the-session-is"><a class="header" href="#what-the-session-is">What the session is</a></h2>
+<p>The builds are the same sample applications the guides walk through — the
+shipped map view, search and route planning, turn-by-turn simulation, the
+offline card and the settings sheet — running keyless, so no credential is
+embedded in them and none appears on the page.</p>
 <p>The hosted devices translate Metal and OpenGL to the host machine’s GPU. If a
 build cannot create a rendering surface there, the app shows its own failure
 state rather than a blank frame.</p>
-<h2 id="for-maintainers"><a class="header" href="#for-maintainers">For maintainers</a></h2>
-<ul>
-<li><code>platform/demo-builds.json</code> holds the public build ids the page reads. It
-carries no secret: an Appetize build id is public by design, and the embed
-uses it directly.</li>
-<li><code>scripts/upload-demo-builds.mjs</code> uploads a built APK or a zipped simulator
-<code>.app</code> and updates each app <strong>in place</strong>, so the public id never changes. The
-Appetize API token comes from <code>.env</code> for a local run and from a repository
-secret in CI.</li>
-<li><code>platform/demo-claim-endpoint/</code> is the budget endpoint: a Vercel function
-over a linked KV store, with a kill switch (<code>DEMO_KILL_SWITCH</code>) and the
-daily and per-visitor limits described above.</li>
-<li>The docs build copies the page and the manifest to <code>/demo/mobile</code> and checks
-them byte for byte, so what is published is what is in the tree.</li>
-</ul>
+<h2 id="why-it-rests"><a class="header" href="#why-it-rests">Why it rests</a></h2>
+<p>The hosting runs on a free plan with thirty streamed minutes a month, shared
+by every visitor, so the demo paces itself: nothing streams until you press
+Start, a session lasts three minutes, and when the month’s minutes are gone
+the page says so and the demo rests until the month turns over.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h1>
 <p>The SDK is one Rust core behind a single generated interface. This page explains the
@@ -2324,10 +2294,10 @@ licenses and notices. Until version 0.1 is published, follow the tutorials’
 “checked-in copy” path rather than a download link.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="screenshots"><a class="header" href="#screenshots">Screenshots</a></h1>
-<p>Every screenshot on this page was captured from the reference applications at
-the same source revision on a standing test device or in the browser. Provider
-credentials were supplied at runtime through each app’s settings surface or its
-documented automation seam; no build on this page embeds a credential.</p>
+<p>Every screenshot on this page was captured from the sample applications on a
+standing test device or in the browser, driving a planned route through the
+simulated trip. Provider credentials were supplied at runtime through each
+app’s settings surface or its automation seam; no build holds one.</p>
 <h2 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h2>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application drawing downtown Sacramento, with the readiness chip, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application drawing downtown Sacramento, with the readiness chip, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"></span></label></p>
 <h2 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h2>
@@ -2341,14 +2311,14 @@ it is the same core rather than a simulation. The capture shows its consumer
 surface: the trip planner card with a selected destination and the expert
 controls folded under <strong>Advanced</strong>. It is served keyless at <a href="#live-demo">the live demo</a>.</p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
-<p>The four captures share one design language (the reference-app UX tokens) and
-one demo artifact, and they walk the same flow: readiness, search, route,
-simulated trip. They also share one vocabulary: <em>readiness chip</em>, <em>map control
-cluster</em>, <em>scale bar</em>, <em>compact attribution control</em>, and the <em>home sheet</em> (the
-browser shell’s <em>trip planner card</em>). Differences are the platform’s own
-chrome: Compose’s Material surface on Android, SwiftUI’s safe-area handling on
-iOS, the React Native host view, and the browser’s WebGPU canvas. The map
-content, control cluster, scale ladder and attribution control are the same.</p>
+<p>The captures share one design language and walk the same flow: readiness,
+search, a planned route, then the simulated trip. They also share one
+vocabulary: <em>readiness chip</em>, <em>map control cluster</em>, <em>scale bar</em>, <em>compact
+attribution control</em>, and the <em>home sheet</em> (the browser’s <em>trip planner card</em>).
+Differences are the platform’s own chrome: Compose’s Material surface on
+Android, SwiftUI’s safe-area handling on iOS, the React Native host view, and
+the browser’s WebGPU canvas. The map content, control cluster, scale ladder and
+attribution control are the same.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="versions-and-support"><a class="header" href="#versions-and-support">Versions and support</a></h1>
 <p>This page states how versions are chosen, what a released version line
@@ -3625,14 +3595,13 @@ redistribute the SDK or ship an application built on it, reproduce the
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="api-reference-rustdoc"><a class="header" href="#api-reference-rustdoc">API reference (rustdoc)</a></h1>
-<p>The rustdoc for the workspace modules ships at the <code>api/</code> path of this
-site: <a href="../api/geospatial_types/index.html">start at <code>geospatial-types</code></a>,
+<p>The reference documentation for every module in the SDK ships at the
+<code>api/</code> path of this site: <a href="../api/geospatial_types/index.html">start at <code>geospatial-types</code></a>,
 the record and math layer every other module builds on.</p>
-<p>This tree is generated, not hand-maintained. The build script runs
-<code>cargo doc</code> against the source commit named in <code>provenance.txt</code> on every
-publish, and stages the rendered tree at <code>api/</code> without post-processing.
-Pages under <code>api/</code> therefore describe exactly that commit; a newer
-publish replaces the whole tree at the same paths.</p>
+<p>It is generated from the source of the current release, so it always
+describes the version of the SDK this site documents. Start there for a
+member’s exact signature, return record and error cases; the guides link
+into it wherever a call needs more context.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="the-ffi-contract"><a class="header" href="#the-ffi-contract">The FFI contract</a></h1>
 <p>The SDK’s binding surface is one UniFFI UDL contract,
@@ -3640,15 +3609,13 @@ publish replaces the whole tree at the same paths.</p>
 <a href="../udl/map_native_core.udl">download</a>. This file is the single source of
 truth: the Kotlin, Swift, React Native and WebAssembly bindings are
 generated from it, so every platform exposes the same names and records.</p>
-<p>The contract is still pre-1.0: a release may rename or replace members
-while the API settles, and the <a href="#changelog">changelog</a> records every
-change with its migration note. The <a href="#api-reference-rustdoc">API reference</a>
-documents the same surface as generated rustdoc; the UDL
-<a href="../udl/map_native_core.udl">download</a> carries the raw form machine
-tooling consumes.</p>
-<p>The pages below show the contract verbatim, byte-equality checked
-against the source file on every publish; an edit to the contract
-propagates to the site through the build or the build fails.</p>
+<p>The contract is pre-1.0, so it grows rather than churns: a release adds
+members and records, and an existing member keeps its signature and its
+meaning. The <a href="#changelog">changelog</a> records what each release adds, and
+the <a href="#api-reference-rustdoc">API reference</a> documents the same surface as
+generated reference documentation.</p>
+<p>The listing below is the contract exactly as the bindings are generated
+from it.</p>
 <details>
 <summary>Show the raw UDL contract</summary>
 <pre><code class="language-udl">// FROZEN (M4, slice 1 — 2026-10-27) — the UniFFI contract of the Maps SDK;
@@ -5692,61 +5659,6 @@ interface Diagnostics {
 };
 </code></pre>
 </details>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="contributing-conventions--rustic-maps-sdk"><a class="header" href="#contributing-conventions--rustic-maps-sdk">Contributing Conventions — Rustic Maps SDK</a></h1>
-<p>The project guides set the repository’s behavioral rules. This document
-translates them into per-language practice, including the generated
-binding surfaces.</p>
-<h2 id="1-no-abbreviations-in-public-identifiers"><a class="header" href="#1-no-abbreviations-in-public-identifiers">1. No abbreviations in public identifiers</a></h2>
-<p>Every public identifier is spelled out, and stays concise yet precise:</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Good</th><th>Bad</th></tr>
-</thead>
-<tbody>
-<tr><td><code>GeographicCoordinate</code></td><td><code>GeoCoord</code></td></tr>
-<tr><td><code>RouteStep</code></td><td><code>RStep</code></td></tr>
-<tr><td><code>instruction_display_text</code></td><td><code>instrDispTxt</code></td></tr>
-<tr><td><code>fetch_traffic_incidents</code></td><td><code>fetchTI</code></td></tr>
-<tr><td><code>time_to_live_seconds</code></td><td><code>ttl</code></td></tr>
-</tbody>
-</table>
-</div>
-<p>The standard forms <code>SDK</code>, <code>URL</code>, <code>HTTP</code>, <code>wasm</code>, and <code>MVT</code> are accepted
-in documentation text, but never as identifier shorthand.</p>
-<h2 id="2-solid-mapping"><a class="header" href="#2-solid-mapping">2. SOLID mapping</a></h2>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Principle</th><th>Rust core</th><th>Kotlin binding surface</th><th>Swift binding surface</th></tr>
-</thead>
-<tbody>
-<tr><td>Single responsibility</td><td>one crate per concern</td><td>one class per screen/feature</td><td>one struct per screen/feature</td></tr>
-<tr><td>Open–closed</td><td>a new vendor means a new <code>*Provider</code> impl; the core stays untouched</td><td>a new capability means a new composable or view-model</td><td><code>final class</code> + protocol; no forks in existing code</td></tr>
-<tr><td>Liskov substitution</td><td>mocks in <code>geospatial-traits::mock</code> must satisfy every tested consumer</td><td>subclasses and refapps honor suspend contracts</td><td>SwiftUI view models honor async throws contracts</td></tr>
-<tr><td>Interface segregation</td><td>ten narrow contracts, not one mega-trait</td><td>expose role-targeted protocols, not god objects</td><td>role-targeted protocols</td></tr>
-<tr><td>Dependency inversion</td><td>crates depend on <code>geospatial-traits</code>, never on a provider</td><td>view models depend on injected SDK protocols</td><td>dependency injection through initializers</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="3-errors"><a class="header" href="#3-errors">3. Errors</a></h2>
-<ul>
-<li>Rust: every failure is <code>geospatial_types::SDKError</code>. Crate code uses no
-<code>unwrap</code>, no <code>expect</code>, and no raw <code>String</code> errors, and panics never
-cross the FFI boundary.</li>
-<li>Kotlin: UniFFI maps the UDL contract to typed exceptions, and the
-refapps surface them as sealed UI states.</li>
-<li>Swift: UniFFI maps the contract to typed Swift errors thrown from async
-methods.</li>
-</ul>
-<h2 id="4-property--and-fixture-first-testing"><a class="header" href="#4-property--and-fixture-first-testing">4. Property- and fixture-first testing</a></h2>
-<ul>
-<li>Coordinate, camera, and projection math gets <code>proptest</code> suites.</li>
-<li>Every external payload gets a recorded fixture and a parser test.</li>
-<li>Reference applications double as UI-test hosts (Espresso / XCUITest /
-Detox).</li>
-</ul>
 
                     </main>
 
