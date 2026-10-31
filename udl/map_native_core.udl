@@ -606,6 +606,72 @@ dictionary UrlTemplateRasterTileSource {
     string user_agent;
 };
 
+/// One provider-neutral vector base-map source (M22): a web-mercator XYZ
+/// vector tileset addressed by a `{z}/{x}/{y}` URL template, painted with one
+/// of the SDK's committed styles.
+///
+/// Like [`UrlTemplateRasterTileSource`], every value comes from the
+/// integrator's shared provider registry: the SDK names no vendor and carries
+/// no URL shape or style list of its own, so a second vector base map is a
+/// registry entry plus this one call. The style is named by the id the
+/// registry's `vector_styles` list carries (`bright-light`, `fiord-dark`,
+/// `positron-light`, …), and an unknown id throws here rather than on the
+/// first frame. Every field is validated when the source is installed, so a
+/// malformed template or an inverted zoom range throws instead of failing on
+/// the first tile.
+///
+/// Draw order: the styled base paints over the raster tiles and beneath every
+/// overlay the view is asked to draw, so an application's markers, routes and
+/// location indicator stay above the base map.
+///
+/// Known limit (stated wherever the demo offers it): the committed styles paint
+/// fills, lines and circles only — place labels and road shields are not
+/// rendered yet.
+dictionary UrlTemplateVectorTileSource {
+    /// The `{z}/{x}/{y}` URL template the tileset publishes: an absolute
+    /// `http`/`https` URL carrying those three placeholders and no other.
+    string url_template;
+    /// The tileset's name, used verbatim in every diagnostic it raises.
+    string source_name;
+    /// The attribution line the tileset's terms require wherever it is shown;
+    /// the status readback reports it back for the shells to display.
+    string attribution_text;
+    /// The committed style id the base paints with.
+    string style_id;
+    /// Lowest zoom level the tileset serves.
+    u8 minimum_zoom_level;
+    /// Highest zoom level the tileset serves.
+    u8 maximum_zoom_level;
+};
+
+/// The vector base source's status readback (M22): what the view is drawing a
+/// styled base with, and what its last resolved frame achieved. The counts are
+/// per frame — the same accounting the raster tile statistics give — so a
+/// shell can show an honest "base map loading"/"base map unavailable" state
+/// without reaching into the SDK.
+dictionary VectorTileSourceStatus {
+    /// Whether the view carries a vector base source at all.
+    boolean is_configured;
+    /// The active style id; empty when no source is configured.
+    string style_id;
+    /// The tileset's name; empty when no source is configured.
+    string source_name;
+    /// The attribution line the tileset's terms require; empty when no source
+    /// is configured.
+    string attribution_text;
+    /// Highest zoom level the tileset serves; zero when no source is
+    /// configured.
+    u8 maximum_zoom_level;
+    /// Tile addresses the last resolved frame drew.
+    u32 drawn_tile_count;
+    /// Tile addresses the last resolved frame skipped because their fetch or
+    /// decode failed.
+    u32 failed_tile_count;
+    /// The last resolved frame's last tile failure detail; null when the frame
+    /// had none (or no frame resolved yet).
+    string? last_failure_detail;
+};
+
 /// Async provider entry point of the SDK: resolves every call of the
 /// implemented `geospatial-traits` contracts through the `map-core`
 /// `ProviderRegistry`. Construct the object empty, then the native
@@ -1371,8 +1437,8 @@ dictionary ReroutePolicy {
 /// Which overlay shape one descriptor configures. The kind tags follow the
 /// wasm canvas' plain-object `kind` strings (the wasm seam passes the
 /// lowercase camel kinds `routePolyline`/`filledPolygon`/`pointMarkers`/
-/// `trafficFlow`; the FFI enum variants are the contract's own CamelCase),
-/// mirroring the native `MapOverlay` payloads one to one.
+/// `trafficFlow`/`pointPins`; the FFI enum variants are the contract's own
+/// CamelCase), mirroring the native `MapOverlay` payloads one to one.
 enum MapOverlayKind {
     /// A routed path drawn as a thick line.
     "RoutePolyline",
@@ -1382,6 +1448,10 @@ enum MapOverlayKind {
     "PointMarkers",
     /// Congestion-colored traffic-flow lines.
     "TrafficFlow",
+    /// Screen-facing teardrop pins anchored at their tip with a hollow head
+    /// center (the A/B route-endpoint marker); reuses `PointMarkers`' payload
+    /// fields.
+    "PointPins",
 };
 
 /// Solid RGBA overlay style, every channel in `[0, 1]`. Mirrors the wasm
@@ -1430,11 +1500,12 @@ dictionary MapOverlay {
     /// Required for the kind.
     sequence<GeographicCoordinate>? ring_coordinates;
 
-    /// `PointMarkers`: the geographic anchor of every marker. Required for
-    /// the kind.
+    /// `PointMarkers` and `PointPins`: the geographic anchor of every marker
+    /// (a pin's anchor is its tip). Required for both kinds.
     sequence<GeographicCoordinate>? point_marker_positions;
-    /// Point markers: marker radius in screen pixels (positive and finite),
-    /// or null for the documented default.
+    /// `PointMarkers` and `PointPins`: marker radius in screen pixels
+    /// (positive and finite), or null for the documented default. A pin's
+    /// radius is its head radius.
     double? point_marker_radius_pixels;
 
     /// `TrafficFlow`: the flow observations to paint, one per road segment
@@ -1616,6 +1687,39 @@ interface MapView {
     /// pending detail's arrival. Throws when the view is detached.
     [Throws=SdkError]
     boolean is_frame_settled(MapCamera camera);
+
+    /// M22: installs a vector base map — a provider-neutral vector tileset
+    /// painted with one of the SDK's committed styles — replacing any vector
+    /// base already installed. The source is validated before anything moves
+    /// (the template's placeholders and scheme, the zoom range, the style id),
+    /// so a refused call keeps the previously installed base in force.
+    ///
+    /// Each frame resolves the camera's visible tiles through one shared
+    /// scheduler: a tile is fetched and decoded once and restyled from its
+    /// cached geometry when the style changes or the camera crosses a style
+    /// zoom stop, never refetched for either. The styled base draws over the
+    /// raster tiles and beneath the overlay list. A tile that fails to fetch
+    /// or decode is skipped and counted; it never fails the frame.
+    ///
+    /// Throws when a frame draw is in flight (the draw owns the scheduler for
+    /// its duration; install after the frame draws). Configuring a base needs
+    /// no attached surface: like the overlay list, the source outlives
+    /// attach/detach cycles.
+    [Throws=SdkError]
+    void set_vector_tile_source(UrlTemplateVectorTileSource source);
+
+    /// Removes the vector base map; following frames draw raster tiles and
+    /// overlays alone until `set_vector_tile_source` installs a new base.
+    /// Like installing, this throws while a frame draw is in flight.
+    [Throws=SdkError]
+    void clear_vector_tile_source();
+
+    /// Reads the vector base source's status: the configured source and style
+    /// plus the last resolved frame's drawn and failed tile counts. A pure
+    /// query — it never fetches or draws, and it answers while a frame is in
+    /// flight (with the previous frame's counts). It never throws: with no
+    /// source installed it answers an honest not-configured status.
+    VectorTileSourceStatus vector_tile_source_status();
 };
 
 /// One presented frame's tile and overlay accounting, mirroring how the

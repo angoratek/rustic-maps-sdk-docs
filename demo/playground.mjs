@@ -19,6 +19,7 @@
         DEFAULT_TILE_SIZE_PIXELS,
         applyTileLayerMode,
         loadVectorBaseOverlays,
+        vectorStyleIdForDescriptor,
       } from './tile_switch.mjs';
 
       // The round-11 control-cluster / follow-camera glue: the §2.4 token
@@ -55,6 +56,13 @@
       const MINIMUM_ZOOM_LEVEL = 0;
       const MAXIMUM_ZOOM_LEVEL = 20;
       const ZOOM_WHEEL_SCALE = 0.0025;
+      // Double click / double tap (round 36): one zoom level around the
+      // pointer under the gesture, recognised within the interval and travel
+      // the platform conventions use. A second tap beyond either bound starts
+      // a fresh pair rather than zooming.
+      const DOUBLE_TAP_ZOOM_STEP = 1.0;
+      const DOUBLE_TAP_INTERVAL_MILLISECONDS = 350;
+      const DOUBLE_TAP_MAXIMUM_MOVEMENT_PIXELS = 24;
       const TILE_COUNT_AT_ZOOM_ZERO = 1;
       const DEGREES_AT_ZOOM_ZERO = 360;
       // Canvas 2D ignores CSS var() style strings (docs/browser-loop.md), so
@@ -94,7 +102,18 @@
       // Distance/duration formatting of the demo progress card.
       const METERS_PER_KILOMETER = 1000;
       const SECONDS_PER_MINUTE = 60;
-      const THEME_NAMES_CYCLING = { dark: 'light', light: 'dark' };
+      // The theme model (§3, owner ruling 2026-10-30): three explicit choices
+      // — Light, Dark and Auto — with Auto as the default. Auto follows the
+      // operating system's `prefers-color-scheme` live; an explicit Light or
+      // Dark choice is remembered on this device and wins from then on.
+      const THEME_CHOICE_NAMES = Object.freeze(['light', 'dark', 'auto']);
+      const THEME_NAMES_CYCLING = Object.freeze({
+        light: 'dark',
+        dark: 'auto',
+        auto: 'light',
+      });
+      const THEME_CHOICE_STORAGE_KEY = 'rusticMapsSdk.themeChoice';
+      const DARK_COLOR_SCHEME_MEDIA_QUERY = '(prefers-color-scheme: dark)';
 
       // --- Round-11 page constants ---
       // The settled pump (§5.3's frame-settled discipline on the on-demand
@@ -123,6 +142,12 @@
       // frame never paints the whole session slow.
       const PERFORMANCE_WARMUP_FRAMES = 3;
       const PERFORMANCE_MINIMUM_SAMPLES_FOR_VERDICT = 5;
+      // The frame-budget scenario (M23): the performance harness drives a
+      // constant-velocity pan through `window.runFrameBudgetScenario`, then
+      // waits this long for the last queued frame to land before reading the
+      // samples, so the measured window ends on a completed frame.
+      const FRAME_BUDGET_SAMPLE_SETTLE_DELAY_MILLISECONDS = 40;
+      const MILLISECONDS_PER_SECOND = 1000;
       // The live raster fallback's ceiling when its registry descriptor
       // declares none (the web-tile grid's common top level).
       const LIVE_RASTER_FALLBACK_ZOOM_LEVEL = 19;
@@ -148,6 +173,13 @@
 
       const map_canvas = document.getElementById('map-canvas');
       const overlay_canvas = document.getElementById('map-overlay');
+      // The control sheet's own element: the route framing's insets keep the
+      // planned route clear of it (docs/ReferenceAppUX.md §4.2).
+      const controls_sheet_element = document.getElementById('controls');
+      // The trip planner's planned-route overlays (the polyline and the A/B
+      // pins): plain `setOverlays` descriptors composed beside the scene
+      // toggles over any base layer.
+      let trip_route_overlays = [];
       const status_element = document.getElementById('harness-status');
       const status_line_element = document.getElementById('status-line');
       const readout_element = document.getElementById('readout');
@@ -289,23 +321,20 @@
       const provider_credential_status = document.getElementById('provider-credential-status');
       const settings_credentials_status =
         document.getElementById('settings-credentials-status');
-      const provider_search_input = document.getElementById('provider-search-input');
-      const provider_search_control = document.getElementById('provider-search-control');
-      const provider_search_results = document.getElementById('provider-search-results');
+      const trip_origin_input = document.getElementById('trip-origin-input');
+      const trip_origin_search_control =
+        document.getElementById('trip-origin-search-control');
+      const trip_destination_input = document.getElementById('trip-destination-input');
+      const trip_destination_search_control =
+        document.getElementById('trip-destination-search-control');
+      const trip_search_results_element = document.getElementById('trip-search-results');
       const trip_suggestions_element = document.getElementById('trip-suggestions');
-      const provider_route_control = document.getElementById('provider-route-control');
-      const provider_route_result = document.getElementById('provider-route-result');
+      const trip_plan_route_control = document.getElementById('trip-plan-route-control');
+      const trip_plan_route_reason = document.getElementById('trip-plan-route-reason');
+      const trip_route_result = document.getElementById('trip-route-result');
       const provider_tile_control = document.getElementById('provider-tile-control');
       const provider_tile_result = document.getElementById('provider-tile-result');
       const provider_tile_preview = document.getElementById('provider-tile-canvas');
-      // The live-route probe's demo waypoints: the recorded Directions
-      // fixture's own trip (1315 10th St → Front St, Sacramento), so a keyed
-      // demo and the fixture-backed test describe the same route.
-      // The trip selection's minimum framing zoom: close enough to read the
-      // destination block without losing the city context.
-      const TRIP_SELECTION_ZOOM_LEVEL = 15;
-      const PROVIDER_ROUTE_DEMO_ORIGIN = { latitude: 38.57693, longitude: -121.49492 };
-      const PROVIDER_ROUTE_DEMO_DESTINATION = { latitude: 38.578739, longitude: -121.507447 };
       // The live-tile probe's address: the Sacramento tile at the playground's
       // zoom-14 camera, served by the same fixture route.
       const PROVIDER_TILE_DEMO_ZOOM_LEVEL = 14;
@@ -365,10 +394,10 @@
       // The provider panels' honest keyless reset: every live result is
       // cleared when the credential is cleared.
       function clear_provider_probe_results() {
-        provider_search_results.textContent = '';
-        provider_search_results.hidden = true;
-        provider_route_result.textContent = '';
-        provider_route_result.hidden = true;
+        trip_search_results_element.textContent = '';
+        trip_search_results_element.hidden = true;
+        trip_route_result.textContent = '';
+        trip_route_result.hidden = true;
         provider_tile_result.textContent = '';
         provider_tile_preview.hidden = true;
       }
@@ -620,13 +649,75 @@
         if (applied_provider_keys.size === 0) {
           set_provider_status(provider_keyless_status_text);
         }
-        // The trip planner's destination: a demo place (keyless) or a live
-        // geocoding result (keyed). Selecting one centers the map and arms
-        // the route action; nothing is invented when nothing matched.
+        // The trip planner's two endpoints: an origin and a destination,
+        // each a demo place (keyless) or a live geocoding result (keyed),
+        // exactly the two-search flow every route planner offers. The demo
+        // artifact's places are the keyless suggestion set, and its recorded
+        // `demo_routes` answer every ordered pair of them, so a keyless
+        // visitor can plan any demo trip without the page inventing geometry.
         const demo_places = REFERENCE_SCENE_ARTIFACT.demo_places ?? [];
-        // The artifact's places are the keyless demo's suggestion set: a
-        // visitor can pick one without typing, and the same places answer
-        // keyless searches.
+        const demo_routes = REFERENCE_SCENE_ARTIFACT.demo_routes ?? [];
+        const TRIP_FIELD_KEYS = Object.freeze(['origin', 'destination']);
+        const TRIP_FIELD_LABELS = Object.freeze({
+          origin: 'Origin',
+          destination: 'Destination',
+        });
+        // The pins' shared style: A green at the origin, B red at the
+        // destination, both at the contract's default head radius.
+        const TRIP_ORIGIN_PIN_COLOR = Object.freeze(
+          { red: 0.13, green: 0.62, blue: 0.29, alpha: 1.0 });
+        const TRIP_DESTINATION_PIN_COLOR = Object.freeze(
+          { red: 0.85, green: 0.16, blue: 0.20, alpha: 1.0 });
+        // The route framing's edge clearance and zoom ceiling: the pins and
+        // the polyline stay clear of the viewport edges and of the control
+        // sheet, and a short downtown route never zooms past street level.
+        const TRIP_FIT_EDGE_MARGIN_PIXELS = 28;
+        const TRIP_FIT_MAXIMUM_ZOOM_LEVEL = 17;
+
+        const trip_fields = {
+          origin: {
+            input: trip_origin_input,
+            search_control: trip_origin_search_control,
+            selected_place: null,
+          },
+          destination: {
+            input: trip_destination_input,
+            search_control: trip_destination_search_control,
+            selected_place: null,
+          },
+        };
+        // The field the suggestion chips fill: whichever field the visitor
+        // last typed in or focused; the destination starts as the default so
+        // a first chip tap still lands somewhere useful.
+        let active_trip_field_key = 'destination';
+
+        function trip_field_label(field_key) {
+          return TRIP_FIELD_LABELS[field_key];
+        }
+
+        /** Enables Plan route only when both fields hold text, with a named
+         * reason while a field is missing (the same gating on every shell). */
+        function refresh_trip_plan_route_state() {
+          const missing_field_keys = TRIP_FIELD_KEYS.filter(
+            (field_key) => trip_fields[field_key].input.value.trim() === '');
+          trip_plan_route_control.disabled = missing_field_keys.length > 0;
+          trip_plan_route_reason.hidden = missing_field_keys.length === 0;
+          trip_plan_route_reason.textContent = missing_field_keys.length === 0
+            ? ''
+            : `Enter ${missing_field_keys.map(trip_field_label).join(' and ')} to plan the route.`;
+        }
+
+        function trip_place_from_demo_place(demo_place) {
+          return {
+            name: demo_place.name,
+            note: demo_place.note ?? '',
+            latitude: demo_place.latitude_degrees,
+            longitude: demo_place.longitude_degrees,
+          };
+        }
+
+        /** The demo places as one-tap suggestions; a tap fills the active
+         * field, so a visitor never has to type to start. */
         function render_trip_suggestions() {
           trip_suggestions_element.textContent = '';
           for (const demo_place of demo_places) {
@@ -634,36 +725,28 @@
             suggestion_chip.type = 'button';
             suggestion_chip.className = 'trip-suggestion-chip';
             suggestion_chip.textContent = demo_place.name;
-            suggestion_chip.addEventListener('click', () => select_trip_place({
-              name: demo_place.name,
-              note: demo_place.note ?? '',
-              latitude: demo_place.latitude_degrees,
-              longitude: demo_place.longitude_degrees,
-            }));
+            suggestion_chip.addEventListener('click', () => assign_trip_place(
+              active_trip_field_key, trip_place_from_demo_place(demo_place)));
             trip_suggestions_element.appendChild(suggestion_chip);
           }
         }
-        let selected_trip_place = null;
-        function select_trip_place(trip_place) {
-          selected_trip_place = trip_place;
-          camera_state.latitude = trip_place.latitude;
-          camera_state.longitude = trip_place.longitude;
-          camera_state.zoom = Math.max(camera_state.zoom, TRIP_SELECTION_ZOOM_LEVEL);
-          controls.zoom.value = camera_state.zoom;
-          for (const preset_button of camera_preset_controls.children) {
-            preset_button.classList.remove('selected');
-          }
-          // The selection resolves the search: the field names the place and
-          // the result list folds away, so only the chosen destination remains
-          // on screen.
-          provider_search_input.value = trip_place.name;
-          provider_search_results.hidden = true;
-          schedule_render();
+
+        /** Fills one field with a chosen place; the selection resolves that
+         * field's search and arms the route action. */
+        function assign_trip_place(field_key, trip_place) {
+          trip_fields[field_key].selected_place = trip_place;
+          trip_fields[field_key].input.value = trip_place.name;
+          trip_search_results_element.hidden = true;
+          active_trip_field_key = field_key;
+          refresh_trip_plan_route_state();
           set_provider_status(
-            `Selected ${trip_place.name}. Plan the route, then start the trip.`);
+            `Selected ${trip_place.name} as the ${trip_field_label(field_key).toLowerCase()}. ` +
+            'Plan the route, then start the trip.');
         }
-        function render_trip_results(result_rows) {
-          provider_search_results.textContent = '';
+
+        /** The result list of one field's search; a row fills that field. */
+        function render_trip_results(field_key, result_rows) {
+          trip_search_results_element.textContent = '';
           for (const result_row of result_rows) {
             const result_item = document.createElement('li');
             const result_button = document.createElement('button');
@@ -679,37 +762,36 @@
               result_note.textContent = result_row.note;
               result_button.appendChild(result_note);
             }
-            result_button.addEventListener('click', () => select_trip_place(result_row));
+            result_button.addEventListener('click', () => assign_trip_place(field_key, result_row));
             result_item.appendChild(result_button);
-            provider_search_results.appendChild(result_item);
+            trip_search_results_element.appendChild(result_item);
           }
-          provider_search_results.hidden = result_rows.length === 0;
+          trip_search_results_element.hidden = result_rows.length === 0;
         }
-        async function search_trip_destination() {
-          const query_text = provider_search_input.value.trim();
+
+        async function search_trip_field(field_key) {
+          const query_text = trip_fields[field_key].input.value.trim();
+          const field_label = trip_field_label(field_key);
           if (query_text === '') {
-            provider_search_results.hidden = true;
-            set_provider_status('Enter a place first.', 'warning');
+            trip_search_results_element.hidden = true;
+            set_provider_status(`Enter a ${field_label.toLowerCase()} first.`, 'warning');
             return;
           }
+          active_trip_field_key = field_key;
           if (applied_provider_keys.size === 0) {
             const query_lowercase = query_text.toLowerCase();
             const matching_places = demo_places
-              .filter((demo_place) =>
-                demo_place.name.toLowerCase().includes(query_lowercase))
-              .map((demo_place) => ({
-                name: demo_place.name,
-                note: demo_place.note ?? '',
-                latitude: demo_place.latitude_degrees,
-                longitude: demo_place.longitude_degrees,
-              }));
-            render_trip_results(matching_places);
+              .filter((demo_place) => demo_place.name.toLowerCase().includes(query_lowercase))
+              .map(trip_place_from_demo_place);
+            render_trip_results(field_key, matching_places);
             if (matching_places.length > 0) {
               set_provider_status(
-                `Demo places: ${matching_places.length}. Select one to plan the trip.`);
+                `Demo places for the ${field_label.toLowerCase()}: ${matching_places.length}. ` +
+                'Select one to fill the field.');
             } else {
               set_provider_status(
-                'No demo place matches; apply a provider key in Settings for live search.',
+                `No demo place matches the ${field_label.toLowerCase()}; ` +
+                'apply a provider key in Settings for live search.',
                 'warning',
               );
             }
@@ -718,7 +800,7 @@
           set_provider_status('Searching…');
           try {
             const place_rows = await window.mapTest.forwardGeocode(query_text);
-            render_trip_results(place_rows.map((place_row) => ({
+            render_trip_results(field_key, place_rows.map((place_row) => ({
               name: place_row.structuredAddressText,
               note: place_row.qualityText,
               latitude: place_row.latitudeDegrees,
@@ -726,7 +808,8 @@
             })));
             if (place_rows.length > 0) {
               set_provider_status(
-                `Live results: ${place_rows.length}. Select one to plan the trip.`);
+                `Live results for the ${field_label.toLowerCase()}: ${place_rows.length}. ` +
+                'Select one to fill the field.');
             } else {
               set_provider_status('The provider returned no results.', 'warning');
             }
@@ -734,47 +817,282 @@
             set_provider_status(`Refused: ${String(error)}`, 'warning');
           }
         }
-        provider_search_control.addEventListener('click', search_trip_destination);
-        // Enter searches: the field is the flow's primary input, so the
-        // keyboard path must not require finding the button.
-        provider_search_input.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            search_trip_destination();
-          }
-        });
+
+        for (const field_key of TRIP_FIELD_KEYS) {
+          const field = trip_fields[field_key];
+          // Typing invalidates the earlier selection: the field's text is
+          // the truth, and Plan route re-resolves from it.
+          field.input.addEventListener('input', () => {
+            field.selected_place = null;
+            active_trip_field_key = field_key;
+            refresh_trip_plan_route_state();
+          });
+          field.input.addEventListener('focus', () => {
+            active_trip_field_key = field_key;
+          });
+          field.search_control.addEventListener('click', () => search_trip_field(field_key));
+          // Enter searches: the field is the flow's primary input, so the
+          // keyboard path must not require finding the button.
+          field.input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              search_trip_field(field_key);
+            }
+          });
+        }
         render_trip_suggestions();
-        provider_route_control.addEventListener('click', async () => {
-          if (applied_provider_keys.size === 0) {
-            provider_route_result.hidden = false;
-            provider_route_result.textContent =
-              'Keyless demo: the recorded Capitol Park \u21d4 Tower Bridge route is the runnable trip. ' +
-              'Apply a provider key in Settings and select a place for live routing.';
-            set_provider_status(
-              'Recorded demo route ready — start the simulated trip.', 'success');
+        refresh_trip_plan_route_state();
+
+        /** Resolves one field to a coordinate: its selected place, a demo
+         * place named exactly by the field's text, or (keyed only) the
+         * provider's first geocoding result. Refuses with a named reason
+         * instead of inventing a place. */
+        async function resolve_trip_endpoint(field_key) {
+          const field = trip_fields[field_key];
+          const field_label = trip_field_label(field_key).toLowerCase();
+          const field_text = field.input.value.trim();
+          if (field_text === '') {
+            throw new Error(`enter a ${field_label} first`);
+          }
+          if (field.selected_place !== null && field.selected_place.name === field_text) {
+            return { ...field.selected_place };
+          }
+          const demo_place = demo_places.find(
+            (candidate) => candidate.name.toLowerCase() === field_text.toLowerCase());
+          if (demo_place !== undefined) {
+            return trip_place_from_demo_place(demo_place);
+          }
+          if (applied_provider_keys.size > 0) {
+            const place_rows = await window.mapTest.forwardGeocode(field_text);
+            if (place_rows.length === 0) {
+              throw new Error(`the provider found no place for the ${field_label} "${field_text}"`);
+            }
+            const first_place = place_rows[0];
+            return {
+              name: first_place.structuredAddressText,
+              latitude: first_place.latitudeDegrees,
+              longitude: first_place.longitudeDegrees,
+            };
+          }
+          throw new Error(
+            `no demo place matches the ${field_label} "${field_text}"; ` +
+            'pick a demo place or apply a provider key');
+        }
+
+        /** The recorded route between two demo places, or null when the
+         * artifact carries no such pair. */
+        function recorded_demo_route(origin_name, destination_name) {
+          return demo_routes.find(
+            (demo_route) => demo_route.origin_name === origin_name
+              && demo_route.destination_name === destination_name) ?? null;
+        }
+
+        /** Flattens a route's step shapes into one traversal-order polyline. */
+        function route_polyline_coordinates(route) {
+          return (route.legs ?? []).flatMap((route_leg) =>
+            (route_leg.steps ?? []).flatMap((route_step) =>
+              (route_step.shape ?? []).map((route_coordinate) => ({
+                latitude: route_coordinate.latitude,
+                longitude: route_coordinate.longitude,
+              }))));
+        }
+
+        /** The route's geographic bounds: the provider's own box when the
+         * record carries one, otherwise the polyline's extent. */
+        function route_bounding_box(route, polyline) {
+          const provided_box = route.bounding_box;
+          if (provided_box?.south_west?.latitude !== undefined
+              && provided_box?.north_east?.latitude !== undefined) {
+            return {
+              south_west: {
+                latitude: provided_box.south_west.latitude,
+                longitude: provided_box.south_west.longitude,
+              },
+              north_east: {
+                latitude: provided_box.north_east.latitude,
+                longitude: provided_box.north_east.longitude,
+              },
+            };
+          }
+          const latitudes = polyline.map((coordinate) => coordinate.latitude);
+          const longitudes = polyline.map((coordinate) => coordinate.longitude);
+          return {
+            south_west: {
+              latitude: Math.min(...latitudes),
+              longitude: Math.min(...longitudes),
+            },
+            north_east: {
+              latitude: Math.max(...latitudes),
+              longitude: Math.max(...longitudes),
+            },
+          };
+        }
+
+        /** The viewport the fit frames: the map canvas' CSS pixel extent. */
+        function trip_fit_viewport() {
+          return {
+            width: map_canvas.clientWidth || overlay_canvas.width,
+            height: map_canvas.clientHeight || overlay_canvas.height,
+          };
+        }
+
+        /** Edge insets keeping the fitted box clear of the control sheet:
+         * the sheet's own side (right on wide viewports, bottom on phones)
+         * plus the fixed margin on the other edges, clamped so the inset
+         * area never collapses. */
+        function trip_fit_edge_insets(viewport) {
+          const edge_insets = {
+            top: TRIP_FIT_EDGE_MARGIN_PIXELS,
+            right: TRIP_FIT_EDGE_MARGIN_PIXELS,
+            bottom: TRIP_FIT_EDGE_MARGIN_PIXELS,
+            left: TRIP_FIT_EDGE_MARGIN_PIXELS,
+          };
+          const sheet_rect = controls_sheet_element.getBoundingClientRect();
+          const canvas_rect = map_canvas.getBoundingClientRect();
+          if (sheet_rect.width === 0 || sheet_rect.height === 0
+              || canvas_rect.width === 0 || canvas_rect.height === 0) {
+            return edge_insets;
+          }
+          const sheet_on_right =
+            sheet_rect.left >= canvas_rect.left + canvas_rect.width / 2;
+          if (sheet_on_right) {
+            edge_insets.right += Math.ceil(canvas_rect.right - sheet_rect.left);
+          } else {
+            edge_insets.bottom += Math.ceil(canvas_rect.bottom - sheet_rect.top);
+          }
+          // The inset area must keep a usable frame: never let a sheet cover
+          // more than 45% of either axis.
+          const maximum_horizontal_inset =
+            Math.floor(viewport.width * 0.45);
+          const maximum_vertical_inset =
+            Math.floor(viewport.height * 0.45);
+          edge_insets.left = Math.min(edge_insets.left, maximum_horizontal_inset);
+          edge_insets.right = Math.min(edge_insets.right, maximum_horizontal_inset);
+          edge_insets.top = Math.min(edge_insets.top, maximum_vertical_inset);
+          edge_insets.bottom = Math.min(edge_insets.bottom, maximum_vertical_inset);
+          return edge_insets;
+        }
+
+        /** Frames the route's bounding box with margin through the contract's
+         * fitted camera, then adopts that pose. */
+        function frame_trip_route(route_box) {
+          const viewport = trip_fit_viewport();
+          const edge_insets = trip_fit_edge_insets(viewport);
+          let fitted_camera;
+          try {
+            fitted_camera = window.mapTest.MapCamera.fittingBounds(
+              route_box.south_west.latitude,
+              route_box.south_west.longitude,
+              route_box.north_east.latitude,
+              route_box.north_east.longitude,
+              viewport.width,
+              viewport.height,
+              edge_insets.top,
+              edge_insets.right,
+              edge_insets.bottom,
+              edge_insets.left,
+              TRIP_FIT_MAXIMUM_ZOOM_LEVEL,
+            );
+          } catch (fit_failure) {
+            show_error_report(
+              'Route framing',
+              String(fit_failure?.message ?? fit_failure),
+            );
             return;
           }
+          const fitted_center = fitted_camera.center();
+          camera_state.latitude = fitted_center.latitude;
+          camera_state.longitude = fitted_center.longitude;
+          camera_state.zoom = fitted_camera.zoomLevel();
+          camera_state.bearing = fitted_camera.bearingDegrees();
+          camera_state.pitch = fitted_camera.pitchDegrees();
+          controls.zoom.value = camera_state.zoom;
+          controls.bearing.value = camera_state.bearing;
+          controls.pitch.value = camera_state.pitch;
+          for (const preset_button of camera_preset_controls.children) {
+            preset_button.classList.remove('selected');
+          }
+          refresh_control_labels();
+          schedule_render();
+        }
+
+        /** Draws the planned route: the step-shape polyline plus the A/B
+         * pins, framed with margin, and reports the summary honestly. */
+        function show_trip_route(route, origin_endpoint, destination_endpoint, is_recorded) {
+          const polyline = route_polyline_coordinates(route);
+          trip_route_overlays = [
+            { kind: 'routePolyline', coordinates: polyline },
+            {
+              kind: 'pointPins',
+              positions: [{
+                latitude: origin_endpoint.latitude,
+                longitude: origin_endpoint.longitude,
+              }],
+              color: TRIP_ORIGIN_PIN_COLOR,
+            },
+            {
+              kind: 'pointPins',
+              positions: [{
+                latitude: destination_endpoint.latitude,
+                longitude: destination_endpoint.longitude,
+              }],
+              color: TRIP_DESTINATION_PIN_COLOR,
+            },
+          ];
+          apply_overlays();
+          frame_trip_route(route_bounding_box(route, polyline));
+          schedule_render();
+          // Recorded routes come from the artifact's snake-case JSON while a
+          // live route carries the wasm seam's camel-case fields; the summary
+          // reads either without rekeying the data.
+          const distance_meters = route.distanceMeters ?? route.distance_meters;
+          const duration_seconds = route.durationSeconds ?? route.duration_seconds;
+          const first_step = route.legs[0]?.steps[0];
+          const first_maneuver_text =
+            first_step?.instructionDisplayText ?? first_step?.instruction_display_text;
+          trip_route_result.hidden = false;
+          trip_route_result.textContent =
+            `${origin_endpoint.name} \u2192 ${destination_endpoint.name}: ` +
+            `${format_distance_text(distance_meters)} · ` +
+            `${format_duration_text(duration_seconds)} · ` +
+            (first_maneuver_text ?? 'no maneuvers') +
+            (is_recorded ? ' \u2014 recorded demo route, pedestrian, fastest.' : '');
+          set_provider_status(
+            is_recorded
+              ? 'Recorded demo route ready \u2014 start the simulated trip.'
+              : 'Live route planned.',
+            'success');
+        }
+
+        trip_plan_route_control.addEventListener('click', async () => {
+          if (trip_plan_route_control.disabled) return;
+          trip_route_result.hidden = true;
+          set_provider_status('Planning\u2026');
           try {
-            const route_origin = selected_trip_place === null
-              ? { latitude: camera_state.latitude, longitude: camera_state.longitude }
-              : PROVIDER_ROUTE_DEMO_ORIGIN;
-            const route_destination = selected_trip_place ?? PROVIDER_ROUTE_DEMO_DESTINATION;
-            const route = await window.mapTest.calculateRoute(
-              route_origin.latitude,
-              route_origin.longitude,
-              route_destination.latitude,
-              route_destination.longitude,
+            const origin_endpoint = await resolve_trip_endpoint('origin');
+            const destination_endpoint = await resolve_trip_endpoint('destination');
+            if (applied_provider_keys.size === 0) {
+              const recorded_route =
+                recorded_demo_route(origin_endpoint.name, destination_endpoint.name);
+              if (recorded_route === null) {
+                throw new Error(
+                  `no recorded route from ${origin_endpoint.name} to ` +
+                  `${destination_endpoint.name}; apply a provider key for live routing`);
+              }
+              show_trip_route(
+                recorded_route.route, origin_endpoint, destination_endpoint, true);
+              return;
+            }
+            const live_route = await window.mapTest.calculateRoute(
+              origin_endpoint.latitude,
+              origin_endpoint.longitude,
+              destination_endpoint.latitude,
+              destination_endpoint.longitude,
             );
-            provider_route_result.hidden = false;
-            const first_maneuver_text = route.legs[0]?.steps[0]?.instructionDisplayText;
-            provider_route_result.textContent =
-              `${format_distance_text(route.distanceMeters)} · ` +
-              `${format_duration_text(route.durationSeconds)} · ` +
-              (first_maneuver_text ?? 'no maneuvers');
-            set_provider_status('Live route planned.', 'success');
+            show_trip_route(live_route, origin_endpoint, destination_endpoint, false);
           } catch (error) {
-            provider_route_result.textContent = '';
-            provider_route_result.hidden = true;
+            trip_route_result.textContent = '';
+            trip_route_result.hidden = true;
             set_provider_status(`Refused: ${String(error)}`, 'warning');
           }
         });
@@ -831,19 +1149,44 @@
         error_report_element.textContent = '';
       }
 
-      // Theme (docs/ReferenceAppUX.md §3): attribute on the root element,
-      // switched by the toggle whose label names the other theme; the 2D
-      // canvas repaints so its literal-mirror styles follow the theme.
-      function current_theme_name() {
-        return document.documentElement.dataset.theme ?? 'dark';
-      }
-      function apply_theme(next_theme) {
-        document.documentElement.dataset.theme = next_theme;
-        theme_toggle_control.textContent =
-          `Switch to ${THEME_NAMES_CYCLING[next_theme]} theme`;
-      }
+      // Theme (docs/ReferenceAppUX.md §3, ruled 2026-10-30): Light / Dark /
+      // Auto with Auto the default. The resolved theme lands on the root
+      // element's `data-theme` (every token and literal-mirror style reads
+      // it), the choice itself on `data-theme-choice`, and the toggle's label
+      // names the choice it switches to next.
       const theme_toggle_control = document.getElementById('theme-toggle-control');
-      apply_theme('dark');
+      const dark_color_scheme_query =
+        typeof window.matchMedia === 'function'
+          ? window.matchMedia(DARK_COLOR_SCHEME_MEDIA_QUERY)
+          : null;
+      let theme_choice = read_local_storage(THEME_CHOICE_STORAGE_KEY);
+      if (!THEME_CHOICE_NAMES.includes(theme_choice)) {
+        theme_choice = 'auto';
+      }
+      function resolved_theme_name() {
+        if (theme_choice !== 'auto') return theme_choice;
+        return dark_color_scheme_query?.matches ? 'dark' : 'light';
+      }
+      function current_theme_name() {
+        return document.documentElement.dataset.theme ?? resolved_theme_name();
+      }
+      function apply_theme_choice(next_choice) {
+        theme_choice = next_choice;
+        write_local_storage(THEME_CHOICE_STORAGE_KEY, next_choice);
+        document.documentElement.dataset.themeChoice = next_choice;
+        document.documentElement.dataset.theme = resolved_theme_name();
+        theme_toggle_control.textContent =
+          `Switch to ${THEME_NAMES_CYCLING[next_choice]} theme`;
+      }
+      apply_theme_choice(theme_choice);
+      // Auto follows the operating system live; an explicit choice ignores
+      // the system from then on.
+      dark_color_scheme_query?.addEventListener?.('change', () => {
+        if (theme_choice !== 'auto') return;
+        document.documentElement.dataset.theme = resolved_theme_name();
+        schedule_render();
+        refresh_vector_base_for_theme();
+      });
 
       // The browser suite drives the advanced controls directly: `?advanced`
       // opens the panel the way a curious user would, without changing what
@@ -861,10 +1204,9 @@
         docs_back_link.hidden = false;
       }
       theme_toggle_control.addEventListener('click', () => {
-        apply_theme(THEME_NAMES_CYCLING[current_theme_name()]);
+        apply_theme_choice(THEME_NAMES_CYCLING[theme_choice]);
         schedule_render();
-        // A vector base repaints in the other palette (and the dark base
-        // clears on its own near-black ground).
+        // A vector base repaints in the palette the new theme resolves to.
         refresh_vector_base_for_theme();
       });
 
@@ -993,13 +1335,34 @@
       // scenes (an all-unchecked list clears it). A wasm-side rejection is
       // a string exception; it surfaces on the error report and the status
       // line, and the previously accepted list stays in force.
+      //
+      // The content list composes over a vector base: the base's own geometry
+      // is a base layer delivered through the same overlay seam, so the two
+      // must share one drawn list (base first) instead of replacing each
+      // other — otherwise choosing a vector base would silently erase the
+      // scene toggles (round 36 field report).
+      let vector_base_overlays = [];
+
+      /** The page's own overlays: the toggled demo scenes, in scene order. */
+      function content_overlay_list() {
+        return [
+          ...sacramento_scene_overlays(
+            Object.entries(overlay_checkboxes)
+              .filter(([, checkbox]) => checkbox.checked)
+              .map(([scene_key]) => scene_key),
+          ),
+          // The planned route and its A/B pins draw over any base layer and
+          // beside every toggled scene.
+          ...trip_route_overlays,
+        ];
+      }
+
+      /** Pushes the composed list for the active base layer. */
       function apply_overlays() {
         if (renderer_mode !== 'gpu' || !gpu_map_canvas) return;
-        const overlay_list = sacramento_scene_overlays(
-          Object.entries(overlay_checkboxes)
-            .filter(([, checkbox]) => checkbox.checked)
-            .map(([scene_key]) => scene_key),
-        );
+        const overlay_list = current_tile_mode === TILE_LAYER_MODES.vector
+          ? [...vector_base_overlays, ...content_overlay_list()]
+          : content_overlay_list();
         try {
           gpu_map_canvas.setOverlays(overlay_list);
         } catch (overlay_failure) {
@@ -1035,11 +1398,22 @@
       // reading as a black map.
       const VECTOR_BASE_RASTER_CLEAR_COLOR = Object.freeze(
         { red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0 });
-      // The vector clear color per theme (the committed dark style paints on
-      // near-black ground; the light style on warm paper).
+      // The vector clear color per theme, used when the active style declares
+      // no background of its own.
       const VECTOR_BASE_CLEAR_COLOR_BY_THEME = Object.freeze({
         light: Object.freeze({ red: 0.94, green: 0.93, blue: 0.90, alpha: 1.0 }),
         dark: Object.freeze({ red: 0.063, green: 0.078, blue: 0.098, alpha: 1.0 }),
+      });
+      // The named styles' own backgrounds, transcribed from the style
+      // artifacts (the color each upstream style was designed on):
+      // Bright `#f8f4f0`, Fiord `#45516E`, Positron `rgb(242,243,240)`.
+      const VECTOR_BASE_CLEAR_COLOR_BY_STYLE = Object.freeze({
+        'bright-light': Object.freeze(
+          { red: 0.972549, green: 0.956863, blue: 0.941176, alpha: 1.0 }),
+        'fiord-dark': Object.freeze(
+          { red: 0.270588, green: 0.317647, blue: 0.431373, alpha: 1.0 }),
+        'positron-light': Object.freeze(
+          { red: 0.949, green: 0.953, blue: 0.941, alpha: 1.0 }),
       });
       const VECTOR_BASE_TILE_SIZE_PIXELS = DEFAULT_TILE_SIZE_PIXELS;
       const VECTOR_BASE_TILE_RADIUS = 1;
@@ -1069,6 +1443,52 @@
       let vector_base_requested_zoom = null;
       const base_map_toggle_element = document.getElementById('base-map-toggle');
       const base_map_status_element = document.getElementById('base-map-status');
+      const vector_style_row_element = document.getElementById('vector-style-row');
+      const vector_style_select_element = document.getElementById('vector-style-select');
+      // The style the visitor picked from the active vector descriptor's
+      // offered styles, or null for "the one matching the resolved theme".
+      let current_vector_style_id = null;
+
+      /** The active descriptor's offered named styles (registry data only). */
+      function offered_vector_styles() {
+        const vector_descriptor = selected_vector_descriptor();
+        return Array.isArray(vector_descriptor?.vector_styles)
+          ? vector_descriptor.vector_styles
+          : [];
+      }
+
+      /** The style the base paints now: the picked one, else the theme join. */
+      function active_vector_style_id() {
+        const vector_descriptor = selected_vector_descriptor();
+        if (vector_descriptor === null) return null;
+        return vectorStyleIdForDescriptor(
+          vector_descriptor, resolved_theme_name(), current_vector_style_id);
+      }
+
+      /** Lists the active descriptor's styles and shows the picker only while
+       * a vector base is active. */
+      function render_vector_style_picker() {
+        const offered_styles = offered_vector_styles();
+        vector_style_row_element.hidden =
+          current_tile_mode !== TILE_LAYER_MODES.vector || offered_styles.length === 0;
+        vector_style_select_element.textContent = '';
+        for (const style_choice of offered_styles) {
+          const style_option = document.createElement('option');
+          style_option.value = style_choice.style_id;
+          style_option.textContent = style_choice.display_name;
+          vector_style_select_element.appendChild(style_option);
+        }
+        const active_style_id = active_vector_style_id();
+        if (active_style_id !== null) {
+          vector_style_select_element.value = active_style_id;
+        }
+      }
+      vector_style_select_element.addEventListener('change', () => {
+        current_vector_style_id = vector_style_select_element.value;
+        apply_vector_base_clear_color();
+        refresh_vector_base();
+        schedule_render();
+      });
 
       /** The registry descriptor declaring a fixture route for one purpose. */
       function base_map_descriptor_for_route_purpose(route_purpose) {
@@ -1148,10 +1568,13 @@
         base_map_status_element.textContent = status_text ?? '';
       }
 
-      /** Applies the active theme's vector clear color to the canvas. */
+      /** Applies the active style's own background (else the theme's paper
+       * color) to the canvas. */
       function apply_vector_base_clear_color() {
-        const clear_color = VECTOR_BASE_CLEAR_COLOR_BY_THEME[current_theme_name()]
-          ?? VECTOR_BASE_CLEAR_COLOR_BY_THEME.dark;
+        const active_style_id = active_vector_style_id();
+        const clear_color = VECTOR_BASE_CLEAR_COLOR_BY_STYLE[active_style_id]
+          ?? VECTOR_BASE_CLEAR_COLOR_BY_THEME[resolved_theme_name()]
+          ?? VECTOR_BASE_CLEAR_COLOR_BY_THEME.light;
         gpu_map_canvas.setBackgroundColor(
           clear_color.red,
           clear_color.green,
@@ -1184,9 +1607,14 @@
             cameraState: camera_snapshot,
             tileSizePixels: VECTOR_BASE_TILE_SIZE_PIXELS,
             tileRadius: VECTOR_BASE_TILE_RADIUS,
-            // The registry names the tile schema; the active theme picks the
-            // committed style palette (`carto-light`, `openmaptiles-dark`, …).
-            styleTheme: current_theme_name(),
+            // The registry offers its named styles; the picker (or the
+            // resolved theme when the visitor has not picked one) selects the
+            // palette the base paints (Bright, Fiord, Positron, …).
+            styleTheme: resolved_theme_name(),
+            selectedStyleId: active_vector_style_id(),
+            // The page's own overlays (scene toggles, later the planned route)
+            // paint over the base in the same drawn list.
+            contentOverlays: content_overlay_list(),
             fetchAndBuildVectorOverlays,
           });
         } catch (vector_failure) {
@@ -1197,9 +1625,15 @@
         // A newer camera pose replaced this load: its result paints nothing,
         // so publishing it would flash an empty base-map status.
         if (vector_result.superseded) return;
+        // Remember the base's own geometry so a later scene toggle recomposes
+        // without re-fetching, and recompose once for toggles that landed
+        // while this load was in flight.
+        vector_base_overlays = vector_result.overlays;
+        apply_overlays();
         if (vector_result.failures.length === 0) {
           set_base_map_status(
-            `Vector base · ${vector_descriptor.display_name}: ` +
+            `Vector base · ${vector_descriptor.display_name} · ` +
+            `${active_vector_style_id()}: ` +
             `${vector_result.overlayCount} styled features over ` +
             `${(2 * VECTOR_BASE_TILE_RADIUS + 1) ** 2} tiles.`);
         } else {
@@ -1262,20 +1696,26 @@
             VECTOR_BASE_RASTER_CLEAR_COLOR.blue,
             VECTOR_BASE_RASTER_CLEAR_COLOR.alpha,
           );
+          vector_base_overlays = [];
           set_overlay_controls_enabled(
             renderer_mode === 'gpu',
             'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
           );
           apply_overlays();
           set_base_map_status(null);
+          render_vector_style_picker();
         } else {
           applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.vector });
           apply_vector_base_clear_color();
+          // The scene toggles and a planned route compose over the vector
+          // base in one drawn list, so they stay available while it draws.
+          vector_base_overlays = [];
           set_overlay_controls_enabled(
-            false,
-            'Scene overlays pause while the vector base map draws its own geometry.',
+            renderer_mode === 'gpu',
+            'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
           );
-          gpu_map_canvas.clearOverlays();
+          render_vector_style_picker();
+          apply_overlays();
           refresh_vector_base();
         }
         schedule_render();
@@ -1287,6 +1727,8 @@
           || renderer_mode !== 'gpu' || !gpu_map_canvas) {
           return;
         }
+        // The theme may have changed which offered style is the default.
+        render_vector_style_picker();
         apply_vector_base_clear_color();
         vector_base_requested_center = null;
         refresh_vector_base();
@@ -1297,6 +1739,7 @@
       window.mapVectorBaseStatus = () =>
         base_map_status_element.hidden ? null : base_map_status_element.textContent;
       render_base_map_toggle();
+      render_vector_style_picker();
 
       // Simulated navigation panel (docs/ReferenceAppUX.md §7.3): until the
       // contract wave ships Navigator on the wasm seam, this
@@ -1482,6 +1925,10 @@
           renderMilliseconds: render_milliseconds,
           drawnTiles: frame_statistics?.drawnTiles ?? 0,
           missingTiles: frame_statistics?.missingTiles ?? 0,
+          // The wasm frame's own stage spans (M23): the frame-budget harness
+          // attributes a slow frame to geometry, encoding or submission from
+          // these instead of inferring it from the total.
+          stageMilliseconds: frame_statistics?.stageMilliseconds ?? null,
         });
         if (frame_performance_samples.length > PERFORMANCE_SAMPLE_WINDOW_FRAMES) {
           frame_performance_samples.shift();
@@ -1501,6 +1948,68 @@
       }
 
       window.mapPerformance = () => performance_summary();
+      /**
+       * The frame-budget scenario (M23): a scripted constant-velocity pan the
+       * performance harness drives from a real browser, so the numbers the
+       * performance chapter quotes come from the page's own frame path rather
+       * than from a synthetic loop. It advances the camera once per animation
+       * frame through the same user-path pan the pointer gesture applies,
+       * renders through the page's normal render step, and resolves with the
+       * frame samples recorded during the window plus the animation-frame
+       * intervals — a frame rate alone cannot tell a smooth 60 Hz loop from a
+       * loop that simply is not drawing.
+       *
+       * The pan runs out and back: the camera returns to where it started, so
+       * the scenario never leaves the recorded tile fixtures (an unmapped edge
+       * frame would report a smaller draw list and flatter numbers) and two
+       * consecutive runs measure the same ground.
+       *
+       * @param {object} options
+       * @param {number} options.panPixelsPerSecond the constant screen-space
+       *   pan velocity, in device pixels per second
+       * @param {number} options.durationMilliseconds how long the pan runs
+       * @returns {Promise<{samples: object[], animationFrameIntervalsMilliseconds:
+       *   number[]}>} the samples recorded during the pan (the page keeps a
+       *   rolling window, so a pan longer than the window reports the window)
+       */
+      window.runFrameBudgetScenario = ({ panPixelsPerSecond, durationMilliseconds }) =>
+        new Promise((resolve) => {
+          const animationFrameIntervalsMilliseconds = [];
+          const scenario_start_milliseconds = performance.now();
+          const scenario_half_duration_milliseconds = durationMilliseconds / 2;
+          let previous_frame_milliseconds = null;
+          let previous_pan_milliseconds = scenario_start_milliseconds;
+          function scenario_step(animation_frame_milliseconds) {
+            if (previous_frame_milliseconds !== null) {
+              animationFrameIntervalsMilliseconds.push(
+                animation_frame_milliseconds - previous_frame_milliseconds);
+            }
+            previous_frame_milliseconds = animation_frame_milliseconds;
+            const pan_milliseconds = animation_frame_milliseconds - previous_pan_milliseconds;
+            previous_pan_milliseconds = animation_frame_milliseconds;
+            const elapsed_milliseconds =
+              animation_frame_milliseconds - scenario_start_milliseconds;
+            const pan_direction =
+              elapsed_milliseconds < scenario_half_duration_milliseconds ? 1 : -1;
+            move_center_by_ground_delta(
+              (pan_direction * panPixelsPerSecond * pan_milliseconds)
+                / MILLISECONDS_PER_SECOND, 0);
+            schedule_render();
+            if (elapsed_milliseconds < durationMilliseconds) {
+              requestAnimationFrame(scenario_step);
+              return;
+            }
+            setTimeout(() => resolve({
+              // The page keeps a rolling window, so the samples are selected
+              // by the scenario's own clock rather than by list position: a
+              // pan longer than the window honestly reports the window.
+              samples: frame_performance_samples.filter(
+                (sample) => sample.atMilliseconds >= scenario_start_milliseconds),
+              animationFrameIntervalsMilliseconds,
+            }), FRAME_BUDGET_SAMPLE_SETTLE_DELAY_MILLISECONDS);
+          }
+          requestAnimationFrame(scenario_step);
+        });
       // The follow demo's live state (the §5.3 machine mirrored as plain
       // page glue; the wasm seam carries no navigation object — §12).
       const FOLLOW_DEMO_PHASE_DISENGAGED = 'disengaged';
@@ -1715,6 +2224,12 @@
         }
         run_render_step();
       }
+
+      // A prefetched tile's payload lands outside any frame (the canvas never
+      // blocks a presenting frame on the network, M23), so the canvas says so
+      // on its element and the page draws the frame that includes it.
+      const MAP_TILE_ARRIVED_EVENT_NAME = 'map-tile-arrived';
+      map_canvas.addEventListener(MAP_TILE_ARRIVED_EVENT_NAME, () => schedule_render());
 
       async function run_render_step() {
         render_busy = true;
@@ -2234,8 +2749,43 @@
       }
 
       let panning = false;
+      // The pointer kind of the gesture in progress: a touch double tap is
+      // recognised from pointer events, and a browser-synthesized `dblclick`
+      // that follows it must not zoom a second time.
+      let last_pointer_kind = 'mouse';
+      let last_touch_tap = null;
+      // The pointer's position in the canvas' own physical pixels (the canvas
+      // backing store can differ from its laid-out size).
+      function pointer_to_canvas_pixels(event) {
+        const canvas_rectangle = overlay_canvas.getBoundingClientRect();
+        return {
+          x_pixels: (event.clientX - canvas_rectangle.left)
+            * (overlay_canvas.width / canvas_rectangle.width),
+          y_pixels: (event.clientY - canvas_rectangle.top)
+            * (overlay_canvas.height / canvas_rectangle.height),
+        };
+      }
+      // Zooms one level around a pointer position: the platform-recognised
+      // double click / double tap, applied through the contract's focal zoom
+      // member like the wheel and the cluster's zoom controls.
+      function zoom_around_canvas_point(canvas_point) {
+        follow_demo_note_camera_gesture();
+        const zoom_target = Math.min(
+          MAXIMUM_ZOOM_LEVEL, camera_state.zoom + DOUBLE_TAP_ZOOM_STEP);
+        const double_tap_pose = resolved_or_null(() =>
+          window.mapTest.zoomCameraByLevelsAroundScreenPoint(
+            build_camera(),
+            zoom_target - camera_state.zoom,
+            canvas_point.x_pixels, canvas_point.y_pixels,
+            overlay_canvas.width, overlay_canvas.height, FIELD_OF_VIEW_DEGREES,
+          ));
+        if (!apply_camera_pose(double_tap_pose)) {
+          refresh_control_labels(); schedule_render();
+        }
+      }
       overlay_canvas.addEventListener('pointerdown', (event) => {
         panning = true; overlay_canvas.classList.add('panning');
+        last_pointer_kind = event.pointerType === 'touch' ? 'touch' : 'mouse';
         follow_demo_note_camera_gesture();
         overlay_canvas.setPointerCapture(event.pointerId);
         last_pointer_position = [event.clientX, event.clientY];
@@ -2247,8 +2797,33 @@
         last_pointer_position = [event.clientX, event.clientY];
         move_center_by_ground_delta(delta_x_pixels, delta_y_pixels);
       });
-      overlay_canvas.addEventListener('pointerup', () => {
+      overlay_canvas.addEventListener('pointerup', (event) => {
         panning = false; overlay_canvas.classList.remove('panning');
+        // A touch double tap zooms; pointer capture keeps the second tap on
+        // the canvas, so the pair is recognised from pointer-ups alone.
+        if (event.pointerType !== 'touch') return;
+        const tap_point = pointer_to_canvas_pixels(event);
+        const now_milliseconds = performance.now();
+        const previous_tap = last_touch_tap;
+        last_touch_tap = { atMilliseconds: now_milliseconds, ...tap_point };
+        if (previous_tap === null) return;
+        const interval_milliseconds = now_milliseconds - previous_tap.atMilliseconds;
+        const travel_pixels = Math.hypot(
+          tap_point.x_pixels - previous_tap.x_pixels,
+          tap_point.y_pixels - previous_tap.y_pixels,
+        );
+        if (interval_milliseconds > DOUBLE_TAP_INTERVAL_MILLISECONDS
+          || travel_pixels > DOUBLE_TAP_MAXIMUM_MOVEMENT_PIXELS) {
+          return;
+        }
+        last_touch_tap = null;
+        zoom_around_canvas_point(tap_point);
+      });
+      overlay_canvas.addEventListener('dblclick', (event) => {
+        // A touch double tap already zoomed from its pointer pair.
+        if (last_pointer_kind === 'touch') return;
+        event.preventDefault();
+        zoom_around_canvas_point(pointer_to_canvas_pixels(event));
       });
       overlay_canvas.addEventListener('wheel', (event) => {
         event.preventDefault();
@@ -2365,6 +2940,9 @@
             ? ''
             : `Scene overlays draw on the WebGPU surface only; this session uses the 2D tile grid (${renderer_detail}).`,
         );
+        // Overlays composed before the surface came up (a route planned while
+        // the renderer was starting, a toggled scene) land now.
+        apply_overlays();
         // The vector base rows were rendered before the renderer answered;
         // they become clickable now (or stay disabled on the 2D path).
         refresh_base_map_toggle_enabled_state();

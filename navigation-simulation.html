@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
+            window.path_to_searchindex_js = "searchindex-b2f143ef.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-b255da14.js"></script>
+        <script src="toc-767d5ab6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -294,18 +294,19 @@ val routeOverlay = MapOverlay(
     pointMarkerRadiusPixels = null,
     trafficFlowSegments = null,
 )
-mapSurface.setOverlays(listOf(routeOverlay))
+mapView.setOverlays(listOf(routeOverlay))
 
 // On every fix (or every instruction, if you follow instructions instead
 // of raw fixes): a 3D course-up camera over the vehicle.
-val followCamera = MapCamera(
-    center = fix.coordinate,
-    zoomLevel = FOLLOW_ZOOM_LEVEL,
+val followCamera = MapCameraPose(
+    latitudeDegrees = fix.coordinate.latitude,
+    longitudeDegrees = fix.coordinate.longitude,
+    zoomLevel = followZoomLevel,
     bearingDegrees = smoothedCourseHeadingDegrees,
-    pitchDegrees = FOLLOW_PITCH_DEGREES,
+    pitchDegrees = followPitchDegrees,
 )
-mapSurface.setLocationIndicator(locationIndicatorState, locationIndicatorStyle)
-mapSurface.draw(followCamera)
+mapView.setLocationIndicator(locationIndicatorState, locationIndicatorStyle)
+mapView.setCamera(followCamera)
 </code></pre>
 <p>Keep the bearing smoothed rather than raw: a fix-to-fix course jitters at
 low speed, and a camera that follows it reads as shaky. When the user pans
@@ -417,16 +418,17 @@ let subscription = navigationController.addNavigationListener(listener: listener
     pointMarkerRadiusPixels: nil,
     trafficFlowSegments: nil
 )
-try mapSurface.setOverlays(overlayDescriptors: [routeOverlay])
+_ = mapView.setOverlays([routeOverlay])
 
-let followCamera = try MapCamera(
-    center: fix.coordinate,
+let followCamera = MapCameraPose(
+    latitudeDegrees: fix.coordinate.latitude,
+    longitudeDegrees: fix.coordinate.longitude,
     zoomLevel: followZoomLevel,
     bearingDegrees: smoothedCourseHeadingDegrees,
     pitchDegrees: followPitchDegrees
 )
-try mapSurface.setLocationIndicator(state: locationIndicatorState, style: locationIndicatorStyle)
-try await mapSurface.draw(camera: followCamera)
+mapView.setLocationIndicator(state: locationIndicatorState, style: locationIndicatorStyle)
+mapView.setCamera(followCamera)
 </code></pre>
 <p>The camera follows the smoothed course, not the raw fix-to-fix bearing, and a
 pan gesture hands control back to the user until the location control is
