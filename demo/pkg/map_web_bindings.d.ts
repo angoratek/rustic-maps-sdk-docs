@@ -348,6 +348,70 @@ export class MapsSdk {
 }
 
 /**
+ * Turn-by-turn navigation over a planned route, mirroring the driving and
+ * readback core of the contract's `Navigator`.
+ *
+ * Build it with `new Navigator()`; `startNavigation(route, unitSystem)`
+ * begins a trip over a `Route` exactly as `calculateRoute` answers it
+ * (`unitSystem` is `"metric"` or `"imperial"`), `updateLocation(update)`
+ * consumes one `NavigationLocationUpdate` and answers the trip snapshot
+ * (or `null` without a trip), `applyReroute(route)` swaps the active
+ * trip's route, `stopNavigation()` clears it, and `currentTripState()`
+ * answers the latest snapshot (`null` without a trip).
+ *
+ * The snapshot's `phase` is `"navigating"`, `"offRoute"` or `"arrived"`
+ * (the contract's `Navigating`/`OffRoute`/`Arrived`); `instruction` is the
+ * composed payload (`activeManeuver` with `distancePhraseText` and
+ * `displayText`, an optional `upcomingManeuver`, `progress`, and the
+ * `isArrival`/`isReroutingRequired` markers); `deviation` is
+ * `{statusChangeKind, distanceFromRouteMeters}` exactly while the phase is
+ * off route; `snappedCoordinate` is `{latitude, longitude}` once a fix has
+ * been processed. The listener, speech and reroute-recalculation members
+ * of the contract's `Navigator` stay native until the wasm seam carries a
+ * foreign-listener contract; `hasActiveTrip()` is the wasm-only helper.
+ */
+export class Navigator {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Replaces the active trip's route (a reroute); without an active trip
+     * the route is dropped. Throws a message for a route the conversion
+     * cannot parse.
+     */
+    applyReroute(route: any): void;
+    /**
+     * The latest trip snapshot, or `null` without an active trip.
+     */
+    currentTripState(): any;
+    /**
+     * Whether a trip is active.
+     */
+    hasActiveTrip(): boolean;
+    /**
+     * Builds the controller with no active trip.
+     */
+    constructor();
+    /**
+     * Begins navigating `route` with the SDK default policies, replacing
+     * any active trip. Throws a message for a route the conversion cannot
+     * parse or a unit system other than `"metric"`/`"imperial"`.
+     */
+    startNavigation(route: any, unit_system: string): void;
+    /**
+     * Ends the active trip: `currentTripState()` answers `null` afterwards
+     * and location updates and reroutes are dropped until the next
+     * `startNavigation`.
+     */
+    stopNavigation(): void;
+    /**
+     * Delivers one position fix to the active trip and answers the
+     * resulting snapshot, or `null` without an active trip (the fix is
+     * then dropped). Throws a message for a malformed update object.
+     */
+    updateLocation(update: any): any;
+}
+
+/**
  * An immutable simulated trip along the planned route's own geometry,
  * mirroring the contract's `RouteSimulator` (M27).
  *
@@ -556,14 +620,13 @@ export function initializeSdk(): Promise<any>;
  * `RouteData`/`RouteLeg`/`RouteStep` dictionaries field for field (lower
  * camel case; `maneuverType` the stable snake-case label).
  *
- * Deliberately a demo/parity seam ahead of the contract: the async
- * provider surface (`MapSdk` and its offline routing members) has no wasm
- * exposure yet, so the helper is documented as wasm-only in
- * `platform/web/tests/contract_sync.mjs`, exactly like the camera gesture
- * helpers. Failures throw the plain verbatim error string (the harness's
- * established shape): bytes that fail archive validation, a coordinate
- * within no graph node's snap tolerance, or a request pair the graph
- * cannot connect — refused, never guessed.
+ * The browser half of the contract's `offline_route_from_archive_bytes`
+ * free helper: both delegate to
+ * [`map_core::offline_routing::calculate_offline_route_from_archive_bytes`],
+ * so the native and wasm answers cannot drift. Failures throw the plain
+ * verbatim error string (the harness's established shape): bytes that fail
+ * archive validation, a coordinate within no graph node's snap tolerance,
+ * or a request pair the graph cannot connect — refused, never guessed.
  */
 export function offlineRouteFromArchiveBytes(archive_bytes: Uint8Array, start_latitude: number, start_longitude: number, end_latitude: number, end_longitude: number): Promise<any>;
 
@@ -697,6 +760,7 @@ export interface InitOutput {
     readonly __wbg_mapcamera_free: (a: number, b: number) => void;
     readonly __wbg_mapssdk_free: (a: number, b: number) => void;
     readonly __wbg_mapview_free: (a: number, b: number) => void;
+    readonly __wbg_navigator_free: (a: number, b: number) => void;
     readonly __wbg_routesimulator_free: (a: number, b: number) => void;
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
     readonly clearMapquestProviders: () => void;
@@ -742,6 +806,13 @@ export interface InitOutput {
     readonly mapview_setRasterTileSource: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
     readonly mapview_updateOverlay: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly navigator_applyReroute: (a: number, b: number, c: number) => void;
+    readonly navigator_currentTripState: (a: number, b: number) => void;
+    readonly navigator_hasActiveTrip: (a: number) => number;
+    readonly navigator_new: () => number;
+    readonly navigator_startNavigation: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly navigator_stopNavigation: (a: number) => void;
+    readonly navigator_updateLocation: (a: number, b: number, c: number) => void;
     readonly offlineRouteFromArchiveBytes: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly panCameraByScreenPixels: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly registerProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
@@ -761,12 +832,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1460: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1460_66: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1460_67: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7725: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7746: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1275: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1507: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1507_73: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1507_74: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7772: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7793: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1304: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

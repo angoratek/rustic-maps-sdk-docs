@@ -166,8 +166,8 @@
       "provenance": "Recorded route geometry with deterministic synthetic fixes: the route is the provider-recorded pedestrian route Capitol Park -> Tower Bridge (the demo_routes member of this artifact, stitched at its shared step vertices), and the fixes are generated along it from a recorded seed by map-navigation's trace_fixture generator. No live GPS capture."
     },
     "wasm_seam_status": {
-      "available": false,
-      "reason": "The Navigator is not exposed on the wasm seam yet; live simulated navigation arrives with the contract wave. Kotlin and Swift bind it today through the frozen UniFFI contract."
+      "available": true,
+      "reason": "The wasm seam exposes the Navigator: the browser demo's guidance card is driven by the same navigation reducer the native controllers use."
     },
     "layout_preview": {
       "notice": "Layout preview with fixed sample values from the demo trace's first recorded state. Illustrative and explicitly not live guidance.",
@@ -186,7 +186,7 @@
       },
       "deviation_alert_preview": {
         "status_change_kind": "OffRoute",
-        "text": "Off route \u2014 12.4 m from the route line; guidance is frozen until a graded fix recovers or a reroute applies."
+        "text": "Off route — 12.4 m from the route line; guidance is frozen until a graded fix recovers or a reroute applies."
       }
     }
   },
@@ -6113,4 +6113,5 @@
         ]
       }
     }
-  ]}
+  ]
+}

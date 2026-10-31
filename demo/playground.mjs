@@ -211,6 +211,10 @@
       // pins): plain `setOverlays` descriptors composed beside the scene
       // toggles over any base layer.
       let trip_route_overlays = [];
+      // The route record behind those overlays, kept so the wasm `Navigator`
+      // can start on the same geometry the camera follows (the overlays alone
+      // carry no steps or maneuvers).
+      let planned_route_record = null;
       const status_element = document.getElementById('harness-status');
       const status_line_element = document.getElementById('status-line');
       const readout_element = document.getElementById('readout');
@@ -1072,6 +1076,7 @@
          * pins, framed with margin, and reports the summary honestly. */
         function show_trip_route(route, origin_endpoint, destination_endpoint, is_recorded) {
           const polyline = route_polyline_coordinates(route);
+          planned_route_record = route;
           trip_route_overlays = [
             { kind: 'routePolyline', coordinates: polyline },
             {
@@ -1829,51 +1834,271 @@
       render_base_map_toggle();
       render_vector_style_picker();
 
-      // Simulated navigation panel (docs/ReferenceAppUX.md §7.3): until the
-      // contract wave ships Navigator on the wasm seam, this
-      // is a plainly labeled spec-driven layout preview — the demo
-      // artifact's fixed sample values, with the pending-seam reason and
-      // the preview notice both visible. No live data is faked here.
+      // Simulated navigation panel (docs/ReferenceAppUX.md §7.3): live
+      // guidance from the wasm `Navigator`, the same reducer the native
+      // controllers drive. The panel is idle until a simulated trip starts on
+      // a planned route; every row it shows then comes from the trip snapshot
+      // (phase, banner, upcoming maneuver, progress, deviation), never from a
+      // preview sample.
       const navigation_demo_reason = document.getElementById('navigation-demo-reason');
       const navigation_demo_preview_notice =
         document.getElementById('navigation-demo-preview-notice');
-      const navigation_demo = REFERENCE_SCENE_ARTIFACT.navigation_demo;
+      const deviation_alert_element = document.getElementById('deviation-alert-preview');
+      const NAVIGATION_IDLE_REASON_TEXT =
+        'Plan a route, then start the simulated trip to see live guidance.';
+      // The seek catch-up (M29): the navigator is fed a fix every
+      // SYNC_STEP meters, capped at MAXIMUM_SYNC_FIX_COUNT fixes so a long
+      // route's seek stays fast.
+      const LIVE_NAVIGATION_SYNC_STEP_METERS = 10;
+      const LIVE_NAVIGATION_MAXIMUM_SYNC_FIX_COUNT = 400;
 
-      document.getElementById('banner-distance-phrase-text').textContent =
-        navigation_demo.layout_preview.active_maneuver.distance_phrase_text;
-      document.getElementById('banner-instruction-text').textContent =
-        navigation_demo.layout_preview.active_maneuver.display_text;
-      document.getElementById('upcoming-instruction-text').textContent =
-        `Then: ${navigation_demo.layout_preview.upcoming_maneuver.display_text}`;
-      // The preview's phase word is chrome, not content: the scene artifact
-      // carries the sample phase in its own spelling, and the page renders the
+      // The snapshot's phase spelling is the seam's own; the chip renders the
       // shared consumer label for it. An unknown spelling stays verbatim
       // rather than being guessed at.
       const NAVIGATION_PHASE_LABEL_BY_RAW_PHASE = Object.freeze({
-        Navigating: ui_label_text('navigation.phase_navigating'),
-        OffRoute: ui_label_text('navigation.phase_off_route'),
-        Arrived: ui_label_text('navigation.phase_arrived'),
+        navigating: ui_label_text('navigation.phase_navigating'),
+        offRoute: ui_label_text('navigation.phase_off_route'),
+        arrived: ui_label_text('navigation.phase_arrived'),
       });
       function navigation_phase_label_text(raw_phase) {
         return NAVIGATION_PHASE_LABEL_BY_RAW_PHASE[raw_phase] ?? raw_phase;
       }
-      document.getElementById('navigation-phase-value').textContent =
-        navigation_phase_label_text(navigation_demo.layout_preview.phase);
-      const preview_progress = navigation_demo.layout_preview.progress;
-      document.getElementById('progress-distance-to-maneuver-value').textContent =
-        format_distance_text(preview_progress.distance_to_next_maneuver_meters);
-      document.getElementById('progress-distance-remaining-value').textContent =
-        format_distance_text(preview_progress.distance_remaining_meters);
-      document.getElementById('progress-duration-remaining-value').textContent =
-        format_duration_text(preview_progress.duration_remaining_seconds);
-      const deviation_alert_element = document.getElementById('deviation-alert-preview');
-      deviation_alert_element.hidden = false;
-      deviation_alert_element.textContent =
-        navigation_demo.layout_preview.deviation_alert_preview.text;
-      navigation_demo_reason.textContent =
-        `${navigation_demo.wasm_seam_status.reason}`;
-      navigation_demo_preview_notice.textContent =
-        layout_preview_notice();
+
+      // The active wasm navigator, or null between trips. One trip at a time,
+      // like the native controllers.
+      let live_navigator = null;
+
+      /**
+       * Draws one trip snapshot into the panel: the banner instruction, the
+       * upcoming maneuver, the three progress rows, the phase chip and the
+       * deviation alert. Values are the snapshot's own; only the formatting
+       * (metres/kilometres, minutes) happens here.
+       */
+      function render_navigation_snapshot(snapshot) {
+        if (snapshot === null) {
+          render_navigation_idle(NAVIGATION_IDLE_REASON_TEXT);
+          return;
+        }
+        navigation_demo_reason.hidden = true;
+        navigation_demo_preview_notice.hidden = true;
+        const instruction = snapshot.instruction;
+        document.getElementById('navigation-phase-value').textContent =
+          navigation_phase_label_text(snapshot.phase);
+        document.getElementById('banner-distance-phrase-text').textContent =
+          instruction.activeManeuver.distancePhraseText;
+        // The phrase line already names the distance; the banner shows the
+        // provider's own sentence (as the native cards do) rather than the
+        // composed variant that repeats the distance inside it.
+        document.getElementById('banner-instruction-text').textContent =
+          instruction.activeManeuver.providerDisplayText
+          ?? instruction.activeManeuver.displayText;
+        document.getElementById('upcoming-instruction-text').textContent =
+          instruction.upcomingManeuver === null
+            ? ''
+            : `Then: ${instruction.upcomingManeuver.displayText}`;
+        document.getElementById('progress-distance-to-maneuver-value').textContent =
+          format_distance_text(instruction.progress.distanceToNextManeuverMeters);
+        document.getElementById('progress-distance-remaining-value').textContent =
+          format_distance_text(instruction.progress.distanceRemainingMeters);
+        document.getElementById('progress-duration-remaining-value').textContent =
+          format_duration_text(instruction.progress.durationRemainingSeconds);
+        if (snapshot.deviation === null) {
+          deviation_alert_element.hidden = true;
+          deviation_alert_element.textContent = '';
+        } else {
+          deviation_alert_element.hidden = false;
+          deviation_alert_element.textContent = ui_label_text_with_values(
+            'navigation.deviation_alert',
+            {
+              offset: format_distance_text(
+                snapshot.deviation.distanceFromRouteMeters),
+            },
+          );
+        }
+      }
+
+      /** Clears the panel and states why it has nothing to show. */
+      function render_navigation_idle(reason_text) {
+        navigation_demo_reason.hidden = false;
+        navigation_demo_reason.textContent = reason_text;
+        navigation_demo_preview_notice.hidden = true;
+        document.getElementById('navigation-phase-value').textContent =
+          ui_label_text('navigation.phase_not_started');
+        document.getElementById('banner-distance-phrase-text').textContent = '';
+        document.getElementById('banner-instruction-text').textContent = '';
+        document.getElementById('upcoming-instruction-text').textContent = '';
+        document.getElementById('progress-distance-to-maneuver-value').textContent = '—';
+        document.getElementById('progress-distance-remaining-value').textContent = '—';
+        document.getElementById('progress-duration-remaining-value').textContent = '—';
+        deviation_alert_element.hidden = true;
+        deviation_alert_element.textContent = '';
+      }
+
+      /**
+       * Normalizes a route record to the seam's camel-case `Route` shape. A
+       * recorded demo route comes from the artifact's snake-case JSON and a
+       * live route already carries the seam's own fields; both feed the same
+       * navigator, so one reader accepts either spelling.
+       */
+      function route_record_for_navigator(route) {
+        const coordinate = (raw_coordinate) => ({
+          latitude: raw_coordinate.latitude,
+          longitude: raw_coordinate.longitude,
+        });
+        const step = (raw_step) => ({
+          distanceMeters: raw_step.distanceMeters ?? raw_step.distance_meters,
+          durationSeconds: raw_step.durationSeconds ?? raw_step.duration_seconds,
+          maneuverType: raw_step.maneuverType ?? raw_step.maneuver_type,
+          instructionDisplayText:
+            raw_step.instructionDisplayText ?? raw_step.instruction_display_text,
+          instructionSpeechText:
+            raw_step.instructionSpeechText ?? raw_step.instruction_speech_text,
+          shape: (raw_step.shape ?? []).map(coordinate),
+        });
+        const leg = (raw_leg) => ({
+          distanceMeters: raw_leg.distanceMeters ?? raw_leg.distance_meters,
+          durationSeconds: raw_leg.durationSeconds ?? raw_leg.duration_seconds,
+          steps: (raw_leg.steps ?? []).map(step),
+        });
+        if (!Array.isArray(route.legs) || route.legs.length === 0) {
+          throw new Error('the route carries no legs to navigate');
+        }
+        const bounding_box = route.boundingBox ?? route.bounding_box;
+        // The seam's parser requires a box; a route without one falls back to
+        // its own first and last coordinates rather than inventing data.
+        let bounding_corners;
+        if (bounding_box !== undefined && bounding_box !== null) {
+          bounding_corners = {
+            southWest: coordinate(bounding_box.southWest ?? bounding_box.south_west),
+            northEast: coordinate(bounding_box.northEast ?? bounding_box.north_east),
+          };
+        } else {
+          const last_leg = route.legs[route.legs.length - 1];
+          const last_step = last_leg.steps[last_leg.steps.length - 1];
+          bounding_corners = {
+            southWest: coordinate(route.legs[0].steps[0].shape[0]),
+            northEast: coordinate(last_step.shape[last_step.shape.length - 1]),
+          };
+        }
+        return {
+          distanceMeters: route.distanceMeters ?? route.distance_meters,
+          durationSeconds: route.durationSeconds ?? route.duration_seconds,
+          boundingBox: bounding_corners,
+          legs: route.legs.map(leg),
+        };
+      }
+
+      /** Starts live guidance on the planned route, or says why it cannot. */
+      function start_live_navigation() {
+        stop_live_navigation(NAVIGATION_IDLE_REASON_TEXT);
+        if (planned_route_record === null) {
+          render_navigation_idle(
+            'Plan a route first; live guidance follows the route you planned.');
+          return;
+        }
+        try {
+          const navigator = new window.mapTest.Navigator();
+          navigator.startNavigation(
+            route_record_for_navigator(planned_route_record), 'metric');
+          live_navigator = navigator;
+          render_navigation_snapshot(navigator.currentTripState());
+        } catch (navigation_failure) {
+          live_navigator = null;
+          render_navigation_idle(
+            `Guidance unavailable: ${String(navigation_failure)}`);
+        }
+      }
+
+      /** Ends the live trip (if any) and clears the panel. */
+      function stop_live_navigation(idle_reason_text = NAVIGATION_IDLE_REASON_TEXT) {
+        if (live_navigator !== null) {
+          try {
+            live_navigator.stopNavigation();
+          } catch {
+            // A refusal on stop cannot leave a stale trip in the panel: the
+            // reference is dropped below either way.
+          }
+          live_navigator = null;
+        }
+        render_navigation_idle(idle_reason_text);
+      }
+
+      /**
+       * Delivers one fix to the live navigator and answers its snapshot (or
+       * null without a trip). The trip's own walker supplies the coordinate
+       * and course; the fix carries the demo's declared accuracy, because a
+       * fix without accuracy is never judged.
+       */
+      function deliver_live_navigation_fix(fix) {
+        if (live_navigator === null) {
+          return null;
+        }
+        return live_navigator.updateLocation({
+          coordinate: { latitude: fix.latitude, longitude: fix.longitude },
+          horizontalAccuracyMeters: FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
+          courseHeadingDegrees: fix.courseHeadingDegrees ?? null,
+          timestampSeconds: null,
+        });
+      }
+
+      /** Delivers one simulated fix to the navigator and redraws the panel. */
+      function advance_live_navigation(fix) {
+        if (live_navigator === null) {
+          return;
+        }
+        try {
+          render_navigation_snapshot(deliver_live_navigation_fix(fix));
+        } catch (navigation_failure) {
+          render_navigation_idle(
+            `Guidance unavailable: ${String(navigation_failure)}`);
+        }
+      }
+
+      /**
+       * Brings the guidance state to the trip's current position after a
+       * seek. The reducer is a forward-only progress machine: a single fix
+       * teleported far down the route lands on the current step's projection
+       * and never advances through the steps between. Replaying the route's
+       * own fixes from the start to the position reproduces exactly the state
+       * a drive there would have produced — no guidance value is invented —
+       * and works for a backward seek as well.
+       */
+      function sync_live_navigation_to_travelled_distance() {
+        if (live_navigator === null || planned_route_record === null) {
+          return;
+        }
+        const target_meters = Math.min(
+          Math.max(follow_demo.travelled_meters, 0), follow_demo.total_meters);
+        start_live_navigation();
+        if (live_navigator === null) {
+          return;
+        }
+        const step_meters = Math.max(
+          LIVE_NAVIGATION_SYNC_STEP_METERS,
+          target_meters / LIVE_NAVIGATION_MAXIMUM_SYNC_FIX_COUNT,
+        );
+        let snapshot = live_navigator.currentTripState();
+        for (
+          let travelled_meters = step_meters;
+          travelled_meters < target_meters;
+          travelled_meters += step_meters
+        ) {
+          snapshot = deliver_live_navigation_fix(
+            polyline_fix_at_travelled_meters(
+              follow_demo.route_polyline, travelled_meters));
+        }
+        snapshot = deliver_live_navigation_fix(
+          polyline_fix_at_travelled_meters(
+            follow_demo.route_polyline, target_meters));
+        render_navigation_snapshot(snapshot);
+      }
+
+      // The harness reads the live trip state without reaching into page
+      // internals (the browser case asserts guidance follows the fixes).
+      window.mapNavigationSnapshot = () =>
+        live_navigator === null ? null : live_navigator.currentTripState();
+
+      render_navigation_idle(NAVIGATION_IDLE_REASON_TEXT);
 
       // Formats one progress distance for the demo card (metric on web).
       function format_distance_text(distance_meters) {
@@ -1886,10 +2111,6 @@
       function format_duration_text(duration_seconds) {
         const duration_minutes = Math.round(duration_seconds / SECONDS_PER_MINUTE);
         return `${duration_minutes} min`;
-      }
-
-      function layout_preview_notice() {
-        return `${navigation_demo.layout_preview.notice} — layout preview, sample values, not live guidance`;
       }
 
       // Camera state; the camera object itself is rebuilt on every change
@@ -2746,7 +2967,10 @@
         }
         follow_demo.travelled_meters = Math.min(
           Math.max(target_meters, 0), follow_demo.total_meters);
-        on_follow_demo_fix(false);
+        // The camera follows every scrub sample; guidance catches up once on
+        // release (finish_follow_demo_seek), because a single teleported fix
+        // cannot advance the reducer's steps.
+        on_follow_demo_fix(false, false);
         if (follow_demo.has_arrived) {
           return;
         }
@@ -2760,6 +2984,9 @@
       }
 
       function end_follow_demo_trip(end_live_text) {
+        // The guidance card belongs to the trip: ending it clears the card.
+        // An arrival keeps its last snapshot (phase Arrived) until Stop.
+        stop_live_navigation();
         if (follow_demo.fix_interval_id !== null) clearInterval(follow_demo.fix_interval_id);
         follow_demo.fix_interval_id = null;
         follow_demo.phase = FOLLOW_DEMO_PHASE_DISENGAGED;
@@ -2793,7 +3020,7 @@
         schedule_render();
       }
 
-      function on_follow_demo_fix(advances = true) {
+      function on_follow_demo_fix(advances = true, feeds_guidance = true) {
         // The walk clamps at the route's total length, so the last fix lands
         // exactly on the destination instead of stopping a tick short of it.
         const travelled_meters = Math.min(
@@ -2807,6 +3034,12 @@
         const fix = polyline_fix_at_travelled_meters(
           follow_demo.route_polyline, travelled_meters);
         follow_demo.latest_fix = { latitude: fix.latitude, longitude: fix.longitude };
+        // The same fix that moves the camera drives the guidance card: the
+        // navigator judges it, advances steps and composes the banner. A
+        // scrubbing seek suppresses this and resyncs on release instead.
+        if (feeds_guidance) {
+          advance_live_navigation(fix);
+        }
         // §5.3: a fix retargets the smoothed course and the ramped zoom; the
         // camera follows only while engaged. A gesture keeps follow broken
         // until the my-location control re-engages it — a fix never silently
@@ -2879,6 +3112,9 @@
       const finish_follow_demo_seek = () => {
         follow_demo.is_seeking = false;
         refresh_follow_demo_seek_control();
+        // Guidance catches up on release: the route is replayed to the seeked
+        // position, so the banner, progress and phase match the camera.
+        sync_live_navigation_to_travelled_distance();
       };
       follow_demo_seek_control.addEventListener('change', finish_follow_demo_seek);
       window.addEventListener('pointerup', () => {
@@ -2922,6 +3158,9 @@
         follow_demo_start_control.textContent = FOLLOW_DEMO_STOP_TEXT;
         refresh_follow_demo_playback_row(true);
         follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
+        // Live guidance starts on the planned route before the first fix, so
+        // the banner already names the first maneuver when the trip begins.
+        start_live_navigation();
         follow_demo.fix_interval_id = setInterval(
           on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
         on_follow_demo_fix();
