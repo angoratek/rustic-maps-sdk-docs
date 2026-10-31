@@ -44,6 +44,17 @@ export const VECTOR_STYLE_CHOICES_FIELD = 'vector_styles';
 /** The style schema a descriptor without the field paints. */
 export const DEFAULT_VECTOR_STYLE_SCHEMA = 'carto';
 
+/**
+ * Invalidates every in-flight vector-base load: each one stops at its next
+ * boundary and returns `superseded` without applying its overlay list. A
+ * caller leaving the vector base calls this before clearing the canvas, so a
+ * load that started moments earlier cannot paint its geometry over the raster
+ * layer that replaced it (the superposition this guard exists to prevent).
+ */
+export function cancelVectorBaseLoad() {
+  active_load_generation += 1;
+}
+
 /** The theme a caller without an active theme paints. */
 export const DEFAULT_VECTOR_STYLE_THEME = 'light';
 
