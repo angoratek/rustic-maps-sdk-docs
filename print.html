@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-719c8217.js";
+            window.path_to_searchindex_js = "searchindex-87535731.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -2580,7 +2580,7 @@ app’s settings surface or its automation seam; no build holds one.</p>
 <h2 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h2>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application in a simulated trip along N Street in downtown Sacramento, with the readiness chip, the maneuver card for the next turn, the upcoming-step card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the playback-speed chips and the pause and exit controls"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application in a simulated trip along N Street in downtown Sacramento, with the readiness chip, the maneuver card for the next turn, the upcoming-step card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the playback-speed chips and the pause and exit controls"></span></label></p>
 <h2 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle and exit"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle and exit"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle, the playback-speed chips and pause and exit"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle, the playback-speed chips and pause and exit"></span></label></p>
 <h2 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h2>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application in a simulated trip through downtown Sacramento inside the shared JS shell, with the readiness chip, the maneuver card, the map control cluster, the scale bar, the compact attribution control at the map’s end edge and the trip’s drawer"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application in a simulated trip through downtown Sacramento inside the shared JS shell, with the readiness chip, the maneuver card, the map control cluster, the scale bar, the compact attribution control at the map’s end edge and the trip’s drawer"></span></label></p>
 <h2 id="webassembly--the-browser-build"><a class="header" href="#webassembly--the-browser-build">WebAssembly — the browser build</a></h2>
@@ -2590,6 +2590,13 @@ it is the same core rather than a simulation. The capture shows its consumer
 surface: the trip planner card with both endpoints chosen, the routed distance
 and duration, and the same route drawn on the map. It is served keyless at
 <a href="#live-demo">the live demo</a>.</p>
+<h2 id="vector-base-with-place-labels"><a class="header" href="#vector-base-with-place-labels">Vector base with place labels</a></h2>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenStreetMap vector base with place labels — Sacramento, Downtown, Alkali Flat, Mansion Flats, Midtown, Southside Park — each drawn from the glyph atlas with a halo over the styled roads and parks"><span class="img-wrapper"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenStreetMap vector base with place labels — Sacramento, Downtown, Alkali Flat, Mansion Flats, Midtown, Southside Park — each drawn from the glyph atlas with a halo over the styled roads and parks"></span></label></p>
+<p>The labels are geometry like everything else: the decoder hands the renderer the
+<code>place</code> features, the style’s symbol layer names the text, and the glyph atlas
+supplies the shapes. They arrive with the vector base — a raster base carries
+its imagery’s own labels instead. This is the web surface today; the native
+shells have the same pipeline and are being wired to it.</p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
 <p>The captures share one design language and walk the same flow: readiness,
 search, a planned route, then the simulated trip. They also share one
