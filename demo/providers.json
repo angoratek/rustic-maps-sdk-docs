@@ -57,6 +57,7 @@
       "settings_hint": "",
       "wasm_registration": null,
       "url_template": "https://tiles.openstreetmap.us/vector/sourdough/{z}/{x}/{y}.mvt",
+      "glyphs_url_template": "https://tiles.openstreetmap.us/fonts/{fontstack}/{range}.pbf",
       "maximum_zoom_level": 15,
       "vector_style": "carto",
       "fixture_routes": [
@@ -83,6 +84,7 @@
       "settings_hint": "",
       "wasm_registration": null,
       "url_template": "https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf",
+      "glyphs_url_template": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
       "maximum_zoom_level": 14,
       "vector_style": "openmaptiles",
       "vector_styles": [

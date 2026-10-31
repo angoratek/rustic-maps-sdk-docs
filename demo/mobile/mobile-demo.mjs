@@ -2,12 +2,13 @@
 //
 // Nothing streams until a visitor presses Start. Start asks the claim endpoint
 // for a session — which enforces the month's streamed-minutes budget and the
-// daily limits server-side — and only a granted session injects the Appetize
-// frame. The page owns presentation; the budget is never a browser opinion.
+// daily limits server-side — and only a granted session reveals the link that
+// opens the app in its own tab. The page owns presentation; the budget is never
+// a browser opinion.
 //
 // The build ids come from `demo-builds.json`, written by
 // `scripts/upload-demo-builds.mjs` and staged beside this page. No API token is
-// present here, and none can be: the Appetize embed uses a public build id.
+// present here, and none can be: the session URL carries only a public build id.
 
 /** Where the claim endpoint answers; set after the Vercel project is created. */
 const CLAIM_ENDPOINT =

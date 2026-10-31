@@ -51,6 +51,36 @@
         signed_angular_difference_degrees,
       } from './map_controls.mjs';
 
+      // Consumer copy (M28): every user-visible label of the page comes from
+      // the shared module. Static markup carries the same canonical text as a
+      // no-script-safe default and names its row with `data-ui-label`; the
+      // pass below makes the module the rendered source. Dynamic labels call
+      // the helpers directly, so no wording is written here twice.
+      import { ui_label_text, ui_label_text_with_values } from './ui_strings.mjs';
+
+      /**
+       * Fills every `data-ui-label` element from the shared module: its text,
+       * or the attribute named by `data-ui-label-attribute` (e.g. an input's
+       * placeholder). `data-ui-label-aria` separately fills the accessible
+       * name when it reads a different canonical row.
+       */
+      function apply_static_ui_strings() {
+        for (const label_element of document.querySelectorAll('[data-ui-label]')) {
+          const label_text = ui_label_text(label_element.dataset.uiLabel);
+          const label_attribute = label_element.dataset.uiLabelAttribute;
+          if (label_attribute === undefined) {
+            label_element.textContent = label_text;
+          } else {
+            label_element.setAttribute(label_attribute, label_text);
+          }
+          const accessible_label_id = label_element.dataset.uiLabelAria;
+          if (accessible_label_id !== undefined) {
+            label_element.setAttribute('aria-label', ui_label_text(accessible_label_id));
+          }
+        }
+      }
+      apply_static_ui_strings();
+
       const INITIAL_ZOOM_LEVEL = 14;
       const FIELD_OF_VIEW_DEGREES = 60;
       const MINIMUM_ZOOM_LEVEL = 0;
@@ -343,10 +373,14 @@
       // The credential rows by provider key; declared here so the persistence
       // toggle's listener (below) can clear remembered keys.
       const provider_credential_controls_by_key = new Map();
-      const provider_keyless_status_text =
-        'No provider key — using demo places for search and routing.';
-      const provider_applied_status_text =
-        'Key applied — live search and routing ready.';
+      const provider_keyless_status_text = ui_label_text('settings.keyless_status');
+
+      /** The canonical applied sentence for one provider descriptor. */
+      function provider_applied_status_text(provider_descriptor) {
+        return ui_label_text_with_values('settings.credential_applied', {
+          provider: provider_descriptor.display_name,
+        });
+      }
       // Persistence is an explicit opt-in (docs/ReferenceAppUX.md §6.5): the
       // key stays in memory unless the visitor ticks "Remember keys on this
       // device". The browser has no secure store, so a remembered key lives
@@ -443,7 +477,10 @@
             `${provider_descriptor.display_name} ${provider_descriptor.credential_label}`;
           const applied_chip_element = document.createElement('span');
           applied_chip_element.className = 'provider-applied-chip';
-          applied_chip_element.textContent = 'Key applied';
+          applied_chip_element.textContent = ui_label_text_with_values(
+            'settings.credential_applied',
+            { provider: provider_descriptor.display_name },
+          );
           applied_chip_element.hidden = true;
           label_row_element.append(label_element, applied_chip_element);
 
@@ -529,9 +566,7 @@
         );
         settings_control.classList.toggle('needs-attention', !has_applied_key);
         settings_control.setAttribute(
-          'aria-label',
-          has_applied_key ? 'Settings' : 'Settings — add a provider key',
-        );
+          'aria-label', ui_label_text('settings.open_accessibility'));
         for (const [provider_key, provider_control] of
              provider_credential_controls_by_key) {
           provider_control.applied_chip_element.hidden =
@@ -603,7 +638,8 @@
               visibility_element.setAttribute('aria-label', 'Show key');
               visibility_element.setAttribute('aria-pressed', 'false');
               refresh_credential_state();
-              set_provider_status(provider_applied_status_text, 'success');
+              set_provider_status(
+                provider_applied_status_text(provider_descriptor), 'success');
               set_settings_credentials_status(
                 remember_provider_credentials
                   ? 'Applied — live providers ready, and this key is remembered on this device.'
@@ -637,7 +673,8 @@
             apply_provider_credential(provider_control, remembered_value)
               .then(() => {
                 refresh_credential_state();
-                set_provider_status(provider_applied_status_text, 'success');
+                set_provider_status(
+                  provider_applied_status_text(provider_descriptor), 'success');
               })
               .catch((error) => {
                 set_settings_credentials_status(
@@ -744,9 +781,19 @@
             'Plan the route, then start the trip.');
         }
 
-        /** The result list of one field's search; a row fills that field. */
+        /** The result list of one field's search; a row fills that field. An
+         * empty answer shows the shared empty-state hint instead of a silently
+         * hidden list. */
         function render_trip_results(field_key, result_rows) {
           trip_search_results_element.textContent = '';
+          if (result_rows.length === 0) {
+            const empty_item = document.createElement('li');
+            empty_item.className = 'trip-result-empty';
+            empty_item.textContent = ui_label_text('plan.empty_results_hint');
+            trip_search_results_element.appendChild(empty_item);
+            trip_search_results_element.hidden = false;
+            return;
+          }
           for (const result_row of result_rows) {
             const result_item = document.createElement('li');
             const result_button = document.createElement('button');
@@ -766,7 +813,7 @@
             result_item.appendChild(result_button);
             trip_search_results_element.appendChild(result_item);
           }
-          trip_search_results_element.hidden = result_rows.length === 0;
+          trip_search_results_element.hidden = false;
         }
 
         async function search_trip_field(field_key) {
@@ -797,7 +844,7 @@
             }
             return;
           }
-          set_provider_status('Searching…');
+          set_provider_status(ui_label_text('plan.searching_in_flight'));
           try {
             const place_rows = await window.mapTest.forwardGeocode(query_text);
             render_trip_results(field_key, place_rows.map((place_row) => ({
@@ -1067,7 +1114,7 @@
         trip_plan_route_control.addEventListener('click', async () => {
           if (trip_plan_route_control.disabled) return;
           trip_route_result.hidden = true;
-          set_provider_status('Planning\u2026');
+          set_provider_status(ui_label_text('plan.planning_in_flight'));
           try {
             const origin_endpoint = await resolve_trip_endpoint('origin');
             const destination_endpoint = await resolve_trip_endpoint('destination');
@@ -1762,8 +1809,20 @@
         navigation_demo.layout_preview.active_maneuver.display_text;
       document.getElementById('upcoming-instruction-text').textContent =
         `Then: ${navigation_demo.layout_preview.upcoming_maneuver.display_text}`;
+      // The preview's phase word is chrome, not content: the scene artifact
+      // carries the sample phase in its own spelling, and the page renders the
+      // shared consumer label for it. An unknown spelling stays verbatim
+      // rather than being guessed at.
+      const NAVIGATION_PHASE_LABEL_BY_RAW_PHASE = Object.freeze({
+        Navigating: ui_label_text('navigation.phase_navigating'),
+        OffRoute: ui_label_text('navigation.phase_off_route'),
+        Arrived: ui_label_text('navigation.phase_arrived'),
+      });
+      function navigation_phase_label_text(raw_phase) {
+        return NAVIGATION_PHASE_LABEL_BY_RAW_PHASE[raw_phase] ?? raw_phase;
+      }
       document.getElementById('navigation-phase-value').textContent =
-        navigation_demo.layout_preview.phase;
+        navigation_phase_label_text(navigation_demo.layout_preview.phase);
       const preview_progress = navigation_demo.layout_preview.progress;
       document.getElementById('progress-distance-to-maneuver-value').textContent =
         format_distance_text(preview_progress.distance_to_next_maneuver_meters);
@@ -2536,8 +2595,8 @@
       // re-targets the ramped zoom and the median-smoothed bearing chase,
       // and re-engages follow. Trip end restores the pre-trip camera; the
       // indicator clears.
-      const FOLLOW_DEMO_START_TEXT = 'Simulate the trip';
-      const FOLLOW_DEMO_STOP_TEXT = 'Stop the trip';
+      const FOLLOW_DEMO_START_TEXT = ui_label_text('route.start_action');
+      const FOLLOW_DEMO_STOP_TEXT = ui_label_text('navigation.exit_action');
       const route_scene = REFERENCE_SCENE_ARTIFACT.overlay_scenes.route;
       const FOLLOW_DEMO_ROUTE_POLYLINE = route_scene.coordinates.map(
         (route_coordinate) => ({
@@ -2975,8 +3034,9 @@
         // readout when enabled and the Advanced diagnostics block).
         status_line_element.setAttribute('data-readiness',
           renderer_mode === 'gpu' ? 'ready' : 'degraded');
-        status_line_element.textContent =
-          renderer_mode === 'gpu' ? 'Ready' : 'Fallback: 2D grid';
+        status_line_element.textContent = renderer_mode === 'gpu'
+          ? ui_label_text('readiness.chip_ready')
+          : `${ui_label_text('readiness.chip_degraded_prefix')}2D grid`;
         // The round-11 surface (§4.1/§4.2/§5.3): the diagnostics gate drops
         // to the readout's named severity (it never raises back — the ring
         // is bounded), the frame facts pre fills, and the follow demo is a
@@ -2997,7 +3057,8 @@
         await run_render_step();
       }).catch((load_error) => {
         status_element.textContent = `Map failed to start: ${load_error}`;
-        status_line_element.textContent = `Failed: ${load_error}`;
+        status_line_element.textContent =
+          `${ui_label_text('readiness.chip_failed_prefix')}${load_error}`;
         status_line_element.setAttribute('data-readiness', 'failed');
         show_error_report('Rustic Maps SDK start failed', String(load_error));
       });

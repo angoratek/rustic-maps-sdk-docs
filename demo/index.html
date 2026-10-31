@@ -20,9 +20,16 @@
         </div>
         <div id="controls-header-actions">
           <a id="docs-back-link" href="../" hidden>&larr; Docs</a>
-          <button id="settings-control" type="button" aria-label="Settings"
+          <!-- Consumer copy (M28): the canonical text sits in the markup as a
+               no-script-safe default and `data-ui-label` names the shared row;
+               `data-ui-label-attribute` fills an attribute instead of the text.
+               `data-ui-label-aria` fills the accessible name when it reads a
+               different row than the visible text. playground.mjs re-applies
+               every marked value from ui_strings.mjs on load. -->
+          <button id="settings-control" type="button" aria-label="Open settings"
                   aria-haspopup="dialog" aria-controls="settings-dialog"
-                  title="Settings">
+                  title="Open settings" data-ui-label="settings.open_accessibility"
+                  data-ui-label-attribute="aria-label">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
                  aria-hidden="true">
@@ -35,7 +42,8 @@
 
       <section id="trip-planner" aria-labelledby="trip-planner-title"
                aria-describedby="provider-credential-status">
-        <h2 class="group-label" id="trip-planner-title">Plan a trip</h2>
+        <h2 class="group-label" id="trip-planner-title"
+            data-ui-label="plan.search_heading">Plan a route</h2>
         <p class="trip-subtitle">Enter an origin and a destination, plan the route,
           then start the trip simulation.</p>
         <div class="trip-search">
@@ -46,8 +54,11 @@
             <path d="m16.2 16.2 4.3 4.3" />
           </svg>
           <input id="trip-origin-input" type="search"
-                 placeholder="Origin" autocomplete="off"
-                 aria-label="Origin" />
+                 placeholder="Search an origin" autocomplete="off"
+                 aria-label="Search an origin"
+                 data-ui-label="plan.origin_hint"
+                 data-ui-label-attribute="placeholder"
+                 data-ui-label-aria="plan.origin_hint" />
           <button id="trip-origin-search-control" type="button"
                   aria-label="Search origin">Search</button>
         </div>
@@ -59,8 +70,11 @@
             <path d="m16.2 16.2 4.3 4.3" />
           </svg>
           <input id="trip-destination-input" type="search"
-                 placeholder="Destination" autocomplete="off"
-                 aria-label="Destination" />
+                 placeholder="Where to?" autocomplete="off"
+                 aria-label="Search a destination"
+                 data-ui-label="plan.destination_hint"
+                 data-ui-label-attribute="placeholder"
+                 data-ui-label-aria="plan.destination_placeholder" />
           <button id="trip-destination-search-control" type="button"
                   aria-label="Search destination">Search</button>
         </div>
@@ -68,7 +82,8 @@
              aria-label="Demo places"></div>
         <ul id="trip-search-results" hidden></ul>
         <div class="trip-credential">
-          <p id="provider-credential-status" class="trip-status" role="status">Starting the map…</p>
+          <p id="provider-credential-status" class="trip-status" role="status"
+             data-ui-label="readiness.chip_loading">Loading…</p>
           <button id="trip-credential-action" type="button" class="credential-action"
                   data-state="keyless" aria-haspopup="dialog"
                   aria-controls="settings-dialog">
@@ -85,8 +100,10 @@
           destination to plan the route.</p>
         <p id="trip-route-result" class="trip-route-result" hidden></p>
         <div class="trip-actions">
-          <button id="trip-plan-route-control" type="button" disabled>Plan route</button>
-          <button id="follow-demo-start-control" type="button" class="primary">Start simulated trip</button>
+          <button id="trip-plan-route-control" type="button" disabled
+                  data-ui-label="plan.plan_route_action">Plan route</button>
+          <button id="follow-demo-start-control" type="button" class="primary"
+                  data-ui-label="route.start_action">Start simulated navigation</button>
         </div>
         <p id="follow-demo-live-line" class="trip-footnote">The recorded Capitol Park
           &harr; Tower Bridge route drives the follow camera.</p>
@@ -113,7 +130,7 @@
       </section>
 
 <section class="control-group" id="camera-controls">
-        <h2 class="group-label">Camera</h2>
+        <h2 class="group-label" data-ui-label="camera.presets_heading">Camera presets</h2>
         <label>Zoom <span class="value-line"><span id="zoom-value"></span><span>0–20</span></span>
           <input id="zoom-control" type="range" min="0" max="20" step="0.1" value="14" aria-label="Zoom level" />
         </label>
@@ -140,9 +157,10 @@
       </section>
 
 <fieldset id="scene-overlay-controls" class="control-group" aria-describedby="scene-overlay-reason">
-        <legend>Scene overlays (3D only)</legend>
+        <legend data-ui-label="scenes.heading">Demo scenes</legend>
         <div id="overlay-scene-toggles"></div>
-        <button id="clear-overlays-control" type="button" class="primary">Clear overlays</button>
+        <button id="clear-overlays-control" type="button" class="primary"
+                data-ui-label="overlays.clear_action">Clear overlays</button>
         <p id="scene-overlay-reason" class="reason-strip" hidden></p>
       </fieldset>
 
@@ -158,8 +176,10 @@
           <p id="upcoming-instruction-text" class="then-line"></p>
           <ul class="navigation-progress">
             <li><span class="progress-label">Distance to maneuver</span><span id="progress-distance-to-maneuver-value"></span></li>
-            <li><span class="progress-label">Distance remaining</span><span id="progress-distance-remaining-value"></span></li>
-            <li><span class="progress-label">Duration remaining</span><span id="progress-duration-remaining-value"></span></li>
+            <li><span class="progress-label"
+                      data-ui-label="navigation.eta_distance_label">Distance remaining</span><span id="progress-distance-remaining-value"></span></li>
+            <li><span class="progress-label"
+                      data-ui-label="navigation.eta_duration_label">Duration remaining</span><span id="progress-duration-remaining-value"></span></li>
           </ul>
           <p id="deviation-alert-preview" hidden></p>
           <p id="navigation-demo-preview-notice" class="reason-strip"></p>
@@ -167,7 +187,7 @@
       </details>
 
 <section class="control-group" id="diagnostics-controls">
-        <h2 class="group-label">Performance and diagnostics</h2>
+        <h2 class="group-label" data-ui-label="diagnostics.title">Diagnostics</h2>
         <p id="performance-strip" class="reason-strip" hidden></p>
         <button id="diagnostics-refresh-control" type="button">Refresh recent SDK events</button>
         <pre id="diagnostics-facts-lines"></pre>
@@ -186,7 +206,8 @@
         <header class="settings-header">
           <h2 id="settings-title">Settings</h2>
           <button id="settings-close-control" type="button"
-                  aria-label="Close settings">&times;</button>
+                  aria-label="Close" data-ui-label="settings.close_action"
+                  data-ui-label-attribute="aria-label">&times;</button>
         </header>
         <div class="settings-body">
           <section class="settings-section" id="provider-credentials-panel"
@@ -212,7 +233,7 @@
             </div>
           </section>
           <section class="settings-section" id="appearance-controls">
-            <h3 class="settings-section-title">Appearance</h3>
+            <h3 class="settings-section-title" data-ui-label="theme.heading">Theme</h3>
             <button id="theme-toggle-control" type="button" aria-live="polite">Switch to light theme</button>
           </section>
         </div>
@@ -235,7 +256,8 @@
          from colliding. -->
     <div id="bottom-start-dock">
       <p id="error-report" role="alert" hidden></p>
-      <p id="status-line" data-readiness="loading" aria-live="polite">Starting the map…</p>
+      <p id="status-line" data-readiness="loading" aria-live="polite"
+         data-ui-label="readiness.chip_loading">Loading…</p>
       <div id="scale-bar-overlay" hidden>
         <span id="scale-bar-label-text"></span>
         <div class="scale-bar-line" id="scale-bar-line"></div>
@@ -258,7 +280,8 @@
       </div>
     </div>
     <div id="readout" hidden></div>
-    <p id="harness-status" class="visually-hidden" aria-hidden="true">Starting the map…</p>
+    <p id="harness-status" class="visually-hidden" aria-hidden="true"
+       data-ui-label="readiness.chip_loading">Loading…</p>
     <script type="module" src="./main.mjs"></script>
     <script type="module" src="./playground.mjs"></script>
   </body>
