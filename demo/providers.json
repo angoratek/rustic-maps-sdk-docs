@@ -2,6 +2,10 @@
   "schema_version": 1,
   "fixture_base_path": "/providers",
   "reference_app_user_agent_template": "RusticMapsReferenceApp/%s (+https://sdk.mapquest.live)",
+  "keyless_base_map": {
+    "provider_key": "openfreemap",
+    "style_id": "bright-light"
+  },
   "providers": [
     {
       "provider_key": "mapquest",
