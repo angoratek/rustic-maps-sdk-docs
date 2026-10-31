@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fe1bb7a7.js";
+            window.path_to_searchindex_js = "searchindex-6567ea81.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -626,51 +626,69 @@ navigationController.stopNavigation();
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="scope-note"><a class="header" href="#scope-note">Scope note</a></h3>
-<p>The WebAssembly seam ships the camera, rendering, overlays and offline
-routing; it does <strong>not</strong> ship the navigation controller. There is no trip
-state, no banner, speech, deviation or phase dispatch, and no <code>Navigator</code>
-on this surface. The sections below use the same route, the same camera and
-the same follow story the other tabs tell, without claiming navigation
-state exists.</p>
-<h3 id="draw-the-route-and-follow-it"><a class="header" href="#draw-the-route-and-follow-it">Draw the route and follow it</a></h3>
-<p>What the browser can do from the same story is draw the planned route on
-the canvas and follow it with the camera:</p>
-<pre><code class="language-js">// Once, when the route arrives: the route geometry as one polyline.
-mapView.setOverlays([
-  {
-    kind: 'routePolyline',
-    coordinates: route.legs.flatMap(
-      (leg) =&gt; leg.steps.flatMap((step) =&gt; step.shape),
-    ),
-    rgbaColor: { red: 0.16, green: 0.47, blue: 1.0, alpha: 0.95 },
-    widthPixels: 6.0,
-  },
-]);
+<p>The WebAssembly seam ships the camera, rendering, overlays, the route
+simulator and offline routing; it does <strong>not</strong> ship the navigation
+controller. There is no <code>navigationController</code> or <code>listener</code>, no trip
+state, no banner, speech, deviation, phase dispatch or rerouting, and no
+<code>Navigator</code> on this surface. What the browser does carry is
+<code>RouteSimulator</code>: an immutable walker over the planned route’s own geometry
+that produces the position fixes the native tabs feed into their controller.
+It is not a guidance policy, so it carries no instruction text and no phase.</p>
+<h3 id="simulate-the-trip-and-follow-it"><a class="header" href="#simulate-the-trip-and-follow-it">Simulate the trip and follow it</a></h3>
+<p>Create the simulator once from the planned route and a pace, then ask it for
+a fix at an elapsed time. The fix carries a <code>coordinate</code>, the
+<code>courseHeadingDegrees</code>, the travelled and remaining meters, and
+<code>isArrived</code>. Draw the route, place the location indicator on the fix, and
+present a course-up camera frame:</p>
+<pre><code class="language-js">import { RouteSimulator } from './web/map_web_bindings.js';
 
-// On every position you already have: the 3D course-up follow camera
-// (z17, 45° pitch, the reference apps' constants) and the route arrow.
+/** @type {any} */
+const plannedRoute = route;
+const routeOverlay = {
+  kind: 'routePolyline',
+  coordinates: plannedRoute.legs.flatMap(
+    (leg) =&gt; leg.steps.flatMap((step) =&gt; step.shape),
+  ),
+  color: { red: 0.16, green: 0.47, blue: 1.0, alpha: 0.95 },
+  widthPixels: 6.0,
+};
+
+const ROUTE_SIMULATOR_SPEED_METERS_PER_SECOND = 1.4;
+const ROUTE_SIMULATOR_SPEED_MULTIPLIER = 20.0;
 const FOLLOW_ZOOM_LEVEL = 17.0;
 const FOLLOW_PITCH_DEGREES = 45.0;
-const fieldOfViewDegrees = 60;
+const fieldOfViewDegrees = 60.0;
+const elapsedSeconds = 0.0;
+
+const routeSimulator = new RouteSimulator(plannedRoute, {
+  speedMetersPerSecond: ROUTE_SIMULATOR_SPEED_METERS_PER_SECOND,
+  speedMultiplier: ROUTE_SIMULATOR_SPEED_MULTIPLIER,
+});
+const fix = routeSimulator.fixAtElapsedSeconds(elapsedSeconds);
+
+mapView.setOverlays([routeOverlay]);
 mapView.setLocationIndicator(
-  { coordinate: fix, courseHeadingDegrees: smoothedCourseHeadingDegrees },
+  { coordinate: fix.coordinate, courseHeadingDegrees: fix.courseHeadingDegrees },
   { visualKind: 'guidedCourseArrow' },
 );
 await mapView.renderFrame(
   new MapCamera(
-    fix.latitude,
-    fix.longitude,
+    fix.coordinate.latitude,
+    fix.coordinate.longitude,
     FOLLOW_ZOOM_LEVEL,
-    smoothedCourseHeadingDegrees,
+    fix.courseHeadingDegrees ?? 0.0,
     FOLLOW_PITCH_DEGREES,
   ),
   fieldOfViewDegrees,
 );
 </code></pre>
-<p>The route and step records are the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code>
-objects the native surfaces return, so the polyline extraction is identical.
-Run the navigation simulation itself on a native platform or in the
-<a href="live-demo.html">live demo</a> until the controller reaches this surface.</p>
+<p>Advance <code>elapsedSeconds</code> on your own tick and call <code>fixAtElapsedSeconds</code>
+again for each frame; <code>fixAtTravelledMeters</code> is the distance-driven
+equivalent. <code>totalDistanceMeters()</code> and <code>totalDurationSeconds()</code> size the
+trip’s progress bar, and <code>isArrived</code> turns true exactly at the final
+coordinate. The route and step records are the same
+<code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code> objects the native surfaces return, so the
+polyline extraction is identical.</p>
 </div>
 
 </div>
