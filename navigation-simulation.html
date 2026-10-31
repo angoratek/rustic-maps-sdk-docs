@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-654ed639.js";
+            window.path_to_searchindex_js = "searchindex-60b36cfa.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -625,15 +625,53 @@ navigationController.stopNavigation();
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
-<h3 id="scope-note"><a class="header" href="#scope-note">Scope note</a></h3>
-<p>The WebAssembly seam ships the camera, rendering, overlays, the route
-simulator and offline routing; it does <strong>not</strong> ship the navigation
-controller. There is no <code>navigationController</code> or <code>listener</code>, no trip
-state, no banner, speech, deviation, phase dispatch or rerouting, and no
-<code>Navigator</code> on this surface. What the browser does carry is
-<code>RouteSimulator</code>: an immutable walker over the planned route’s own geometry
-that produces the position fixes the native tabs feed into their controller.
-It is not a guidance policy, so it carries no instruction text and no phase.</p>
+<h3 id="start-the-navigator-on-the-route"><a class="header" href="#start-the-navigator-on-the-route">Start the navigator on the route</a></h3>
+<p>The browser seam carries the navigator’s <strong>driving and readback</strong> core:
+<code>startNavigation</code>, <code>updateLocation</code>, <code>applyReroute</code>, <code>stopNavigation</code> and
+<code>currentTripState</code> on a <code>Navigator</code> class (plus a <code>hasActiveTrip</code> helper).
+The listener, speech-trigger and reroute-recalculation members stay native
+until the browser seam has a foreign-listener contract; the frozen
+contract itself is unchanged.</p>
+<p>Create the navigator on the route you planned and drive it with the same
+walker the native tabs use. Each <code>updateLocation</code> answers the trip
+snapshot; the phase, the instruction payload, the progress numbers and the
+deviation all come from that one call:</p>
+<pre><code class="language-js">import { Navigator, RouteSimulator } from './web/map_web_bindings.js';
+
+const navigationController = new Navigator();
+navigationController.startNavigation(route, 'metric');
+
+const navigationRouteSimulator = new RouteSimulator(route, {
+  speedMetersPerSecond: 1.4,
+  speedMultiplier: 20.0,
+});
+
+const navigationFix = navigationRouteSimulator.fixAtElapsedSeconds(0.0);
+const tripSnapshot = navigationController.updateLocation({
+  coordinate: navigationFix.coordinate,
+  horizontalAccuracyMeters: 8.0,
+  courseHeadingDegrees: navigationFix.courseHeadingDegrees,
+  timestampSeconds: null,
+});
+
+// One snapshot is all the card needs.
+const phase = tripSnapshot.phase;
+const distancePhrase = tripSnapshot.instruction.activeManeuver.distancePhraseText;
+const bannerText = tripSnapshot.instruction.activeManeuver.providerDisplayText
+  ?? tripSnapshot.instruction.activeManeuver.displayText;
+const thenText = tripSnapshot.instruction.upcomingManeuver?.displayText ?? '';
+const metersToManeuver =
+  tripSnapshot.instruction.progress.distanceToNextManeuverMeters;
+const metersRemaining = tripSnapshot.instruction.progress.distanceRemainingMeters;
+const secondsRemaining = tripSnapshot.instruction.progress.durationRemainingSeconds;
+const deviationMeters = tripSnapshot.deviation?.distanceFromRouteMeters ?? null;
+</code></pre>
+<p>A fix without an accuracy is never judged and never advances a step, so a
+simulated source carries its accuracy like a real fix. <code>stopNavigation</code>
+ends the trip; <code>applyReroute</code> swaps the route without restarting the
+navigator. The banner keeps the native cards’ two lines: the phrase names
+the distance and <code>providerDisplayText</code> is the provider’s own sentence, so
+the distance is not printed twice.</p>
 <h3 id="simulate-the-trip-and-follow-it"><a class="header" href="#simulate-the-trip-and-follow-it">Simulate the trip and follow it</a></h3>
 <p>Create the simulator once from the planned route and a pace, then ask it for
 a fix at an elapsed time. The fix carries a <code>coordinate</code>, the

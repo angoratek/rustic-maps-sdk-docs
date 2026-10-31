@@ -834,6 +834,150 @@ export class MapsSdk {
 if (Symbol.dispose) MapsSdk.prototype[Symbol.dispose] = MapsSdk.prototype.free;
 
 /**
+ * Turn-by-turn navigation over a planned route, mirroring the driving and
+ * readback core of the contract's `Navigator`.
+ *
+ * Build it with `new Navigator()`; `startNavigation(route, unitSystem)`
+ * begins a trip over a `Route` exactly as `calculateRoute` answers it
+ * (`unitSystem` is `"metric"` or `"imperial"`), `updateLocation(update)`
+ * consumes one `NavigationLocationUpdate` and answers the trip snapshot
+ * (or `null` without a trip), `applyReroute(route)` swaps the active
+ * trip's route, `stopNavigation()` clears it, and `currentTripState()`
+ * answers the latest snapshot (`null` without a trip).
+ *
+ * The snapshot's `phase` is `"navigating"`, `"offRoute"` or `"arrived"`
+ * (the contract's `Navigating`/`OffRoute`/`Arrived`); `instruction` is the
+ * composed payload (`activeManeuver` with `distancePhraseText` and
+ * `displayText`, an optional `upcomingManeuver`, `progress`, and the
+ * `isArrival`/`isReroutingRequired` markers); `deviation` is
+ * `{statusChangeKind, distanceFromRouteMeters}` exactly while the phase is
+ * off route; `snappedCoordinate` is `{latitude, longitude}` once a fix has
+ * been processed. The listener, speech and reroute-recalculation members
+ * of the contract's `Navigator` stay native until the wasm seam carries a
+ * foreign-listener contract; `hasActiveTrip()` is the wasm-only helper.
+ */
+export class Navigator {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        NavigatorFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_navigator_free(ptr, 0);
+    }
+    /**
+     * Replaces the active trip's route (a reroute); without an active trip
+     * the route is dropped. Throws a message for a route the conversion
+     * cannot parse.
+     * @param {any} route
+     */
+    applyReroute(route) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.navigator_applyReroute(retptr, this.__wbg_ptr, addHeapObject(route));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * The latest trip snapshot, or `null` without an active trip.
+     * @returns {any}
+     */
+    currentTripState() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.navigator_currentTripState(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Whether a trip is active.
+     * @returns {boolean}
+     */
+    hasActiveTrip() {
+        const ret = wasm.navigator_hasActiveTrip(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * Builds the controller with no active trip.
+     */
+    constructor() {
+        const ret = wasm.navigator_new();
+        this.__wbg_ptr = ret;
+        NavigatorFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Begins navigating `route` with the SDK default policies, replacing
+     * any active trip. Throws a message for a route the conversion cannot
+     * parse or a unit system other than `"metric"`/`"imperial"`.
+     * @param {any} route
+     * @param {string} unit_system
+     */
+    startNavigation(route, unit_system) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(unit_system, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.navigator_startNavigation(retptr, this.__wbg_ptr, addHeapObject(route), ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Ends the active trip: `currentTripState()` answers `null` afterwards
+     * and location updates and reroutes are dropped until the next
+     * `startNavigation`.
+     */
+    stopNavigation() {
+        wasm.navigator_stopNavigation(this.__wbg_ptr);
+    }
+    /**
+     * Delivers one position fix to the active trip and answers the
+     * resulting snapshot, or `null` without an active trip (the fix is
+     * then dropped). Throws a message for a malformed update object.
+     * @param {any} update
+     * @returns {any}
+     */
+    updateLocation(update) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.navigator_updateLocation(retptr, this.__wbg_ptr, addHeapObject(update));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+}
+if (Symbol.dispose) Navigator.prototype[Symbol.dispose] = Navigator.prototype.free;
+
+/**
  * An immutable simulated trip along the planned route's own geometry,
  * mirroring the contract's `RouteSimulator` (M27).
  *
@@ -1185,14 +1329,13 @@ export function initializeSdk() {
  * `RouteData`/`RouteLeg`/`RouteStep` dictionaries field for field (lower
  * camel case; `maneuverType` the stable snake-case label).
  *
- * Deliberately a demo/parity seam ahead of the contract: the async
- * provider surface (`MapSdk` and its offline routing members) has no wasm
- * exposure yet, so the helper is documented as wasm-only in
- * `platform/web/tests/contract_sync.mjs`, exactly like the camera gesture
- * helpers. Failures throw the plain verbatim error string (the harness's
- * established shape): bytes that fail archive validation, a coordinate
- * within no graph node's snap tolerance, or a request pair the graph
- * cannot connect — refused, never guessed.
+ * The browser half of the contract's `offline_route_from_archive_bytes`
+ * free helper: both delegate to
+ * [`map_core::offline_routing::calculate_offline_route_from_archive_bytes`],
+ * so the native and wasm answers cannot drift. Failures throw the plain
+ * verbatim error string (the harness's established shape): bytes that fail
+ * archive validation, a coordinate within no graph node's snap tolerance,
+ * or a request pair the graph cannot connect — refused, never guessed.
  * @param {Uint8Array} archive_bytes
  * @param {number} start_latitude
  * @param {number} start_longitude
@@ -2508,7 +2651,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_7746(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_7793(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -3525,28 +3668,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2435, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7725);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2443, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7772);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 272, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1460);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 280, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1507);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 272, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1460_66);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 280, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1507_73);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 272, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1460_67);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 280, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1507_74);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 244, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1275);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 248, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1304);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -3620,18 +3763,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_1275(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_1275(arg0, arg1);
+function __wasm_bindgen_func_elem_1304(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_1304(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_7746(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_7746(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_7793(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_7793(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_7725(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_7772(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_7725(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_7772(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3642,10 +3785,10 @@ function __wasm_bindgen_func_elem_7725(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1460(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1507(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1460(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1507(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3656,10 +3799,10 @@ function __wasm_bindgen_func_elem_1460(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1460_66(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1507_73(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1460_66(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1507_73(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3670,10 +3813,10 @@ function __wasm_bindgen_func_elem_1460_66(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1460_67(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1507_74(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1460_67(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1507_74(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3773,6 +3916,9 @@ const MapViewFinalization = (typeof FinalizationRegistry === 'undefined')
 const MapsSdkFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_mapssdk_free(ptr, 1));
+const NavigatorFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_navigator_free(ptr, 1));
 const RouteSimulatorFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_routesimulator_free(ptr, 1));
