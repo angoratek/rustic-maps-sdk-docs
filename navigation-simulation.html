@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3412cf25.js";
+            window.path_to_searchindex_js = "searchindex-cce66272.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-2fe6af0c.js"></script>
@@ -480,9 +480,27 @@ delivers fixes:</p>
 
 const navigationController = new Navigator();
 
-// All four topics in one call: the listener object defined in "Draw the
-// trip on the map" below drives the banner, the voice line, the off-route
-// alert and the drawer phase from one place; cancel() removes all four.
+// One listener implements the four callbacks the contract carries; one call
+// subscribes all four, and cancel() removes them together.
+const listener = {
+  onNavigationInstruction(instruction) {
+    setNextManeuver({
+      instructionText: instruction.activeManeuver.instruction.composedDisplayText,
+      distancePhrase: instruction.activeManeuver.distancePhrase,
+      isReroutingRequired: instruction.isReroutingRequired,
+    });
+  },
+  onSpeechInstruction(speechInstruction) {
+    speak(speechInstruction.utteranceSpeechText);
+  },
+  onDeviationStatusChange(deviationStatusChange) {
+    setDeviation(deviationStatusChange);
+  },
+  onNavigationPhaseChange(navigationPhaseChange) {
+    setPhase(navigationPhaseChange);
+  },
+};
+
 const subscription = navigationController.addNavigationListener(listener);
 </code></pre>
 <p>The listener implements the four callback methods the contract carries
@@ -509,12 +527,11 @@ navigationController.updateLocation({
 const tripState = navigationController.currentTripState();
 </code></pre>
 <h3 id="draw-the-trip-on-the-map-2"><a class="header" href="#draw-the-trip-on-the-map-2">Draw the trip on the map</a></h3>
-<p>The generated surface exposes the same overlay, camera and
-location-indicator members the contract carries; the contract’s <code>MapView</code>
-class is the one your native host shell binds to. Put the route on once, then
-drive the next-maneuver card from the instruction listener and the follow
+<p>The package’s <code>MapView</code> handle exposes the overlay, camera and
+location-indicator members the contract carries. Put the route on once, then
+drive the next-maneuver card from the listener subscribed above and the follow
 camera from each accepted fix:</p>
-<pre><code class="language-js">import { MapCamera, MapOverlayKind } from '@angoratek/rustic-maps-sdk';
+<pre><code class="language-js">import { MapOverlayKind } from '@angoratek/rustic-maps-sdk';
 
 // Once, when the route arrives: one polyline over the whole route.
 const routeOverlay = {
@@ -527,38 +544,19 @@ const routeOverlay = {
 };
 mapView.setOverlays([routeOverlay]);
 
-// The listener subscribed above; the next-maneuver card reads the
-// instruction payload the controller dispatches.
-const listener = {
-  onNavigationInstruction(instruction) {
-    setNextManeuver({
-      instructionText: instruction.activeManeuver.instruction.composedDisplayText,
-      distancePhrase: instruction.activeManeuver.distancePhrase,
-      isReroutingRequired: instruction.isReroutingRequired,
-    });
-  },
-  onSpeechInstruction(speechInstruction) {
-    speak(speechInstruction.utteranceSpeechText);
-  },
-  onDeviationStatusChange(deviationStatusChange) {
-    setDeviation(deviationStatusChange);
-  },
-  onNavigationPhaseChange(navigationPhaseChange) {
-    setPhase(navigationPhaseChange);
-  },
-};
-
 // On every accepted fix: the 3D course-up follow camera (z17, 45° pitch,
-// the reference apps' constants).
+// the reference apps' constants). The handle takes the same five-value pose
+// the other tabs use.
 const FOLLOW_ZOOM_LEVEL = 17.0;
 const FOLLOW_PITCH_DEGREES = 45.0;
-const followCamera = new MapCamera(
-  { latitude: fix.latitude, longitude: fix.longitude },
-  FOLLOW_ZOOM_LEVEL,
-  smoothedCourseHeadingDegrees,
-  FOLLOW_PITCH_DEGREES,
-);
-await mapView.draw(followCamera);
+const followCamera = {
+  latitudeDegrees: fix.latitude,
+  longitudeDegrees: fix.longitude,
+  zoomLevel: FOLLOW_ZOOM_LEVEL,
+  bearingDegrees: smoothedCourseHeadingDegrees,
+  pitchDegrees: FOLLOW_PITCH_DEGREES,
+};
+mapView.setCamera(followCamera);
 </code></pre>
 <p>The camera follows the smoothed course, not the raw fix-to-fix bearing, and
 a pan gesture hands control back to the user until the location control is
