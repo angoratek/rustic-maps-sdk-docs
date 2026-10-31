@@ -320,12 +320,14 @@ export function vectorStyleIdForDescriptor(
  * @param {string} [options.selectedStyleId] the style the page's picker chose
  *   (one of the descriptor's offered styles), overriding the theme join
  * @param {function} options.fetchAndBuildVectorOverlays injected decoder
- * @returns {Promise<{overlays: object[], overlayCount: number,
- *   failures: object[], superseded: boolean}>} `overlays` is the base's own
- *   geometry (without `contentOverlays`), so the caller can recompose after a
- *   later content change; `superseded` is true when a newer call replaced
- *   this one before it applied its list — the caller must not publish such a
- *   result as the current base layer.
+ * @returns {Promise<{overlays: object[], labels: object[],
+ *   overlayCount: number, labelCount: number, failures: object[],
+ *   superseded: boolean}>} `overlays` is the base's own geometry (without
+ *   `contentOverlays`), so the caller can recompose after a later content
+ *   change, and `labels` is the base's symbol-layer text for the canvas'
+ *   label layer; `superseded` is true when a newer call replaced this one
+ *   before it applied its list — the caller must not publish such a result
+ *   as the current base layer.
  */
 export async function loadVectorBaseOverlays({
   canvas,
@@ -368,15 +370,23 @@ export async function loadVectorBaseOverlays({
   });
   const failures = [];
   const overlays = [];
+  const labels = [];
   for (const descriptor of descriptors) {
     for (const address of tile_addresses) {
       if (load_generation !== active_load_generation) {
-        return { overlays: [], overlayCount: 0, failures, superseded: true };
+        return {
+          overlays: [],
+          labels: [],
+          overlayCount: 0,
+          labelCount: 0,
+          failures,
+          superseded: true,
+        };
       }
       let tile_url = null;
       try {
         tile_url = vectorTileUrlForDescriptor({ descriptor, ...address });
-        const tile_overlays = await fetchAndBuildVectorOverlays({
+        const decoded_tile = await fetchAndBuildVectorOverlays({
           url: tile_url,
           tileZoomLevel: address.zoomLevel,
           tileX: address.tileX,
@@ -384,7 +394,15 @@ export async function loadVectorBaseOverlays({
           tileSizePixels,
           styleId: vectorStyleIdForDescriptor(descriptor, styleTheme, selectedStyleId),
         });
-        overlays.push(...tile_overlays);
+        // A decoder may answer the plain overlay array (older seams and test
+        // fakes) or the `{overlays, labels}` object this slice's decoder
+        // returns; both keep the base's geometry and labels together.
+        if (Array.isArray(decoded_tile)) {
+          overlays.push(...decoded_tile);
+        } else {
+          overlays.push(...(decoded_tile?.overlays ?? []));
+          labels.push(...(decoded_tile?.labels ?? []));
+        }
       } catch (tile_failure) {
         failures.push({
           zoomLevel: address.zoomLevel,
@@ -399,12 +417,31 @@ export async function loadVectorBaseOverlays({
   // A newer load started while this one was fetching: drop this list rather
   // than painting a stale camera pose.
   if (load_generation !== active_load_generation) {
-    return { overlays: [], overlayCount: 0, failures, superseded: true };
+    return {
+      overlays: [],
+      labels: [],
+      overlayCount: 0,
+      labelCount: 0,
+      failures,
+      superseded: true,
+    };
   }
   // The base paints first and the caller's own overlays paint over it, so a
-  // vector base never has to displace the scene toggles or a route line.
+  // vector base never has to displace the scene toggles or a route line. The
+  // labels ride the canvas' own label layer (absence-tolerant, so a fake
+  // canvas that only draws overlays still works).
   canvas.setOverlays([...overlays, ...contentOverlays]);
-  return { overlays, overlayCount: overlays.length, failures, superseded: false };
+  if (typeof canvas.setLabels === 'function') {
+    canvas.setLabels(labels);
+  }
+  return {
+    overlays,
+    labels,
+    overlayCount: overlays.length,
+    labelCount: labels.length,
+    failures,
+    superseded: false,
+  };
 }
 
 /**
