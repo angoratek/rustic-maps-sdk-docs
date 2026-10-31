@@ -53,29 +53,31 @@
 <a href=#53 id=53 data-nosnippet>53</a>    DEFAULT_ROUTE_LINE_RGBA, DEFAULT_ROUTE_LINE_WIDTH_PIXELS, DEFAULT_TRAFFIC_LINE_WIDTH_PIXELS,
 <a href=#54 id=54 data-nosnippet>54</a>    FilledPolygonOverlay, MapOverlay, PointMarkersOverlay, PointPinsOverlay, RoutePolylineOverlay,
 <a href=#55 id=55 data-nosnippet>55</a>    TRAFFIC_BLOCKED_RGBA, TRAFFIC_CONGESTED_RGBA, TRAFFIC_FREE_FLOW_RGBA, TRAFFIC_SLOW_RGBA,
-<a href=#56 id=56 data-nosnippet>56</a>    TrafficFlowOverlay, overlay_triangle_vertices, traffic_congestion_rgba,
-<a href=#57 id=57 data-nosnippet>57</a>};
-<a href=#58 id=58 data-nosnippet>58</a><span class="kw">pub use </span>prefetch::{
-<a href=#59 id=59 data-nosnippet>59</a>    PREFETCH_FALLBACK_ZOOM_BELOW, PREFETCH_MAXIMUM_CONCURRENT_FETCHES, PREFETCH_RING_TILES,
-<a href=#60 id=60 data-nosnippet>60</a>    TilePrefetchPlanner,
-<a href=#61 id=61 data-nosnippet>61</a>};
-<a href=#62 id=62 data-nosnippet>62</a><span class="kw">pub use </span>projection::{
-<a href=#63 id=63 data-nosnippet>63</a>    MAXIMUM_MERCATOR_LATITUDE_DEGREES, MERCATOR_TILE_SIZE_PIXELS, coordinate_to_normalized_world,
-<a href=#64 id=64 data-nosnippet>64</a>    normalized_world_to_coordinate, tile_key_for_coordinate, tiles_covering, zoom_scale_pixels,
-<a href=#65 id=65 data-nosnippet>65</a>};
-<a href=#66 id=66 data-nosnippet>66</a><span class="kw">pub use </span>renderer::{
-<a href=#67 id=67 data-nosnippet>67</a>    CLEAR_COLOR_RGBA, ClipSpaceTileVertex, Renderer, TextureWindow, TileQuad, TileWorldSpan,
-<a href=#68 id=68 data-nosnippet>68</a>};
-<a href=#69 id=69 data-nosnippet>69</a><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
-<a href=#70 id=70 data-nosnippet>70</a></span><span class="kw">pub use </span>surface::{
-<a href=#71 id=71 data-nosnippet>71</a>    SurfaceFrameStatistics, SurfaceGraphicsContext, SurfaceGraphicsContextSource,
-<a href=#72 id=72 data-nosnippet>72</a>    SurfaceRenderError, SurfaceRenderTarget, SurfaceTileRenderer, WgpuSurfaceGraphicsContextSource,
-<a href=#73 id=73 data-nosnippet>73</a>};
-<a href=#74 id=74 data-nosnippet>74</a><span class="kw">pub use </span>tile_key::TileKey;
-<a href=#75 id=75 data-nosnippet>75</a><span class="kw">pub use </span>tile_scheduler::{PreparedTile, TileReadiness, TileScheduler, prepared_frame_is_idle};
-<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub use </span>tile_texture_pool::TileTexturePool;
-<a href=#77 id=77 data-nosnippet>77</a><span class="kw">pub use </span>vector_base::{
-<a href=#78 id=78 data-nosnippet>78</a>    DEFAULT_VECTOR_BASE_MAXIMUM_CACHED_TILE_COUNT,
-<a href=#79 id=79 data-nosnippet>79</a>    VECTOR_BASE_STYLE_ZOOM_QUANTIZATION_STEPS_PER_LEVEL, VectorBaseFrame, VectorBaseScheduler,
-<a href=#80 id=80 data-nosnippet>80</a>};
+<a href=#56 id=56 data-nosnippet>56</a>    TrafficFlowOverlay, WORLD_SPACE_OVERLAY_WORLD_COPY_INSTANCES, WorldSpaceOverlayFrameUniforms,
+<a href=#57 id=57 data-nosnippet>57</a>    WorldSpaceOverlayGeometry, WorldSpaceOverlayVertex, overlay_triangle_vertices,
+<a href=#58 id=58 data-nosnippet>58</a>    traffic_congestion_rgba,
+<a href=#59 id=59 data-nosnippet>59</a>};
+<a href=#60 id=60 data-nosnippet>60</a><span class="kw">pub use </span>prefetch::{
+<a href=#61 id=61 data-nosnippet>61</a>    PREFETCH_FALLBACK_ZOOM_BELOW, PREFETCH_MAXIMUM_CONCURRENT_FETCHES, PREFETCH_RING_TILES,
+<a href=#62 id=62 data-nosnippet>62</a>    TilePrefetchPlanner,
+<a href=#63 id=63 data-nosnippet>63</a>};
+<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub use </span>projection::{
+<a href=#65 id=65 data-nosnippet>65</a>    MAXIMUM_MERCATOR_LATITUDE_DEGREES, MERCATOR_TILE_SIZE_PIXELS, coordinate_to_normalized_world,
+<a href=#66 id=66 data-nosnippet>66</a>    normalized_world_to_coordinate, tile_key_for_coordinate, tiles_covering, zoom_scale_pixels,
+<a href=#67 id=67 data-nosnippet>67</a>};
+<a href=#68 id=68 data-nosnippet>68</a><span class="kw">pub use </span>renderer::{
+<a href=#69 id=69 data-nosnippet>69</a>    CLEAR_COLOR_RGBA, ClipSpaceTileVertex, Renderer, TextureWindow, TileQuad, TileWorldSpan,
+<a href=#70 id=70 data-nosnippet>70</a>};
+<a href=#71 id=71 data-nosnippet>71</a><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
+<a href=#72 id=72 data-nosnippet>72</a></span><span class="kw">pub use </span>surface::{
+<a href=#73 id=73 data-nosnippet>73</a>    SurfaceFrameStatistics, SurfaceGraphicsContext, SurfaceGraphicsContextSource,
+<a href=#74 id=74 data-nosnippet>74</a>    SurfaceRenderError, SurfaceRenderTarget, SurfaceTileRenderer, WgpuSurfaceGraphicsContextSource,
+<a href=#75 id=75 data-nosnippet>75</a>};
+<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub use </span>tile_key::TileKey;
+<a href=#77 id=77 data-nosnippet>77</a><span class="kw">pub use </span>tile_scheduler::{PreparedTile, TileReadiness, TileScheduler, prepared_frame_is_idle};
+<a href=#78 id=78 data-nosnippet>78</a><span class="kw">pub use </span>tile_texture_pool::TileTexturePool;
+<a href=#79 id=79 data-nosnippet>79</a><span class="kw">pub use </span>vector_base::{
+<a href=#80 id=80 data-nosnippet>80</a>    DEFAULT_VECTOR_BASE_MAXIMUM_CACHED_TILE_COUNT,
+<a href=#81 id=81 data-nosnippet>81</a>    VECTOR_BASE_STYLE_ZOOM_QUANTIZATION_STEPS_PER_LEVEL, VectorBaseFrame, VectorBaseScheduler,
+<a href=#82 id=82 data-nosnippet>82</a>};
 </code></pre></div></section></main></body></html>

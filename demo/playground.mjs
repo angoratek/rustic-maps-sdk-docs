@@ -1444,6 +1444,8 @@
       const base_map_toggle_element = document.getElementById('base-map-toggle');
       const base_map_status_element = document.getElementById('base-map-status');
       const vector_style_row_element = document.getElementById('vector-style-row');
+      const base_map_labels_note_element =
+        document.getElementById('base-map-labels-note');
       const vector_style_select_element = document.getElementById('vector-style-select');
       // The style the visitor picked from the active vector descriptor's
       // offered styles, or null for "the one matching the resolved theme".
@@ -1471,6 +1473,9 @@
         const offered_styles = offered_vector_styles();
         vector_style_row_element.hidden =
           current_tile_mode !== TILE_LAYER_MODES.vector || offered_styles.length === 0;
+        // The vector pipeline has no text stage yet; the note shares the
+        // picker's visibility so it only claims what the active base does.
+        base_map_labels_note_element.hidden = vector_style_row_element.hidden;
         vector_style_select_element.textContent = '';
         for (const style_choice of offered_styles) {
           const style_option = document.createElement('option');
@@ -2016,11 +2021,12 @@
       const FOLLOW_DEMO_PHASE_ENGAGED = 'engaged';
       const FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE = 'brokenByGesture';
       const FOLLOW_DEMO_LIVE_LINE_TEXTS = {
-        disengaged: 'The demo drives the artifact\'s route scene polyline with the §5.3 follow camera.',
+        disengaged: 'The trip follows the route you planned, on the §5.3 follow camera. Plan a route first, or start with the artifact scene.',
         engaged: 'Follow engaged — the camera centers on the guided fix.',
         brokenByGesture: 'Follow broken by a gesture — tap the my-location control to re-engage.',
         ended: 'Trip ended — the pre-trip camera is restored.',
         stopped: 'Trip stopped — the pre-trip camera is restored.',
+        arrived: 'Arrived — the trip ended at the destination. Stop restores the pre-trip camera.',
       };
       const follow_demo = {
         phase: FOLLOW_DEMO_PHASE_DISENGAGED,
@@ -2570,16 +2576,17 @@
       }
 
       function on_follow_demo_fix() {
+        // The walk clamps at the route's total length, so the last fix lands
+        // exactly on the destination instead of stopping a tick short of it.
+        const travelled_meters = Math.min(
+          follow_demo.travelled_meters, follow_demo.total_meters);
+        const has_arrived = travelled_meters >= follow_demo.total_meters;
         const remaining_distance_fraction =
           follow_demo.total_meters <= 0
             ? 0
-            : 1 - follow_demo.travelled_meters / follow_demo.total_meters;
-        if (remaining_distance_fraction <= 0) {
-          end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.ended);
-          return;
-        }
+            : 1 - travelled_meters / follow_demo.total_meters;
         const fix = polyline_fix_at_travelled_meters(
-          follow_demo.route_polyline, follow_demo.travelled_meters);
+          follow_demo.route_polyline, travelled_meters);
         follow_demo.latest_fix = { latitude: fix.latitude, longitude: fix.longitude };
         // §5.3: a fix retargets the smoothed course and the ramped zoom; the
         // camera follows only while engaged. A gesture keeps follow broken
@@ -2604,13 +2611,24 @@
           },
           { visualKind: 'guidedCourseArrow' },
         );
-        follow_demo.travelled_meters +=
+        follow_demo.travelled_meters = travelled_meters +
           FOLLOW_DEMO_SPEED_METERS_PER_SECOND *
           (FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS / 1000);
         refresh_control_labels();
         refresh_compass_control();
         refresh_my_location_control();
         schedule_render();
+        if (has_arrived) {
+          // Arrival keeps the destination on screen: the fixes stop, the
+          // camera stays where the trip ended, and Stop restores the
+          // pre-trip camera the way it does at any other moment.
+          if (follow_demo.fix_interval_id !== null) {
+            clearInterval(follow_demo.fix_interval_id);
+            follow_demo.fix_interval_id = null;
+          }
+          follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.arrived;
+          return;
+        }
         request_pump_step();
       }
 
@@ -2623,9 +2641,15 @@
         // fixed deep zoom and the plane's pitch; center and bearing hold
         // until the first fix retargets them.
         follow_demo.pre_trip_camera = { ...camera_state };
-        follow_demo.route_polyline = FOLLOW_DEMO_ROUTE_POLYLINE;
+        // The trip walks the route the visitor planned; the artifact's own
+        // scene polyline is only the fallback for the no-plan demo.
+        const planned_route_polyline = trip_route_overlays
+          .find((overlay) => overlay.kind === 'routePolyline')
+          ?.coordinates ?? null;
+        const trip_polyline = planned_route_polyline ?? FOLLOW_DEMO_ROUTE_POLYLINE;
+        follow_demo.route_polyline = trip_polyline;
         follow_demo.travelled_meters = 0;
-        follow_demo.total_meters = polyline_length_meters(FOLLOW_DEMO_ROUTE_POLYLINE);
+        follow_demo.total_meters = polyline_length_meters(trip_polyline);
         follow_bearing_chase.reset();
         course_median_smoother.reset();
         follow_demo.target_bearing_degrees = null;
