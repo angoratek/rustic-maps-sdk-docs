@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b9ca8585.js";
+            window.path_to_searchindex_js = "searchindex-39025aeb.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -231,15 +231,29 @@ otherwise.</p>
 <h3 id="route-without-the-network"><a class="header" href="#route-without-the-network">Route without the network</a></h3>
 <p>The offline routing layer runs inside the SDK: a compiled routing
 archive — OpenStreetMap extract in, self-describing archive file out —
-answers routes with A* over a memory-mapped graph, honoring recorded
+answers routes with A* over the archive’s graph, honoring recorded
 turn restrictions and deriving maneuver text from the geometry’s bearing
 change.</p>
-<p>The direct route call from foreign code joins the contract in a later
-release. Today the layer answers the WebAssembly surface’s offline route
-seam, and an offline routing decorator lets you retry over the archive
-when your online provider fails — you wrap the provider yourself; the SDK
-registers no fallback on your behalf. Maneuver texts stay honest where
-the extract carries no street names.</p>
+<p>The contract carries the route call on every surface: pass the archive
+bytes, not a path, so the same call works on Android, iOS, React Native
+and the browser.</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
+import uniffi.rustic_maps.offlineRouteFromArchiveBytes
+
+// The compiled RMOG archive's bytes, bundled with the app or downloaded.
+val archiveBytes: ByteArray = archiveFile.readBytes()
+val plannedRoute = offlineRouteFromArchiveBytes(
+    archiveBytes,
+    GeographicCoordinate(latitude = 0.001, longitude = 0.0),
+    GeographicCoordinate(latitude = 0.001, longitude = 0.002),
+)
+</code></pre>
+<p>The request uses the archive profile’s default options (automobile,
+fastest, metric). A corrupt archive throws <code>OfflineRoutingFailure</code>. An
+offline routing decorator also lets you retry over the archive when your
+online provider fails — you wrap the provider yourself; the SDK registers
+no fallback on your behalf. Maneuver texts stay honest where the extract
+carries no street names.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="ios">
@@ -273,11 +287,22 @@ let terms = try mapSdk.rasterTileCacheTerms()
 regions your users revisit while online; the cache answers from disk.</p>
 <h3 id="route-without-the-network-1"><a class="header" href="#route-without-the-network-1">Route without the network</a></h3>
 <p>The offline routing layer runs inside the SDK over a compiled archive:
-A* on a memory-mapped graph, recorded turn restrictions honored,
-maneuver text derived from the geometry. The direct route call from
-Swift joins the contract in a later release; today the layer serves the
-WebAssembly surface’s offline route seam, and you can wrap your online
-provider with the offline fallback decorator yourself.</p>
+A* on the archive’s graph, recorded turn restrictions honored, maneuver
+text derived from the geometry. The contract call takes the archive bytes,
+not a path, so the same call works on every platform:</p>
+<pre><code class="language-swift">// The compiled RMOG archive's bytes, bundled with the app or downloaded.
+let archiveURL = URL(fileURLWithPath: "routing_grid.rmog")
+let archiveBytes = try Data(contentsOf: archiveURL)
+let plannedRoute = try await offlineRouteFromArchiveBytes(
+    archiveBytes: archiveBytes,
+    start: GeographicCoordinate(latitude: 0.001, longitude: 0.0),
+    end: GeographicCoordinate(latitude: 0.001, longitude: 0.002)
+)
+</code></pre>
+<p>The request uses the archive profile’s default options (automobile,
+fastest, metric). A corrupt archive throws <code>OfflineRoutingFailure</code>. You
+can also wrap your online provider with the offline fallback decorator
+yourself; the SDK registers no fallback on your behalf.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
@@ -330,12 +355,24 @@ the regions your users expect to revisit once while online, and the cache
 holds them until the budget or time-to-live says otherwise.</p>
 <h3 id="route-without-the-network-2"><a class="header" href="#route-without-the-network-2">Route without the network</a></h3>
 <p>The compiled routing archive — the OpenStreetMap extract in, the
-self-describing archive file out — answers routes with A* over a
-memory-mapped graph, honoring recorded turn restrictions and deriving
-maneuver text from the geometry. The package exports no archive-route call to
-React Native yet; today the WebAssembly surface carries that seam, and the
-native tabs join it in a later release. The SDK registers no fallback on your
-behalf.</p>
+self-describing archive file out — answers routes with A* over the
+archive’s graph, honoring recorded turn restrictions and deriving maneuver
+text from the geometry. The generated bindings carry the contract’s
+archive-route call; pass the bytes, not a path:</p>
+<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from '@angoratek/rustic-maps-sdk';
+
+// The compiled RMOG archive's bytes, bundled with the app or downloaded.
+const archiveResponse = await fetch('routing_grid.rmog');
+const archiveBytes = await archiveResponse.arrayBuffer();
+const plannedOfflineRoute = await offlineRouteFromArchiveBytes(
+  archiveBytes,
+  { latitude: 0.001, longitude: 0.0 },
+  { latitude: 0.001, longitude: 0.002 },
+);
+</code></pre>
+<p>The request uses the archive profile’s default options (automobile,
+fastest, metric). A corrupt archive rejects with <code>OfflineRoutingFailure</code>.
+The SDK registers no fallback on your behalf.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">

@@ -49,6 +49,13 @@
 // `detail` — while the provider surface maps the six `SDKError` variants the
 // registry path can produce. Further variants enter the contract as later
 // slices surface real error paths; none are invented here.
+//
+// The offline routing seam adds the namespace function
+// `offline_route_from_archive_bytes` addition-only: the native counterpart of
+// the wasm export of the same name, taking the compiled `RMOG` archive as
+// bytes (the shape every target shares) and answering a `Route`. Both
+// surfaces delegate to one `map-core` implementation, so a Kotlin or Swift
+// consumer routes offline exactly as the browser does.
 
 namespace rustic_maps {
     /// Version of the compiled SDK, equal to the crate's package version.
@@ -69,6 +76,24 @@ namespace rustic_maps {
     /// row-major from the north.
     [Throws=SdkError]
     sequence<TileKey> tiles_covering(BoundingBox bounding_box, u8 zoom_level);
+
+    /// Routes between two coordinates over an offline routing graph loaded
+    /// from in-memory archive bytes: the native counterpart of the wasm
+    /// `offlineRouteFromArchiveBytes` export, sharing one implementation in
+    /// `map-core` so the two cannot drift. The archive is the self-describing
+    /// `RMOG` container compiled from an OpenStreetMap extract; it is
+    /// validated in memory before routing, and no provider has to be
+    /// registered. The request uses the graph profile's default options
+    /// (automobile, fastest, metric). An archive that fails validation
+    /// throws `OfflineRoutingFailure`; a coordinate beyond the graph's snap
+    /// tolerance throws `InvalidCoordinateInput`, and a pair the graph
+    /// cannot connect throws `ProviderRequestRejected`.
+    [Async, Throws=SdkError]
+    Route offline_route_from_archive_bytes(
+        bytes archive_bytes,
+        GeographicCoordinate start,
+        GeographicCoordinate end
+    );
 
     /// The SDK default step-advance policy: the distance-to-end-of-step
     /// condition with the Ferrostar recommended driving defaults.
@@ -182,6 +207,15 @@ dictionary EdgeInsets {
     /// stale-surface retry, or the frame's render state was busy in another
     /// draw. Round 8 (surface slice).
     RenderingSurfaceUnavailable(string detail);
+    /// A cache read, write or eviction failed (an unavailable store, a
+    /// corrupt entry, or a byte-budget refusal). The detail names the reason
+    /// verbatim; before round 42 this surfaced as `InvalidCoordinateInput`.
+    CacheOperationFailure(string detail);
+    /// An offline routing graph failed validation or could not be read: a
+    /// truncated or foreign archive, an unsupported version, or a malformed
+    /// section. The detail names the reason verbatim; before round 42 this
+    /// surfaced as `InvalidCoordinateInput`.
+    OfflineRoutingFailure(string detail);
 };
 
 /// Anchored map camera (geographic center, zoom, bearing, pitch) mirroring
