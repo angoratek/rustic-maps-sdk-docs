@@ -2663,9 +2663,12 @@
       // §2.4 ladder distance; a missing answer renders no bar (exactly the
       // native scale bar's rule).
       function refresh_scale_bar(camera) {
+        // The bar is laid out in CSS pixels by the stylesheet, so the ground
+        // answer is asked for the CSS viewport: on a high-density canvas the
+        // drawing buffer's pixels are smaller than the bar's own unit.
         const ground_answer = resolved_or_null(() =>
           camera.groundMetersPerScreenPixel(
-            overlay_canvas.width, overlay_canvas.height, FIELD_OF_VIEW_DEGREES)) ?? null;
+            window.innerWidth, window.innerHeight, FIELD_OF_VIEW_DEGREES)) ?? null;
         scale_bar_selection = select_scale_bar_scale(ground_answer);
         scale_bar_element.hidden = !scale_bar_selection;
         if (scale_bar_selection) {
@@ -3320,10 +3323,22 @@
       });
       overlay_canvas.addEventListener('pointermove', (event) => {
         if (!panning || !last_pointer_position) return;
-        const delta_x_pixels = event.clientX - last_pointer_position[0];
-        const delta_y_pixels = event.clientY - last_pointer_position[1];
+        const delta_x_css_pixels = event.clientX - last_pointer_position[0];
+        const delta_y_css_pixels = event.clientY - last_pointer_position[1];
         last_pointer_position = [event.clientX, event.clientY];
-        move_center_by_ground_delta(delta_x_pixels, delta_y_pixels);
+        // The camera takes drawing-buffer pixels; the pointer moved CSS
+        // pixels, so the delta follows the canvas' own ratio.
+        const canvas_rectangle = overlay_canvas.getBoundingClientRect();
+        const ratio_x = canvas_rectangle.width > 0
+          ? overlay_canvas.width / canvas_rectangle.width
+          : 1;
+        const ratio_y = canvas_rectangle.height > 0
+          ? overlay_canvas.height / canvas_rectangle.height
+          : 1;
+        move_center_by_ground_delta(
+          delta_x_css_pixels * ratio_x,
+          delta_y_css_pixels * ratio_y,
+        );
       });
       overlay_canvas.addEventListener('pointerup', (event) => {
         panning = false; overlay_canvas.classList.remove('panning');
@@ -3383,9 +3398,24 @@
       }, { passive: false });
       window.addEventListener('resize', () => { resize_canvases(); schedule_render(); });
 
+      /**
+       * Sizes both canvases in device pixels while the stylesheet keeps their
+       * laid-out size in CSS pixels: on a 2× display the compositor then draws
+       * the frame 1:1 instead of upscaling it, which is what keeps text and
+       * line work crisp. The wasm canvas reads the same ratio from
+       * `canvas.width / clientWidth`, so text, halos and overlay widths keep
+       * their CSS size.
+       */
+      function canvas_device_pixel_ratio() {
+        return Math.max(1, window.devicePixelRatio || 1);
+      }
+
       function resize_canvases() {
-        map_canvas.width = window.innerWidth; map_canvas.height = window.innerHeight;
-        overlay_canvas.width = window.innerWidth; overlay_canvas.height = window.innerHeight;
+        const device_pixel_ratio = canvas_device_pixel_ratio();
+        map_canvas.width = Math.round(window.innerWidth * device_pixel_ratio);
+        map_canvas.height = Math.round(window.innerHeight * device_pixel_ratio);
+        overlay_canvas.width = map_canvas.width;
+        overlay_canvas.height = map_canvas.height;
       }
 
       resize_canvases();
