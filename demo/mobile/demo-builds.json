@@ -1,17 +1,17 @@
 {
   "$comment": "Public identity of the Appetize-hosted demo builds (M24). Written by scripts/upload-demo-builds.mjs; read by the /demo/mobile page. Only public data: build ids, version codes, timestamps and the source commit. The Appetize API token never appears here.",
-  "generatedAt": "2026-10-31T06:34:00.000Z",
-  "sourceCommit": "7c966bd6a9989c722e38a7b2b81be68bf042c570",
+  "generatedAt": "2026-10-31T09:26:57.501Z",
+  "sourceCommit": "b9b30ae0b2a413c4905e4175d4f546cbe70bd524",
   "builds": {
     "android": {
       "buildId": "5a2b37wuwdn4oehc5yfatdkxoa",
-      "versionCode": 4,
-      "updatedAt": "2026-10-31T06:33:56.833Z"
+      "versionCode": 5,
+      "updatedAt": "2026-10-31T09:26:54.209Z"
     },
     "ios": {
       "buildId": "yhozvsk5ys6w43abbkk7wxxsma",
-      "versionCode": 4,
-      "updatedAt": "2026-10-31T06:33:59.323Z"
+      "versionCode": 5,
+      "updatedAt": "2026-10-31T09:26:56.719Z"
     },
     "reactNativeAndroid": {
       "buildId": "usxc23e5mgukljuzapocwrycki",
