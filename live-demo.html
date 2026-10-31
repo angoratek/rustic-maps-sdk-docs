@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-654ed639.js";
+            window.path_to_searchindex_js = "searchindex-60b36cfa.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -182,9 +182,10 @@
 
 <p>The demo runs the SDK’s own browser build — the same wasm module the
 WebAssembly package ships — drawing rendered map imagery on a WebGPU canvas
-with pan, zoom, bearing and pitch controls, in-page overlays, and offline
-routing over a compiled archive. It is static, keyless and served from this
-site’s <code>/demo</code> path.</p>
+with pan, zoom, bearing and pitch controls, in-page overlays, recorded route
+planning, a simulated trip with live turn-by-turn guidance from the SDK’s own
+navigator, and offline routing over a compiled archive. It is static, keyless
+and served from this site’s <code>/demo</code> path.</p>
 <h2 id="what-the-demo-needs-in-a-browser"><a class="header" href="#what-the-demo-needs-in-a-browser">What the demo needs in a browser</a></h2>
 <ul>
 <li><strong>WebGPU.</strong> Chromium-based browsers support it flag-free since 113;
@@ -192,8 +193,9 @@ Safari ships it from version 26; Firefox ships it since 141, with
 desktop first. MDN’s WebGPU page carries the live compatibility table.</li>
 <li><strong>A secure context.</strong> The browser resolves WebGPU only over HTTPS or
 localhost.</li>
-<li><strong>Keyless by default.</strong> The demo renders bundled demo imagery and
-answers routes from a bundled routing archive. The gear in the panel header
+<li><strong>Keyless by default.</strong> The demo renders bundled demo imagery, plans the
+recorded demo routes, drives the simulated trip and answers offline routes
+from a bundled archive. The gear in the panel header
 opens <strong>Settings</strong>, where a provider key can be applied at runtime for live
 geocoding, routing and tile probes (MapQuest today; the provider registry
 is designed for more); the key stays in the page’s memory and is never

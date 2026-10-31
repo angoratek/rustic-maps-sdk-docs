@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-654ed639.js";
+            window.path_to_searchindex_js = "searchindex-60b36cfa.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -196,11 +196,13 @@ the released files.</p>
 </tbody>
 </table>
 </div>
-<p>The Android artifact is a release AAR (Maven coordinate
-<code>com.angoratek:rustic-maps-sdk</code>) carrying the Kotlin bindings plus the
-Rust dynamic library for three ABIs. Measured sizes (2026-10-29): the AAR
-is 16 MiB; the stripped per-ABI <code>.so</code> libraries measure arm64-v8a
-12 MiB, armeabi-v7a 8.7 MiB, and x86_64 13 MiB.</p>
+<p>The Android release ships two AARs: the bindings and runtime
+(<code>com.angoratek:rustic-maps-sdk</code>) carrying the Kotlin bindings plus the
+Rust dynamic library for three ABIs, and the <code>MapView</code> widget and Compose
+wrapper (<code>rustic-maps-sdk-android-ui-v&lt;version&gt;.aar</code>) that depends on it.
+Measured sizes (2026-10-29, bindings AAR): 16 MiB; the stripped per-ABI
+<code>.so</code> libraries measure arm64-v8a 12 MiB, armeabi-v7a 8.7 MiB, and x86_64
+13 MiB.</p>
 <h2 id="ios"><a class="header" href="#ios">iOS</a></h2>
 <div class="table-wrapper">
 <table>

@@ -61,6 +61,7 @@ const elements = {
   countdown: document.querySelector('[data-role="session-countdown"]'),
   stop: document.querySelector('[data-role="stop"]'),
   resting: document.querySelector('[data-role="resting"]'),
+  budgetLine: document.querySelector('[data-role="budget-line"]'),
   manifestLine: document.querySelector('[data-role="manifest-line"]'),
 };
 
@@ -120,6 +121,34 @@ async function loadManifest() {
     return await response.json();
   } catch {
     return null;
+  }
+}
+
+/**
+ * Reads the month's remaining minutes without claiming a session, so a
+ * visitor can see what is left before pressing Start. The readout is hidden
+ * when the status service is unreachable; it is an explanation, never a gate.
+ */
+async function renderBudgetLine() {
+  try {
+    const statusUrl = new URL(CLAIM_ENDPOINT);
+    statusUrl.searchParams.set('platform', state.platform);
+    statusUrl.searchParams.set('status', 'true');
+    statusUrl.searchParams.set('visitor', visitorToken());
+    const response = await fetch(statusUrl, { cache: 'no-store' });
+    const status = await response.json();
+    if (!Number.isFinite(status?.remainingSeconds)) {
+      return;
+    }
+    const remainingMinutes = Math.floor(status.remainingSeconds / 60);
+    elements.budgetLine.textContent =
+      remainingMinutes === 1
+        ? 'About 1 streamed minute remains this month.'
+        : `About ${remainingMinutes} streamed minutes remain this month.`;
+    elements.budgetLine.hidden = false;
+  } catch {
+    // The page works without the readout; the claim itself reports the same
+    // facts when it answers.
   }
 }
 
@@ -289,6 +318,7 @@ async function main() {
   state.manifest = await loadManifest();
   wire();
   renderPoster();
+  renderBudgetLine();
 }
 
 main();
