@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f588e358.js";
+            window.path_to_searchindex_js = "searchindex-719c8217.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -379,18 +379,18 @@ let plannedRoute = try await routingEngine.calculateRoute(
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="resolve-a-query-into-places-2"><a class="header" href="#resolve-a-query-into-places-2">Resolve a query into places</a></h3>
-<p>The TurboModule surface mirrors the contract as promise-returning
-methods. Everything you call on <code>MapSdk</code> resolves to the same records
-the other platforms see, with lower camel case field names:</p>
+<p>The package’s <code>MapsSdk</code> handle answers the contract’s search and routing
+calls as promises. Every record it resolves carries the same fields the other
+platforms see, in lower camel case:</p>
 <!-- docs-snippet: begin search-and-routing/search-for-places react-native -->
 <pre><code class="language-ts">const originPlace = (await mapSdk.forwardGeocode(originSearchQuery))[0] ?? null;
 const destinationPlace =
   (await mapSdk.forwardGeocode(destinationSearchQuery))[0] ?? null;
-if (originPlace === null || destinationPlace === null) {
-  return null;
-}
 </code></pre>
 <!-- docs-snippet: end search-and-routing/search-for-places react-native -->
+<p>A query that resolves to no place leaves the field <code>null</code>; the example stops
+before planning rather than inventing a coordinate, exactly as the other tabs
+do.</p>
 <p>Pass <code>undefined</code> (or omit it) as the boundary to search worldwide, and pass
 a <code>BoundingBox</code> (<code>southWest</code>/<code>northEast</code> corners, lower camel case) to
 restrict the search. <code>suggest</code> answers fast completion candidates while the
@@ -421,12 +421,11 @@ one leg per waypoint pair with its steps.</p>
 error state instead of retrying blindly (the rate limiter refills on its
 own).</p>
 <h3 id="frame-the-route-preview-1"><a class="header" href="#frame-the-route-preview-1">Frame the route preview</a></h3>
-<p>The generated <code>MapCamera.fitBounds</code> takes the same inset story as the
-other tabs: 224 px clear on the left for the route card, 48 px top and
-right, 96 px bottom, clamped at zoom 22:</p>
-<pre><code class="language-js">const fittedCamera = MapCamera.fitBounds(
+<p>The map view’s <code>fitBounds</code> takes the same inset story as the other tabs:
+224 px clear on the left for the route card, 48 px top and right, 96 px
+bottom, clamped at zoom 22:</p>
+<pre><code class="language-js">mapView.fitBounds(
   plannedRoute.boundingBox,
-  { widthPixels, heightPixels },
   { left: 224, top: 48, right: 48, bottom: 96 },
   22,
 );
@@ -444,16 +443,12 @@ map view:</p>
 await mapView.setOverlays([routeOverlay]);
 </code></pre>
 <!-- docs-snippet: end search-and-routing/draw-the-route react-native -->
-<h3 id="group-the-calls-with-engines-2"><a class="header" href="#group-the-calls-with-engines-2">Group the calls with engines</a></h3>
-<p>The generated engine classes wrap the same SDK and delegate verbatim:</p>
-<pre><code class="language-js">import { SearchEngine, RoutingEngine } from '@angoratek/rustic-maps-sdk';
-
-const searchEngine = new SearchEngine(mapSdk);
-const settledPlaces = await searchEngine.search('Capitol Park', undefined);
-
-const routingEngine = new RoutingEngine(mapSdk);
-const plannedRoute = await routingEngine.calculateRoute(waypoints, routeOptions);
-</code></pre>
+<h3 id="keep-one-sdk-handle"><a class="header" href="#keep-one-sdk-handle">Keep one SDK handle</a></h3>
+<p>The package handle answers <code>search</code>, <code>suggest</code>, <code>forwardGeocode</code> and
+<code>calculateRoute</code> directly, so a React Native screen needs no extra wrapper.
+The generated engine classes wrap a lower-level <code>MapSdk</code> instance, which would
+be a second SDK — with its own provider registry and tile cache — in the same
+process. Keep the single handle from the <a href="first-map.html">first map</a> guide.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">

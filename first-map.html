@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f588e358.js";
+            window.path_to_searchindex_js = "searchindex-719c8217.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -458,19 +458,20 @@ the callback set, so the host application only composes it. The package
 also owns the one native SDK instance; create it with <code>MapsSdk.create()</code>
 before you mount the view, which attaches to it as soon as it is available.</p>
 <!-- docs-snippet: skip — a JSX fragment outside the docs checks. -->
-<pre><code class="language-tsx">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
+<pre><code class="language-tsx">import { useRef } from 'react';
 import { MapView, type MapViewHandle } from '@angoratek/rustic-maps-sdk/MapView';
 
-// One native SDK per process; create it before the view mounts.
-const mapSdk = await MapsSdk.create();
-await mapSdk.setProviderCredential(providerKey, mapQuestApiKey);
+// Hold the handle to drive the camera, overlays and location layer.
+const mapViewRef = useRef&lt;MapViewHandle | null&gt;(null);
 
 &lt;MapView
   ref={mapViewRef}
   style={{ flex: 1 }}
-  onMapReady={() =&gt; { /* frame the first camera */ }}
-  onCameraChanged={(camera) =&gt; { /* reflect the pose in your UI */ }}
-  onError={(failure) =&gt; { /* the contract's error detail, verbatim */ }}
+  topBarInsetPixels={topBarInsetPixels}
+  bottomBarInsetPixels={bottomBarInsetPixels}
+  onMapReady={() =&gt; { /* the first frame presented */ }}
+  onCameraChanged={(camera, isGestureDriven) =&gt; { /* reflect the pose */ }}
+  onError={(failure) =&gt; { /* failure.phase, failure.message */ }}
 /&gt;;
 </code></pre>
 <p>The generated contract classes from the package root remain available for
@@ -500,9 +501,9 @@ mapView.setCamera(mapCamera);
 <p><code>animateCamera</code> and <code>fitBounds</code> are on the same handle, with the same
 signatures the other tabs show.</p>
 <h3 id="pan-the-camera-from-a-gesture-2"><a class="header" href="#pan-the-camera-from-a-gesture-2">Pan the camera from a gesture</a></h3>
-<p>The generated <code>MapCamera</code> carries the same gesture members on the
-JavaScript side, so a native view’s drag delta becomes one call (the shell’s
-own view controller does exactly this):</p>
+<p>The generated <code>MapCamera</code> carries the same gesture members on the JavaScript
+side. The package’s native views call them for their own gestures; reach for
+them when you drive the camera from a control of your own or from a test:</p>
 <pre><code class="language-js">const pannedCamera = camera.panByScreenPixels(
   dragDeltaXPixels,
   dragDeltaYPixels,
@@ -514,10 +515,11 @@ const pannedCenter = pannedCamera.center();
 <p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
 pinch and twist deltas with the same focal-point correction.</p>
 <h3 id="where-to-continue"><a class="header" href="#where-to-continue">Where to continue</a></h3>
-<p>With the SDK installed, continue in <a href="search-and-routing.html">Search and
-routing</a>; the navigation tutorial’s <a href="navigation-simulation.html">React
-Native</a> tab shows the full simulated-trip demo
-flow over this same surface.</p>
+<p>The camera block above is the first step of the shared worked example the four
+guides walk: the same <code>mapCamera</code>, <code>mapSdk</code> and <code>mapView</code> continue through
+<a href="search-and-routing.html">Search and routing</a>, <a href="navigation-simulation.html">Turn-by-turn
+navigation</a> and <a href="offline-maps.html">Offline maps</a>
+with the same names. Start there once this surface draws.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
