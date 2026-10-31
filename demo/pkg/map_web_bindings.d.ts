@@ -121,6 +121,11 @@ export class MapView {
      */
     addOverlay(overlay: any): string;
     /**
+     * Clears the label candidate list; following frames draw no labels
+     * until [`MapView::set_labels`] supplies a new list.
+     */
+    clearLabels(): void;
+    /**
      * Clears the location-indicator layer; following frames draw no
      * indicator until [`MapView::set_location_indicator`] supplies a
      * new one.
@@ -168,8 +173,9 @@ export class MapView {
      * `missingTiles` (requested tiles with no pooled imagery this frame),
      * `tileZoomLevel` (the fetch zoom, clamped to the recorded fixtures),
      * `tileResolution` (the resolution the frame's fixtures were
-     * fetched and sampled at) and `overlayTriangles` (solid overlay
-     * triangles drawn over the tiles this frame; zero without overlays).
+     * fetched and sampled at) and `overlayTriangles` (triangles in the
+     * cached world-space overlay layer drawn over the tiles this frame; zero
+     * without overlays; the GPU clips copies and near-plane fragments).
      * With the raster tile layer hidden through
      * [`MapView::set_tile_layer_visible`] the frame skips the whole
      * tile pipeline and reports `requestedTiles`, `drawnTiles`,
@@ -206,6 +212,24 @@ export class MapView {
      * normally on the next frame (the texture cache survives hidden frames).
      */
     setBaseMapVisible(visible: boolean): void;
+    /**
+     * Decodes one Mapbox glyph-protocol range and packs it into the
+     * `R8Unorm` atlas the label layer draws with. Answers the decoded font
+     * stack name, glyph count and page dimensions for the page's status
+     * readout. A malformed payload or an un-packable range is a
+     * string-valued rejection and keeps the previous font in force.
+     */
+    setGlyphRange(glyph_range_bytes: Uint8Array): object;
+    /**
+     * Replaces the label candidates drawn over the overlays in every
+     * following [`MapView::render_frame`], and answers how many the call
+     * accepted. Each descriptor carries its text, geographic anchor, paint,
+     * halos, size and collision fields; [`MapView::set_glyph_range`] must
+     * supply the glyphs before anything draws. Every invalid descriptor
+     * rejects the whole call with a string-valued error and keeps the
+     * previous list in force; nothing panics.
+     */
+    setLabels(labels: any[]): number;
     /**
      * Sets the location-indicator layer drawn over the overlays in every
      * following [`MapView::render_frame`] (the native surface's top
@@ -321,6 +345,43 @@ export class MapsSdk {
      * The compiled SDK version (the workspace package version).
      */
     readonly compiledVersion: string;
+}
+
+/**
+ * An immutable simulated trip along the planned route's own geometry,
+ * mirroring the contract's `RouteSimulator` (M27).
+ *
+ * Construct it with a `Route`-shaped plain object (the same shape
+ * `calculateRoute` answers) and a `SimulatedTripPace`-shaped plain object;
+ * both fix methods then answer `SimulatedTripFix`-shaped plain objects. The
+ * SDK carries no pacing policy.
+ */
+export class RouteSimulator {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * The fix at `elapsed_seconds` of simulated travel, clamped into
+     * `[0, totalDurationSeconds()]`.
+     */
+    fixAtElapsedSeconds(elapsed_seconds: number): object;
+    /**
+     * The fix at `travelled_meters` from the route start, clamped into
+     * `[0, totalDistanceMeters()]`.
+     */
+    fixAtTravelledMeters(travelled_meters: number): object;
+    /**
+     * Builds the walker over `route` at `pace`. Throws with a message when
+     * the route carries no usable geometry or the pace cannot drive a trip.
+     */
+    constructor(route: any, pace: any);
+    /**
+     * Total length of the route's flattened polyline, in meters.
+     */
+    totalDistanceMeters(): number;
+    /**
+     * Total simulated travel time at the chosen pace, in seconds.
+     */
+    totalDurationSeconds(): number;
 }
 
 /**
@@ -574,6 +635,28 @@ export function tilesCovering(south_west_latitude: number, south_west_longitude:
 export function vectorTileGeographicBounds(tile_zoom_level: number, tile_x: number, tile_y: number): object;
 
 /**
+ * Decodes and styles one vector tile into the point-label descriptors the
+ * WebGPU canvas' [`crate::canvas::MapView::set_labels`] consumes.
+ *
+ * The address and wire bytes are validated exactly like the overlay export,
+ * and the labels come from the same style conversion (the symbol layers'
+ * text fallbacks, paint, size stops, priority, rank and overlap rule), so the
+ * overlay and label halves of one tile cannot disagree. Size stops evaluate
+ * at the tile's own integer zoom level — the page lists tiles at the camera's
+ * rounded zoom — and the canvas places the labels at the exact frame camera
+ * pose. A malformed payload
+ * or an out-of-grid address rejects with a string-valued error; nothing
+ * throws across the wasm boundary as a panic.
+ */
+export function vectorTileLabelDescriptors(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number): Array<any>;
+
+/**
+ * The same label conversion painted with the committed style a style id
+ * names; an unknown style id rejects with the documented list of known ids.
+ */
+export function vectorTileLabelDescriptorsForStyle(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number, style_id: string): Array<any>;
+
+/**
  * Decodes and styles one vector tile into the overlay descriptor list the
  * WebGPU canvas consumes.
  *
@@ -612,6 +695,7 @@ export interface InitOutput {
     readonly __wbg_mapcamera_free: (a: number, b: number) => void;
     readonly __wbg_mapssdk_free: (a: number, b: number) => void;
     readonly __wbg_mapview_free: (a: number, b: number) => void;
+    readonly __wbg_routesimulator_free: (a: number, b: number) => void;
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
     readonly clearMapquestProviders: () => void;
     readonly clearProvider: () => void;
@@ -639,6 +723,7 @@ export interface InitOutput {
     readonly mapssdk_compiledVersion: (a: number, b: number) => void;
     readonly mapssdk_create: () => number;
     readonly mapview_addOverlay: (a: number, b: number, c: number) => void;
+    readonly mapview_clearLabels: (a: number) => void;
     readonly mapview_clearLocationIndicator: (a: number) => void;
     readonly mapview_clearOverlays: (a: number) => void;
     readonly mapview_initialize: (a: number) => number;
@@ -648,6 +733,8 @@ export interface InitOutput {
     readonly mapview_sdkCompiledVersion: (a: number, b: number) => void;
     readonly mapview_setBackgroundColor: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly mapview_setBaseMapVisible: (a: number, b: number) => void;
+    readonly mapview_setGlyphRange: (a: number, b: number, c: number, d: number) => void;
+    readonly mapview_setLabels: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setRasterTileSource: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -657,20 +744,27 @@ export interface InitOutput {
     readonly panCameraByScreenPixels: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly registerProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly rotateCameraByDegreesAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
+    readonly routesimulator_fixAtElapsedSeconds: (a: number, b: number, c: number) => void;
+    readonly routesimulator_fixAtTravelledMeters: (a: number, b: number, c: number) => void;
+    readonly routesimulator_new: (a: number, b: number, c: number) => void;
+    readonly routesimulator_totalDistanceMeters: (a: number) => number;
+    readonly routesimulator_totalDurationSeconds: (a: number) => number;
     readonly setProviderCredential: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly subscribeToDiagnosticEvents: (a: number) => void;
     readonly tileKeyForCoordinate: (a: number, b: number, c: number, d: number) => void;
     readonly tilesCovering: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileGeographicBounds: (a: number, b: number, c: number, d: number) => void;
+    readonly vectorTileLabelDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly vectorTileLabelDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1408: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1408_56: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1408_57: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7664: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7685: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1232: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1461: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1461_66: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1461_67: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7726: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7747: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1276: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

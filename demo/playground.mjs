@@ -1464,6 +1464,15 @@
       });
       const VECTOR_BASE_TILE_SIZE_PIXELS = DEFAULT_TILE_SIZE_PIXELS;
       const VECTOR_BASE_TILE_RADIUS = 1;
+      // The Latin glyph range the demo's label pass draws with. The committed
+      // fixture is served same-origin by the dev server (the recorded raster
+      // tiles' pattern); the payload itself names the font stack it carries,
+      // so the renderer uses whichever families the range declares.
+      const VECTOR_LABEL_FONT_STACK = 'Noto Sans Regular';
+      const VECTOR_LABEL_GLYPH_RANGE = '0-255';
+      const VECTOR_LABEL_GLYPH_RANGE_URL =
+        `/glyphs/${encodeURIComponent(VECTOR_LABEL_FONT_STACK)}/${VECTOR_LABEL_GLYPH_RANGE}.pbf`;
+      let label_glyph_status = null;
       const VECTOR_BASE_RELOAD_DEBOUNCE_MILLISECONDS = 180;
       // Every raster base layer a registry descriptor declares (their fixture
       // routes back the demo canvas' recorded imagery).
@@ -1682,17 +1691,24 @@
         // while this load was in flight.
         vector_base_overlays = vector_result.overlays;
         apply_overlays();
+        const label_status_suffix =
+          `${vector_result.labelCount} labels` +
+          (label_glyph_status === null
+            ? ' (glyphs unavailable, so none draw)'
+            : '');
         if (vector_result.failures.length === 0) {
           set_base_map_status(
             `Vector base · ${vector_descriptor.display_name} · ` +
             `${active_vector_style_id()}: ` +
-            `${vector_result.overlayCount} styled features over ` +
+            `${vector_result.overlayCount} styled features and ` +
+            `${label_status_suffix} over ` +
             `${(2 * VECTOR_BASE_TILE_RADIUS + 1) ** 2} tiles.`);
         } else {
           const first_failure = vector_result.failures[0];
           set_base_map_status(
             `Vector base · ${vector_descriptor.display_name}: ` +
-            `${vector_result.overlayCount} styled features; ` +
+            `${vector_result.overlayCount} styled features, ` +
+            `${label_status_suffix}; ` +
             `${vector_result.failures.length} tiles failed — ` +
             `${first_failure?.error ?? 'unknown failure'}`);
         }
@@ -1749,6 +1765,11 @@
             VECTOR_BASE_RASTER_CLEAR_COLOR.alpha,
           );
           vector_base_overlays = [];
+          // The raster base paints its own imagery: the vector base's labels
+          // leave with it.
+          if (renderer_mode === 'gpu' && gpu_map_canvas) {
+            gpu_map_canvas.clearLabels();
+          }
           set_overlay_controls_enabled(
             renderer_mode === 'gpu',
             'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
@@ -1886,6 +1907,10 @@
       refresh_base_map_toggle_enabled_state();
       window.mapRendererMode = () => renderer_mode;
       window.mapLastFrameStats = () => last_frame_statistics;
+      // The decoded glyph range the label layer draws with (font stack name,
+      // glyph count and atlas page size), read by the label suite; null until
+      // the range loaded or when it failed.
+      window.mapLabelGlyphStatus = () => label_glyph_status;
       // The live camera state, read by the UX tests (docs/ReferenceAppUX.md
       // §10.1) instead of parsing the readout's presentation text.
       window.mapCameraState = () => ({ ...camera_state, rendererMode: renderer_mode });
@@ -2974,6 +2999,20 @@
             tile_resolution,
           );
           renderer_detail = `GPU adapter ${await gpu_map_canvas.initialize()}`;
+          // The vector base's label pass needs the glyph range before any
+          // label can draw; the dev server serves the committed recorded
+          // range same-origin (the raster tiles' fixture pattern). A missing
+          // range leaves `label_glyph_status` null and the base simply draws
+          // without labels, never an error the map cannot recover from.
+          try {
+            const glyph_range_response = await fetch(VECTOR_LABEL_GLYPH_RANGE_URL);
+            if (glyph_range_response.ok) {
+              label_glyph_status = gpu_map_canvas.setGlyphRange(
+                new Uint8Array(await glyph_range_response.arrayBuffer()));
+            }
+          } catch (glyph_failure) {
+            label_glyph_status = null;
+          }
           // Fixtures cover the recorded demo area only. The registry's live
           // raster descriptor fills every other address, so a visitor can pan
           // anywhere in the world without the map going blank; a registered
