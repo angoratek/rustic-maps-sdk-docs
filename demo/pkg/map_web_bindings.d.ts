@@ -635,8 +635,10 @@ export function tilesCovering(south_west_latitude: number, south_west_longitude:
 export function vectorTileGeographicBounds(tile_zoom_level: number, tile_x: number, tile_y: number): object;
 
 /**
- * Decodes and styles one vector tile into the point-label descriptors the
- * WebGPU canvas' [`crate::canvas::MapView::set_labels`] consumes.
+ * Decodes and styles one vector tile into the label descriptors the WebGPU
+ * canvas' [`crate::canvas::MapView::set_labels`] consumes. A point-placed
+ * symbol candidate carries its anchor; a line-placed one (a road name) also
+ * carries the line geometry the canvas runs the text along.
  *
  * The address and wire bytes are validated exactly like the overlay export,
  * and the labels come from the same style conversion (the symbol layers'
@@ -759,12 +761,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1461: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1461_66: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1461_67: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7726: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7747: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1276: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1460: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1460_66: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1460_67: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7725: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7746: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1275: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-87535731.js";
+            window.path_to_searchindex_js = "searchindex-fe1bb7a7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -839,8 +839,10 @@ dictionary UrlTemplateRasterTileSource {
 /// malformed template or an inverted zoom range throws instead of failing on
 /// the first tile.
 ///
-/// Draw order: the styled base paints over the raster tiles and beneath every
-/// overlay the view is asked to draw, so an application's markers, routes and
+/// Draw order: while installed, the styled base replaces the raster tiles —
+/// the raster layer is hidden, so its imagery and baked labels cannot show
+/// through the style's translucent fills — and paints beneath every overlay
+/// the view is asked to draw, so an application's markers, routes and
 /// location indicator stay above the base map.
 ///
 /// Known limit (stated wherever the demo offers it): the committed styles paint
