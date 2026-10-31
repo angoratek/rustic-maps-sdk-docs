@@ -275,12 +275,14 @@
                 ? null
                 : containers[0].querySelector('[' + TITLE_ATTR + ']').getAttribute(TITLE_ATTR));
         if (initial_platform !== null) {
-            // The hash already names the platform in the deep-link case; a
-            // remembered or defaulted choice is written back so the address
-            // bar always shows what the reader is looking at.
+            // The page selects a tab on load, but it does not mint an anchor
+            // for it: a reader who arrives at the plain address keeps the
+            // plain address, and only a click or a followed deep link puts a
+            // platform in the fragment. (Writing one here made every first
+            // visit land on `#android`.)
             selectPlatform(initial_platform, {
                 persist: true,
-                rewriteHash: hash_platform_name() !== initial_platform,
+                rewriteHash: false,
             });
         }
         watchContentsList();
