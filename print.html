@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-1ae5f6ba.js";
+            window.path_to_searchindex_js = "searchindex-3412cf25.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-2fe6af0c.js"></script>
@@ -2388,11 +2388,10 @@ variant and its verbatim detail.</p>
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>The SDK is in active development; everything below is unreleased. The FFI
 contract surface it describes changes <strong>addition-only</strong>: existing members
-keep their signature and meaning. This page is a curated, public-facing
-summary. The complete development log lives in the source repository.</p>
+keep their signature and meaning, so an upgrade never rewrites your calls.</p>
 <h2 id="imagery-and-caching"><a class="header" href="#imagery-and-caching">Imagery and caching</a></h2>
 <ul>
-<li>All seven MapQuest provider APIs are implemented and covered by recorded-response tests.
+<li>All seven MapQuest provider APIs are implemented against recorded provider responses.
 They cover routes with strategies and multiple legs, the route matrix,
 forward and reverse geocoding, search prediction, traffic incidents,
 traffic-flow congestion polylines, and raster tiles in standard and
@@ -2420,8 +2419,8 @@ fallback, and a fetch budget. Route, polygon, marker, and traffic
 overlay layers sit on top of the tiles, and the renderer owns the
 location indicator (a tracking dot with accuracy ring, or a guided
 course arrow).</li>
-<li>The same renderer scene draws headless (deterministic golden-image
-tests), into live Android/iOS surfaces, and in the browser through
+<li>The same renderer scene draws headless (for deterministic tests), into
+live Android/iOS surfaces, and in the browser through
 WebGPU. One WGSL/vertex pattern is byte-identical across the wasm and
 native paths.</li>
 </ul>
@@ -2444,7 +2443,8 @@ a plain browser run.</li>
 </ul>
 <h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
 <ul>
-<li>Navigation state is a pure reducer over <code>Option&lt;NavigationSession&gt;</code>.
+<li>Navigation state is deterministic: the same sequence of location updates
+always produces the same phase, step and instruction.
 It implements Ferrostar-pattern step-advance conditions (manual, eager
 distance-to-end, delayed current-step, Or/And combinators, and the
 fresh-instance reset contract), deviation detection with
@@ -2475,8 +2475,8 @@ bindings from a frozen, addition-only UDL contract. The wasm surface is
 a hand-reviewed TypeScript mirror regression-checked against the same
 UDL. Callback providers (geocoding, tiles) and a navigation controller
 with per-topic subscriptions cross the foreign callbacks seam. Exported
-async methods run through an SDK-owned runtime handback, so foreign
-event loops never meet an unserved reactor.</li>
+async methods run on an SDK-owned runtime, so your application’s event
+loop never blocks on a provider call.</li>
 <li>Reference applications on Android (Compose), iOS (SwiftUI), and the
 browser reference app implement one shared design language. Each reaches
 search → route → simulated turn-by-turn with speech through a
@@ -2497,20 +2497,18 @@ source descriptor.</li>
 </ul>
 <h2 id="provider-credentials"><a class="header" href="#provider-credentials">Provider credentials</a></h2>
 <ul>
-<li>The reference applications never embed a provider key in a build.
-They start keyless and take credentials at runtime from a settings
-surface whose rows come from one shared provider registry; keys stay
+<li>The SDK never needs a provider key at build time: the reference
+applications start keyless and take credentials at runtime from a
+settings surface whose rows come from one shared provider registry; keys stay
 in memory unless the user opts in to device secure storage (Keychain
 or Android Keystore). Automated UI runs can inject a credential through
 a launch intent/environment; it is never persisted or logged.</li>
 </ul>
 <h2 id="releases-and-the-live-demo"><a class="header" href="#releases-and-the-live-demo">Releases and the live demo</a></h2>
 <ul>
-<li>A tag-driven release pipeline runs the gate set on the tagged tree,
-builds the Android AAR, the iOS XCFramework archive and the wasm
-package, and assembles a draft GitHub Release with an exact asset-set
-check, SHA-256 sidecars and manifest, keyless Sigstore signature
-bundles, regenerated third-party notices and changelog-derived notes.</li>
+<li>A release is cut from a tag and ships the Android AAR, the iOS
+XCFramework archive and the wasm package together, with SHA-256
+checksums, signature bundles and the third-party notices beside them.</li>
 <li>The same WebAssembly build powers a live, keyless demo at this site’s
 <code>/demo</code> path. Its provider panel can take a runtime key for live
 geocoding, routing and tile probes; the static demo defaults to the
@@ -2519,13 +2517,10 @@ bundled demo imagery.</li>
 <h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
 <ul>
 <li>A <code>tracing</code>-facade diagnostics layer provides bounded, per-subsystem
-ring sinks with coordinate scrubbing at the sink. Its severity gate
-never raises once finer events have been requested. Subscribe and
-flush seams on the native and wasm surfaces back the reference apps’
-readouts and a later log-sharing story.</li>
-<li>CI runs fmt, clippy with warnings-as-errors, the workspace test suite,
-a wasm-targeted clippy closure, a browser e2e suite, and the
-documentation-site pipeline (build → scrub → stage) on every push.</li>
+rings, with coordinates removed before an event reaches your listener.
+Its severity gate never raises once finer events have been requested.
+Subscribe and flush seams on the native and wasm surfaces back the
+reference apps’ readouts and any log-sharing you add.</li>
 </ul>
 <h2 id="attribution"><a class="header" href="#attribution">Attribution</a></h2>
 <p>Each provider descriptor carries its own attribution line, and the
