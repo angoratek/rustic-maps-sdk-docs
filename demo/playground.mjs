@@ -18,6 +18,7 @@
         TILE_LAYER_MODES,
         DEFAULT_TILE_SIZE_PIXELS,
         applyTileLayerMode,
+        cancelVectorBaseLoad,
         loadVectorBaseOverlays,
         vectorStyleIdForDescriptor,
       } from './tile_switch.mjs';
@@ -1474,8 +1475,14 @@
       // so the renderer uses whichever families the range declares.
       const VECTOR_LABEL_FONT_STACK = 'Noto Sans Regular';
       const VECTOR_LABEL_GLYPH_RANGE = '0-255';
-      const VECTOR_LABEL_GLYPH_RANGE_URL =
-        `/glyphs/${encodeURIComponent(VECTOR_LABEL_FONT_STACK)}/${VECTOR_LABEL_GLYPH_RANGE}.pbf`;
+      // Relative to this module, not the site root: the demo is served both at
+      // `/` (the dev server) and at `/demo/` (the published site), and an
+      // absolute `/glyphs/…` path 404s under `/demo/` — which silently removed
+      // every label from the live demo while the dev server looked fine.
+      const VECTOR_LABEL_GLYPH_RANGE_URL = new URL(
+        `./glyphs/${encodeURIComponent(VECTOR_LABEL_FONT_STACK)}/${VECTOR_LABEL_GLYPH_RANGE}.pbf`,
+        import.meta.url,
+      ).toString();
       let label_glyph_status = null;
       const VECTOR_BASE_RELOAD_DEBOUNCE_MILLISECONDS = 180;
       // Every raster base layer a registry descriptor declares (their fixture
@@ -1761,6 +1768,10 @@
         vector_base_requested_center = null;
         vector_base_requested_zoom = null;
         if (next_mode === TILE_LAYER_MODES.raster) {
+          // A load that started before this switch must not apply its list
+          // after the raster layer is back: it would paint the vector base
+          // over the imagery (the superposition the cancel exists to stop).
+          cancelVectorBaseLoad();
           applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.raster });
           gpu_map_canvas.setBackgroundColor(
             VECTOR_BASE_RASTER_CLEAR_COLOR.red,

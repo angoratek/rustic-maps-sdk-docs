@@ -70,6 +70,46 @@ const state = {
   sessionTimerIdentifier: null,
 };
 
+/** Where the browser keeps its demo visitor token (this browser only). */
+const VISITOR_TOKEN_STORAGE_KEY = 'rustic-maps-demo-visitor-token';
+
+/** The token shape the claim endpoint accepts. */
+const VISITOR_TOKEN_PATTERN = /^[A-Za-z0-9._-]{8,64}$/;
+
+/** The operator secret, when the page is opened with one (`?operatorToken=`). */
+const operatorToken = new URL(window.location.href).searchParams.get('operatorToken');
+
+/** Builds one random, URL-safe visitor token. */
+function createVisitorToken() {
+  if (typeof window.crypto?.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  const randomPart = Math.random().toString(36).slice(2);
+  return `visitor-${Date.now().toString(36)}-${randomPart}`;
+}
+
+/**
+ * The token this browser presents, created on first use. The endpoint counts
+ * sessions per token rather than per IP address, because an address is not a
+ * visitor: a VPN or a carrier NAT shares one, which used to lock out people
+ * who had never watched a session. Storage can be unavailable (private
+ * windows); the page then presents a fresh token for this load and the
+ * address backstop still bounds the day.
+ */
+function visitorToken() {
+  try {
+    const storedToken = window.localStorage.getItem(VISITOR_TOKEN_STORAGE_KEY);
+    if (storedToken !== null && VISITOR_TOKEN_PATTERN.test(storedToken)) {
+      return storedToken;
+    }
+    const createdToken = createVisitorToken();
+    window.localStorage.setItem(VISITOR_TOKEN_STORAGE_KEY, createdToken);
+    return createdToken;
+  } catch {
+    return createVisitorToken();
+  }
+}
+
 /** Fetches the public build manifest; a missing one is an honest empty state. */
 async function loadManifest() {
   try {
@@ -113,11 +153,14 @@ function renderPoster() {
 }
 
 /** Shows the resting state with the endpoint's own words. */
-function showResting(detail) {
+function showResting(detail, remainingSeconds = null) {
   elements.poster.hidden = true;
   elements.session.hidden = true;
   elements.resting.hidden = false;
-  elements.resting.textContent = detail;
+  const minutesLeft = Number.isFinite(remainingSeconds)
+    ? ` About ${Math.floor(remainingSeconds / 60)} of this month’s streamed minutes remain.`
+    : '';
+  elements.resting.textContent = `${detail}${minutesLeft}`;
 }
 
 /** Ends the running session and returns the page to its poster. */
@@ -181,17 +224,23 @@ async function requestSession() {
   elements.start.disabled = true;
   elements.posterDetail.textContent = 'Starting…';
   try {
-    const response = await fetch(
-      `${CLAIM_ENDPOINT}?platform=${encodeURIComponent(state.platform)}`,
-      { cache: 'no-store' },
-    );
+    const claimUrl = new URL(CLAIM_ENDPOINT);
+    claimUrl.searchParams.set('platform', state.platform);
+    claimUrl.searchParams.set('visitor', visitorToken());
+    if (operatorToken !== null && operatorToken !== '') {
+      claimUrl.searchParams.set('operatorToken', operatorToken);
+    }
+    const response = await fetch(claimUrl, { cache: 'no-store' });
     const claim = await response.json();
     if (claim.state === 'ok') {
       startSession(build, claim.sessionSeconds ?? 180);
       return;
     }
     if (claim.state === 'resting') {
-      showResting(claim.detail ?? 'The demo is resting right now.');
+      showResting(
+        claim.detail ?? 'The demo is resting right now.',
+        claim.remainingSeconds,
+      );
       return;
     }
     showResting(claim.detail ?? 'The demo could not start.');

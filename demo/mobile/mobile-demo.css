@@ -48,14 +48,24 @@ body {
   padding: 40px var(--gutter-inline) 64px;
 }
 
+/* The title and the Docs link share one row: the link is part of the
+   masthead, never a separate paragraph the platform tabs can crowd into. */
+.masthead-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .masthead h1 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 2rem;
   letter-spacing: -0.02em;
 }
 
 .lede {
-  margin: 0 0 28px;
+  margin: 12px 0 24px;
   max-width: 60ch;
   color: var(--text-secondary-color);
 }
@@ -63,6 +73,7 @@ body {
 .platform-tabs {
   display: flex;
   gap: 8px;
+  margin-top: 8px;
   margin-bottom: 20px;
   flex-wrap: wrap;
 }
@@ -201,12 +212,9 @@ body {
   margin: 0 0 8px;
 }
 
-.masthead-links {
-  margin: 12px 0 0;
-}
-
 .docs-back-link {
   display: inline-block;
+  flex: 0 0 auto;
   padding: 6px 14px;
   border: 1px solid var(--surface-border-color);
   border-radius: var(--radius-medium);
