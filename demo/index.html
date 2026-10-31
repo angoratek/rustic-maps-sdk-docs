@@ -103,6 +103,13 @@
           <select id="vector-style-select" aria-label="Vector base style"></select>
         </label>
         <p id="base-map-status" class="reason-strip" hidden></p>
+        <!-- The same limit the three native shells state in their base-map
+             menu: the vector pipeline draws land, water and roads, and has no
+             text pipeline yet. -->
+        <p class="base-map-labels-note" id="base-map-labels-note">
+          Vector styles draw land, water and roads. Labels are not rendered
+          yet.
+        </p>
       </section>
 
 <section class="control-group" id="camera-controls">
