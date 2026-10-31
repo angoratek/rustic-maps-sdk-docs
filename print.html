@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-87535731.js";
+            window.path_to_searchindex_js = "searchindex-fe1bb7a7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -2591,12 +2591,15 @@ surface: the trip planner card with both endpoints chosen, the routed distance
 and duration, and the same route drawn on the map. It is served keyless at
 <a href="#live-demo">the live demo</a>.</p>
 <h2 id="vector-base-with-place-labels"><a class="header" href="#vector-base-with-place-labels">Vector base with place labels</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenStreetMap vector base with place labels — Sacramento, Downtown, Alkali Flat, Mansion Flats, Midtown, Southside Park — each drawn from the glyph atlas with a halo over the styled roads and parks"><span class="img-wrapper"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenStreetMap vector base with place labels — Sacramento, Downtown, Alkali Flat, Mansion Flats, Midtown, Southside Park — each drawn from the glyph atlas with a halo over the styled roads and parks"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"><span class="img-wrapper"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"></span></label></p>
 <p>The labels are geometry like everything else: the decoder hands the renderer the
-<code>place</code> features, the style’s symbol layer names the text, and the glyph atlas
-supplies the shapes. They arrive with the vector base — a raster base carries
-its imagery’s own labels instead. This is the web surface today; the native
-shells have the same pipeline and are being wired to it.</p>
+<code>place</code> and <code>transportation_name</code> features, the style’s symbol layers name the
+text, and the glyph atlas supplies the shapes. Street names ride their own
+roads, rotated to the road’s bearing and skipped when the text would not fit;
+place names sit above them, and a collision pass keeps one from covering
+another. They arrive with the vector base — a raster base carries its imagery’s
+own labels instead. Every surface draws them: the browser, Android, iOS and both
+React Native shells.</p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
 <p>The captures share one design language and walk the same flow: readiness,
 search, a planned route, then the simulated trip. They also share one
@@ -4549,8 +4552,10 @@ dictionary UrlTemplateRasterTileSource {
 /// malformed template or an inverted zoom range throws instead of failing on
 /// the first tile.
 ///
-/// Draw order: the styled base paints over the raster tiles and beneath every
-/// overlay the view is asked to draw, so an application's markers, routes and
+/// Draw order: while installed, the styled base replaces the raster tiles —
+/// the raster layer is hidden, so its imagery and baked labels cannot show
+/// through the style's translucent fills — and paints beneath every overlay
+/// the view is asked to draw, so an application's markers, routes and
 /// location indicator stay above the base map.
 ///
 /// Known limit (stated wherever the demo offers it): the committed styles paint
