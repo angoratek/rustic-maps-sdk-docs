@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fe1bb7a7.js";
+            window.path_to_searchindex_js = "searchindex-6567ea81.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -527,6 +527,8 @@ with the same names. Start there once this surface draws.</p>
 <p>A Chromium-based browser with WebGPU (flag-free in Chromium since 113;
 Safari from version 26; Firefox from 141, desktop first) and a
 <a href="downloads.html">downloaded release tarball</a> of the wasm package.</p>
+<p>The page needs a map-platform API key only for live search, routing and
+imagery. The demo runs keyless on recorded tiles and recorded places.</p>
 <h3 id="install-the-artifact-2"><a class="header" href="#install-the-artifact-2">Install the artifact</a></h3>
 <p>Unpack the release and serve its directory from any static file server
 over HTTPS or localhost:</p>
@@ -534,50 +536,53 @@ over HTTPS or localhost:</p>
 cp -r node_modules/@angoratek/rustic-maps-sdk-web ./web
 python3 -m http.server 8000   # any static server; localhost is fine
 </code></pre>
-<h3 id="load-the-module-and-start-the-core"><a class="header" href="#load-the-module-and-start-the-core">Load the module and start the core</a></h3>
+<h3 id="start-the-sdk-and-show-the-map-on-a-canvas"><a class="header" href="#start-the-sdk-and-show-the-map-on-a-canvas">Start the SDK and show the map on a canvas</a></h3>
+<p>One page creates one SDK root. Provider registration is a separate free
+call whose first argument is the provider key from the shared registry;
+read the credential at <strong>runtime</strong> — a settings form, a server-issued
+token, or a test’s environment — never from the bundle.</p>
+<p>The browser has no native view to drop into a layout. You supply a
+<code>&lt;canvas&gt;</code> element and hand it, plus the SDK root, to <code>MapView</code>. The view
+claims the element, acquires the WebGPU device, and renders tiles fetched
+from a same-origin path you host. The page keeps pointer handling; the
+view owns the surface and the frame.</p>
 <pre><code class="language-html">&lt;canvas id="map-canvas"&gt;&lt;/canvas&gt;
-&lt;script type="module"&gt;
-  import init from './web/map_web_bindings.js';
-  await init();
-&lt;/script&gt;
 </code></pre>
-<p>The page’s entry, exactly as the reference application does it:</p>
-<pre><code class="language-js">import init, { MapsSdk } from './web/map_web_bindings.js';
+<pre><code class="language-js">import init, { MapsSdk, MapView, registerProvider } from './web/map_web_bindings.js';
 
 await init();
-const maps = await MapsSdk.create();
-console.log(`Maps SDK ready (version ${maps.compiledVersion})`);
-</code></pre>
-<p>The status probe answers the same version string the native surfaces
-do.</p>
-<h3 id="draw-a-map-surface-1"><a class="header" href="#draw-a-map-surface-1">Draw a map surface</a></h3>
-<p><code>MapView</code> claims the canvas element, acquires the WebGPU device, and
-renders tiles fetched from a same-origin path you host:</p>
-<pre><code class="language-js">const canvas = /** @type {HTMLCanvasElement} */ (
+const mapSdk = await MapsSdk.create();
+registerProvider('mapquest', providerCredential);
+
+const canvas = /** @type {HTMLCanvasElement} */ (
   document.querySelector('#map-canvas')
 );
-// A page creates one SDK root and hands it to every view; the view's tile
-// resolution follows the device pixel ratio (a screenshot or capture tool
-// can pin it with the optional third argument: `new MapView(canvas, maps,
-// TileResolution.Retina)`).
-const maps = await MapsSdk.create();
-const mapView = new MapView(canvas, maps);
+const mapView = new MapView(canvas, mapSdk);
 const adapterDescription = await mapView.initialize();
-console.log(`rendering on ${adapterDescription}`);
-
-// The canvas fetches its raster tiles from the same-origin
-// /tiles/{zoom}_{tileX}_{tileY}.png path; record or serve imagery there.
-
-// The render frame: build the shared demo camera, present, repeat on
-// change. This is the same pose every platform starts from.
-const fieldOfViewDegrees = 60;
-const camera = new MapCamera(38.5766, -121.4944, 12.0, 0.0, 0.0);
-const frameStatistics = await mapView.renderFrame(camera, fieldOfViewDegrees);
+console.log(`Maps SDK ready (version ${mapSdk.compiledVersion}) on ${adapterDescription}`);
 </code></pre>
+<p>The demo skips the <code>registerProvider</code> call until a visitor supplies a key;
+recorded tiles and recorded places answer meanwhile.</p>
+<p>The status probe answers the same version string the native surfaces do. The
+view’s tile resolution follows the device pixel ratio; the optional third
+constructor argument pins it (<code>new MapView(canvas, mapSdk, TileResolution.Retina)</code>). The canvas fetches its raster tiles from the
+same-origin <code>/tiles/{zoom}_{tileX}_{tileY}.png</code> path, so record or serve
+imagery there.</p>
 <p>If <code>initialize()</code> fails in a browser without WebGPU, give the page the
 documented degradation message (name <code>navigator.gpu</code> and the missing
 capability; link the MDN compatibility table) — never a user-agent
 sniff.</p>
+<h3 id="open-the-map-3"><a class="header" href="#open-the-map-3">Open the map</a></h3>
+<p>Set the camera the view draws with, then present a frame. The shared demo
+camera on every platform is Capitol Park, Sacramento at zoom 12, north-up
+and top-down:</p>
+<pre><code class="language-js">const mapCamera = new MapCamera(38.5766, -121.4944, 12.0, 0.0, 0.0);
+const fieldOfViewDegrees = 60.0;
+const frameStatistics = await mapView.renderFrame(mapCamera, fieldOfViewDegrees);
+</code></pre>
+<p><code>renderFrame</code> takes the camera by value, so build a fresh <code>MapCamera</code> for
+each changed pose. The other tabs hand their view a camera and let it pump
+frames; the browser page calls <code>renderFrame</code> itself on every change.</p>
 <h3 id="project-and-unproject"><a class="header" href="#project-and-unproject">Project and unproject</a></h3>
 <p>The same camera answers screen mappings without rendering:</p>
 <pre><code class="language-js">const screenPoint = camera.projectToScreen(
@@ -601,24 +606,50 @@ const tileKeys = camera.visibleTileKeys(
   tileZoom,
 );
 </code></pre>
-<p>The TypeScript types of these value shapes are mirrored in the package’s
-hand-reviewed type surface; field names are lower camel case.</p>
+<p>These methods answer plain objects with lower-camel-case fields; the
+generated declarations describe each shape.</p>
 <h3 id="pan-the-camera-from-a-gesture-3"><a class="header" href="#pan-the-camera-from-a-gesture-3">Pan the camera from a gesture</a></h3>
-<p>Keep pointer capture and delta shaping in your page and forward the travel
-to the camera member; it answers the resulting pose (the ground point the
-pointer grabbed becomes the new center):</p>
-<pre><code class="language-js">const pannedPose = camera.panByScreenPixels(
+<p>There is no gesture layer on this surface: keep pointer capture, wheel and
+touch handling in your page and forward the travel to the camera member. It
+answers the resulting pose as a plain object (the ground point the pointer
+grabbed becomes the new center):</p>
+<pre><code class="language-js">const pannedCamera = camera.panByScreenPixels(
   deltaXPixels,
   deltaYPixels,
   canvas.width,
   canvas.height,
   fieldOfViewDegrees,
 );
-// { latitude, longitude, zoomLevel, bearingDegrees, pitchDegrees }
+const pannedCenter = pannedCamera.center();
 </code></pre>
 <p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
-pinch and twist deltas with the same focal-point correction; the older free
-helpers (<code>panCameraByScreenPixels</code>, …) remain as aliases.</p>
+pinch and twist deltas with the same focal-point correction. The free
+helpers (<code>panCameraByScreenPixels</code>, …) remain as older aliases.</p>
+<h3 id="add-your-first-overlay-1"><a class="header" href="#add-your-first-overlay-1">Add your first overlay</a></h3>
+<p>Draw more than tiles by setting the overlay list the view draws every
+frame. The descriptor uses the browser’s field spelling: <code>color</code>, not the
+native tabs’ <code>rgbaColor</code>.</p>
+<pre><code class="language-js">const routeOverlay = {
+  kind: 'routePolyline',
+  coordinates: [
+    { latitude: 38.5766, longitude: -121.4944 },
+    { latitude: 38.5802, longitude: -121.5083 },
+  ],
+  color: { red: 0.2, green: 0.4, blue: 0.9, alpha: 0.9 },
+  widthPixels: 3.0,
+};
+mapView.setOverlays([routeOverlay]);
+</code></pre>
+<p><code>setOverlays</code> replaces the drawn list in one go. For an overlay you keep
+across frames, <code>addOverlay</code> answers an opaque identifier, <code>updateOverlay</code>
+replaces that entry in its draw position, and <code>removeOverlay</code> answers
+whether it was present.</p>
+<h3 id="where-to-continue-1"><a class="header" href="#where-to-continue-1">Where to continue</a></h3>
+<p>The camera block above is the first step of the shared worked example the four
+guides walk: the same <code>mapCamera</code>, <code>mapSdk</code> and <code>mapView</code> continue through
+<a href="search-and-routing.html">Search and routing</a>, <a href="navigation-simulation.html">Turn-by-turn
+navigation</a> and <a href="offline-maps.html">Offline maps</a>
+with the same names. Start there once this surface draws.</p>
 </div>
 
 </div>
