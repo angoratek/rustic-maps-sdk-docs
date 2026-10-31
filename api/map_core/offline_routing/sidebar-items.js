@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ArchiveOfflineRoutingProvider"]};
+window.SIDEBAR_ITEMS = {"fn":["calculate_offline_route_from_archive_bytes"],"struct":["ArchiveOfflineRoutingProvider"]};
