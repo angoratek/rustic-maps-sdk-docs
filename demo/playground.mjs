@@ -1504,8 +1504,14 @@
           typeof provider_descriptor.url_template === 'string'
           && provider_descriptor.url_template.trim() !== '');
       let current_tile_mode = TILE_LAYER_MODES.raster;
+      // The demo's default vector base is the descriptor offering the
+      // Bright/Fiord/Positron family (the richest committed styles); a
+      // registry with no such family falls back to its first vector entry.
       let current_vector_provider_key =
-        VECTOR_BASE_MAP_DESCRIPTORS[0]?.provider_key ?? null;
+        (VECTOR_BASE_MAP_DESCRIPTORS.find((provider_descriptor) =>
+          (provider_descriptor.vector_styles ?? []).some(
+            (style_choice) => style_choice.style_id === 'bright-light',
+          )) ?? VECTOR_BASE_MAP_DESCRIPTORS[0])?.provider_key ?? null;
       let vector_base_reload_timer = null;
       // The camera pose the latest vector-base request covers. Recording the
       // request (rather than only the completed load) keeps the render loop
