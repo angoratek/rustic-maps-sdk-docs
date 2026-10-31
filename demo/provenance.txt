@@ -1,4 +1,4 @@
-source_commit: 38385a5fe074f71e9b3a29c69bebe69275591b2f
+source_commit: a6d69aebf5018e796b17a04f9c94a7a2eabe3fb6
 dirty_tree: no
 generator: scripts/build-docs-site.sh (maps-sdk-rs)
 content_license: MIT OR Apache-2.0
