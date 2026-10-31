@@ -200,3 +200,22 @@ body {
 .notes p {
   margin: 0 0 8px;
 }
+
+.masthead-links {
+  margin: 12px 0 0;
+}
+
+.docs-back-link {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid var(--surface-border-color);
+  border-radius: var(--radius-medium);
+  color: var(--text-primary-color);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.docs-back-link:hover {
+  border-color: var(--accent-fill-color);
+  color: var(--accent-fill-color);
+}
