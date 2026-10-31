@@ -14,8 +14,8 @@ const CLAIM_ENDPOINT =
   document.querySelector('meta[name="demo-claim-endpoint"]')?.content ??
   'https://rustic-maps-demo-claim.vercel.app/api/claim';
 
-/** The Appetize embed origin. */
-const APPETIZE_EMBED_ORIGIN = 'https://appetize.io/embed';
+/** The Appetize origin that hosts one session as a page of its own. */
+const APPETIZE_APP_ORIGIN = 'https://appetize.io/app';
 
 /** The device a session runs on, per platform tab (documented, not random). */
 const DEVICE_BY_PLATFORM = new Map([
@@ -23,6 +23,16 @@ const DEVICE_BY_PLATFORM = new Map([
   ['ios', 'iphone14pro'],
   ['react-native', 'pixel7'],
 ]);
+
+/** The device the active tab asks for. */
+function activeDevice() {
+  return DEVICE_BY_PLATFORM.get(state.platform) ?? 'pixel7';
+}
+
+/** The app the active tab starts, as the poster names it. */
+function appNameForPlatform() {
+  return POSTER_TITLE_BY_PLATFORM.get(state.platform) ?? 'The demo';
+}
 
 /** The manifest entry each tab starts, in the manifest's own key spelling. */
 const MANIFEST_KEY_BY_PLATFORM = new Map([
@@ -45,7 +55,8 @@ const elements = {
   posterDetail: document.querySelector('[data-role="poster-detail"]'),
   start: document.querySelector('[data-role="start"]'),
   session: document.querySelector('[data-role="session"]'),
-  frame: document.querySelector('[data-role="frame"]'),
+  sessionTitle: document.querySelector('[data-role="session-title"]'),
+  sessionLink: document.querySelector('[data-role="session-link"]'),
   countdown: document.querySelector('[data-role="session-countdown"]'),
   stop: document.querySelector('[data-role="stop"]'),
   resting: document.querySelector('[data-role="resting"]'),
@@ -114,7 +125,7 @@ function stopSession() {
     window.clearInterval(state.sessionTimerIdentifier);
     state.sessionTimerIdentifier = null;
   }
-  elements.frame.removeAttribute('src');
+  elements.sessionLink.removeAttribute('href');
   elements.session.hidden = true;
   elements.poster.hidden = false;
   elements.resting.hidden = true;
@@ -141,19 +152,23 @@ function startCountdown(sessionSeconds) {
   }, 1000);
 }
 
-/** Injects the Appetize frame for a granted session. */
+/** Opens the granted session as its own tab and starts the countdown. */
 function startSession(build, sessionSeconds) {
-  const device = DEVICE_BY_PLATFORM.get(state.platform) ?? 'pixel7';
-  const embedUrl = new URL(`${APPETIZE_EMBED_ORIGIN}/${build.buildId}`);
-  embedUrl.searchParams.set('device', device);
-  embedUrl.searchParams.set('scale', '75');
-  embedUrl.searchParams.set('autoplay', 'true');
-  embedUrl.searchParams.set('orientation', 'portrait');
+  const device = activeDevice();
+  const sessionUrl = new URL(`${APPETIZE_APP_ORIGIN}/${build.buildId}`);
+  sessionUrl.searchParams.set('device', device);
+  sessionUrl.searchParams.set('scale', '75');
+  sessionUrl.searchParams.set('autoplay', 'true');
+  sessionUrl.searchParams.set('orientation', 'portrait');
+  elements.sessionLink.href = sessionUrl.toString();
+  elements.sessionTitle.textContent = `${appNameForPlatform()} is ready`;
   elements.poster.hidden = true;
   elements.resting.hidden = true;
   elements.session.hidden = false;
-  elements.frame.src = embedUrl.toString();
   startCountdown(sessionSeconds);
+  // The browser only opens a tab from a real click, and the claim is an
+  // awaited request, so the visitor presses the link that just appeared
+  // rather than relying on a popup the browser may block.
 }
 
 /** Asks the claim endpoint for a session, then starts it or rests. */
@@ -214,15 +229,10 @@ function wire() {
     stopSession();
     renderPoster();
   });
-  // A session must not keep streaming in a hidden tab: navigating away, or
-  // hiding the page, ends it.
+  // The session runs in its own tab, so the countdown stops when this page
+  // goes away; the tab keeps streaming until it is closed or its three
+  // minutes run out.
   window.addEventListener('pagehide', stopSession);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && !elements.session.hidden) {
-      stopSession();
-      showResting('The session ended when the page was hidden.');
-    }
-  });
 }
 
 async function main() {
