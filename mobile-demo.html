@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b2f143ef.js";
+            window.path_to_searchindex_js = "searchindex-2265ed08.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-767d5ab6.js"></script>
+        <script src="toc-2fe6af0c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,49 +180,22 @@
 <p><a href="demo/mobile/">Open the mobile demo</a></p>
 </div>
 
-<p>The Android, iOS and React Native reference applications, running on a hosted
-device inside this page. Pick a platform, press <strong>Start demo</strong>, and the app
-streams for three minutes.</p>
-<h2 id="what-it-costs-and-why-it-rests"><a class="header" href="#what-it-costs-and-why-it-rests">What it costs, and why it rests</a></h2>
-<p>The hosted devices run on a free plan that allows <strong>thirty streamed minutes a
-month</strong>, shared by every visitor. That budget is real, so the demo is built
-around it rather than around an optimistic assumption:</p>
-<ul>
-<li>nothing streams until you press Start — loading the page costs nothing;</li>
-<li>a session is capped at <strong>three minutes</strong>;</li>
-<li>at most <strong>two sessions a day</strong> are granted across all visitors, and one per
-visitor;</li>
-<li>when the month’s minutes are gone, the page says so and the demo rests until
-the month turns over.</li>
-</ul>
-<p>Those limits are enforced by a small server-side endpoint, not by the page: a
-browser-side counter would reset with the tab and a crawler would reload
-straight past it. A grant reserves the whole session up front, so a session
-abandoned early can never overrun the budget.</p>
-<h2 id="what-runs-in-the-session"><a class="header" href="#what-runs-in-the-session">What runs in the session</a></h2>
-<p>The builds are the open reference applications from this repository, the same
-ones the tutorials walk through: the map view the package ships, the demo
-scenes, search and route planning, turn-by-turn simulation, the offline card
-and the settings sheet. They run <strong>keyless</strong> against a mock provider, so no API
-key is embedded in a build and none is visible in the page.</p>
+<p>The Android and iOS sample applications, running on a hosted device. Pick a
+platform, press <strong>Start demo</strong>, and the session opens in its own browser tab
+for three minutes.</p>
+<h2 id="what-the-session-is"><a class="header" href="#what-the-session-is">What the session is</a></h2>
+<p>The builds are the same sample applications the guides walk through — the
+shipped map view, search and route planning, turn-by-turn simulation, the
+offline card and the settings sheet — running keyless, so no credential is
+embedded in them and none appears on the page.</p>
 <p>The hosted devices translate Metal and OpenGL to the host machine’s GPU. If a
 build cannot create a rendering surface there, the app shows its own failure
 state rather than a blank frame.</p>
-<h2 id="for-maintainers"><a class="header" href="#for-maintainers">For maintainers</a></h2>
-<ul>
-<li><code>platform/demo-builds.json</code> holds the public build ids the page reads. It
-carries no secret: an Appetize build id is public by design, and the embed
-uses it directly.</li>
-<li><code>scripts/upload-demo-builds.mjs</code> uploads a built APK or a zipped simulator
-<code>.app</code> and updates each app <strong>in place</strong>, so the public id never changes. The
-Appetize API token comes from <code>.env</code> for a local run and from a repository
-secret in CI.</li>
-<li><code>platform/demo-claim-endpoint/</code> is the budget endpoint: a Vercel function
-over a linked KV store, with a kill switch (<code>DEMO_KILL_SWITCH</code>) and the
-daily and per-visitor limits described above.</li>
-<li>The docs build copies the page and the manifest to <code>/demo/mobile</code> and checks
-them byte for byte, so what is published is what is in the tree.</li>
-</ul>
+<h2 id="why-it-rests"><a class="header" href="#why-it-rests">Why it rests</a></h2>
+<p>The hosting runs on a free plan with thirty streamed minutes a month, shared
+by every visitor, so the demo paces itself: nothing streams until you press
+Start, a session lasts three minutes, and when the month’s minutes are gone
+the page says so and the demo rests until the month turns over.</p>
 
                     </main>
 

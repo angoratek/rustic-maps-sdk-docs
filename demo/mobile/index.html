@@ -41,12 +41,12 @@
           <button type="button" class="start" data-role="start" disabled>Start demo</button>
         </div>
         <div class="session" data-role="session" hidden>
-          <iframe
-            data-role="frame"
-            title="Hosted mobile demo"
-            allow="autoplay; fullscreen"
-            referrerpolicy="strict-origin-when-cross-origin"
-          ></iframe>
+          <p class="session-title" data-role="session-title">Your session is ready</p>
+          <p class="session-detail">
+            The demo runs in its own browser tab, on a hosted device. Open it
+            there and come back here when you are done.
+          </p>
+          <a class="start" data-role="session-link" target="_blank" rel="noopener noreferrer">Open the demo</a>
           <div class="session-bar">
             <span data-role="session-countdown"></span>
             <button type="button" data-role="stop">Stop</button>
