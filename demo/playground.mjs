@@ -266,6 +266,7 @@
       const follow_demo_playback_row = document.getElementById('follow-demo-playback');
       const follow_demo_speed_controls = document.getElementById('follow-demo-speed-controls');
       const follow_demo_pause_control = document.getElementById('follow-demo-pause-control');
+      const follow_demo_seek_control = document.getElementById('follow-demo-seek-control');
       const diagnostics_refresh_control = document.getElementById('diagnostics-refresh-control');
       const diagnostics_facts_element = document.getElementById('diagnostics-facts-lines');
       const diagnostics_event_lines = document.getElementById('diagnostics-event-lines');
@@ -2128,6 +2129,12 @@
         // and a pause that freezes the walk without ending the trip.
         speed_multiplier: 1,
         is_paused: false,
+        // Whether the trip reached the route's end. Seeks set it from the
+        // walker's own position, so seeking back clears it (M27's seek).
+        has_arrived: false,
+        // Whether a pointer is scrubbing the seek control: the walker's ticks
+        // must not overwrite the thumb with its own, slightly advanced value.
+        is_seeking: false,
         // The latest guided fix: the my-location control re-centers on it
         // when a gesture-broken follow is re-engaged (§5.3).
         latest_fix: null,
@@ -2157,6 +2164,8 @@
         isFollowing: follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED,
         travelledMeters: follow_demo.travelled_meters,
         totalMeters: follow_demo.total_meters,
+        hasArrived: follow_demo.has_arrived,
+        isPaused: follow_demo.is_paused,
         targetBearingDegrees: follow_demo.target_bearing_degrees,
         cameraZoom: camera_state.zoom,
       });
@@ -2659,14 +2668,30 @@
         }
       }
 
+      /**
+       * Bounds and positions the seek control at the trip's own geometry. The
+       * thumb follows every fix unless a pointer is scrubbing it, so the
+       * control and the walker cannot show two positions at once.
+       */
+      function refresh_follow_demo_seek_control() {
+        follow_demo_seek_control.max = String(follow_demo.total_meters);
+        if (!follow_demo.is_seeking) {
+          follow_demo_seek_control.value = String(follow_demo.travelled_meters);
+        }
+      }
+
       /** Shows or hides the playback row, and names the pause control. */
       function refresh_follow_demo_playback_row(is_running) {
         follow_demo_playback_row.hidden = !is_running;
         follow_demo_pause_control.textContent = follow_demo.is_paused
           ? ui_label_text('navigation.resume_action')
           : ui_label_text('navigation.pause_action');
+        // The arrival state has nothing left to pause; the seek control stays
+        // usable so a backwards seek can leave the arrival.
+        follow_demo_pause_control.hidden = follow_demo.has_arrived;
         if (is_running) {
           render_follow_demo_speed_controls();
+          refresh_follow_demo_seek_control();
         }
       }
 
@@ -2689,6 +2714,38 @@
         follow_demo.fix_interval_id = setInterval(
           on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
         on_follow_demo_fix();
+      }
+
+      /**
+       * Moves the trip to a travelled distance through the walker (M27):
+       * `on_follow_demo_fix(false)` asks for that fix without advancing the
+       * cursor, so the camera, the indicator, the ETA line and the arrival
+       * are exactly what a normal fix at this position produces. A paused
+       * trip stays paused; a running (or arrived) trip continues from the new
+       * position unless the seek lands on the destination.
+       */
+      function seek_follow_demo_trip(target_meters) {
+        if (follow_demo.phase === FOLLOW_DEMO_PHASE_DISENGAGED) {
+          return;
+        }
+        const should_run = !follow_demo.is_paused;
+        if (follow_demo.fix_interval_id !== null) {
+          clearInterval(follow_demo.fix_interval_id);
+          follow_demo.fix_interval_id = null;
+        }
+        follow_demo.travelled_meters = Math.min(
+          Math.max(target_meters, 0), follow_demo.total_meters);
+        on_follow_demo_fix(false);
+        if (follow_demo.has_arrived) {
+          return;
+        }
+        follow_demo_live_line.textContent = should_run
+          ? FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged
+          : FOLLOW_DEMO_LIVE_LINE_TEXTS.paused;
+        if (should_run) {
+          follow_demo.fix_interval_id = setInterval(
+            on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
+        }
       }
 
       function end_follow_demo_trip(end_live_text) {
@@ -2719,16 +2776,19 @@
         follow_demo_live_line.textContent = end_live_text;
         follow_demo_start_control.textContent = FOLLOW_DEMO_START_TEXT;
         follow_demo.is_paused = false;
+        follow_demo.has_arrived = false;
+        follow_demo.is_seeking = false;
         refresh_follow_demo_playback_row(false);
         schedule_render();
       }
 
-      function on_follow_demo_fix() {
+      function on_follow_demo_fix(advances = true) {
         // The walk clamps at the route's total length, so the last fix lands
         // exactly on the destination instead of stopping a tick short of it.
         const travelled_meters = Math.min(
           follow_demo.travelled_meters, follow_demo.total_meters);
         const has_arrived = travelled_meters >= follow_demo.total_meters;
+        follow_demo.has_arrived = has_arrived;
         const remaining_distance_fraction =
           follow_demo.total_meters <= 0
             ? 0
@@ -2759,13 +2819,17 @@
           },
           { visualKind: 'guidedCourseArrow' },
         );
-        follow_demo.travelled_meters = travelled_meters +
-          FOLLOW_DEMO_SPEED_METERS_PER_SECOND *
-          follow_demo.speed_multiplier *
-          (FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS / 1000);
+        if (advances) {
+          follow_demo.travelled_meters = travelled_meters +
+            FOLLOW_DEMO_SPEED_METERS_PER_SECOND *
+            follow_demo.speed_multiplier *
+            (FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS / 1000);
+        }
         refresh_control_labels();
         refresh_compass_control();
         refresh_my_location_control();
+        refresh_follow_demo_seek_control();
+        follow_demo_pause_control.hidden = has_arrived;
         schedule_render();
         if (has_arrived) {
           // Arrival keeps the destination on screen: the fixes stop, the
@@ -2792,6 +2856,26 @@
         }
       });
 
+      // The seek control (M27): every input asks the walker for that
+      // position. A pointer-down marks the scrub so the walker's own ticks
+      // never fight the thumb; pointer-up (or a keyboard change) ends it.
+      follow_demo_seek_control.addEventListener('pointerdown', () => {
+        follow_demo.is_seeking = true;
+      });
+      follow_demo_seek_control.addEventListener('input', () => {
+        seek_follow_demo_trip(Number(follow_demo_seek_control.value));
+      });
+      const finish_follow_demo_seek = () => {
+        follow_demo.is_seeking = false;
+        refresh_follow_demo_seek_control();
+      };
+      follow_demo_seek_control.addEventListener('change', finish_follow_demo_seek);
+      window.addEventListener('pointerup', () => {
+        if (follow_demo.is_seeking) {
+          finish_follow_demo_seek();
+        }
+      });
+
       follow_demo_start_control.addEventListener('click', () => {
         if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
@@ -2810,6 +2894,8 @@
         follow_demo.route_polyline = trip_polyline;
         follow_demo.travelled_meters = 0;
         follow_demo.is_paused = false;
+        follow_demo.has_arrived = false;
+        follow_demo.is_seeking = false;
         follow_demo.total_meters = polyline_length_meters(trip_polyline);
         follow_bearing_chase.reset();
         course_median_smoother.reset();

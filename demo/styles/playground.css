@@ -1321,3 +1321,17 @@
   border-color: var(--accent-fill-color, #2563eb);
   color: var(--accent-text-color, #8fbaff);
 }
+
+/* The route-position seek control (M27): the trip's scrub row, always a
+   full row of the playback group so the thumb has room to travel. */
+.trip-seek {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-basis: 100%;
+}
+
+.trip-seek input[type='range'] {
+  flex: 1;
+  accent-color: var(--accent-fill-color, #2563eb);
+}
