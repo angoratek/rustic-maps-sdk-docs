@@ -70,7 +70,7 @@
            bottom sheet reserves it so no dock ever draws over the sheet. */
         --bottom-start-dock-height: 72px;
         /* The map strip the phone sheet must leave visible above itself. */
-        --phone-map-minimum-height: 200px;
+        --phone-map-minimum-height: 168px;
       }
       :root[data-theme='light'] {
         --surface-color: rgba(255, 255, 255, 0.92);
@@ -771,6 +771,25 @@
         letter-spacing: -0.01em;
         color: var(--text-primary-color);
       }
+      /* The vector style picker: one row beside the base-map rows, shown only
+         while a vector base is active. */
+      .base-map-style-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      .base-map-style-row[hidden] { display: none; }
+      #vector-style-select {
+        font: inherit;
+        color: var(--text-primary-color);
+        background: var(--field-fill-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+        padding: 6px 8px;
+      }
       .trip-subtitle {
         margin: calc(-1 * var(--stack-group) + 6px) 0 0;
         font-size: var(--type-caption-size);
@@ -786,7 +805,7 @@
         color: var(--text-secondary-color);
         pointer-events: none;
       }
-      #provider-search-input {
+      .trip-search input {
         width: 100%;
         height: 44px;
         padding: 0 86px 0 36px;
@@ -797,23 +816,23 @@
         border-radius: var(--radius-control);
         appearance: none;
       }
-      #provider-search-input::placeholder {
+      .trip-search input::placeholder {
         color: var(--text-secondary-color);
         overflow: hidden;
         text-overflow: ellipsis;
       }
       /* The field carries its own Search button; the native clear affordance
          would sit underneath it. */
-      #provider-search-input::-webkit-search-cancel-button {
+      .trip-search input::-webkit-search-cancel-button {
         -webkit-appearance: none;
         appearance: none;
       }
-      #provider-search-input:focus {
+      .trip-search input:focus {
         outline: none;
         border-color: var(--accent-color);
         box-shadow: 0 0 0 3px var(--accent-soft-color);
       }
-      #provider-search-control {
+      .trip-search button {
         position: absolute;
         right: 5px;
         height: 34px;
@@ -825,7 +844,7 @@
         border-color: transparent;
         border-radius: var(--radius-inline);
       }
-      #provider-search-control:hover {
+      .trip-search button:hover {
         color: var(--on-accent-color);
         background: var(--accent-fill-color);
         border-color: var(--accent-fill-color);
@@ -856,7 +875,7 @@
         color: var(--accent-text-color);
         border-color: var(--accent-color);
       }
-      #provider-search-results {
+      #trip-search-results {
         list-style: none;
         margin: 0;
         padding: 2px;
@@ -866,9 +885,9 @@
         max-height: 176px;
         overflow-y: auto;
       }
-      #provider-search-results[hidden] { display: none; }
-      #provider-search-results li { margin: 0; }
-      #provider-search-results li + li { border-top: 1px solid var(--surface-border-color); }
+      #trip-search-results[hidden] { display: none; }
+      #trip-search-results li { margin: 0; }
+      #trip-search-results li + li { border-top: 1px solid var(--surface-border-color); }
       .trip-result-button {
         display: flex;
         flex-direction: column;
@@ -1197,9 +1216,16 @@
           padding: var(--stack-group);
           border-radius: var(--radius-surface);
         }
-        /* On the sheet the subtitle would cost the row that keeps the whole
-           trip card and Advanced visible at phone height. */
-        .trip-subtitle { display: none; }
+        /* On the sheet the subtitle and the follow-camera footnote would cost
+           the rows that keep the trip card's own actions visible at phone
+           height; the status line already carries the same guidance. */
+        .trip-subtitle,
+        .trip-footnote { display: none; }
+        /* Two search fields instead of one: the field height and the card's
+           spacing tighten so Plan route and Start simulated trip stay inside
+           the sheet at 390x844 without scrolling. */
+        .trip-search input { height: 40px; }
+        .trip-suggestions { margin-top: 0; }
         /* A representative error fits inside the space the sheet leaves. */
         #error-report { max-height: 20vh; }
         #controls-header {

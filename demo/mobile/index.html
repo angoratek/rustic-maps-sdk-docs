@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mobile demo — Rustic Maps SDK</title>
+    <meta
+      name="description"
+      content="Run the Android, iOS and React Native reference applications in your browser, in short budgeted sessions."
+    />
+    <meta name="demo-claim-endpoint" content="https://rustic-maps-demo-claim.vercel.app/api/claim" />
+    <link rel="stylesheet" href="mobile-demo.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <h1>Mobile demo</h1>
+        <p class="lede">
+          The reference applications run here, in your browser, on a hosted
+          device. Nothing streams until you press Start, and a session lasts
+          three minutes.
+        </p>
+      </header>
+
+      <div class="platform-tabs" role="tablist">
+        <button type="button" role="tab" data-platform="android" aria-selected="true">
+          Android
+        </button>
+        <button type="button" role="tab" data-platform="ios" aria-selected="false">
+          iOS
+        </button>
+        <button type="button" role="tab" data-platform="react-native" aria-selected="false">
+          React Native
+        </button>
+      </div>
+
+      <section class="stage" aria-live="polite">
+        <div class="poster" data-role="poster">
+          <p class="poster-title" data-role="poster-title">Android reference application</p>
+          <p class="poster-detail" data-role="poster-detail">Build not published yet.</p>
+          <button type="button" class="start" data-role="start" disabled>Start demo</button>
+        </div>
+        <div class="session" data-role="session" hidden>
+          <iframe
+            data-role="frame"
+            title="Hosted mobile demo"
+            allow="autoplay; fullscreen"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+          <div class="session-bar">
+            <span data-role="session-countdown"></span>
+            <button type="button" data-role="stop">Stop</button>
+          </div>
+        </div>
+        <p class="resting" data-role="resting" hidden></p>
+      </section>
+
+      <footer class="notes">
+        <p>
+          Sessions are three minutes, and the demo shares thirty streamed
+          minutes a month across all visitors, so it rests when they run out.
+          The builds are the open reference applications: they run against a
+          mock provider, and no API key is embedded.
+        </p>
+        <p data-role="manifest-line"></p>
+      </footer>
+    </main>
+    <script type="module" src="mobile-demo.mjs"></script>
+  </body>
+</html>

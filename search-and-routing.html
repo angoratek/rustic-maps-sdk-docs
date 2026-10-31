@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9b8c3d49.js";
+            window.path_to_searchindex_js = "searchindex-b2f143ef.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-b255da14.js"></script>
+        <script src="toc-767d5ab6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -191,16 +191,15 @@ compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
 <div class="platform-tab-panel" data-platform-panel="android">
 <h3 id="resolve-a-query-into-places"><a class="header" href="#resolve-a-query-into-places">Resolve a query into places</a></h3>
 <p>The provider surface runs on Kotlin coroutines: every <code>MapSdk</code> call you
-see here is a <code>suspend fun</code>. Run it from a coroutine scope:</p>
-<pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
-import uniffi.rustic_maps.Place
-
-// "Capitol Park" is the shared demo query, the same string on every tab.
-suspend fun resolveDestination(
-    mapSdk: MapSdk,
-    queryText: String = "Capitol Park",
-): Place? = mapSdk.forwardGeocode(queryText).firstOrNull()
+see here is a <code>suspend fun</code>. Run it from a coroutine scope. The plan
+sheet’s two fields each resolve the text a user typed:</p>
+<!-- docs-snippet: begin search-and-routing/search-for-places android -->
+<pre><code class="language-kotlin">val originPlace: Place = mapSdk.forwardGeocode(originSearchQuery).firstOrNull()
+    ?: return null
+val destinationPlace: Place = mapSdk.forwardGeocode(destinationSearchQuery).firstOrNull()
+    ?: return null
 </code></pre>
+<!-- docs-snippet: end search-and-routing/search-for-places android -->
 <p><code>forwardGeocode</code> answers every candidate the provider resolved, most
 likely first; <code>suggest</code> answers fast completion candidates
 while the user types, and <code>search</code> answers full results for a
@@ -208,16 +207,12 @@ settled query. Both search calls take an optional <code>BoundingBox</code> bound
 that restricts the search.</p>
 <h3 id="plan-the-route"><a class="header" href="#plan-the-route">Plan the route</a></h3>
 <p><code>calculateRoute</code> takes the ordered waypoints and the routing options. This
-is the shared demo request on every platform: exactly two waypoints,
-automobile, fastest, metric, no avoids.</p>
-<pre><code class="language-kotlin">import uniffi.rustic_maps.AvoidOptions
-import uniffi.rustic_maps.RouteOptions
-import uniffi.rustic_maps.RouteStrategy
-import uniffi.rustic_maps.TransportationMode
-import uniffi.rustic_maps.UnitSystem
-
-val routeOptions = RouteOptions(
-    transportationMode = TransportationMode.AUTOMOBILE,
+is the shared demo request on every platform: exactly two waypoints, the
+pedestrian option set the reference applications plan every demo route
+with, fastest, metric, no avoids.</p>
+<!-- docs-snippet: begin search-and-routing/plan-the-route android -->
+<pre><code class="language-kotlin">val routeOptions = RouteOptions(
+    transportationMode = TransportationMode.PEDESTRIAN,
     routeStrategy = RouteStrategy.FASTEST,
     unitSystem = UnitSystem.METRIC,
     avoidOptions = AvoidOptions(
@@ -228,15 +223,12 @@ val routeOptions = RouteOptions(
     ),
     departureTimestampSeconds = null,
 )
-
-// Exactly two waypoints: Capitol Park to Tower Bridge.
-val waypoints = listOf(
-    originCoordinate,
-    destinationCoordinate,
+val plannedRoute = mapSdk.calculateRoute(
+    waypoints = listOf(originPlace.coordinate, destinationPlace.coordinate),
+    routeOptions = routeOptions,
 )
-suspend fun planRoute(mapSdk: MapSdk, waypoints: List&lt;GeographicCoordinate&gt;) =
-    mapSdk.calculateRoute(waypoints, routeOptions)
 </code></pre>
+<!-- docs-snippet: end search-and-routing/plan-the-route android -->
 <p>The returned <code>Route</code> carries total distance and duration, the
 geometry’s bounding box, and one leg per waypoint pair, each with its
 maneuver steps.</p>
@@ -262,10 +254,27 @@ val fittedCamera = try {
 </code></pre>
 <p>The insets you pass are the pixels your overlays keep clear, so the
 destination never hides under your own panels.</p>
-<h3 id="show-the-route-over-the-surface"><a class="header" href="#show-the-route-over-the-surface">Show the route over the surface</a></h3>
-<p>Draw the geometry with the route-polyline overlay (the <a href="first-map.html">first
-map</a> tutorial’s overlay step covers the descriptor), then
-start a trip on the route in the <a href="navigation-simulation.html">navigation
+<h3 id="draw-the-route"><a class="header" href="#draw-the-route">Draw the route</a></h3>
+<p>Build one route-polyline overlay from the planned geometry and hand it to
+the map view; the <a href="first-map.html">first map</a> tutorial’s overlay step covers
+the descriptor’s other fields.</p>
+<!-- docs-snippet: begin search-and-routing/draw-the-route android -->
+<pre><code class="language-kotlin">val routeOverlay = MapOverlay(
+    kind = MapOverlayKind.ROUTE_POLYLINE,
+    coordinates = plannedRoute.legs
+        .flatMap { leg -&gt; leg.steps }
+        .flatMap { step -&gt; step.shape },
+    rgbaColor = null,
+    widthPixels = null,
+    ringCoordinates = null,
+    pointMarkerPositions = null,
+    pointMarkerRadiusPixels = null,
+    trafficFlowSegments = null,
+)
+mapView.setOverlays(listOf(routeOverlay))
+</code></pre>
+<!-- docs-snippet: end search-and-routing/draw-the-route android -->
+<p>Then start a trip on the route in the <a href="navigation-simulation.html">navigation
 tutorial</a>.</p>
 <h3 id="group-the-calls-with-engines"><a class="header" href="#group-the-calls-with-engines">Group the calls with engines</a></h3>
 <p>The contract also groups these capabilities into small engine objects built
@@ -285,24 +294,28 @@ val plannedRoute = routingEngine.calculateRoute(waypoints, routeOptions)
 <div class="platform-tab-panel" data-platform-panel="ios">
 <h3 id="resolve-a-query-into-places-1"><a class="header" href="#resolve-a-query-into-places-1">Resolve a query into places</a></h3>
 <p>The provider surface throws on failure and awaits its provider calls:</p>
-<pre><code class="language-swift">import RusticMapsSDK
-
-// "Capitol Park" is the shared demo query, the same string on every tab.
-let places = try await mapSdk.forwardGeocode(addressText: "Capitol Park")
-guard let destination = places.first else {
-    // No candidate: surface the empty state.
-    return
+<!-- docs-snippet: begin search-and-routing/search-for-places ios -->
+<pre><code class="language-swift">let originResults = try await mapSdk.forwardGeocode(addressText: originSearchQuery)
+let destinationResults = try await mapSdk.forwardGeocode(
+    addressText: destinationSearchQuery
+)
+guard
+    let originPlace = originResults.first,
+    let destinationPlace = destinationResults.first
+else {
+    throw WalkthroughScenarioError.planFieldResolvedNoPlace
 }
 </code></pre>
+<!-- docs-snippet: end search-and-routing/search-for-places ios -->
 <p><code>suggest</code> gives fast completion candidates for a query under
 construction, <code>search</code> gives full results for a settled one, and
 both take an optional <code>BoundingBox</code> boundary.</p>
 <h3 id="plan-the-route-1"><a class="header" href="#plan-the-route-1">Plan the route</a></h3>
-<pre><code class="language-swift">// The shared demo request: two waypoints, automobile, fastest, metric.
-let routeOptions = RouteOptions(
-    transportationMode: TransportationMode.automobile,
-    routeStrategy: RouteStrategy.fastest,
-    unitSystem: UnitSystem.metric,
+<!-- docs-snippet: begin search-and-routing/plan-the-route ios -->
+<pre><code class="language-swift">let routeOptions = RouteOptions(
+    transportationMode: .pedestrian,
+    routeStrategy: .fastest,
+    unitSystem: .metric,
     avoidOptions: AvoidOptions(
         tollRoads: false,
         limitedAccessHighways: false,
@@ -311,27 +324,42 @@ let routeOptions = RouteOptions(
     ),
     departureTimestampSeconds: nil
 )
-
-let route = try await mapSdk.calculateRoute(
-    waypoints: [originCoordinate, destination.coordinate],
+let plannedRoute = try await mapSdk.calculateRoute(
+    waypoints: [originPlace.coordinate, destinationPlace.coordinate],
     routeOptions: routeOptions
 )
-try planRoutePreview(route)
 </code></pre>
+<!-- docs-snippet: end search-and-routing/plan-the-route ios -->
 <p>The returned <code>Route</code> carries distance, duration, the bounding box,
 and one leg per waypoint pair with its steps.</p>
 <h3 id="frame-and-draw-the-preview"><a class="header" href="#frame-and-draw-the-preview">Frame and draw the preview</a></h3>
 <p>Fit the camera to the route’s bounding box through the insets-aware
 constructor (shown in the <a href="first-map.html">first map</a> tutorial), then hand
-the route’s geometry to the surface’s overlay list:</p>
+the route’s geometry to the map view’s overlay list:</p>
 <pre><code class="language-swift">let fittedCamera = try MapCamera.fitBounds(
-    boundingBox: route.boundingBox,
+    boundingBox: plannedRoute.boundingBox,
     viewport: viewport,
     edgeInsets: EdgeInsets(left: 224, top: 48, right: 48, bottom: 96),
     maximumZoomLevel: 22
 )
 pinnedFitBoundsCamera = fittedCamera
 </code></pre>
+<!-- docs-snippet: begin search-and-routing/draw-the-route ios -->
+<pre><code class="language-swift">let routeOverlay = MapOverlay(
+    kind: .routePolyline,
+    coordinates: plannedRoute.legs
+        .flatMap { leg in leg.steps }
+        .flatMap { step in step.shape },
+    rgbaColor: nil,
+    widthPixels: nil,
+    ringCoordinates: nil,
+    pointMarkerPositions: nil,
+    pointMarkerRadiusPixels: nil,
+    trafficFlowSegments: nil
+)
+_ = mapView.setOverlays([routeOverlay])
+</code></pre>
+<!-- docs-snippet: end search-and-routing/draw-the-route ios -->
 <h3 id="group-the-calls-with-engines-1"><a class="header" href="#group-the-calls-with-engines-1">Group the calls with engines</a></h3>
 <p>Each engine wraps the same SDK and delegates verbatim, keeping the typed
 failures and detail text:</p>
@@ -354,42 +382,23 @@ let plannedRoute = try await routingEngine.calculateRoute(
 <p>The TurboModule surface mirrors the contract as promise-returning
 methods. Everything you call on <code>MapSdk</code> resolves to the same records
 the other platforms see, with lower camel case field names:</p>
-<pre><code class="language-js">import {
-  MapSdk,
-  MapCamera,
-  GeographicCoordinate,
-  BoundingBox,
-  TransportationMode,
-  RouteStrategy,
-  UnitSystem,
-} from '@angoratek/rustic-maps-sdk';
-
-const mapSdk = new MapSdk();
-await mapSdk.setProviderCredential(mapQuestApiKey);
-
-// "Capitol Park" is the shared demo query, the same string on every tab.
-const queryText = 'Capitol Park';
-
-// Fast completion candidates while the user types:
-const completions = await mapSdk.suggest(queryText, undefined);
-
-// Full results for a settled query, restricted to the visible region:
-const results = await mapSdk.search(queryText, visibleRegionBoundingBox);
-
-// Address text into a coordinate:
-const destination = (await mapSdk.forwardGeocode(queryText))[0];
+<!-- docs-snippet: begin search-and-routing/search-for-places react-native -->
+<pre><code class="language-ts">const originPlace = (await mapSdk.forwardGeocode(originSearchQuery))[0] ?? null;
+const destinationPlace =
+  (await mapSdk.forwardGeocode(destinationSearchQuery))[0] ?? null;
+if (originPlace === null || destinationPlace === null) {
+  return null;
+}
 </code></pre>
+<!-- docs-snippet: end search-and-routing/search-for-places react-native -->
 <p>Pass <code>undefined</code> (or omit it) as the boundary to search worldwide, and pass
 a <code>BoundingBox</code> (<code>southWest</code>/<code>northEast</code> corners, lower camel case) to
-restrict the search.</p>
+restrict the search. <code>suggest</code> answers fast completion candidates while the
+user types, and <code>search</code> answers full results for a settled query.</p>
 <h3 id="plan-the-route-2"><a class="header" href="#plan-the-route-2">Plan the route</a></h3>
-<pre><code class="language-js">const waypoints = [
-  { latitude: originLatitude, longitude: originLongitude },
-  { latitude: destination.coordinate.latitude, longitude: destination.coordinate.longitude },
-];
-
-const route = await mapSdk.calculateRoute(waypoints, {
-  transportationMode: TransportationMode.Automobile,
+<!-- docs-snippet: begin search-and-routing/plan-the-route react-native -->
+<pre><code class="language-ts">const routeOptions: RouteOptions = {
+  transportationMode: TransportationMode.Pedestrian,
   routeStrategy: RouteStrategy.Fastest,
   unitSystem: UnitSystem.Metric,
   avoidOptions: {
@@ -399,10 +408,15 @@ const route = await mapSdk.calculateRoute(waypoints, {
     unpavedRoads: false,
   },
   departureTimestampSeconds: undefined,
-});
-
-console.log(route.distanceMeters, route.durationSeconds);
+};
+const plannedRoute = await mapSdk.calculateRoute(
+  [originPlace.coordinate, destinationPlace.coordinate],
+  routeOptions,
+);
 </code></pre>
+<!-- docs-snippet: end search-and-routing/plan-the-route react-native -->
+<p>The route carries <code>distanceMeters</code>, <code>durationSeconds</code>, the bounding box and
+one leg per waypoint pair with its steps.</p>
 <p>A rejected promise carries the typed <code>SdkError</code>; surface it in your
 error state instead of retrying blindly (the rate limiter refills on its
 own).</p>
@@ -411,12 +425,25 @@ own).</p>
 other tabs: 224 px clear on the left for the route card, 48 px top and
 right, 96 px bottom, clamped at zoom 22:</p>
 <pre><code class="language-js">const fittedCamera = MapCamera.fitBounds(
-  route.boundingBox,
+  plannedRoute.boundingBox,
   { widthPixels, heightPixels },
   { left: 224, top: 48, right: 48, bottom: 96 },
   22,
 );
 </code></pre>
+<h3 id="draw-the-route-1"><a class="header" href="#draw-the-route-1">Draw the route</a></h3>
+<p>Build one route-polyline overlay from the planned geometry and hand it to the
+map view:</p>
+<!-- docs-snippet: begin search-and-routing/draw-the-route react-native -->
+<pre><code class="language-ts">const routeOverlay: MapOverlay = {
+  kind: MapOverlayKind.RoutePolyline,
+  coordinates: plannedRoute.legs.flatMap(leg =&gt;
+    leg.steps.flatMap(step =&gt; step.shape),
+  ),
+};
+await mapView.setOverlays([routeOverlay]);
+</code></pre>
+<!-- docs-snippet: end search-and-routing/draw-the-route react-native -->
 <h3 id="group-the-calls-with-engines-2"><a class="header" href="#group-the-calls-with-engines-2">Group the calls with engines</a></h3>
 <p>The generated engine classes wrap the same SDK and delegate verbatim:</p>
 <pre><code class="language-js">import { SearchEngine, RoutingEngine } from '@angoratek/rustic-maps-sdk';

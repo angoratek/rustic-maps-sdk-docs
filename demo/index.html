@@ -36,8 +36,8 @@
       <section id="trip-planner" aria-labelledby="trip-planner-title"
                aria-describedby="provider-credential-status">
         <h2 class="group-label" id="trip-planner-title">Plan a trip</h2>
-        <p class="trip-subtitle">Search a place, plan the route, then start the trip
-          simulation.</p>
+        <p class="trip-subtitle">Enter an origin and a destination, plan the route,
+          then start the trip simulation.</p>
         <div class="trip-search">
           <svg class="trip-search-icon" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -45,14 +45,28 @@
             <circle cx="11" cy="11" r="7" />
             <path d="m16.2 16.2 4.3 4.3" />
           </svg>
-          <input id="provider-search-input" type="search"
-                 placeholder="Search a place" autocomplete="off"
-                 aria-label="Search places or addresses" />
-          <button id="provider-search-control" type="button" aria-label="Search">Search</button>
+          <input id="trip-origin-input" type="search"
+                 placeholder="Origin" autocomplete="off"
+                 aria-label="Origin" />
+          <button id="trip-origin-search-control" type="button"
+                  aria-label="Search origin">Search</button>
+        </div>
+        <div class="trip-search">
+          <svg class="trip-search-icon" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round"
+               aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m16.2 16.2 4.3 4.3" />
+          </svg>
+          <input id="trip-destination-input" type="search"
+                 placeholder="Destination" autocomplete="off"
+                 aria-label="Destination" />
+          <button id="trip-destination-search-control" type="button"
+                  aria-label="Search destination">Search</button>
         </div>
         <div id="trip-suggestions" class="trip-suggestions" role="group"
              aria-label="Demo places"></div>
-        <ul id="provider-search-results" hidden></ul>
+        <ul id="trip-search-results" hidden></ul>
         <div class="trip-credential">
           <p id="provider-credential-status" class="trip-status" role="status">Starting the map…</p>
           <button id="trip-credential-action" type="button" class="credential-action"
@@ -67,9 +81,11 @@
             <span class="credential-action-label">Add a provider key</span>
           </button>
         </div>
-        <p id="provider-route-result" class="trip-route-result" hidden></p>
+        <p id="trip-plan-route-reason" class="reason-strip">Enter an origin and a
+          destination to plan the route.</p>
+        <p id="trip-route-result" class="trip-route-result" hidden></p>
         <div class="trip-actions">
-          <button id="provider-route-control" type="button">Plan route</button>
+          <button id="trip-plan-route-control" type="button" disabled>Plan route</button>
           <button id="follow-demo-start-control" type="button" class="primary">Start simulated trip</button>
         </div>
         <p id="follow-demo-live-line" class="trip-footnote">The recorded Capitol Park
@@ -83,6 +99,9 @@
 <section class="control-group" id="base-map-controls" aria-describedby="base-map-status">
         <h2 class="group-label">Base map</h2>
         <div id="base-map-toggle" role="group" aria-label="Base map tiles"></div>
+        <label class="base-map-style-row" id="vector-style-row" hidden>Vector style
+          <select id="vector-style-select" aria-label="Vector base style"></select>
+        </label>
         <p id="base-map-status" class="reason-strip" hidden></p>
       </section>
 

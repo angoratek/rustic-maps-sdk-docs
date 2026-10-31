@@ -37,6 +37,9 @@ export const VECTOR_TILE_MAXIMUM_ZOOM_LEVEL_FIELD = 'maximum_zoom_level';
 
 /** Registry field naming the tile schema's committed style family. */
 export const VECTOR_STYLE_SCHEMA_FIELD = 'vector_style';
+/// The descriptor field listing the named styles it offers (`style_id`,
+/// `display_name`, `theme`, `attribution_text`).
+export const VECTOR_STYLE_CHOICES_FIELD = 'vector_styles';
 
 /** The style schema a descriptor without the field paints. */
 export const DEFAULT_VECTOR_STYLE_SCHEMA = 'carto';
@@ -256,9 +259,34 @@ export function vectorTileUrlForDescriptor({
  *
  * @param {object} descriptor the provider registry descriptor
  * @param {string} [styleTheme] the active theme name (`light` or `dark`)
+ * @param {string} [selectedStyleId] an explicit style id the page's style
+ *   picker chose; it wins over the schema+theme join when the descriptor
+ *   offers it
  * @returns {string}
  */
-export function vectorStyleIdForDescriptor(descriptor, styleTheme) {
+export function vectorStyleIdForDescriptor(
+  descriptor,
+  styleTheme,
+  selectedStyleId = null,
+) {
+  const offered_styles = Array.isArray(descriptor?.[VECTOR_STYLE_CHOICES_FIELD])
+    ? descriptor[VECTOR_STYLE_CHOICES_FIELD]
+    : [];
+  const offered_style_ids = offered_styles
+    .map((style_choice) => style_choice?.style_id)
+    .filter((style_id) => typeof style_id === 'string' && style_id.trim() !== '');
+  if (typeof selectedStyleId === 'string'
+      && offered_style_ids.includes(selectedStyleId)) {
+    return selectedStyleId;
+  }
+  if (offered_style_ids.length > 0) {
+    // The descriptor's own styles: the one matching the active theme, or the
+    // first offered style when none names that theme.
+    const theme_matching_style = offered_styles.find(
+      (style_choice) => style_choice?.theme === (styleTheme ?? DEFAULT_VECTOR_STYLE_THEME),
+    );
+    return theme_matching_style?.style_id ?? offered_style_ids[0];
+  }
   const schema = descriptor?.[VECTOR_STYLE_SCHEMA_FIELD];
   const validated_schema = typeof schema === 'string' && schema.trim() !== ''
     ? schema.trim()
@@ -285,10 +313,18 @@ export function vectorStyleIdForDescriptor(descriptor, styleTheme) {
  * @param {{latitude: number, longitude: number, zoom: number}} options.cameraState
  * @param {number} [options.tileSizePixels]
  * @param {number} [options.tileRadius]
+ * @param {object[]} [options.contentOverlays] the caller's own overlays (scene
+ *   toggles, a planned route) composed **after** the base's geometry, so a
+ *   vector base and the page's content coexist in one drawn list instead of
+ *   replacing each other
+ * @param {string} [options.selectedStyleId] the style the page's picker chose
+ *   (one of the descriptor's offered styles), overriding the theme join
  * @param {function} options.fetchAndBuildVectorOverlays injected decoder
- * @returns {Promise<{overlayCount: number, failures: object[],
- *   superseded: boolean}>} `superseded` is true when a newer call replaced
- *   this one before it applied its list; the caller must not publish such a
+ * @returns {Promise<{overlays: object[], overlayCount: number,
+ *   failures: object[], superseded: boolean}>} `overlays` is the base's own
+ *   geometry (without `contentOverlays`), so the caller can recompose after a
+ *   later content change; `superseded` is true when a newer call replaced
+ *   this one before it applied its list — the caller must not publish such a
  *   result as the current base layer.
  */
 export async function loadVectorBaseOverlays({
@@ -298,10 +334,15 @@ export async function loadVectorBaseOverlays({
   tileSizePixels = DEFAULT_TILE_SIZE_PIXELS,
   tileRadius = DEFAULT_TILE_RADIUS,
   styleTheme = DEFAULT_VECTOR_STYLE_THEME,
+  selectedStyleId = null,
+  contentOverlays = [],
   fetchAndBuildVectorOverlays,
 }) {
   if (!Array.isArray(descriptors)) {
     throw new Error('descriptors must be an array of provider descriptors');
+  }
+  if (!Array.isArray(contentOverlays)) {
+    throw new Error('contentOverlays must be an array of overlay descriptors');
   }
   if (typeof fetchAndBuildVectorOverlays !== 'function') {
     throw new Error(
@@ -330,7 +371,7 @@ export async function loadVectorBaseOverlays({
   for (const descriptor of descriptors) {
     for (const address of tile_addresses) {
       if (load_generation !== active_load_generation) {
-        return { overlayCount: 0, failures, superseded: true };
+        return { overlays: [], overlayCount: 0, failures, superseded: true };
       }
       let tile_url = null;
       try {
@@ -341,7 +382,7 @@ export async function loadVectorBaseOverlays({
           tileX: address.tileX,
           tileY: address.tileY,
           tileSizePixels,
-          styleId: vectorStyleIdForDescriptor(descriptor, styleTheme),
+          styleId: vectorStyleIdForDescriptor(descriptor, styleTheme, selectedStyleId),
         });
         overlays.push(...tile_overlays);
       } catch (tile_failure) {
@@ -358,10 +399,12 @@ export async function loadVectorBaseOverlays({
   // A newer load started while this one was fetching: drop this list rather
   // than painting a stale camera pose.
   if (load_generation !== active_load_generation) {
-    return { overlayCount: 0, failures, superseded: true };
+    return { overlays: [], overlayCount: 0, failures, superseded: true };
   }
-  canvas.setOverlays(overlays);
-  return { overlayCount: overlays.length, failures, superseded: false };
+  // The base paints first and the caller's own overlays paint over it, so a
+  // vector base never has to displace the scene toggles or a route line.
+  canvas.setOverlays([...overlays, ...contentOverlays]);
+  return { overlays, overlayCount: overlays.length, failures, superseded: false };
 }
 
 /**
