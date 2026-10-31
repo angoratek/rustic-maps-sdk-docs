@@ -1,6 +1,6 @@
-source_commit: 83beb4b2dac3c17dff362ca59b8564c92ff9fd90
+source_commit: 9a6ecf5280130de7a537b7f35c3b292ab481b217
 dirty_tree: no
 generator: scripts/build-docs-site.sh (maps-sdk-rs)
 content_license: MIT OR Apache-2.0
 map_attribution: map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL)
-gates-green-asserted-by-publisher: 83beb4b2dac3c17dff362ca59b8564c92ff9fd90 (recorded 2026-10-31T04:16:11Z)
+gates-green-asserted-by-publisher: 9a6ecf5280130de7a537b7f35c3b292ab481b217 (recorded 2026-10-31T04:24:02Z)
