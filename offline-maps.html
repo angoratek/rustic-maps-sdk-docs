@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f588e358.js";
+            window.path_to_searchindex_js = "searchindex-719c8217.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -282,38 +282,60 @@ provider with the offline fallback decorator yourself.</p>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="register-the-providers-with-a-tile-cache-2"><a class="header" href="#register-the-providers-with-a-tile-cache-2">Register the providers with a tile cache</a></h3>
-<pre><code class="language-js">import { MapSdk } from '@angoratek/rustic-maps-sdk';
+<p>The package’s one SDK handle installs the provider set and wraps the
+raster-tile contract in the disk response cache. The reference application’s
+offline card reports the registration it installed:</p>
+<pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-const mapSdk = new MapSdk();
-await mapSdk.setProviderCredentialWithTileCache(
-  mapQuestApiKey,
-  tileCacheDatabasePath,   // a writable SQLite path your app owns
-  16_777_216n,             // the absolute byte budget (16 MiB); u64 is a bigint
-);
+async function createMapSdkWithTileCache(providerKey, mapQuestApiKey) {
+  const mapSdk = await MapsSdk.create();
+  const registration = await mapSdk.setProviderCredentialWithTileCache(
+    providerKey,
+    mapQuestApiKey,
+  );
+  if (!registration.isApplied) {
+    throw new Error(registration.detailText);
+  }
+  return mapSdk;
+}
 </code></pre>
+<p>The package opens (or creates) the cache under the application’s caches
+directory with a 16 MiB budget; JavaScript passes the provider key and the
+credential, never a file path. A refusal resolves with <code>isApplied: false</code> and
+the provider’s verbatim <code>detailText</code>. Re-registration replaces the raster-tile
+slot, cache included.</p>
 <h3 id="read-and-tune-the-caching-terms-2"><a class="header" href="#read-and-tune-the-caching-terms-2">Read and tune the caching terms</a></h3>
-<pre><code class="language-js">await mapSdk.setRasterTileCacheTimeToLive(timeToLiveSeconds);
-const terms = await mapSdk.rasterTileCacheTerms();
-// terms.effectiveTimeToLiveSeconds
-// terms.providerTermsCeilingSeconds
-// terms.defaultTimeToLiveSeconds
+<p>The cache starts at the tiles category’s default time-to-live, 30 calendar
+days — the imagery-provider terms ceiling. Tune the live value and read what
+went into force:</p>
+<pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-// The same calls through the offline facade:
-// const offlineManager = new OfflineManager(mapSdk);
-// await offlineManager.setTileTimeToLive(timeToLiveSeconds);
-// const terms = await offlineManager.tileCacheTerms();
+const mapSdk = await MapsSdk.create();
+const oneWeekInSeconds = 7 * 24 * 60 * 60;
+await mapSdk.setTileCacheTimeToLive(oneWeekInSeconds);
+const terms = await mapSdk.tileCacheTerms();
+if (terms !== null) {
+  // terms.effectiveTimeToLiveSeconds
+  // terms.providerTermsCeilingSeconds
+  // terms.defaultTimeToLiveSeconds
+}
 </code></pre>
-<p>Show the effective terms in your offline-maps settings screen; a value
-above the provider’s ceiling is accepted and clamped, and the readback
-is what went into force.</p>
+<p>A request above the provider’s declared ceiling is accepted, and the ceiling
+clamps what the cache retains; the readback shows the effective value, so
+display it in your offline-maps settings screen.</p>
+<h3 id="pre-warm-the-tiles-you-need-1"><a class="header" href="#pre-warm-the-tiles-you-need-1">Pre-warm the tiles you need</a></h3>
+<p>Cached tile responses render whenever the network is unavailable: a cache miss
+goes to the network and back-fills, and a cache hit answers from disk. Render
+the regions your users expect to revisit once while online, and the cache
+holds them until the budget or time-to-live says otherwise.</p>
 <h3 id="route-without-the-network-2"><a class="header" href="#route-without-the-network-2">Route without the network</a></h3>
-<p>The same compiled archive the other tabs describe runs inside the SDK on
-this surface too: A* over a memory-mapped graph, recorded turn
-restrictions honored, maneuver text derived from the geometry. The direct
-route call from React Native joins the contract in a later release; today
-the layer serves the WebAssembly surface’s offline route seam, and an
-offline routing decorator wraps your online provider when you choose to
-fall back. The SDK registers no fallback on your behalf.</p>
+<p>The compiled routing archive — the OpenStreetMap extract in, the
+self-describing archive file out — answers routes with A* over a
+memory-mapped graph, honoring recorded turn restrictions and deriving
+maneuver text from the geometry. The package exports no archive-route call to
+React Native yet; today the WebAssembly surface carries that seam, and the
+native tabs join it in a later release. The SDK registers no fallback on your
+behalf.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
