@@ -85,6 +85,26 @@
       "url_template": "https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf",
       "maximum_zoom_level": 14,
       "vector_style": "openmaptiles",
+      "vector_styles": [
+        {
+          "style_id": "bright-light",
+          "display_name": "Bright",
+          "theme": "light",
+          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) · style Bright from OpenFreeMap styles, design CC BY 4.0"
+        },
+        {
+          "style_id": "fiord-dark",
+          "display_name": "Fiord",
+          "theme": "dark",
+          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) · style Fiord from OpenFreeMap styles, design CC BY 4.0"
+        },
+        {
+          "style_id": "positron-light",
+          "display_name": "Positron",
+          "theme": "light",
+          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) · style Positron (CartoDB lineage) from OpenFreeMap styles, design CC BY 4.0 / CC BY 3.0"
+        }
+      ],
       "fixture_routes": [
         {
           "purpose": "vector_tiles",

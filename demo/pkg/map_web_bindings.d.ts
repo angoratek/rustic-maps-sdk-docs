@@ -10,6 +10,26 @@ export class MapCamera {
     free(): void;
     [Symbol.dispose](): void;
     /**
+     * The camera's bearing in degrees — the contract's
+     * `bearing_degrees()` getter.
+     */
+    bearingDegrees(): number;
+    /**
+     * The camera's center, as `{latitude, longitude}` — the contract's
+     * `center()` getter. The getters make a fitted camera's chosen framing
+     * readable (round-9 ask, contract members since M17).
+     */
+    center(): object;
+    /**
+     * Builds the camera that frames a bounding box inside the viewport's
+     * inset region, mirroring the contract's `fit_bounds` constructor:
+     * top-down and north-up, zoomed to the largest level that keeps the
+     * whole box inside the inset area (clamped to `maximum_zoom_level`), and
+     * centered on the inset region's center. Fails with a message when the
+     * corners, viewport, insets or maximum zoom are unusable.
+     */
+    static fittingBounds(south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number, width_pixels: number, height_pixels: number, inset_top_pixels: number, inset_right_pixels: number, inset_bottom_pixels: number, inset_left_pixels: number, maximum_zoom_level: number): MapCamera;
+    /**
      * Ground meters represented by one screen pixel at the camera's center
      * (the scale bars' helper, round 10). The viewport and field-of-view
      * arguments mirror the projection methods' shape and the viewport is
@@ -32,6 +52,11 @@ export class MapCamera {
      * alias for the M3 demo call sites.
      */
     panByScreenPixels(delta_x_pixels: number, delta_y_pixels: number, width_pixels: number, height_pixels: number, field_of_view_degrees: number): object;
+    /**
+     * The camera's pitch in degrees — the contract's `pitch_degrees()`
+     * getter.
+     */
+    pitchDegrees(): number;
     /**
      * Projects a coordinate to viewport pixels (origin top-left, y down),
      * as `{x, y}`. Fails with a message when the point lies behind the
@@ -70,6 +95,10 @@ export class MapCamera {
      * answers when the focal ray misses the ground plane.
      */
     zoomByLevelsAroundScreenPoint(delta_zoom_levels: number, focal_x_pixels: number, focal_y_pixels: number, width_pixels: number, height_pixels: number, field_of_view_degrees: number): object;
+    /**
+     * The camera's zoom level — the contract's `zoom_level()` getter.
+     */
+    zoomLevel(): number;
 }
 
 /**
@@ -209,6 +238,9 @@ export class MapView {
      *   color?}` — an ear-clip triangulated ring fill,
      * * `{kind: "pointMarkers", positions: [{latitude, longitude}...],
      *   color?, radiusPixels?}` — screen-facing octagon markers,
+     * * `{kind: "pointPins", positions: [{latitude, longitude}...],
+     *   color?, radiusPixels?}` — teardrop pins anchored at their tip with a
+     *   hollow head center,
      * * `{kind: "trafficFlow", segments: [{shapeCoordinates:
      *   [{latitude, longitude}...], congestionLevel:
      *   CanvasTrafficFlowCongestionLevel}...], widthPixels?}` —
@@ -590,15 +622,20 @@ export interface InitOutput {
     readonly forwardGeocode: (a: number, b: number) => number;
     readonly getSdkCompiledVersion: (a: number) => void;
     readonly initializeSdk: () => number;
+    readonly mapcamera_bearingDegrees: (a: number) => number;
+    readonly mapcamera_center: (a: number, b: number) => void;
+    readonly mapcamera_fittingBounds: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => void;
     readonly mapcamera_groundMetersPerScreenPixel: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly mapcamera_new: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly mapcamera_panByScreenPixels: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly mapcamera_pitchDegrees: (a: number) => number;
     readonly mapcamera_projectToScreen: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly mapcamera_rotateByDegreesAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly mapcamera_screenToGroundCoordinate: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly mapcamera_tileZoomLevel: (a: number) => number;
     readonly mapcamera_visibleTileKeys: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly mapcamera_zoomByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
+    readonly mapcamera_zoomLevel: (a: number) => number;
     readonly mapssdk_compiledVersion: (a: number, b: number) => void;
     readonly mapssdk_create: () => number;
     readonly mapview_addOverlay: (a: number, b: number, c: number) => void;
@@ -628,12 +665,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_2150: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2150_51: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2150_52: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9560: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9562: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1399: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1408: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1408_56: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1408_57: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7664: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7685: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1232: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
