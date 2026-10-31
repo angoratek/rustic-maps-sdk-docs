@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-39025aeb.js";
+            window.path_to_searchindex_js = "searchindex-654ed639.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -197,7 +197,7 @@ application’s offline-maps demo runs exactly this:</p>
 val tileCacheBudgetBytes = 16777216UL   // 16 MiB, the demo's absolute budget
 
 mapSdk.setProviderCredentialWithTileCache(
-    mapQuestApiKey,
+    providerApiKey,
     tileCacheDatabaseFile.absolutePath,
     tileCacheBudgetBytes,
 )
@@ -265,7 +265,7 @@ carries no street names.</p>
 let tileCacheBudgetBytes: UInt64 = 16_777_216   // 16 MiB
 
 try mapSdk.setProviderCredentialWithTileCache(
-    mapquestApiKey: mapQuestApiKey,
+    mapquestApiKey: providerApiKey,
     tileCacheDatabasePath: tileCacheDatabasePath,
     tileCacheAbsoluteMaximumBytes: tileCacheBudgetBytes
 )
@@ -312,11 +312,11 @@ raster-tile contract in the disk response cache. The reference application’s
 offline card reports the registration it installed:</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-async function createMapSdkWithTileCache(providerKey, mapQuestApiKey) {
+async function createMapSdkWithTileCache(providerKey, providerApiKey) {
   const mapSdk = await MapsSdk.create();
   const registration = await mapSdk.setProviderCredentialWithTileCache(
     providerKey,
-    mapQuestApiKey,
+    providerApiKey,
   );
   if (!registration.isApplied) {
     throw new Error(registration.detailText);
