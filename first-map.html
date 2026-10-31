@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3412cf25.js";
+            window.path_to_searchindex_js = "searchindex-cce66272.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-2fe6af0c.js"></script>
@@ -336,18 +336,14 @@ import PackageDescription
 let package = Package(
     name: "MyMapApp",
     dependencies: [
-        // The release's Package.swift lands on the repository's
-        // swift-package branch; its binaryTarget pins the release URL
-        // and checksum.
+        // Add the release's package reference here; its binaryTarget pins
+        // the XCFramework URL and checksum.
     ],
     targets: [
         .executableTarget(name: "MyMapApp")
     ]
 )
 </code></pre>
-<p>Until the release lands, the checked-in packaging manifest in the source
-tree consumes the local unzipped framework the same way; follow its
-<code>binaryTarget</code> shape.</p>
 <h3 id="build-the-sdk-and-register-the-provider-1"><a class="header" href="#build-the-sdk-and-register-the-provider-1">Build the SDK and register the provider</a></h3>
 <p>The reference application constructs the session SDK exactly like this:</p>
 <pre><code class="language-swift">import RusticMapsSDK
@@ -422,25 +418,31 @@ zoom, exactly as the route-preview flow does:</p>
 arm64-v8a or iOS, and a <a href="downloads.html">downloaded release tarball</a>,
 and a map-platform API key for the provider you register.</p>
 <h3 id="install-the-artifact-1"><a class="header" href="#install-the-artifact-1">Install the artifact</a></h3>
-<p>Install the release tarball from your checked-in copy; no registry is
-involved:</p>
+<p>Install the release tarball you downloaded; no registry is involved:</p>
 <pre><code class="language-bash">npm install ./rustic-maps-sdk-rn-v0.1.0.tgz
 </code></pre>
 <p>The package carries the TurboModule glue; link it with your React
 Native version’s normal autolinking (pod install on the iOS side).</p>
 <h3 id="build-the-sdk-and-register-the-provider-2"><a class="header" href="#build-the-sdk-and-register-the-provider-2">Build the SDK and register the provider</a></h3>
-<p>Importing the package entry installs the Rust module into Hermes once,
-and the generated classes are named exports of it. Construct the SDK and
-register the provider set:</p>
-<pre><code class="language-js">import { MapSdk } from '@angoratek/rustic-maps-sdk';
+<p>The package owns one native SDK per process. Create it with
+<code>MapsSdk.create()</code> and register the provider’s credential:</p>
+<pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-export async function createMapSdk(mapQuestApiKey) {
-  const mapSdk = await new MapSdk();
-  await mapSdk.setProviderCredential(mapQuestApiKey);
+export async function createMapSdk(providerKey, mapQuestApiKey) {
+  const mapSdk = await MapsSdk.create();
+  const registration = await mapSdk.setProviderCredential(
+    providerKey,
+    mapQuestApiKey,
+  );
+  if (!registration.isApplied) {
+    throw new Error(registration.detailText);
+  }
   return mapSdk;
 }
 </code></pre>
-<p>The returned promise rejects verbatim when the key is refused.</p>
+<p>A refused credential resolves with <code>isApplied: false</code> and the provider’s
+verbatim <code>detailText</code>, so surface it in your error state rather than
+continuing.</p>
 <p>Take the key at <strong>runtime</strong> — a settings screen, secure storage, or a
 launch environment for automated tests. Do not bake it into the JS bundle
 or a native build file; the reference app reads it from its settings
@@ -450,20 +452,18 @@ surface and keeps it only when the user opts in.</p>
 (Android <code>SurfaceView</code>, iOS <code>CAMetalLayer</code>): it owns the surface
 lifecycle, frame pump, gestures, camera verbs, id-addressed overlays and
 the callback set, so the host application only composes it. The package
-also owns the one native SDK instance — construct it through
-<code>MapsSdk</code> and hand it to the view.</p>
-<!-- docs-snippet: skip — the component's props, handle and callbacks are
-type-checked by the RN package's own typed-parity test; the docs checks have
-no React Native/JSX environment. -->
+also owns the one native SDK instance; create it with <code>MapsSdk.create()</code>
+before you mount the view, which attaches to it as soon as it is available.</p>
+<!-- docs-snippet: skip — a JSX fragment outside the docs checks. -->
 <pre><code class="language-tsx">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 import { MapView, type MapViewHandle } from '@angoratek/rustic-maps-sdk/MapView';
 
-const maps = await MapsSdk.initialize();   // one native SDK per process
-await maps.setProviderCredential(mapQuestApiKey);
+// One native SDK per process; create it before the view mounts.
+const mapSdk = await MapsSdk.create();
+await mapSdk.setProviderCredential(providerKey, mapQuestApiKey);
 
 &lt;MapView
   ref={mapViewRef}
-  maps={maps}
   style={{ flex: 1 }}
   onMapReady={() =&gt; { /* frame the first camera */ }}
   onCameraChanged={(camera) =&gt; { /* reflect the pose in your UI */ }}
@@ -527,27 +527,19 @@ Safari from version 26; Firefox from 141, desktop first) and a
 over HTTPS or localhost:</p>
 <pre><code class="language-bash">npm install ./rustic-maps-sdk-web-v0.1.0.tgz
 cp -r node_modules/@angoratek/rustic-maps-sdk-web ./web
-node ./web/server.js   # your own static server; localhost is fine
+python3 -m http.server 8000   # any static server; localhost is fine
 </code></pre>
 <h3 id="load-the-module-and-start-the-core"><a class="header" href="#load-the-module-and-start-the-core">Load the module and start the core</a></h3>
 <pre><code class="language-html">&lt;canvas id="map-canvas"&gt;&lt;/canvas&gt;
 &lt;script type="module"&gt;
-  import {
-    init,
-    initializeSdk,
-  } from './web/map_web_bindings.js';
+  import init from './web/map_web_bindings.js';
+  await init();
 &lt;/script&gt;
 </code></pre>
 <p>The page’s entry, exactly as the reference application does it:</p>
-<pre><code class="language-js">import init, {
-  MapCamera,
-  MapView,
-  TileResolution,
-  devicePixelRatioThreshold,
-  initializeSdk,
-  getSdkCompiledVersion,
-} from './web/map_web_bindings.js';
+<pre><code class="language-js">import init, { MapsSdk } from './web/map_web_bindings.js';
 
+await init();
 const maps = await MapsSdk.create();
 console.log(`Maps SDK ready (version ${maps.compiledVersion})`);
 </code></pre>
