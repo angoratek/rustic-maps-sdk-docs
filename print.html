@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6567ea81.js";
+            window.path_to_searchindex_js = "searchindex-b9ca8585.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -350,13 +350,24 @@ discards unused code, so these archive sizes are not the size your
 application adds; the per-architecture measurement is a recorded open
 decision on whether the iOS artifact later moves to a dynamic slice.</p>
 <h2 id="react-native"><a class="header" href="#react-native">React Native</a></h2>
-<p>The React Native artifact is a source TurboModule package
-(<code>@angoratek/rustic-maps-sdk</code>) generated from the contract. It
-carries the generated TypeScript surface, the JSI C++ glue, and the
-podspec/CMake wiring your application compiles against its own React
-Native version, so no binary slice inside the tarball constrains which
-React Native version you run. The Android side of the current package
-builds the Rust static archive for arm64-v8a.</p>
+<p>The React Native artifact is a TurboModule package
+(<code>@angoratek/rustic-maps-sdk</code>) generated from the contract. It carries the
+generated TypeScript surface, the JSI C++ glue, and the podspec/CMake wiring.</p>
+<p>Two facts bound what it can do for you:</p>
+<ul>
+<li><strong>It is generated for a React Native version range</strong>, not for every version:
+<code>platform/rn/package.json</code> declares the peer range the generated glue was
+produced against (React Native ≥ 0.88, React ≥ 19 at the time of writing).
+Outside that range, regenerate with the matching <code>ubrn</code> — the pinned
+generator is what produces the glue.</li>
+<li><strong>It ships as a source package.</strong> The compiled native payload
+(<code>jniLibs/&lt;abi&gt;/libmap_native_core.a</code> and the iOS
+<code>AngoratekRusticMapsSdkFramework.xcframework</code>) is produced by
+<code>scripts/build-rn.sh</code> on a host with the Android NDK and Xcode;
+<code>scripts/package-rn-npm.sh --with-native-payload</code> packs it into the tarball.
+A tarball without that payload builds the Rust code in your own project on
+first build.</li>
+</ul>
 <h2 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h2>
 <p>The wasm artifact (<code>@angoratek/rustic-maps-sdk-web</code>) is the
 <code>wasm-bindgen</code> ES module emit. Measured size (2026-10-29): 3.6 MiB
@@ -1041,7 +1052,8 @@ maps</a>.</p>
 <p>Install the SDK, register a map provider with your API key, and draw a
 first rendered map surface. Choose your platform’s tab and follow its
 steps top to bottom; every snippet is a complete step and compiles
-against the <a href="#the-ffi-contract">FFI contract</a>. If you are new to map SDKs,
+against the generated bindings (<a href="#the-ffi-contract">the FFI contract</a> they are
+built from). If you are new to map SDKs,
 read <a href="#map-concepts">Map concepts</a> first: it explains tiles, zoom
 levels, the world coordinate system and the camera these snippets build
 on.</p>
@@ -1067,6 +1079,8 @@ the two runtime dependencies the Kotlin bindings need:</p>
 
 dependencies {
     implementation(files("libs/rustic-maps-sdk-android-v0.1.0.aar"))
+    // The MapView wrapper is a second AAR and depends on the bindings above.
+    implementation(files("libs/rustic-maps-sdk-android-ui-v0.1.0.aar"))
     implementation("net.java.dev.jna:jna:5.18.1@aar")   // the UniFFI runtime
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
@@ -1192,8 +1206,9 @@ clears both the bulk list and the addressed overlays.</p>
 target, and a <a href="#downloads">downloaded release XCFramework</a>, and a
 map-platform API key for the provider you register.</p>
 <p>Unzip the release into a <code>Frameworks/</code> directory in your project and add
-the Swift package product (<code>RusticMapsSDK</code>) through your package
-manifest, resolved from the release’s checksummed zip:</p>
+<strong>both</strong> Swift package products — <code>RusticMapsSDK</code> (the generated bindings)
+and <code>MapNativeCoreUI</code> (the map view the next step uses) — through your
+package manifest, resolved from the release’s checksummed zip:</p>
 <pre><code class="language-swift">// Package.swift
 // swift-tools-version: 5.10
 import PackageDescription
@@ -1201,11 +1216,23 @@ import PackageDescription
 let package = Package(
     name: "MyMapApp",
     dependencies: [
-        // Add the release's package reference here; its binaryTarget pins
-        // the XCFramework URL and checksum.
+        // The package the release publishes: a generated branch manifest whose
+        // binaryTarget pins the XCFramework URL and checksum.
+        .package(
+            url: "https://github.com/angoratek/rustic-maps-sdk.git",
+            branch: "swift-package"
+        ),
     ],
     targets: [
-        .executableTarget(name: "MyMapApp")
+        .executableTarget(
+            name: "MyMapApp",
+            // Both products ship in the same package: the bindings and the
+            // map view.
+            dependencies: [
+                .product(name: "RusticMapsSDK", package: "rustic-maps-sdk"),
+                .product(name: "MapNativeCoreUI", package: "rustic-maps-sdk"),
+            ]
+        )
     ]
 )
 </code></pre>
@@ -2630,10 +2657,11 @@ below lists the exact file names the release will carry; each will resolve at
 <tr><th>Platform</th><th>Artifact file</th><th>What it contains</th></tr>
 </thead>
 <tbody>
-<tr><td>Android</td><td><code>rustic-maps-sdk-android-vX.Y.Z.aar</code></td><td>Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64</td></tr>
+<tr><td>Android (bindings)</td><td><code>rustic-maps-sdk-android-vX.Y.Z.aar</code></td><td>Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64</td></tr>
+<tr><td>Android (<code>MapView</code> wrapper)</td><td><code>rustic-maps-sdk-android-ui-vX.Y.Z.aar</code></td><td>The <code>MapView</code> and its Compose wrapper; depends on the bindings AAR, so add both</td></tr>
 <tr><td>iOS</td><td><code>rustic-maps-sdk-ios-vX.Y.Z.xcframework.zip</code></td><td>The XCFramework (arm64 device and simulator slices), packaged for a Swift Package Manager binary target</td></tr>
 <tr><td>WebAssembly</td><td><code>rustic-maps-sdk-web-vX.Y.Z.tar.gz</code> (the module) and <code>rustic-maps-sdk-web-vX.Y.Z.tgz</code> (the npm package)</td><td>The wasm module, its JavaScript shim and both type files; the npm package adds the manifest, licenses and notices</td></tr>
-<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-vX.Y.Z.tgz</code> (npm package <code>@angoratek/rustic-maps-sdk</code>)</td><td>The TurboModule package: generated TypeScript, JSI C++, podspec and CMake glue</td></tr>
+<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-vX.Y.Z.tgz</code> (npm package <code>@angoratek/rustic-maps-sdk</code>)</td><td>The TurboModule source package: generated TypeScript, JSI C++, podspec and CMake glue. The compiled native payload is built by <code>scripts/build-rn.sh</code> (or packed in with <code>package-rn-npm.sh --with-native-payload</code>)</td></tr>
 <tr><td>All platforms</td><td><code>rustic-maps-sdk-notices-vX.Y.Z.md</code></td><td>The third-party dependency notices that accompany your own distribution</td></tr>
 </tbody>
 </table>
@@ -2663,8 +2691,24 @@ downloaded.</p>
 these exact artifact names: the AAR for Android, the checksummed zip for the
 Swift Package Manager binary target, and the module archive for the wasm
 package. The npm packages ship the same generated trees with a manifest,
-licenses and notices. Until version 0.1 is published, follow the tutorials’
-“checked-in copy” path rather than a download link.</p>
+licenses and notices.</p>
+<p><strong>Until version 0.1 is published</strong>, build the packages from a checkout: each
+one has a script that produces the artifact the tutorials install —</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Package</th><th>Script</th><th>Output</th></tr>
+</thead>
+<tbody>
+<tr><td>Android</td><td><code>scripts/build-android.sh</code></td><td>the bindings AAR and the <code>MapView</code> wrapper AAR</td></tr>
+<tr><td>iOS</td><td><code>scripts/build-ios.sh</code></td><td>the XCFramework and the verified Swift package</td></tr>
+<tr><td>React Native</td><td><code>scripts/build-rn.sh</code></td><td>the generated TurboModule sources and native payload</td></tr>
+<tr><td>WebAssembly</td><td><code>scripts/package-web-npm.sh</code></td><td>the npm tarball (build the wasm package first)</td></tr>
+</tbody>
+</table>
+</div>
+<p>The scripts print their prerequisites when one is missing; they are the same
+steps the release pipeline runs.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="screenshots"><a class="header" href="#screenshots">Screenshots</a></h1>
 <p>Every screenshot on this page was captured from the sample applications on a
