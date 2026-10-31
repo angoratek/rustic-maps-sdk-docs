@@ -67,6 +67,20 @@
           "path_pattern": "^vector/sourdough/6/18/27\\.mvt$",
           "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt"
         }
+      ],
+      "vector_styles": [
+        {
+          "style_id": "carto-light",
+          "display_name": "Carto Light",
+          "theme": "light",
+          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US"
+        },
+        {
+          "style_id": "carto-dark",
+          "display_name": "Carto Dark",
+          "theme": "dark",
+          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US"
+        }
       ]
     },
     {
@@ -118,7 +132,7 @@
     },
     {
       "provider_key": "openstreetmap",
-      "display_name": "OpenStreetMap",
+      "display_name": "OpenStreetMap Standard",
       "credential_label": "",
       "registration_available": {
         "android": true,
