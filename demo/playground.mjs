@@ -263,6 +263,9 @@
       const scale_bar_line_element = document.getElementById('scale-bar-line');
       const follow_demo_start_control = document.getElementById('follow-demo-start-control');
       const follow_demo_live_line = document.getElementById('follow-demo-live-line');
+      const follow_demo_playback_row = document.getElementById('follow-demo-playback');
+      const follow_demo_speed_controls = document.getElementById('follow-demo-speed-controls');
+      const follow_demo_pause_control = document.getElementById('follow-demo-pause-control');
       const diagnostics_refresh_control = document.getElementById('diagnostics-refresh-control');
       const diagnostics_facts_element = document.getElementById('diagnostics-facts-lines');
       const diagnostics_event_lines = document.getElementById('diagnostics-event-lines');
@@ -2111,6 +2114,7 @@
         ended: 'Trip ended — the pre-trip camera is restored.',
         stopped: 'Trip stopped — the pre-trip camera is restored.',
         arrived: 'Arrived — the trip ended at the destination. Stop restores the pre-trip camera.',
+        paused: 'Trip paused — Resume continues from the same point on the route.',
       };
       const follow_demo = {
         phase: FOLLOW_DEMO_PHASE_DISENGAGED,
@@ -2120,6 +2124,10 @@
         total_meters: 0,
         fix_interval_id: null,
         target_bearing_degrees: null,
+        // The playback pace (M27): a multiplier over the demo's own speed,
+        // and a pause that freezes the walk without ending the trip.
+        speed_multiplier: 1,
+        is_paused: false,
         // The latest guided fix: the my-location control re-centers on it
         // when a gesture-broken follow is re-engaged (§5.3).
         latest_fix: null,
@@ -2629,6 +2637,60 @@
           longitude: route_coordinate.longitude_degrees,
         }));
 
+      // The playback controls (M27): the paces a visitor may pick, applied to
+      // the route's own walk speed, and the one control that pauses it.
+      const FOLLOW_DEMO_SPEED_MULTIPLIERS = [1, 2, 4, 8];
+
+      /** Rebuilds the speed chips and marks the active one. */
+      function render_follow_demo_speed_controls() {
+        follow_demo_speed_controls.replaceChildren();
+        for (const multiplier of FOLLOW_DEMO_SPEED_MULTIPLIERS) {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.textContent = ui_label_text_with_values(
+            'navigation.speed_multiplier_label', { multiplier });
+          chip.setAttribute(
+            'aria-pressed', String(multiplier === follow_demo.speed_multiplier));
+          chip.addEventListener('click', () => {
+            follow_demo.speed_multiplier = multiplier;
+            render_follow_demo_speed_controls();
+          });
+          follow_demo_speed_controls.append(chip);
+        }
+      }
+
+      /** Shows or hides the playback row, and names the pause control. */
+      function refresh_follow_demo_playback_row(is_running) {
+        follow_demo_playback_row.hidden = !is_running;
+        follow_demo_pause_control.textContent = follow_demo.is_paused
+          ? ui_label_text('navigation.resume_action')
+          : ui_label_text('navigation.pause_action');
+        if (is_running) {
+          render_follow_demo_speed_controls();
+        }
+      }
+
+      /** Stops the fix timer without ending the trip. */
+      function pause_follow_demo_trip() {
+        if (follow_demo.fix_interval_id !== null) {
+          clearInterval(follow_demo.fix_interval_id);
+          follow_demo.fix_interval_id = null;
+        }
+        follow_demo.is_paused = true;
+        refresh_follow_demo_playback_row(true);
+        follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.paused;
+      }
+
+      /** Restarts the fix timer and delivers a fix immediately. */
+      function resume_follow_demo_trip() {
+        follow_demo.is_paused = false;
+        refresh_follow_demo_playback_row(true);
+        follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
+        follow_demo.fix_interval_id = setInterval(
+          on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
+        on_follow_demo_fix();
+      }
+
       function end_follow_demo_trip(end_live_text) {
         if (follow_demo.fix_interval_id !== null) clearInterval(follow_demo.fix_interval_id);
         follow_demo.fix_interval_id = null;
@@ -2656,6 +2718,8 @@
         refresh_control_labels();
         follow_demo_live_line.textContent = end_live_text;
         follow_demo_start_control.textContent = FOLLOW_DEMO_START_TEXT;
+        follow_demo.is_paused = false;
+        refresh_follow_demo_playback_row(false);
         schedule_render();
       }
 
@@ -2697,6 +2761,7 @@
         );
         follow_demo.travelled_meters = travelled_meters +
           FOLLOW_DEMO_SPEED_METERS_PER_SECOND *
+          follow_demo.speed_multiplier *
           (FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS / 1000);
         refresh_control_labels();
         refresh_compass_control();
@@ -2716,6 +2781,17 @@
         request_pump_step();
       }
 
+      follow_demo_pause_control.addEventListener('click', () => {
+        if (follow_demo.phase === FOLLOW_DEMO_PHASE_DISENGAGED) {
+          return;
+        }
+        if (follow_demo.is_paused) {
+          resume_follow_demo_trip();
+        } else {
+          pause_follow_demo_trip();
+        }
+      });
+
       follow_demo_start_control.addEventListener('click', () => {
         if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
@@ -2733,6 +2809,7 @@
         const trip_polyline = planned_route_polyline ?? FOLLOW_DEMO_ROUTE_POLYLINE;
         follow_demo.route_polyline = trip_polyline;
         follow_demo.travelled_meters = 0;
+        follow_demo.is_paused = false;
         follow_demo.total_meters = polyline_length_meters(trip_polyline);
         follow_bearing_chase.reset();
         course_median_smoother.reset();
@@ -2746,6 +2823,7 @@
         controls.zoom.value = camera_state.zoom;
         controls.pitch.value = camera_state.pitch;
         follow_demo_start_control.textContent = FOLLOW_DEMO_STOP_TEXT;
+        refresh_follow_demo_playback_row(true);
         follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
         follow_demo.fix_interval_id = setInterval(
           on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);

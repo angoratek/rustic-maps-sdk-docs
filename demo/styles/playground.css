@@ -1279,3 +1279,45 @@
           text-overflow: ellipsis;
         }
       }
+
+/* The simulated trip's playback controls (M27): a speed row and one
+   pause/resume control, shown only while a trip runs. */
+.trip-playback[hidden] {
+  display: none;
+}
+
+.trip-playback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
+.trip-playback-label {
+  color: var(--text-secondary-color, #9aa4b2);
+  font-size: 0.85rem;
+}
+
+.trip-speed-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.trip-speed-controls button,
+#follow-demo-pause-control {
+  appearance: none;
+  border: 1px solid var(--surface-border-color, rgba(255, 255, 255, 0.14));
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.trip-speed-controls button[aria-pressed='true'] {
+  border-color: var(--accent-fill-color, #2563eb);
+  color: var(--accent-text-color, #8fbaff);
+}
