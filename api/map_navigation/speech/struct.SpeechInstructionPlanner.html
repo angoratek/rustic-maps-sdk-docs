@@ -11,7 +11,7 @@ new emission, never as a replay.</p>
     &amp;mut self,
     previous_state: <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>&gt;,
     current_state: &amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>,
-    unit_system: UnitSystem,
+    unit_system: <a class="enum" href="../../geospatial_types/route/enum.UnitSystem.html" title="enum geospatial_types::route::UnitSystem">UnitSystem</a>,
     now: <a class="struct" href="https://doc.rust-lang.org/1.99.0/std/time/struct.Instant.html" title="struct std::time::Instant">Instant</a>,
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="struct.SpeechUtterance.html" title="struct map_navigation::speech::SpeechUtterance">SpeechUtterance</a>&gt;</h4></section></summary><div class="docblock"><p>Evaluates one dispatched fix against the trigger policy and returns
 the utterances it emits (at most one per fix, in this ordering: the

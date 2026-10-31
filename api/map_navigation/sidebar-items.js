@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["course_filtering","deviation","geometry","instruction","location","observer","recorder","reducer","reroute","speech","state","step_advance"]};
+window.SIDEBAR_ITEMS = {"mod":["course_filtering","deviation","geometry","instruction","location","observer","recorder","reducer","reroute","route_walk","speech","state","step_advance"]};

@@ -905,6 +905,12 @@
         font-weight: 400;
         color: var(--text-secondary-color);
       }
+      /* The shared empty-state hint: a note, never a selectable result. */
+      .trip-result-empty {
+        padding: 8px 10px;
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
       /* The status line: informational by default, warning only when the
          message is a refusal (data-tone), so the keyless note no longer
          dresses an ordinary state in the warning color. */
@@ -1222,7 +1228,7 @@
         .trip-subtitle,
         .trip-footnote { display: none; }
         /* Two search fields instead of one: the field height and the card's
-           spacing tighten so Plan route and Start simulated trip stay inside
+           spacing tighten so Plan route and Start simulated navigation stay inside
            the sheet at 390x844 without scrolling. */
         .trip-search input { height: 40px; }
         .trip-suggestions { margin-top: 0; }
