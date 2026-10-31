@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6567ea81.js";
+            window.path_to_searchindex_js = "searchindex-b9ca8585.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -223,13 +223,24 @@ discards unused code, so these archive sizes are not the size your
 application adds; the per-architecture measurement is a recorded open
 decision on whether the iOS artifact later moves to a dynamic slice.</p>
 <h2 id="react-native"><a class="header" href="#react-native">React Native</a></h2>
-<p>The React Native artifact is a source TurboModule package
-(<code>@angoratek/rustic-maps-sdk</code>) generated from the contract. It
-carries the generated TypeScript surface, the JSI C++ glue, and the
-podspec/CMake wiring your application compiles against its own React
-Native version, so no binary slice inside the tarball constrains which
-React Native version you run. The Android side of the current package
-builds the Rust static archive for arm64-v8a.</p>
+<p>The React Native artifact is a TurboModule package
+(<code>@angoratek/rustic-maps-sdk</code>) generated from the contract. It carries the
+generated TypeScript surface, the JSI C++ glue, and the podspec/CMake wiring.</p>
+<p>Two facts bound what it can do for you:</p>
+<ul>
+<li><strong>It is generated for a React Native version range</strong>, not for every version:
+<code>platform/rn/package.json</code> declares the peer range the generated glue was
+produced against (React Native ≥ 0.88, React ≥ 19 at the time of writing).
+Outside that range, regenerate with the matching <code>ubrn</code> — the pinned
+generator is what produces the glue.</li>
+<li><strong>It ships as a source package.</strong> The compiled native payload
+(<code>jniLibs/&lt;abi&gt;/libmap_native_core.a</code> and the iOS
+<code>AngoratekRusticMapsSdkFramework.xcframework</code>) is produced by
+<code>scripts/build-rn.sh</code> on a host with the Android NDK and Xcode;
+<code>scripts/package-rn-npm.sh --with-native-payload</code> packs it into the tarball.
+A tarball without that payload builds the Rust code in your own project on
+first build.</li>
+</ul>
 <h2 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h2>
 <p>The wasm artifact (<code>@angoratek/rustic-maps-sdk-web</code>) is the
 <code>wasm-bindgen</code> ES module emit. Measured size (2026-10-29): 3.6 MiB

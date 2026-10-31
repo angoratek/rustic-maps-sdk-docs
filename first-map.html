@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6567ea81.js";
+            window.path_to_searchindex_js = "searchindex-b9ca8585.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -179,7 +179,8 @@
 <p>Install the SDK, register a map provider with your API key, and draw a
 first rendered map surface. Choose your platform’s tab and follow its
 steps top to bottom; every snippet is a complete step and compiles
-against the <a href="udl-contract.html">FFI contract</a>. If you are new to map SDKs,
+against the generated bindings (<a href="udl-contract.html">the FFI contract</a> they are
+built from). If you are new to map SDKs,
 read <a href="map-concepts.html">Map concepts</a> first: it explains tiles, zoom
 levels, the world coordinate system and the camera these snippets build
 on.</p>
@@ -205,6 +206,8 @@ the two runtime dependencies the Kotlin bindings need:</p>
 
 dependencies {
     implementation(files("libs/rustic-maps-sdk-android-v0.1.0.aar"))
+    // The MapView wrapper is a second AAR and depends on the bindings above.
+    implementation(files("libs/rustic-maps-sdk-android-ui-v0.1.0.aar"))
     implementation("net.java.dev.jna:jna:5.18.1@aar")   // the UniFFI runtime
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
@@ -330,8 +333,9 @@ clears both the bulk list and the addressed overlays.</p>
 target, and a <a href="downloads.html">downloaded release XCFramework</a>, and a
 map-platform API key for the provider you register.</p>
 <p>Unzip the release into a <code>Frameworks/</code> directory in your project and add
-the Swift package product (<code>RusticMapsSDK</code>) through your package
-manifest, resolved from the release’s checksummed zip:</p>
+<strong>both</strong> Swift package products — <code>RusticMapsSDK</code> (the generated bindings)
+and <code>MapNativeCoreUI</code> (the map view the next step uses) — through your
+package manifest, resolved from the release’s checksummed zip:</p>
 <pre><code class="language-swift">// Package.swift
 // swift-tools-version: 5.10
 import PackageDescription
@@ -339,11 +343,23 @@ import PackageDescription
 let package = Package(
     name: "MyMapApp",
     dependencies: [
-        // Add the release's package reference here; its binaryTarget pins
-        // the XCFramework URL and checksum.
+        // The package the release publishes: a generated branch manifest whose
+        // binaryTarget pins the XCFramework URL and checksum.
+        .package(
+            url: "https://github.com/angoratek/rustic-maps-sdk.git",
+            branch: "swift-package"
+        ),
     ],
     targets: [
-        .executableTarget(name: "MyMapApp")
+        .executableTarget(
+            name: "MyMapApp",
+            // Both products ship in the same package: the bindings and the
+            // map view.
+            dependencies: [
+                .product(name: "RusticMapsSDK", package: "rustic-maps-sdk"),
+                .product(name: "MapNativeCoreUI", package: "rustic-maps-sdk"),
+            ]
+        )
     ]
 )
 </code></pre>

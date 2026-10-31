@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6567ea81.js";
+            window.path_to_searchindex_js = "searchindex-b9ca8585.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -194,10 +194,11 @@ below lists the exact file names the release will carry; each will resolve at
 <tr><th>Platform</th><th>Artifact file</th><th>What it contains</th></tr>
 </thead>
 <tbody>
-<tr><td>Android</td><td><code>rustic-maps-sdk-android-vX.Y.Z.aar</code></td><td>Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64</td></tr>
+<tr><td>Android (bindings)</td><td><code>rustic-maps-sdk-android-vX.Y.Z.aar</code></td><td>Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64</td></tr>
+<tr><td>Android (<code>MapView</code> wrapper)</td><td><code>rustic-maps-sdk-android-ui-vX.Y.Z.aar</code></td><td>The <code>MapView</code> and its Compose wrapper; depends on the bindings AAR, so add both</td></tr>
 <tr><td>iOS</td><td><code>rustic-maps-sdk-ios-vX.Y.Z.xcframework.zip</code></td><td>The XCFramework (arm64 device and simulator slices), packaged for a Swift Package Manager binary target</td></tr>
 <tr><td>WebAssembly</td><td><code>rustic-maps-sdk-web-vX.Y.Z.tar.gz</code> (the module) and <code>rustic-maps-sdk-web-vX.Y.Z.tgz</code> (the npm package)</td><td>The wasm module, its JavaScript shim and both type files; the npm package adds the manifest, licenses and notices</td></tr>
-<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-vX.Y.Z.tgz</code> (npm package <code>@angoratek/rustic-maps-sdk</code>)</td><td>The TurboModule package: generated TypeScript, JSI C++, podspec and CMake glue</td></tr>
+<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-vX.Y.Z.tgz</code> (npm package <code>@angoratek/rustic-maps-sdk</code>)</td><td>The TurboModule source package: generated TypeScript, JSI C++, podspec and CMake glue. The compiled native payload is built by <code>scripts/build-rn.sh</code> (or packed in with <code>package-rn-npm.sh --with-native-payload</code>)</td></tr>
 <tr><td>All platforms</td><td><code>rustic-maps-sdk-notices-vX.Y.Z.md</code></td><td>The third-party dependency notices that accompany your own distribution</td></tr>
 </tbody>
 </table>
@@ -227,8 +228,24 @@ downloaded.</p>
 these exact artifact names: the AAR for Android, the checksummed zip for the
 Swift Package Manager binary target, and the module archive for the wasm
 package. The npm packages ship the same generated trees with a manifest,
-licenses and notices. Until version 0.1 is published, follow the tutorials’
-“checked-in copy” path rather than a download link.</p>
+licenses and notices.</p>
+<p><strong>Until version 0.1 is published</strong>, build the packages from a checkout: each
+one has a script that produces the artifact the tutorials install —</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Package</th><th>Script</th><th>Output</th></tr>
+</thead>
+<tbody>
+<tr><td>Android</td><td><code>scripts/build-android.sh</code></td><td>the bindings AAR and the <code>MapView</code> wrapper AAR</td></tr>
+<tr><td>iOS</td><td><code>scripts/build-ios.sh</code></td><td>the XCFramework and the verified Swift package</td></tr>
+<tr><td>React Native</td><td><code>scripts/build-rn.sh</code></td><td>the generated TurboModule sources and native payload</td></tr>
+<tr><td>WebAssembly</td><td><code>scripts/package-web-npm.sh</code></td><td>the npm tarball (build the wasm package first)</td></tr>
+</tbody>
+</table>
+</div>
+<p>The scripts print their prerequisites when one is missing; they are the same
+steps the release pipeline runs.</p>
 
                     </main>
 
