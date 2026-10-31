@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-cce66272.js";
+            window.path_to_searchindex_js = "searchindex-f588e358.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-2fe6af0c.js"></script>
+        <script src="toc-1539ac9a.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -701,6 +701,33 @@ dictionary Route {
     sequence&lt;RouteLeg&gt; legs;
 };
 
+/// Pace chosen by the application for a simulated trip. The SDK carries no
+/// default pace: every application picks its own numbers. Both values must
+/// be finite and strictly positive, and their product must stay finite.
+dictionary SimulatedTripPace {
+    /// Baseline travel speed in meters per second.
+    double speed_meters_per_second;
+    /// Multiplier applied to the baseline speed (for example 1, 2, 4 or 8).
+    double speed_multiplier;
+};
+
+/// One position of a simulated trip along the planned route's own polyline.
+dictionary SimulatedTripFix {
+    /// Position on the planned route's geometry.
+    GeographicCoordinate coordinate;
+    /// Direction of travel along the active segment, in degrees clockwise
+    /// from true north, or null when the route has no segment.
+    double? course_heading_degrees;
+    /// Distance travelled from the route start, in meters.
+    double travelled_meters;
+    /// Distance left to the route end, in meters.
+    double remaining_meters;
+    /// Simulated elapsed time from the trip start, in seconds.
+    double elapsed_seconds;
+    /// True exactly when the fix sits at the route's final coordinate.
+    boolean is_arrived;
+};
+
 /// One origin-destination cell of a distance matrix.
 dictionary DistanceMatrixEntry {
     /// Origin index into the request's origins.
@@ -1281,6 +1308,31 @@ interface Navigator {
     /// are controller configuration and keep delivering the next trip's
     /// events. Stopping without an active trip is a no-op.
     void stop_navigation();
+};
+
+/// An immutable simulated trip over one planned route: distance-parameterised
+/// interpolation along the route's own polyline at a caller-chosen pace. The
+/// SDK carries no pacing policy and no default speed.
+interface RouteSimulator {
+    /// Builds the simulator over `route`. Refuses a pace whose speed or
+    /// multiplier is non-finite or not strictly positive, and a route whose
+    /// legs and steps carry no usable geometry.
+    [Throws=SdkError]
+    constructor(Route route, SimulatedTripPace pace);
+
+    /// Total length of the route's flattened polyline, in meters.
+    double total_distance_meters();
+
+    /// Total simulated travel time at the chosen pace, in seconds.
+    double total_duration_seconds();
+
+    /// The fix at `travelled_meters` from the route start, clamped into
+    /// `[0, total_distance_meters()]`.
+    SimulatedTripFix fix_at_travelled_meters(double travelled_meters);
+
+    /// The fix at `elapsed_seconds` of simulated travel, clamped into
+    /// `[0, total_duration_seconds()]`.
+    SimulatedTripFix fix_at_elapsed_seconds(double elapsed_seconds);
 };
 
 /// High-level phase of a trip that has already been started. Rerouting is not

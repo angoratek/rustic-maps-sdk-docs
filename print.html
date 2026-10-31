@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-cce66272.js";
+            window.path_to_searchindex_js = "searchindex-f588e358.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-2fe6af0c.js"></script>
+        <script src="toc-1539ac9a.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -551,9 +551,9 @@ covers the whole loop.</p>
 <p><a href="demo/mobile">Open the mobile demo</a></p>
 </div>
 
-<p>The Android and iOS sample applications, running on a hosted device. Pick a
-platform, press <strong>Start demo</strong>, and the session opens in its own browser tab
-for three minutes.</p>
+<p>The Android, iOS and React Native sample applications, running on a hosted
+device. Pick a platform, press <strong>Start demo</strong>, and the session opens in its own
+browser tab for three minutes.</p>
 <h2 id="what-the-session-is"><a class="header" href="#what-the-session-is">What the session is</a></h2>
 <p>The builds are the same sample applications the guides walk through — the
 shipped map view, search and route planning, turn-by-turn simulation, the
@@ -569,6 +569,225 @@ state rather than a blank frame.</p>
 by every visitor, so the demo paces itself: nothing streams until you press
 Start, a session lasts three minutes, and when the month’s minutes are gone
 the page says so and the demo rests until the month turns over.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="quickstart-for-gis-developers"><a class="header" href="#quickstart-for-gis-developers">Quickstart for GIS developers</a></h1>
+<p>A terse path for people who already work with tiles, projections and routing
+engines and do not need the concepts explained. Read this page, then jump
+straight to the guide for your platform. If you want the model behind these
+calls, <a href="#map-concepts">Map concepts</a> has it in one page.</p>
+<h2 id="what-the-sdk-gives-you-1"><a class="header" href="#what-the-sdk-gives-you-1">What the SDK gives you</a></h2>
+<p>One Rust core, four surfaces. The same calls exist on Android (Kotlin), iOS
+(Swift), React Native (TypeScript) and WebAssembly (TypeScript), because all
+four bind the same contract.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Call</th><th>What you get</th></tr>
+</thead>
+<tbody>
+<tr><td><code>MapView</code></td><td>The map surface: it owns the platform surface, the frame pump, gestures and lifecycle. You give it a view and an SDK object; you never draw.</td></tr>
+<tr><td><code>setCamera</code></td><td>Center, zoom, bearing, pitch. Zoom is continuous; pitch tops out at 75°.</td></tr>
+<tr><td><code>setOverlays</code></td><td>Route polylines, filled rings, point markers, A/B pins and traffic flow — all in coordinates, projected per frame.</td></tr>
+<tr><td><code>forwardGeocode</code> / <code>searchPlace</code></td><td>Provider geocoding and search prediction; results carry a coordinate and a quality.</td></tr>
+<tr><td><code>calculateRoute</code></td><td>A route with legs, steps, shapes and instructions; flatten the step shapes and you have the polyline.</td></tr>
+<tr><td><code>startNavigation</code> + a fix source</td><td>A reducer that advances steps, grades deviation and reports progress; the reference apps drive it with a recorded trace or a route walker.</td></tr>
+<tr><td><code>TileCacheTerms</code> / offline graph</td><td>A disk tile cache with per-category TTLs, and a self-describing offline routing graph compiled from OpenStreetMap.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="the-order-that-works"><a class="header" href="#the-order-that-works">The order that works</a></h2>
+<ol>
+<li><strong>Create the map.</strong> Construct the SDK object, hand it your view, register a
+provider with its credential at runtime.</li>
+<li><strong>Set the camera.</strong> A <code>MapCamera</code> is an immutable pose; build a new one for
+each view change, or ask it to fit a bounding box inside your own inset
+region.</li>
+<li><strong>Put something on it.</strong> Overlays are geography plus style. A route polyline
+is the flattened <code>shape</code> of its steps.</li>
+<li><strong>Plan and follow.</strong> <code>calculateRoute</code>, then drive the navigation reducer with
+fixes from your location source; the reducer tells you the active step, the
+distance remaining and when the driver has left the line.</li>
+</ol>
+<h2 id="coordinates-in-one-paragraph"><a class="header" href="#coordinates-in-one-paragraph">Coordinates, in one paragraph</a></h2>
+<p>Positions are WGS 84 latitude/longitude in <code>GeographicCoordinate</code>. Regions are
+<code>BoundingBox</code> between a south-west and a north-east corner and never span the
+antimeridian. Tiles are addressed by <code>TileKey</code> (column, row from the north,
+zoom) on the web-mercator grid. Everything you draw is in these coordinates;
+the camera does the projection, and <code>projectToScreen</code> /
+<code>screenToGroundCoordinate</code> are there when you need the same math for your own
+UI.</p>
+<h2 id="credentials"><a class="header" href="#credentials">Credentials</a></h2>
+<p>Provider keys are <strong>not</strong> build inputs. They are entered at runtime through the
+settings surface, or injected for one session by automation. There is no
+<code>local.properties</code>, <code>Info.plist</code> or <code>.xcconfig</code> seam, and no release artifact
+carries one. A key you apply is held for the session and optionally remembered
+in the platform’s secure store — never in your project.</p>
+<h2 id="where-to-go-next-1"><a class="header" href="#where-to-go-next-1">Where to go next</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>You want</th><th>Read</th></tr>
+</thead>
+<tbody>
+<tr><td>A rendered map in an app</td><td><a href="#your-first-map">Your first map</a></td></tr>
+<tr><td>Search results and a planned route</td><td><a href="#search-and-routing">Search and routing</a></td></tr>
+<tr><td>A moving trip with turn-by-turn guidance</td><td><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></td></tr>
+<tr><td>Routing with no network</td><td><a href="#offline-maps-1">Offline maps</a></td></tr>
+<tr><td>The exact surface, member by member</td><td><a href="#the-ffi-contract">The FFI contract</a></td></tr>
+<tr><td>Frame costs and how to measure them</td><td><a href="#performance-and-profiling">Performance and profiling</a></td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="map-concepts"><a class="header" href="#map-concepts">Map concepts</a></h1>
+<p>This page explains the ideas every map SDK is built on: tiles, zoom
+levels, the coordinate system maps are drawn in, and the camera that
+decides what you see. The guides use these ideas without defining them,
+so read this page once if you have not worked with a map before, then
+continue with <a href="#your-first-map">Your first map</a>.</p>
+<h2 id="positions-and-regions"><a class="header" href="#positions-and-regions">Positions and regions</a></h2>
+<p>A position is a <code>GeographicCoordinate</code>: latitude and longitude in decimal
+degrees on the WGS 84 ellipsoid. Latitude runs from -90 to 90; longitude
+runs from -180 to 180.</p>
+<p>A region is a <code>BoundingBox</code> between a south-west and a north-east corner,
+each one a coordinate. A box never spans the antimeridian. If a region
+crosses it, encode the region as two adjacent boxes.</p>
+<p>The examples on this page are Kotlin because that makes them concrete;
+the same records cross every binding, with each platform’s field naming.</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.BoundingBox
+import uniffi.rustic_maps.GeographicCoordinate
+
+val capitolPark = GeographicCoordinate(38.5766, -121.4944)
+val downtownSacramento = BoundingBox(
+    southWest = GeographicCoordinate(38.5700, -121.5030),
+    northEast = GeographicCoordinate(38.5850, -121.4850),
+)
+</code></pre>
+<h2 id="the-world-square"><a class="header" href="#the-world-square">The world square</a></h2>
+<p>The SDK does not draw in latitude and longitude. Before anything is
+placed on screen, a coordinate is projected onto the Web Mercator
+world: a square where every position becomes two numbers in <code>[0, 1]</code>.
+The horizontal number is zero on the antimeridian and grows eastward.
+The vertical number is zero at the north pole and grows southward.</p>
+<p>Only part of the ellipsoid fits in that square. The projection stops at
+about 85.05 degrees north and south, and latitudes beyond the cutoff
+clamp to the edge. The top and bottom of the world square are therefore
+not the poles, and a coordinate near a pole sits on the boundary rather
+than beyond it.</p>
+<p>Mercator also changes scale across the map: it stretches the ground more
+the farther you move from the equator. At a given zoom, the ground
+distance covered by one screen pixel shrinks with the cosine of the
+center latitude. The camera answers that distance for a scale bar through
+<code>groundMetersPerScreenPixel</code>.</p>
+<h2 id="tiles"><a class="header" href="#tiles">Tiles</a></h2>
+<p>A tile is one payload at one zoom level. Its address is a <code>TileKey</code>: a
+column, a row counted from the north, and the zoom level. This is the
+web-mercator XYZ scheme. At zoom 0 the whole world is one tile, and each
+level doubles the columns and rows, so zoom level <code>z</code> has <code>2^z</code> columns
+and <code>2^z</code> rows. A coordinate’s address is the tile cell that contains its
+position in the world square.</p>
+<p>A raster tile is a pre-rendered image. The contract carries one as
+<code>RasterTileData</code>: the tile address, an image format (<code>Png</code> or <code>Jpeg</code>), a
+tile resolution, and the encoded bytes. <code>Standard</code> is the plain form;
+<code>Retina</code> is the <code>@2x</code> form with twice the texels per edge for the same
+logical tile span, which is what a high-density screen wants.</p>
+<p>A vector tile is different: it carries geometry and style rather than
+pixels. Its vertices are stored in the tile’s own space, with x to the
+right and y down inside the tile. The SDK converts each vertex through
+the tile’s web-mercator address into a <code>GeographicCoordinate</code>, so vector
+geometry and your own overlays share one coordinate space.</p>
+<p>Either kind of tile is addressed, fetched and reused by the same key.
+When the view moves, the SDK asks for the tiles the view now covers and
+keeps the ones it already holds.</p>
+<h2 id="zoom-is-continuous"><a class="header" href="#zoom-is-continuous">Zoom is continuous</a></h2>
+<p>A camera’s zoom is a number, not a whole tile level, and each unit
+doubles the on-screen scale. The camera accepts zoom 0 through 24.</p>
+<p>The tile grid only changes at whole levels, so a smooth pinch gesture
+passes through fractional zoom while the SDK picks the nearest whole
+level for a tile fetch: <code>tileZoomLevel</code>. To ask which tiles the view
+covers, use <code>visibleTileKeys</code>, which lists every tile at a chosen level
+whose area intersects the visible ground, sorted row-major from the
+north. A rotated or tilted view can cover tiles you would not guess from
+the center alone, so read the list instead of computing a rectangle.</p>
+<h2 id="the-camera"><a class="header" href="#the-camera">The camera</a></h2>
+<p>A <code>MapCamera</code> is an anchored pose made of four values.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Value</th><th>What it means</th></tr>
+</thead>
+<tbody>
+<tr><td><code>center</code></td><td>The ground point rendered at the viewport center</td></tr>
+<tr><td><code>zoom_level</code></td><td>Scale; continuous, and each unit doubles the on-screen scale</td></tr>
+<tr><td><code>bearing_degrees</code></td><td>The compass direction the top of the viewport points to, clockwise from north, wrapped into <code>[0, 360)</code></td></tr>
+<tr><td><code>pitch_degrees</code></td><td>Tilt from straight down; zero is top-down, and the maximum is 75 degrees so the view keeps ground in it</td></tr>
+</tbody>
+</table>
+</div>
+<p>The camera carries no setters. A new view is a new camera; the getters
+read the pose back as it was built.</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
+import uniffi.rustic_maps.MapCamera
+
+val camera = MapCamera(
+    center = GeographicCoordinate(38.5766, -121.4944),
+    zoomLevel = 12.0,
+    bearingDegrees = 0.0,
+    pitchDegrees = 0.0,
+)
+</code></pre>
+<p>A camera is also the projection and the tile selector, not only a
+description. <code>projectToScreen</code> maps a coordinate to viewport pixels and
+<code>screenToGroundCoordinate</code> maps a pixel back to the ground, returning
+nothing when the pixel’s ray misses the ground. Both use the camera’s
+pose, so your own UI and the renderer place things on the same pixel
+without duplicating the math.</p>
+<p>The second constructor, <code>fitBounds</code>, builds a camera that frames a
+bounding box: top-down and north-up, zoomed to the largest level that
+keeps the whole box inside the inset region you pass. Insets are the
+pixels your own UI keeps clear, such as a route card, a sheet panel or an
+attribution label, so the box never hides beneath them.</p>
+<h2 id="overlays-are-geography"><a class="header" href="#overlays-are-geography">Overlays are geography</a></h2>
+<p>Everything drawn on top of the tiles is an overlay: a <code>MapOverlay</code> record
+with a kind and the payload that kind reads.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Kind</th><th>Payload</th></tr>
+</thead>
+<tbody>
+<tr><td><code>RoutePolyline</code></td><td><code>coordinates</code>, a polyline in traversal order</td></tr>
+<tr><td><code>FilledPolygon</code></td><td><code>ringCoordinates</code>, one outer ring in traversal order</td></tr>
+<tr><td><code>PointMarkers</code> and <code>PointPins</code></td><td><code>pointMarkerPositions</code>, one coordinate per marker</td></tr>
+<tr><td><code>TrafficFlow</code></td><td><code>trafficFlowSegments</code>, traffic records whose <code>shapeCoordinates</code> are coordinates</td></tr>
+</tbody>
+</table>
+</div>
+<p>The payload is the point: a list of <code>GeographicCoordinate</code>. An overlay is
+not a picture and not a set of screen pixels. It is geography plus a
+style (a color, a line width, a marker radius), and the SDK projects it
+through the same camera as the tiles in every frame.</p>
+<p>That shared space is why an overlay needs no conversion work from your
+application. A calculated route carries its geometry as coordinates on
+its steps; flatten those shapes into one list and a <code>RoutePolyline</code>
+draws over the roads. A place returned by search carries a coordinate;
+put it in <code>pointMarkerPositions</code> and the marker sits on that place.
+Panning, zooming, rotating and tilting keep the two layers aligned
+because every frame re-projects the same geographic inputs.</p>
+<h2 id="a-frame-in-order"><a class="header" href="#a-frame-in-order">A frame in order</a></h2>
+<p>A frame is one pass through the same few steps:</p>
+<ol>
+<li>You choose a <code>MapCamera</code> pose.</li>
+<li>The camera lists the tiles the view covers and maps every overlay
+coordinate into the viewport.</li>
+<li>The SDK fetches the missing tiles, draws them, then draws the overlays
+through the same camera.</li>
+<li>A new pose repeats the pass; the coordinate space never changes.</li>
+</ol>
+<p>Once those steps are clear, the tutorials are applications of them.
+Start with <a href="#your-first-map">Your first map</a>, then continue to <a href="#search-and-routing">Search and
+routing</a>, <a href="#turn-by-turn-navigation-1">Turn-by-turn
+navigation</a> and <a href="#offline-maps-1">Offline maps</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h1>
 <p>The SDK is one Rust core behind a single generated interface. This page explains the
@@ -812,7 +1031,7 @@ derives from the geometry where the extract carries no street names.</p>
 release. Today it answers the WebAssembly surface’s offline route seam, and
 the offline routing decorator wraps your online provider when you choose
 to fall back; one compiled archive serves every target.</p>
-<h2 id="where-to-go-next-1"><a class="header" href="#where-to-go-next-1">Where to go next</a></h2>
+<h2 id="where-to-go-next-2"><a class="header" href="#where-to-go-next-2">Where to go next</a></h2>
 <p>The tutorials apply these concepts in order: <a href="#your-first-map">Your first
 map</a>, <a href="#search-and-routing">Search and routing</a>,
 <a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a>, and <a href="#offline-maps-1">Offline
@@ -822,7 +1041,10 @@ maps</a>.</p>
 <p>Install the SDK, register a map provider with your API key, and draw a
 first rendered map surface. Choose your platform’s tab and follow its
 steps top to bottom; every snippet is a complete step and compiles
-against the <a href="#the-ffi-contract">FFI contract</a>.</p>
+against the <a href="#the-ffi-contract">FFI contract</a>. If you are new to map SDKs,
+read <a href="#map-concepts">Map concepts</a> first: it explains tiles, zoom
+levels, the world coordinate system and the camera these snippets build
+on.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -2291,17 +2513,18 @@ standing test device or in the browser, driving a planned route through the
 simulated trip. Provider credentials were supplied at runtime through each
 app’s settings surface or its automation seam; no build holds one.</p>
 <h2 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application drawing downtown Sacramento, with the readiness chip, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application drawing downtown Sacramento, with the readiness chip, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application in a simulated trip along N Street in downtown Sacramento, with the readiness chip, the maneuver card for the next turn, the upcoming-step card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the playback-speed chips and the pause and exit controls"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application in a simulated trip along N Street in downtown Sacramento, with the readiness chip, the maneuver card for the next turn, the upcoming-step card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the playback-speed chips and the pause and exit controls"></span></label></p>
 <h2 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application drawing downtown Sacramento, with the readiness chip, settings control, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application drawing downtown Sacramento, with the readiness chip, settings control, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle and exit"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle and exit"></span></label></p>
 <h2 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application rendering downtown Sacramento inside the shared JS shell, with the readiness chip, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application rendering downtown Sacramento inside the shared JS shell, with the readiness chip, map control cluster, scale bar, the compact attribution control at the map’s end edge and the home sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application in a simulated trip through downtown Sacramento inside the shared JS shell, with the readiness chip, the maneuver card, the map control cluster, the scale bar, the compact attribution control at the map’s end edge and the trip’s drawer"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application in a simulated trip through downtown Sacramento inside the shared JS shell, with the readiness chip, the maneuver card, the map control cluster, the scale bar, the compact attribution control at the map’s end edge and the trip’s drawer"></span></label></p>
 <h2 id="webassembly--the-browser-build"><a class="header" href="#webassembly--the-browser-build">WebAssembly — the browser build</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application rendering the same Sacramento camera on a WebGPU canvas, with the readiness chip, the trip planner card, the map control cluster, the scale bar and the compact attribution control at the map’s end edge"><span class="img-wrapper"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application rendering the same Sacramento camera on a WebGPU canvas, with the readiness chip, the trip planner card, the map control cluster, the scale bar and the compact attribution control at the map’s end edge"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application drawing a planned Capitol Park to Tower Bridge route on a WebGPU canvas, with the trip planner card, the recorded-route summary, the readiness chip, the map control cluster and the scale bar"><span class="img-wrapper"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application drawing a planned Capitol Park to Tower Bridge route on a WebGPU canvas, with the trip planner card, the recorded-route summary, the readiness chip, the map control cluster and the scale bar"></span></label></p>
 <p>The browser build runs the SDK’s own wasm module and draws through WebGPU, so
 it is the same core rather than a simulation. The capture shows its consumer
-surface: the trip planner card with a selected destination and the expert
-controls folded under <strong>Advanced</strong>. It is served keyless at <a href="#live-demo">the live demo</a>.</p>
+surface: the trip planner card with both endpoints chosen, the routed distance
+and duration, and the same route drawn on the map. It is served keyless at
+<a href="#live-demo">the live demo</a>.</p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
 <p>The captures share one design language and walk the same flow: readiness,
 search, a planned route, then the simulated trip. They also share one
@@ -4116,6 +4339,33 @@ dictionary Route {
     sequence&lt;RouteLeg&gt; legs;
 };
 
+/// Pace chosen by the application for a simulated trip. The SDK carries no
+/// default pace: every application picks its own numbers. Both values must
+/// be finite and strictly positive, and their product must stay finite.
+dictionary SimulatedTripPace {
+    /// Baseline travel speed in meters per second.
+    double speed_meters_per_second;
+    /// Multiplier applied to the baseline speed (for example 1, 2, 4 or 8).
+    double speed_multiplier;
+};
+
+/// One position of a simulated trip along the planned route's own polyline.
+dictionary SimulatedTripFix {
+    /// Position on the planned route's geometry.
+    GeographicCoordinate coordinate;
+    /// Direction of travel along the active segment, in degrees clockwise
+    /// from true north, or null when the route has no segment.
+    double? course_heading_degrees;
+    /// Distance travelled from the route start, in meters.
+    double travelled_meters;
+    /// Distance left to the route end, in meters.
+    double remaining_meters;
+    /// Simulated elapsed time from the trip start, in seconds.
+    double elapsed_seconds;
+    /// True exactly when the fix sits at the route's final coordinate.
+    boolean is_arrived;
+};
+
 /// One origin-destination cell of a distance matrix.
 dictionary DistanceMatrixEntry {
     /// Origin index into the request's origins.
@@ -4696,6 +4946,31 @@ interface Navigator {
     /// are controller configuration and keep delivering the next trip's
     /// events. Stopping without an active trip is a no-op.
     void stop_navigation();
+};
+
+/// An immutable simulated trip over one planned route: distance-parameterised
+/// interpolation along the route's own polyline at a caller-chosen pace. The
+/// SDK carries no pacing policy and no default speed.
+interface RouteSimulator {
+    /// Builds the simulator over `route`. Refuses a pace whose speed or
+    /// multiplier is non-finite or not strictly positive, and a route whose
+    /// legs and steps carry no usable geometry.
+    [Throws=SdkError]
+    constructor(Route route, SimulatedTripPace pace);
+
+    /// Total length of the route's flattened polyline, in meters.
+    double total_distance_meters();
+
+    /// Total simulated travel time at the chosen pace, in seconds.
+    double total_duration_seconds();
+
+    /// The fix at `travelled_meters` from the route start, clamped into
+    /// `[0, total_distance_meters()]`.
+    SimulatedTripFix fix_at_travelled_meters(double travelled_meters);
+
+    /// The fix at `elapsed_seconds` of simulated travel, clamped into
+    /// `[0, total_duration_seconds()]`.
+    SimulatedTripFix fix_at_elapsed_seconds(double elapsed_seconds);
 };
 
 /// High-level phase of a trip that has already been started. Rerouting is not

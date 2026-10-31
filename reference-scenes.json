@@ -163,7 +163,7 @@
       "name": "sacramento_clean_walk",
       "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
       "sample_interval_seconds": 5.0,
-      "provenance": "Deterministic synthetic trace generated at the California State Capitol, downtown Sacramento (38.5766, -121.4944) by map-navigation's trace_fixture generator; no live provider capture."
+      "provenance": "Recorded route geometry with deterministic synthetic fixes: the route is the provider-recorded pedestrian route Capitol Park -> Tower Bridge (the demo_routes member of this artifact, stitched at its shared step vertices), and the fixes are generated along it from a recorded seed by map-navigation's trace_fixture generator. No live GPS capture."
     },
     "wasm_seam_status": {
       "available": false,
@@ -173,20 +173,20 @@
       "notice": "Layout preview with fixed sample values from the demo trace's first recorded state. Illustrative and explicitly not live guidance.",
       "phase": "Navigating",
       "active_maneuver": {
-        "distance_phrase_text": "250 m",
-        "display_text": "Turn left onto 15th Street"
+        "distance_phrase_text": "100 m",
+        "display_text": "Turn right onto N St. Go for 970 m."
       },
       "upcoming_maneuver": {
-        "display_text": "Turn right onto O Street"
+        "display_text": "Turn left onto 2nd St. Go for 139 m."
       },
       "progress": {
-        "distance_to_next_maneuver_meters": 249.99999996506537,
-        "distance_remaining_meters": 799.9872079755606,
-        "duration_remaining_seconds": 399.9936039877803
+        "distance_to_next_maneuver_meters": 123.39999999999998,
+        "distance_remaining_meters": 1436.0420881526838,
+        "duration_remaining_seconds": 1477.0
       },
       "deviation_alert_preview": {
         "status_change_kind": "OffRoute",
-        "text": "Off route entered \u2014 12.4 m from the route line; guidance is frozen (deviation-alert styling sample)"
+        "text": "Off route \u2014 12.4 m from the route line; guidance is frozen until a graded fix recovers or a reroute applies."
       }
     }
   },
