@@ -231,7 +231,10 @@ function startSession(build, sessionSeconds) {
   const sessionUrl = new URL(`${APPETIZE_APP_ORIGIN}/${build.buildId}`);
   sessionUrl.searchParams.set('device', device);
   sessionUrl.searchParams.set('scale', '75');
-  sessionUrl.searchParams.set('autoplay', 'true');
+  // No `autoplay`: the app page's own Start demo button gates the stream,
+  // and an autoplay request is treated as an embed (refused with "This app
+  // may not be embedded on this website" when the host is not allow-listed).
+  // Loading the page is free; only the stream the visitor starts counts.
   sessionUrl.searchParams.set('orientation', 'portrait');
   elements.sessionLink.href = sessionUrl.toString();
   elements.sessionTitle.textContent = `${appNameForPlatform()} is ready`;
