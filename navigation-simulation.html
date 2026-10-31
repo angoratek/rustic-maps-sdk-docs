@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f588e358.js";
+            window.path_to_searchindex_js = "searchindex-719c8217.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -466,11 +466,12 @@ navigationController.stopNavigation()
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
-<h3 id="what-the-react-native-surface-carries"><a class="header" href="#what-the-react-native-surface-carries">What the React Native surface carries</a></h3>
-<p>The TurboModule exposes the same contract members as promise-returning
-methods, including the navigation controller’s. A simulated-trip
-integration builds a controller object, subscribes the topics, and
-delivers fixes:</p>
+<h3 id="build-the-controller-and-subscribe-first-2"><a class="header" href="#build-the-controller-and-subscribe-first-2">Build the controller and subscribe first</a></h3>
+<p>Subscribe to the topics before you start the trip, so the initial instruction
+dispatch of the trip start is received. The package exposes the same
+navigation controller to JavaScript; the reference application drives its
+simulated trip from its native host module and forwards each payload to this
+listener, so the calls below are the JavaScript path over the same contract:</p>
 <pre><code class="language-js">import {
   Navigator,
   UnitSystem,
@@ -507,17 +508,22 @@ const subscription = navigationController.addNavigationListener(listener);
 (<code>onNavigationInstruction</code>, <code>onSpeechInstruction</code>,
 <code>onDeviationStatusChange</code>, <code>onNavigationPhaseChange</code>); each invocation
 delivers the same payloads the native platforms receive, with lower
-camel case field names.</p>
-<h3 id="start-the-trip-and-deliver-fixes"><a class="header" href="#start-the-trip-and-deliver-fixes">Start the trip and deliver fixes</a></h3>
+camel case field names. A subscription is cancelled with its handle when your
+screen leaves; dropping the reference does not unsubscribe.</p>
+<h3 id="start-the-trip-2"><a class="header" href="#start-the-trip-2">Start the trip</a></h3>
+<p>Use the SDK’s default policies unless your product measured different ones:</p>
 <pre><code class="language-js">navigationController.startNavigation(
   route,
   UnitSystem.Metric,
   defaultStepAdvancePolicy(),
   defaultDeviationPolicy(),
 );
-
-// One fix per sample of your location source (or its recorded trace):
-navigationController.updateLocation({
+</code></pre>
+<p>The initial instruction payload dispatches before the call returns; the
+banner shows the first maneuver.</p>
+<h3 id="deliver-position-fixes-2"><a class="header" href="#deliver-position-fixes-2">Deliver position fixes</a></h3>
+<p>One fix per sample of your location source (or of its recorded trace):</p>
+<pre><code class="language-js">navigationController.updateLocation({
   coordinate: { latitude: sampleLatitude, longitude: sampleLongitude },
   horizontalAccuracyMeters: 8.0,
   courseHeadingDegrees: undefined,
@@ -526,12 +532,18 @@ navigationController.updateLocation({
 
 const tripState = navigationController.currentTripState();
 </code></pre>
+<p>Fixes without a reported accuracy never advance a step and are never judged
+for deviation, so a simulated source must carry its accuracy like a real fix
+does.</p>
 <h3 id="draw-the-trip-on-the-map-2"><a class="header" href="#draw-the-trip-on-the-map-2">Draw the trip on the map</a></h3>
 <p>The package’s <code>MapView</code> handle exposes the overlay, camera and
 location-indicator members the contract carries. Put the route on once, then
 drive the next-maneuver card from the listener subscribed above and the follow
 camera from each accepted fix:</p>
-<pre><code class="language-js">import { MapOverlayKind } from '@angoratek/rustic-maps-sdk';
+<pre><code class="language-js">import {
+  LocationIndicatorVisualKind,
+  MapOverlayKind,
+} from '@angoratek/rustic-maps-sdk';
 
 // Once, when the route arrives: one polyline over the whole route.
 const routeOverlay = {
@@ -546,7 +558,7 @@ mapView.setOverlays([routeOverlay]);
 
 // On every accepted fix: the 3D course-up follow camera (z17, 45° pitch,
 // the reference apps' constants). The handle takes the same five-value pose
-// the other tabs use.
+// the other tabs use, and the guided arrow sits over the vehicle.
 const FOLLOW_ZOOM_LEVEL = 17.0;
 const FOLLOW_PITCH_DEGREES = 45.0;
 const followCamera = {
@@ -556,6 +568,13 @@ const followCamera = {
   bearingDegrees: smoothedCourseHeadingDegrees,
   pitchDegrees: FOLLOW_PITCH_DEGREES,
 };
+mapView.setLocationIndicator(
+  {
+    coordinate: { latitude: fix.latitude, longitude: fix.longitude },
+    courseHeadingDegrees: smoothedCourseHeadingDegrees,
+  },
+  { visualKind: LocationIndicatorVisualKind.GuidedCourseArrow },
+);
 mapView.setCamera(followCamera);
 </code></pre>
 <p>The camera follows the smoothed course, not the raw fix-to-fix bearing, and
@@ -572,6 +591,33 @@ your own TTS wrapper), and use the delivery’s <code>utteranceId</code> for ded
   });
 }
 </code></pre>
+<h3 id="reroute-when-guidance-freezes-2"><a class="header" href="#reroute-when-guidance-freezes-2">Reroute when guidance freezes</a></h3>
+<p>A deviating trip asks for a replacement route through the controller’s
+reroute checks. Keep the state machine in your own coordinator:</p>
+<pre><code class="language-js">import { DeviationGradeKind } from '@angoratek/rustic-maps-sdk';
+
+const tripState = navigationController.currentTripState();
+if (
+  tripState?.deviation?.gradeKind === DeviationGradeKind.FullyOffRoute &amp;&amp;
+  navigationController.beginRerouteCalculation()
+) {
+  const replacement = await mapSdk.calculateRoute(
+    [
+      { latitude: fix.latitude, longitude: fix.longitude },
+      destinationPlace.coordinate,
+    ],
+    routeOptions,
+  );
+  navigationController.applyReroute(
+    replacement,
+    defaultStepAdvancePolicy(),
+  );
+} else {
+  navigationController.cancelRerouteCalculation();
+}
+</code></pre>
+<p>The trip state readback carries the phase, the progress and
+<code>isCalculatingNewRoute</code>, so your UI can show the recalculation honestly.</p>
 <h3 id="end-the-trip-2"><a class="header" href="#end-the-trip-2">End the trip</a></h3>
 <pre><code class="language-js">// Clears the active trip and its state; subscriptions stay registered.
 navigationController.stopNavigation();

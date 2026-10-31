@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f588e358.js";
+            window.path_to_searchindex_js = "searchindex-719c8217.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -1320,19 +1320,20 @@ the callback set, so the host application only composes it. The package
 also owns the one native SDK instance; create it with <code>MapsSdk.create()</code>
 before you mount the view, which attaches to it as soon as it is available.</p>
 <!-- docs-snippet: skip — a JSX fragment outside the docs checks. -->
-<pre><code class="language-tsx">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
+<pre><code class="language-tsx">import { useRef } from 'react';
 import { MapView, type MapViewHandle } from '@angoratek/rustic-maps-sdk/MapView';
 
-// One native SDK per process; create it before the view mounts.
-const mapSdk = await MapsSdk.create();
-await mapSdk.setProviderCredential(providerKey, mapQuestApiKey);
+// Hold the handle to drive the camera, overlays and location layer.
+const mapViewRef = useRef&lt;MapViewHandle | null&gt;(null);
 
 &lt;MapView
   ref={mapViewRef}
   style={{ flex: 1 }}
-  onMapReady={() =&gt; { /* frame the first camera */ }}
-  onCameraChanged={(camera) =&gt; { /* reflect the pose in your UI */ }}
-  onError={(failure) =&gt; { /* the contract's error detail, verbatim */ }}
+  topBarInsetPixels={topBarInsetPixels}
+  bottomBarInsetPixels={bottomBarInsetPixels}
+  onMapReady={() =&gt; { /* the first frame presented */ }}
+  onCameraChanged={(camera, isGestureDriven) =&gt; { /* reflect the pose */ }}
+  onError={(failure) =&gt; { /* failure.phase, failure.message */ }}
 /&gt;;
 </code></pre>
 <p>The generated contract classes from the package root remain available for
@@ -1362,9 +1363,9 @@ mapView.setCamera(mapCamera);
 <p><code>animateCamera</code> and <code>fitBounds</code> are on the same handle, with the same
 signatures the other tabs show.</p>
 <h3 id="pan-the-camera-from-a-gesture-2"><a class="header" href="#pan-the-camera-from-a-gesture-2">Pan the camera from a gesture</a></h3>
-<p>The generated <code>MapCamera</code> carries the same gesture members on the
-JavaScript side, so a native view’s drag delta becomes one call (the shell’s
-own view controller does exactly this):</p>
+<p>The generated <code>MapCamera</code> carries the same gesture members on the JavaScript
+side. The package’s native views call them for their own gestures; reach for
+them when you drive the camera from a control of your own or from a test:</p>
 <pre><code class="language-js">const pannedCamera = camera.panByScreenPixels(
   dragDeltaXPixels,
   dragDeltaYPixels,
@@ -1376,10 +1377,11 @@ const pannedCenter = pannedCamera.center();
 <p><code>zoomByLevelsAroundScreenPoint</code> and <code>rotateByDegreesAroundScreenPoint</code> apply
 pinch and twist deltas with the same focal-point correction.</p>
 <h3 id="where-to-continue"><a class="header" href="#where-to-continue">Where to continue</a></h3>
-<p>With the SDK installed, continue in <a href="#search-and-routing">Search and
-routing</a>; the navigation tutorial’s <a href="#turn-by-turn-navigation-1">React
-Native</a> tab shows the full simulated-trip demo
-flow over this same surface.</p>
+<p>The camera block above is the first step of the shared worked example the four
+guides walk: the same <code>mapCamera</code>, <code>mapSdk</code> and <code>mapView</code> continue through
+<a href="#search-and-routing">Search and routing</a>, <a href="#turn-by-turn-navigation-1">Turn-by-turn
+navigation</a> and <a href="#offline-maps-1">Offline maps</a>
+with the same names. Start there once this surface draws.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
@@ -1693,18 +1695,18 @@ let plannedRoute = try await routingEngine.calculateRoute(
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="resolve-a-query-into-places-2"><a class="header" href="#resolve-a-query-into-places-2">Resolve a query into places</a></h3>
-<p>The TurboModule surface mirrors the contract as promise-returning
-methods. Everything you call on <code>MapSdk</code> resolves to the same records
-the other platforms see, with lower camel case field names:</p>
+<p>The package’s <code>MapsSdk</code> handle answers the contract’s search and routing
+calls as promises. Every record it resolves carries the same fields the other
+platforms see, in lower camel case:</p>
 <!-- docs-snippet: begin search-and-routing/search-for-places react-native -->
 <pre><code class="language-ts">const originPlace = (await mapSdk.forwardGeocode(originSearchQuery))[0] ?? null;
 const destinationPlace =
   (await mapSdk.forwardGeocode(destinationSearchQuery))[0] ?? null;
-if (originPlace === null || destinationPlace === null) {
-  return null;
-}
 </code></pre>
 <!-- docs-snippet: end search-and-routing/search-for-places react-native -->
+<p>A query that resolves to no place leaves the field <code>null</code>; the example stops
+before planning rather than inventing a coordinate, exactly as the other tabs
+do.</p>
 <p>Pass <code>undefined</code> (or omit it) as the boundary to search worldwide, and pass
 a <code>BoundingBox</code> (<code>southWest</code>/<code>northEast</code> corners, lower camel case) to
 restrict the search. <code>suggest</code> answers fast completion candidates while the
@@ -1735,12 +1737,11 @@ one leg per waypoint pair with its steps.</p>
 error state instead of retrying blindly (the rate limiter refills on its
 own).</p>
 <h3 id="frame-the-route-preview-1"><a class="header" href="#frame-the-route-preview-1">Frame the route preview</a></h3>
-<p>The generated <code>MapCamera.fitBounds</code> takes the same inset story as the
-other tabs: 224 px clear on the left for the route card, 48 px top and
-right, 96 px bottom, clamped at zoom 22:</p>
-<pre><code class="language-js">const fittedCamera = MapCamera.fitBounds(
+<p>The map view’s <code>fitBounds</code> takes the same inset story as the other tabs:
+224 px clear on the left for the route card, 48 px top and right, 96 px
+bottom, clamped at zoom 22:</p>
+<pre><code class="language-js">mapView.fitBounds(
   plannedRoute.boundingBox,
-  { widthPixels, heightPixels },
   { left: 224, top: 48, right: 48, bottom: 96 },
   22,
 );
@@ -1758,16 +1759,12 @@ map view:</p>
 await mapView.setOverlays([routeOverlay]);
 </code></pre>
 <!-- docs-snippet: end search-and-routing/draw-the-route react-native -->
-<h3 id="group-the-calls-with-engines-2"><a class="header" href="#group-the-calls-with-engines-2">Group the calls with engines</a></h3>
-<p>The generated engine classes wrap the same SDK and delegate verbatim:</p>
-<pre><code class="language-js">import { SearchEngine, RoutingEngine } from '@angoratek/rustic-maps-sdk';
-
-const searchEngine = new SearchEngine(mapSdk);
-const settledPlaces = await searchEngine.search('Capitol Park', undefined);
-
-const routingEngine = new RoutingEngine(mapSdk);
-const plannedRoute = await routingEngine.calculateRoute(waypoints, routeOptions);
-</code></pre>
+<h3 id="keep-one-sdk-handle"><a class="header" href="#keep-one-sdk-handle">Keep one SDK handle</a></h3>
+<p>The package handle answers <code>search</code>, <code>suggest</code>, <code>forwardGeocode</code> and
+<code>calculateRoute</code> directly, so a React Native screen needs no extra wrapper.
+The generated engine classes wrap a lower-level <code>MapSdk</code> instance, which would
+be a second SDK — with its own provider registry and tile cache — in the same
+process. Keep the single handle from the <a href="#your-first-map">first map</a> guide.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
@@ -2129,11 +2126,12 @@ navigationController.stopNavigation()
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
-<h3 id="what-the-react-native-surface-carries"><a class="header" href="#what-the-react-native-surface-carries">What the React Native surface carries</a></h3>
-<p>The TurboModule exposes the same contract members as promise-returning
-methods, including the navigation controller’s. A simulated-trip
-integration builds a controller object, subscribes the topics, and
-delivers fixes:</p>
+<h3 id="build-the-controller-and-subscribe-first-2"><a class="header" href="#build-the-controller-and-subscribe-first-2">Build the controller and subscribe first</a></h3>
+<p>Subscribe to the topics before you start the trip, so the initial instruction
+dispatch of the trip start is received. The package exposes the same
+navigation controller to JavaScript; the reference application drives its
+simulated trip from its native host module and forwards each payload to this
+listener, so the calls below are the JavaScript path over the same contract:</p>
 <pre><code class="language-js">import {
   Navigator,
   UnitSystem,
@@ -2170,17 +2168,22 @@ const subscription = navigationController.addNavigationListener(listener);
 (<code>onNavigationInstruction</code>, <code>onSpeechInstruction</code>,
 <code>onDeviationStatusChange</code>, <code>onNavigationPhaseChange</code>); each invocation
 delivers the same payloads the native platforms receive, with lower
-camel case field names.</p>
-<h3 id="start-the-trip-and-deliver-fixes"><a class="header" href="#start-the-trip-and-deliver-fixes">Start the trip and deliver fixes</a></h3>
+camel case field names. A subscription is cancelled with its handle when your
+screen leaves; dropping the reference does not unsubscribe.</p>
+<h3 id="start-the-trip-2"><a class="header" href="#start-the-trip-2">Start the trip</a></h3>
+<p>Use the SDK’s default policies unless your product measured different ones:</p>
 <pre><code class="language-js">navigationController.startNavigation(
   route,
   UnitSystem.Metric,
   defaultStepAdvancePolicy(),
   defaultDeviationPolicy(),
 );
-
-// One fix per sample of your location source (or its recorded trace):
-navigationController.updateLocation({
+</code></pre>
+<p>The initial instruction payload dispatches before the call returns; the
+banner shows the first maneuver.</p>
+<h3 id="deliver-position-fixes-2"><a class="header" href="#deliver-position-fixes-2">Deliver position fixes</a></h3>
+<p>One fix per sample of your location source (or of its recorded trace):</p>
+<pre><code class="language-js">navigationController.updateLocation({
   coordinate: { latitude: sampleLatitude, longitude: sampleLongitude },
   horizontalAccuracyMeters: 8.0,
   courseHeadingDegrees: undefined,
@@ -2189,12 +2192,18 @@ navigationController.updateLocation({
 
 const tripState = navigationController.currentTripState();
 </code></pre>
+<p>Fixes without a reported accuracy never advance a step and are never judged
+for deviation, so a simulated source must carry its accuracy like a real fix
+does.</p>
 <h3 id="draw-the-trip-on-the-map-2"><a class="header" href="#draw-the-trip-on-the-map-2">Draw the trip on the map</a></h3>
 <p>The package’s <code>MapView</code> handle exposes the overlay, camera and
 location-indicator members the contract carries. Put the route on once, then
 drive the next-maneuver card from the listener subscribed above and the follow
 camera from each accepted fix:</p>
-<pre><code class="language-js">import { MapOverlayKind } from '@angoratek/rustic-maps-sdk';
+<pre><code class="language-js">import {
+  LocationIndicatorVisualKind,
+  MapOverlayKind,
+} from '@angoratek/rustic-maps-sdk';
 
 // Once, when the route arrives: one polyline over the whole route.
 const routeOverlay = {
@@ -2209,7 +2218,7 @@ mapView.setOverlays([routeOverlay]);
 
 // On every accepted fix: the 3D course-up follow camera (z17, 45° pitch,
 // the reference apps' constants). The handle takes the same five-value pose
-// the other tabs use.
+// the other tabs use, and the guided arrow sits over the vehicle.
 const FOLLOW_ZOOM_LEVEL = 17.0;
 const FOLLOW_PITCH_DEGREES = 45.0;
 const followCamera = {
@@ -2219,6 +2228,13 @@ const followCamera = {
   bearingDegrees: smoothedCourseHeadingDegrees,
   pitchDegrees: FOLLOW_PITCH_DEGREES,
 };
+mapView.setLocationIndicator(
+  {
+    coordinate: { latitude: fix.latitude, longitude: fix.longitude },
+    courseHeadingDegrees: smoothedCourseHeadingDegrees,
+  },
+  { visualKind: LocationIndicatorVisualKind.GuidedCourseArrow },
+);
 mapView.setCamera(followCamera);
 </code></pre>
 <p>The camera follows the smoothed course, not the raw fix-to-fix bearing, and
@@ -2235,6 +2251,33 @@ your own TTS wrapper), and use the delivery’s <code>utteranceId</code> for ded
   });
 }
 </code></pre>
+<h3 id="reroute-when-guidance-freezes-2"><a class="header" href="#reroute-when-guidance-freezes-2">Reroute when guidance freezes</a></h3>
+<p>A deviating trip asks for a replacement route through the controller’s
+reroute checks. Keep the state machine in your own coordinator:</p>
+<pre><code class="language-js">import { DeviationGradeKind } from '@angoratek/rustic-maps-sdk';
+
+const tripState = navigationController.currentTripState();
+if (
+  tripState?.deviation?.gradeKind === DeviationGradeKind.FullyOffRoute &amp;&amp;
+  navigationController.beginRerouteCalculation()
+) {
+  const replacement = await mapSdk.calculateRoute(
+    [
+      { latitude: fix.latitude, longitude: fix.longitude },
+      destinationPlace.coordinate,
+    ],
+    routeOptions,
+  );
+  navigationController.applyReroute(
+    replacement,
+    defaultStepAdvancePolicy(),
+  );
+} else {
+  navigationController.cancelRerouteCalculation();
+}
+</code></pre>
+<p>The trip state readback carries the phase, the progress and
+<code>isCalculatingNewRoute</code>, so your UI can show the recalculation honestly.</p>
 <h3 id="end-the-trip-2"><a class="header" href="#end-the-trip-2">End the trip</a></h3>
 <pre><code class="language-js">// Clears the active trip and its state; subscriptions stay registered.
 navigationController.stopNavigation();
@@ -2400,38 +2443,60 @@ provider with the offline fallback decorator yourself.</p>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="register-the-providers-with-a-tile-cache-2"><a class="header" href="#register-the-providers-with-a-tile-cache-2">Register the providers with a tile cache</a></h3>
-<pre><code class="language-js">import { MapSdk } from '@angoratek/rustic-maps-sdk';
+<p>The package’s one SDK handle installs the provider set and wraps the
+raster-tile contract in the disk response cache. The reference application’s
+offline card reports the registration it installed:</p>
+<pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-const mapSdk = new MapSdk();
-await mapSdk.setProviderCredentialWithTileCache(
-  mapQuestApiKey,
-  tileCacheDatabasePath,   // a writable SQLite path your app owns
-  16_777_216n,             // the absolute byte budget (16 MiB); u64 is a bigint
-);
+async function createMapSdkWithTileCache(providerKey, mapQuestApiKey) {
+  const mapSdk = await MapsSdk.create();
+  const registration = await mapSdk.setProviderCredentialWithTileCache(
+    providerKey,
+    mapQuestApiKey,
+  );
+  if (!registration.isApplied) {
+    throw new Error(registration.detailText);
+  }
+  return mapSdk;
+}
 </code></pre>
+<p>The package opens (or creates) the cache under the application’s caches
+directory with a 16 MiB budget; JavaScript passes the provider key and the
+credential, never a file path. A refusal resolves with <code>isApplied: false</code> and
+the provider’s verbatim <code>detailText</code>. Re-registration replaces the raster-tile
+slot, cache included.</p>
 <h3 id="read-and-tune-the-caching-terms-2"><a class="header" href="#read-and-tune-the-caching-terms-2">Read and tune the caching terms</a></h3>
-<pre><code class="language-js">await mapSdk.setRasterTileCacheTimeToLive(timeToLiveSeconds);
-const terms = await mapSdk.rasterTileCacheTerms();
-// terms.effectiveTimeToLiveSeconds
-// terms.providerTermsCeilingSeconds
-// terms.defaultTimeToLiveSeconds
+<p>The cache starts at the tiles category’s default time-to-live, 30 calendar
+days — the imagery-provider terms ceiling. Tune the live value and read what
+went into force:</p>
+<pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
-// The same calls through the offline facade:
-// const offlineManager = new OfflineManager(mapSdk);
-// await offlineManager.setTileTimeToLive(timeToLiveSeconds);
-// const terms = await offlineManager.tileCacheTerms();
+const mapSdk = await MapsSdk.create();
+const oneWeekInSeconds = 7 * 24 * 60 * 60;
+await mapSdk.setTileCacheTimeToLive(oneWeekInSeconds);
+const terms = await mapSdk.tileCacheTerms();
+if (terms !== null) {
+  // terms.effectiveTimeToLiveSeconds
+  // terms.providerTermsCeilingSeconds
+  // terms.defaultTimeToLiveSeconds
+}
 </code></pre>
-<p>Show the effective terms in your offline-maps settings screen; a value
-above the provider’s ceiling is accepted and clamped, and the readback
-is what went into force.</p>
+<p>A request above the provider’s declared ceiling is accepted, and the ceiling
+clamps what the cache retains; the readback shows the effective value, so
+display it in your offline-maps settings screen.</p>
+<h3 id="pre-warm-the-tiles-you-need-1"><a class="header" href="#pre-warm-the-tiles-you-need-1">Pre-warm the tiles you need</a></h3>
+<p>Cached tile responses render whenever the network is unavailable: a cache miss
+goes to the network and back-fills, and a cache hit answers from disk. Render
+the regions your users expect to revisit once while online, and the cache
+holds them until the budget or time-to-live says otherwise.</p>
 <h3 id="route-without-the-network-2"><a class="header" href="#route-without-the-network-2">Route without the network</a></h3>
-<p>The same compiled archive the other tabs describe runs inside the SDK on
-this surface too: A* over a memory-mapped graph, recorded turn
-restrictions honored, maneuver text derived from the geometry. The direct
-route call from React Native joins the contract in a later release; today
-the layer serves the WebAssembly surface’s offline route seam, and an
-offline routing decorator wraps your online provider when you choose to
-fall back. The SDK registers no fallback on your behalf.</p>
+<p>The compiled routing archive — the OpenStreetMap extract in, the
+self-describing archive file out — answers routes with A* over a
+memory-mapped graph, honoring recorded turn restrictions and deriving
+maneuver text from the geometry. The package exports no archive-route call to
+React Native yet; today the WebAssembly surface carries that seam, and the
+native tabs join it in a later release. The SDK registers no fallback on your
+behalf.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
