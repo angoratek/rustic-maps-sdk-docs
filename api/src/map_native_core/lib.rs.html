@@ -33,14 +33,14 @@
 <a href=#33 id=33 data-nosnippet>33</a>//! out, over the same `map-core` implementation the WebAssembly export uses.
 <a href=#34 id=34 data-nosnippet>34</a>//!
 <a href=#35 id=35 data-nosnippet>35</a>//! Every exported entry point of this crate (and every callback invocation
-<a href=#36 id=36 data-nosnippet>36</a>//! inside an exported frame) is panic-contained by the UniFFI 0.32.2
+<a href=#36 id=36 data-nosnippet>36</a>//! inside an exported frame) is panic-contained by the UniFFI 0.31.2
 <a href=#37 id=37 data-nosnippet>37</a>//! scaffolding itself; [`crate::panic_boundary`] documents the containment
 <a href=#38 id=38 data-nosnippet>38</a>//! map, which is why this crate adds no redundant `catch_unwind` layer of
 <a href=#39 id=39 data-nosnippet>39</a>//! its own, and holds the crate's `unwrap`/`expect` policy for FFI-reachable
 <a href=#40 id=40 data-nosnippet>40</a>//! code.
 <a href=#41 id=41 data-nosnippet>41</a>
 <a href=#42 id=42 data-nosnippet>42</a></span><span class="comment">// The scaffolding generated from the UDL builds its namespace metadata in
-<a href=#43 id=43 data-nosnippet>43</a>// large const arrays (uniffi 0.32's codegen pattern); the attribute cannot
+<a href=#43 id=43 data-nosnippet>43</a>// large const arrays (uniffi 0.31's codegen pattern); the attribute cannot
 <a href=#44 id=44 data-nosnippet>44</a>// scope into the machine-generated macro expansion, so the lint is allowed
 <a href=#45 id=45 data-nosnippet>45</a>// crate-wide.
 <a href=#46 id=46 data-nosnippet>46</a></span><span class="attr">#![allow(clippy::large_const_arrays)]
