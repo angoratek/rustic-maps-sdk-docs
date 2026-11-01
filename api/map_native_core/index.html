@@ -28,7 +28,7 @@ seam (<a href="offline_routing/index.html" title="mod map_native_core::offline_r
 <code>offline_route_from_archive_bytes</code> function: archive bytes in, a route
 out, over the same <code>map-core</code> implementation the WebAssembly export uses.</p>
 <p>Every exported entry point of this crate (and every callback invocation
-inside an exported frame) is panic-contained by the UniFFI 0.32.2
+inside an exported frame) is panic-contained by the UniFFI 0.31.2
 scaffolding itself; <a href="panic_boundary/index.html" title="mod map_native_core::panic_boundary"><code>crate::panic_boundary</code></a> documents the containment
 map, which is why this crate adds no redundant <code>catch_unwind</code> layer of
 its own, and holds the crate’s <code>unwrap</code>/<code>expect</code> policy for FFI-reachable
