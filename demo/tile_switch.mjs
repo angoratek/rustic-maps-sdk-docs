@@ -73,7 +73,7 @@ const WESTERN_EDGE_LONGITUDE_DEGREES = 180;
 const DEGREES_PER_RADIAN = Math.PI / 180;
 /** Latitude where the web-mercator projection is cut, in both hemispheres. */
 const MAXIMUM_MERCATOR_LATITUDE_DEGREES = 85.05112878;
-// Integer zoom-grid bounds mirrored from `map-rendering`'s camera
+// Integer zoom-grid bounds mirrored from `rustic-maps-rendering`'s camera
 // (`MINIMUM_ZOOM_LEVEL` / `MAXIMUM_ZOOM_LEVEL`).
 /** Lowest integer zoom level of the tile grid. */
 const MINIMUM_TILE_ZOOM_LEVEL = 0;

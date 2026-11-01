@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ARRIVAL_CONDITION_REMAINING_STEPS_BOUND","MAXIMUM_STEP_ADVANCES_PER_FIX"],"enum":["NavigationEvent"],"fn":["reduce_navigation_event"],"struct":["NavigationSession"]};

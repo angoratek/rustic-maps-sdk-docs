@@ -58,7 +58,7 @@
 <a href=#58 id=58 data-nosnippet>58</a>/// `Cache-Control: public, max-age=86400` — an 86400-second per-response
 <a href=#59 id=59 data-nosnippet>59</a>/// tightening is a possible refinement, while this 30-day
 <a href=#60 id=60 data-nosnippet>60</a>/// value remains the SDK's terms ceiling, enforced by this crate's lockstep
-<a href=#61 id=61 data-nosnippet>61</a>/// test against `map_cache::ResponseCategory::VectorTiles`.
+<a href=#61 id=61 data-nosnippet>61</a>/// test against `rustic_maps_cache::ResponseCategory::VectorTiles`.
 <a href=#62 id=62 data-nosnippet>62</a></span><span class="kw">pub const </span>OSMUS_VECTOR_TILE_CACHE_CEILING_SECONDS: u64 = <span class="number">30 </span>* <span class="number">24 </span>* <span class="number">60 </span>* <span class="number">60</span>;
 <a href=#63 id=63 data-nosnippet>63</a>
 <a href=#64 id=64 data-nosnippet>64</a><span class="doccomment">/// Prefix of the identifying User-Agent the usage policy requires. The
@@ -216,7 +216,7 @@
 <a href=#216 id=216 data-nosnippet>216</a>    </span><span class="attr">#[test]
 <a href=#217 id=217 data-nosnippet>217</a>    </span><span class="kw">fn </span>cache_vector_tiles_default_matches_provider_terms_ceiling() {
 <a href=#218 id=218 data-nosnippet>218</a>        <span class="macro">assert_eq!</span>(
-<a href=#219 id=219 data-nosnippet>219</a>            map_cache::ResponseCategory::VectorTiles.default_time_to_live_seconds(),
+<a href=#219 id=219 data-nosnippet>219</a>            rustic_maps_cache::ResponseCategory::VectorTiles.default_time_to_live_seconds(),
 <a href=#220 id=220 data-nosnippet>220</a>            OSMUS_VECTOR_TILE_CACHE_CEILING_SECONDS
 <a href=#221 id=221 data-nosnippet>221</a>        );
 <a href=#222 id=222 data-nosnippet>222</a>    }

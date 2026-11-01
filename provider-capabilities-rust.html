@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b8d81c0f.js";
+            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -178,7 +178,7 @@
                         <h1 id="provider-capabilities-in-rust"><a class="header" href="#provider-capabilities-in-rust">Provider capabilities in Rust</a></h1>
 <p>The Rust crates are the SDK’s implementation layer. A provider is a struct
 that implements one or more of the vendor-neutral traits in
-<code>geospatial-traits</code>; the core resolves it through <code>map_core::ProviderRegistry</code>.
+<code>geospatial-traits</code>; the core resolves it through <code>rustic_maps_core::ProviderRegistry</code>.
 The four application targets bind this same core through the contract.</p>
 <p>The repository publishes the Rust API reference, but it does not publish a
 Rust application package or a public Rust <code>MapsSdk</code>/<code>MapView</code> object. The
@@ -242,8 +242,8 @@ base reaches every target through the generic URL-template vector provider.</p>
 <tr><td>Raster tiles</td><td><code>RasterTileProvider</code>; <code>MapQuestRasterTileProvider</code>, <code>UrlTemplateRasterTileProvider</code></td></tr>
 <tr><td>Vector tiles</td><td><code>VectorTileProvider</code>; <code>UrlTemplateVectorTileProvider</code>, <code>OpenStreetMapUsVectorTileProvider</code></td></tr>
 <tr><td>Offline routing</td><td><code>OfflineRoutingProvider</code>, <code>ArchiveOfflineRoutingProvider</code>, <code>calculate_offline_route_from_archive_bytes</code></td></tr>
-<tr><td>Navigation</td><td><code>map-navigation</code>: reducer, policies, <code>RouteWalk</code>, <code>SimulatedTripPace</code></td></tr>
-<tr><td>Rendering</td><td><code>map-rendering</code>: <code>MapCamera</code>, headless renderer, surface renderer, committed vector styles</td></tr>
+<tr><td>Navigation</td><td><code>rustic-maps-navigation</code>: reducer, policies, <code>RouteWalk</code>, <code>SimulatedTripPace</code></td></tr>
+<tr><td>Rendering</td><td><code>rustic-maps-rendering</code>: <code>MapCamera</code>, headless renderer, surface renderer, committed vector styles</td></tr>
 </tbody>
 </table>
 </div>
@@ -256,21 +256,21 @@ base reaches every target through the generic URL-template vector provider.</p>
 <tbody>
 <tr><td><code>geospatial-types</code></td><td>Coordinates, bounding boxes, route records, tile data, and <code>SDKError</code></td></tr>
 <tr><td><code>geospatial-traits</code></td><td>The vendor-neutral provider traits</td></tr>
-<tr><td><code>map-core</code></td><td><code>ProviderRegistry</code>, cache-then-network policy, offline routing, and the offline routing fallback</td></tr>
+<tr><td><code>rustic-maps-core</code></td><td><code>ProviderRegistry</code>, cache-then-network policy, offline routing, and the offline routing fallback</td></tr>
 <tr><td><code>provider-transport</code></td><td>The portable HTTP transport seam: native <code>reqwest</code>, browser <code>fetch</code></td></tr>
 <tr><td><code>mapquest-provider</code></td><td>The MapQuest implementations of every supported contract</td></tr>
 <tr><td><code>url-template-raster-provider</code></td><td>A raster-tile provider over any <code>{z}/{x}/{y}</code> template</td></tr>
 <tr><td><code>url-template-vector-provider</code></td><td>A vector-tile provider over any <code>{z}/{x}/{y}</code> template</td></tr>
 <tr><td><code>openstreetmap-us-vector-provider</code></td><td>The OpenStreetMap US Sourdough vector tileset</td></tr>
-<tr><td><code>map-cache</code></td><td>The disk response cache and byte budget</td></tr>
-<tr><td><code>map-rendering</code></td><td>The <code>wgpu</code> renderer, camera, and vector styles</td></tr>
-<tr><td><code>map-vector-tiles</code></td><td>The MVT decoder</td></tr>
-<tr><td><code>map-glyphs</code></td><td>The glyph reader, range cache, and atlas packer</td></tr>
-<tr><td><code>map-navigation</code></td><td>The navigation reducer, policies, speech pacing, and route walk</td></tr>
-<tr><td><code>map-offline-graph-archive</code></td><td>The reader for compiled routing archives</td></tr>
-<tr><td><code>map-offline-graph-compiler</code></td><td>The OpenStreetMap to archive compiler</td></tr>
-<tr><td><code>map-native-core</code></td><td>The UniFFI binding crate behind the native targets</td></tr>
-<tr><td><code>map-web-bindings</code></td><td>The WebAssembly binding crate</td></tr>
+<tr><td><code>rustic-maps-cache</code></td><td>The disk response cache and byte budget</td></tr>
+<tr><td><code>rustic-maps-rendering</code></td><td>The <code>wgpu</code> renderer, camera, and vector styles</td></tr>
+<tr><td><code>rustic-maps-vector-tiles</code></td><td>The MVT decoder</td></tr>
+<tr><td><code>rustic-maps-glyphs</code></td><td>The glyph reader, range cache, and atlas packer</td></tr>
+<tr><td><code>rustic-maps-navigation</code></td><td>The navigation reducer, policies, speech pacing, and route walk</td></tr>
+<tr><td><code>rustic-maps-offline-graph-archive</code></td><td>The reader for compiled routing archives</td></tr>
+<tr><td><code>rustic-maps-offline-graph-compiler</code></td><td>The OpenStreetMap to archive compiler</td></tr>
+<tr><td><code>rustic-maps-native-core</code></td><td>The UniFFI binding crate behind the native targets</td></tr>
+<tr><td><code>rustic-maps-web-bindings</code></td><td>The WebAssembly binding crate</td></tr>
 </tbody>
 </table>
 </div>
@@ -308,7 +308,7 @@ when a slot is empty.</p>
 </span><span class="boring">fn main() {
 </span>use std::sync::Arc;
 use geospatial_traits::RoutingProvider;
-use map_core::ProviderRegistry;
+use rustic_maps_core::ProviderRegistry;
 
 fn registry_with(provider: Arc&lt;dyn RoutingProvider&gt;) -&gt; ProviderRegistry {
     let mut registry = ProviderRegistry::new();
@@ -350,7 +350,7 @@ call serves every target.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use geospatial_types::{GeographicCoordinate, SDKError};
-use map_core::calculate_offline_route_from_archive_bytes;
+use rustic_maps_core::calculate_offline_route_from_archive_bytes;
 
 async fn route_over_archive(archive_bytes: &amp;[u8]) -&gt; Result&lt;(), SDKError&gt; {
     let start = GeographicCoordinate {

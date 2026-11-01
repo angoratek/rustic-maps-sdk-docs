@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b8d81c0f.js";
+            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -188,14 +188,14 @@ Rust and have no platform dependency.</p>
 <tr><th>Crate</th><th>What it provides</th></tr>
 </thead>
 <tbody>
-<tr><td><code>map-rendering</code></td><td>The camera and projection model, the raster tile scheduler, overlays, labels and the headless <code>wgpu</code> renderer</td></tr>
-<tr><td><code>map-core</code></td><td>The provider registry, provider contracts, offline routing and the shared SDK operations</td></tr>
+<tr><td><code>rustic-maps-rendering</code></td><td>The camera and projection model, the raster tile scheduler, overlays, labels and the headless <code>wgpu</code> renderer</td></tr>
+<tr><td><code>rustic-maps-core</code></td><td>The provider registry, provider contracts, offline routing and the shared SDK operations</td></tr>
 <tr><td><code>geospatial-types</code></td><td>Coordinates, tiles, records and the shared error type</td></tr>
 <tr><td><code>geospatial-traits</code></td><td>The vendor-neutral provider traits a tileset, routing or geocoding service implements</td></tr>
-<tr><td><code>map-navigation</code></td><td>Route walking, instruction generation, deviation and reroute policy</td></tr>
-<tr><td><code>map-positioning</code></td><td>Position validation, course smoothing and the simulated position source</td></tr>
-<tr><td><code>map-vector-tiles</code> / <code>map-glyphs</code></td><td>Mapbox Vector Tile decoding and glyph-atlas packing</td></tr>
-<tr><td><code>map-offline-graph-archive</code></td><td>Reading compiled offline routing graphs</td></tr>
+<tr><td><code>rustic-maps-navigation</code></td><td>Route walking, instruction generation, deviation and reroute policy</td></tr>
+<tr><td><code>rustic-maps-positioning</code></td><td>Position validation, course smoothing and the simulated position source</td></tr>
+<tr><td><code>rustic-maps-vector-tiles</code> / <code>rustic-maps-glyphs</code></td><td>Mapbox Vector Tile decoding and glyph-atlas packing</td></tr>
+<tr><td><code>rustic-maps-offline-graph-archive</code></td><td>Reading compiled offline routing graphs</td></tr>
 </tbody>
 </table>
 </div>
@@ -206,7 +206,7 @@ the first Rust release.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use geospatial_types::GeographicCoordinate;
-use map_rendering::{DEFAULT_FIELD_OF_VIEW_DEGREES, MapCamera, ViewportPixels};
+use rustic_maps_rendering::{DEFAULT_FIELD_OF_VIEW_DEGREES, MapCamera, ViewportPixels};
 
 let center = GeographicCoordinate::from_degrees(38.5766, -121.4944)?;
 let camera = MapCamera::new(center, 12.0, 0.0, 0.0);
@@ -220,7 +220,7 @@ let screen_point = camera.project_to_screen(
 );
 <span class="boring">}</span></code></pre>
 <h2 id="rendering-a-frame"><a class="header" href="#rendering-a-frame">Rendering a frame</a></h2>
-<p><code>map-rendering</code>’s headless renderer draws into an offscreen <code>wgpu</code> target:
+<p><code>rustic-maps-rendering</code>’s headless renderer draws into an offscreen <code>wgpu</code> target:
 create a <code>HeadlessTileRenderer</code> over a <code>GraphicsContext</code>, resolve the camera’s
 visible tiles through a <code>TileScheduler</code>, and read the frame back as RGBA
 bytes. The renderer is the same one the native surfaces use, so what you see
@@ -230,18 +230,18 @@ binds them through a WebAssembly canvas adapter rather than a Rust surface.</p>
 <h2 id="providers"><a class="header" href="#providers">Providers</a></h2>
 <p>Implement the vendor-neutral traits from <code>geospatial-traits</code> — a raster or
 vector tileset, a routing engine, a geocoding service, a distance matrix or
-traffic — and register them in the <code>map-core</code> registry. The registry is what
+traffic — and register them in the <code>rustic-maps-core</code> registry. The registry is what
 the SDK’s operations dispatch through, so a Rust application and a platform
 binding share the same provider story. See
 <a href="adding-a-provider.html">Add a provider</a> for the descriptor fields and the
 registration path.</p>
 <h2 id="positioning"><a class="header" href="#positioning">Positioning</a></h2>
-<p><code>map-positioning::PositionController</code> validates the fixes your OS source
+<p><code>rustic-maps-positioning::PositionController</code> validates the fixes your OS source
 reports, smooths their course and tracks staleness, so a Rust application can
 feed the same stream to the renderer’s location layer, a follow camera and
 the navigation controller. <code>SimulatedPositionSource</code> walks a route for tests
 and demos:</p>
-<pre><code class="language-bash">cargo run -p map-positioning --example simulated_walk
+<pre><code class="language-bash">cargo run -p rustic-maps-positioning --example simulated_walk
 </code></pre>
 
                     </main>

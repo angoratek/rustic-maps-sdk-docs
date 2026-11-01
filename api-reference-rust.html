@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b8d81c0f.js";
+            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -189,9 +189,9 @@
 <tbody>
 <tr><td><code>geospatial_types</code></td><td>Shared data records and the error model for the Maps SDK.</td></tr>
 <tr><td><code>geospatial_traits</code></td><td>Vendor-neutral provider contracts for the Maps SDK.</td></tr>
-<tr><td><code>map_core</code></td><td>Orchestration core of the Maps SDK: the provider registry, the cache-then-network policy and the typed value boundary between providers and the rest of the SDK.</td></tr>
-<tr><td><code>map_rendering</code></td><td>GPU map rendering: camera model, raster tile scheduling with parent fallback and a texture pool, vector-tile styling (fill, line, circle and symbol layers), overlays, and location indicators.</td></tr>
-<tr><td><code>map_navigation</code></td><td>Turn-by-turn navigation for a planned route.</td></tr>
+<tr><td><code>rustic_maps_core</code></td><td>Orchestration core of the Maps SDK: the provider registry, the cache-then-network policy and the typed value boundary between providers and the rest of the SDK.</td></tr>
+<tr><td><code>rustic_maps_rendering</code></td><td>GPU map rendering: camera model, raster tile scheduling with parent fallback and a texture pool, vector-tile styling (fill, line, circle and symbol layers), overlays, and location indicators.</td></tr>
+<tr><td><code>rustic_maps_navigation</code></td><td>Turn-by-turn navigation for a planned route.</td></tr>
 </tbody>
 </table>
 </div>
@@ -416,7 +416,7 @@
 </tbody>
 </table>
 </div>
-<h2 id="map_core"><a class="header" href="#map_core">map_core</a></h2>
+<h2 id="rustic_maps_core"><a class="header" href="#rustic_maps_core">rustic_maps_core</a></h2>
 <p>Orchestration core of the Maps SDK: the provider registry, the cache-then-network policy and the typed value boundary between providers and the rest of the SDK.</p>
 <p>Rendering, navigation and provider crates build on this crate. No concrete provider is wired in directly; applications register providers at startup through [<code>ProviderRegistry</code>].</p>
 <h3 id="module-crate-2"><a class="header" href="#module-crate-2">Module <code>crate</code></a></h3>
@@ -507,7 +507,7 @@
 </tbody>
 </table>
 </div>
-<h2 id="map_rendering"><a class="header" href="#map_rendering">map_rendering</a></h2>
+<h2 id="rustic_maps_rendering"><a class="header" href="#rustic_maps_rendering">rustic_maps_rendering</a></h2>
 <p>GPU map rendering: camera model, raster tile scheduling with parent fallback and a texture pool, vector-tile styling (fill, line, circle and symbol layers), overlays, and location indicators.</p>
 <p>The crate separates scene composition from GPU execution. Projection, camera math, tile scheduling, overlay and label assembly, and the quad assembly in [<code>renderer</code>] are free of <code>wgpu</code> types, so they build and run on every target, including WebAssembly. The native [<code>headless</code>] and [<code>surface</code>] renderers consume that composition and submit it to a <code>wgpu</code> device. On WebAssembly the host page drives WebGPU and consumes the same vertex and style contracts through the wasm bindings.</p>
 <h3 id="module-crate-3"><a class="header" href="#module-crate-3">Module <code>crate</code></a></h3>
@@ -635,7 +635,7 @@
 <li>[<code>label_candidates_for_vector_tile</code>] walks a decoded tile’s symbol-layer features and reads each label’s text through the style’s ordered fallbacks. Candidates keep the style’s paint, size, priority, rank, placement and overlap rule. A symbol layer also filters before a feature becomes a candidate: its <code>rank</code> must pass the layer’s zoom-stepped rank ceiling, and its <code>class</code> must be useful at the frame’s zoom (a shop waits until the layer’s per-class minimum zoom). A [<code>VectorSymbolPlacement::Point</code>] layer anchors a candidate at each of the feature’s points; a [<code>VectorSymbolPlacement::Line</code>] layer carries the feature’s whole line geometry so the frame can place the text along it. 2. [<code>LabelLayer::place</code>] projects the candidates through the frame camera, sorts them by priority, then style order, then rank (the documented collision-priority rule: lower priority is more important), and greedily rejects any label whose padded screen rectangle intersects a label already placed. <code>allow_overlap</code> labels skip the test and never block later labels. The frame places at most [<code>MAXIMUM_LABELS_PER_FRAME</code>] labels: once that budget is spent, every remaining candidate is dropped even if it would fit, so a dense downtown cannot out-shout the places that matter. A label whose text repeats an already-placed label is dropped, so the buffered overlap between adjacent tiles cannot paint one place twice. The output order is a pure function of the input order and the camera.</li>
 </ol>
 <p>A line-placed label projects its geometry and takes its longest straight run (consecutive near-collinear segments) as the text’s run: the text is centered halfway along that run, rotated to its chord bearing, flipped so it always reads upright, and skipped when the run is shorter than the text plus the collision padding at each end. The collision rectangle is the axis-aligned box around the rotated text, so it rejects exactly like a point label’s. 3. [<code>LabelLayer::quad_vertices</code>] lays the glyph bitmaps out on the atlas and emits clip-space textured quads, halo first and text second. A rotated label rotates each glyph’s screen-space rectangle about the label’s anchor before converting it to clip space, so every backend that draws these vertices carries rotation without a second vertex format.</p>
-<p>Latin text is measured from the decoded glyph ranges and nothing here shapes complex scripts (see <code>map-glyphs</code>). A frame with no symbol layers or no glyphs produces no vertices, so the tiles-only pipelines stay byte-identical.</p>
+<p>Latin text is measured from the decoded glyph ranges and nothing here shapes complex scripts (see <code>rustic-maps-glyphs</code>). A frame with no symbol layers or no glyphs produces no vertices, so the tiles-only pipelines stay byte-identical.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -910,7 +910,7 @@
 </table>
 </div>
 <h3 id="module-vector_style"><a class="header" href="#module-vector_style">Module <code>vector_style</code></a></h3>
-<p>Vector-tile styling: a decoded [<code>map_vector_tiles::VectorTile</code>] becomes the renderer’s overlay primitives — filled polygons for polygon features, polylines for line features, point markers for point features — under a small explicit style.</p>
+<p>Vector-tile styling: a decoded [<code>rustic_maps_vector_tiles::VectorTile</code>] becomes the renderer’s overlay primitives — filled polygons for polygon features, polylines for line features, point markers for point features — under a small explicit style.</p>
 <p>The style is deliberately data-only: a layer entry names the source layer, the geometry kind it paints, an optional one-attribute text filter and the paint values (RGBA, line width, marker radius). A symbol layer declares the label style a text pass will use — ordered text-field fallbacks, font stack, size stops, text and halo paint, [<code>VectorSymbolPlacement</code>], priority and overlap — but paints no overlay primitive itself: the frame-level label pass ([<code>crate::labels</code>]) reads it and draws its text through the glyph atlas, either anchored at a point or run along a line feature. The style carries no expression language. The artifact [<code>DEFAULT_VECTOR_STYLE_ARTIFACT_JSON</code>] carries the default style; [<code>default_vector_tile_style</code>] parses it and [<code>in_code_default_vector_tile_style</code>] is the documented fallback when the artifact is missing or malformed.</p>
 <p>Polygon features paint every exterior ring with its interior rings subtracted through the overlay’s hole-aware fill (see [<code>crate::overlay::FilledPolygonOverlay</code>]), and the conversion groups its primitives into one [<code>VectorOverlayBatch</code>] per style layer, which a dedicated vector pipeline can consume.</p>
 <p>Coordinates convert from tile-local extent space (<code>x</code> right, <code>y</code> down, the MVT convention) through the tile’s web-mercator address to geographic degrees, so the overlays project exactly like every other map coordinate.</p>
@@ -970,7 +970,7 @@
 </tbody>
 </table>
 </div>
-<h2 id="map_navigation"><a class="header" href="#map_navigation">map_navigation</a></h2>
+<h2 id="rustic_maps_navigation"><a class="header" href="#rustic_maps_navigation">rustic_maps_navigation</a></h2>
 <p>Turn-by-turn navigation for a planned route.</p>
 <p>The crate is a pure event reducer: [<code>reduce_navigation_event</code>] maps [<code>NavigationEvent</code>]s onto a [<code>NavigationSession</code>] without touching the network, the clock or the GPU. Each location fix is judged for deviation ([<code>deviation</code>]), snapped onto the route geometry ([<code>geometry</code>]), and evaluated against a pluggable [<code>StepAdvanceCondition</code>]. When the driver leaves the route, the caller supplies a replacement route through [<code>NavigationEvent::RerouteProvided</code>] and the reducer swaps it in. [<code>NavigationPhase</code>] moves through <code>Navigating</code>, <code>OffRoute</code> and <code>Arrived</code>; <code>OffRoute</code> is a pause the driver can recover from by returning to the route.</p>
 <p>Supporting modules compose the user-visible output:</p>

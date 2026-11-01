@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["coordinate_to_fingerprint_text"],"struct":["RequestDescriptor"]};

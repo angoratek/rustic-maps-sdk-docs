@@ -7,7 +7,7 @@
 //
 // The wasm exports (`vectorTileOverlayDescriptors` and
 // `vectorTileGeographicBounds`) live in
-// `crates/map-web-bindings/src/vector_layer.rs`; the descriptor vocabulary is
+// `crates/rustic-maps-web-bindings/src/vector_layer.rs`; the descriptor vocabulary is
 // the canvas' own `setOverlays` vocabulary, so a descriptor built here can be
 // handed to `setOverlays` verbatim.
 import {
@@ -16,7 +16,7 @@ import {
   vectorTileLabelDescriptorsForStyle,
   vectorTileOverlayDescriptors,
   vectorTileOverlayDescriptorsForStyle,
-} from './pkg/map_web_bindings.js';
+} from './pkg/rustic_maps_web_bindings.js';
 
 /** Edge length of one demo raster tile, in screen pixels. */
 export const DEFAULT_TILE_SIZE_PIXELS = 256;

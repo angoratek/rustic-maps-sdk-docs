@@ -161,9 +161,9 @@
   "navigation_demo": {
     "simulated_trace": {
       "name": "sacramento_clean_walk",
-      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
+      "fixture_path": "crates/rustic-maps-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
       "sample_interval_seconds": 5.0,
-      "provenance": "Recorded route geometry with deterministic synthetic fixes: the route is the provider-recorded pedestrian route Capitol Park -> Tower Bridge (the demo_routes member of this artifact, stitched at its shared step vertices), and the fixes are generated along it from a recorded seed by map-navigation's trace_fixture generator. No live GPS capture."
+      "provenance": "Recorded route geometry with deterministic synthetic fixes: the route is the provider-recorded pedestrian route Capitol Park -> Tower Bridge (the demo_routes member of this artifact, stitched at its shared step vertices), and the fixes are generated along it from a recorded seed by rustic-maps-navigation's trace_fixture generator. No live GPS capture."
     },
     "wasm_seam_status": {
       "available": true,
@@ -225,19 +225,19 @@
   "demo_plans": [
     {
       "scenario": "sacramento_clean_walk",
-      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
+      "fixture_path": "crates/rustic-maps-navigation/fixtures/navigation/traces/sacramento_clean_walk.json",
       "label": "Clean walk",
       "description": "Replays a walk that follows the route start to finish; guidance runs clean."
     },
     {
       "scenario": "sacramento_deviation_recovery",
-      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_deviation_recovery.json",
+      "fixture_path": "crates/rustic-maps-navigation/fixtures/navigation/traces/sacramento_deviation_recovery.json",
       "label": "Deviation recovery",
       "description": "Replays a walk that steps off the line and recovers; guidance freezes while off route."
     },
     {
       "scenario": "sacramento_deviation_reroute",
-      "fixture_path": "crates/map-navigation/fixtures/navigation/traces/sacramento_deviation_reroute.json",
+      "fixture_path": "crates/rustic-maps-navigation/fixtures/navigation/traces/sacramento_deviation_reroute.json",
       "label": "Deviation reroute",
       "description": "Replays a walk that steps off the line; a replacement route is applied once the guidance freezes."
     }

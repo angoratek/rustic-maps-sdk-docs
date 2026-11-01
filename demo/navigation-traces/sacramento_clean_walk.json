@@ -1,7 +1,7 @@
 {
   "metadata": {
     "scenario_name": "sacramento_clean_walk",
-    "provenance": "recorded route geometry with deterministic synthetic fixes: the route is the provider-recorded pedestrian route Capitol Park to Tower Bridge from platform/reference-scenes.json's demo_routes member (recorded MapQuest geometry, stitched at its shared step vertices, declared distances recomputed); the fixes are generated along it from the seed in this metadata by map-navigation's trace_fixture generator (SplitMix64 PRNG, radially clamped Gaussian fix noise); no live GPS capture. Regenerate with: cargo test -p map-navigation regenerate_trace_fixtures -- --ignored",
+    "provenance": "recorded route geometry with deterministic synthetic fixes: the route is the provider-recorded pedestrian route Capitol Park to Tower Bridge from platform/reference-scenes.json's demo_routes member (recorded MapQuest geometry, stitched at its shared step vertices, declared distances recomputed); the fixes are generated along it from the seed in this metadata by rustic-maps-navigation's trace_fixture generator (SplitMix64 PRNG, radially clamped Gaussian fix noise); no live GPS capture. Regenerate with: cargo test -p rustic-maps-navigation regenerate_trace_fixtures -- --ignored",
     "generator_seed": 2026102701,
     "deviation_threshold_meters": 25.0,
     "horizontal_accuracy_meters": 8.0,
