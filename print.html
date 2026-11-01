@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-76a5390f.js";
+            window.path_to_searchindex_js = "searchindex-83cce045.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -4213,27 +4213,28 @@ provider-backed app can add.</li>
 page lists the exact files, and a new version never rewrites an existing one.
 There is no Maven Central, npm registry or Swift Package Manager registry
 entry — the files served from this site are the artifacts you install.</p>
-<h2 id="version-010"><a class="header" href="#version-010">Version 0.1.0</a></h2>
-<p>The files below are built from this repository at version 0.1.0 and served
-from this site. Every file carries a <code>.sha256</code> sidecar, and
+<!-- downloads-version:begin -->## Version 0.1.0<!-- downloads-version:end -->
+<p>The files below are built from this repository and served from this site.
+Every file carries a <code>.sha256</code> sidecar, and
 <a href="downloads/v0.1.0/SHA256SUMS.txt"><code>SHA256SUMS.txt</code></a> covers the set.</p>
+<!-- downloads-table:begin -->
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>Platform</th><th>Artifact</th></tr>
 </thead>
 <tbody>
-<tr><td>Rust</td><td>The public crates (<code>map-rendering</code>, <code>map-core</code>, <code>geospatial-types</code>, <code>geospatial-traits</code>, <code>map-navigation</code>, <code>map-positioning</code>, the vector-tile and offline-graph crates) are consumed from the SDK source today; a registry package follows the first Rust release. Start with <a href="#use-the-sdk-from-rust">Use the SDK from Rust</a>.</td></tr>
-<tr><td>Android (bindings)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar"><code>rustic-maps-sdk-android-v0.1.0.aar</code></a> — Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64</td></tr>
-<tr><td>Android (<code>MapView</code> wrapper)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar"><code>rustic-maps-sdk-android-ui-v0.1.0.aar</code></a> — the <code>MapView</code> and its Compose wrapper; depends on the bindings AAR, so add both</td></tr>
-<tr><td>iOS</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip"><code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code></a> — the XCFramework (arm64 device and simulator slices), packaged for a Swift Package Manager binary target</td></tr>
-<tr><td>WebAssembly (module)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tar.gz"><code>rustic-maps-sdk-web-v0.1.0.tar.gz</code></a> — the wasm module, its JavaScript shim and both type files</td></tr>
-<tr><td>WebAssembly (npm package)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz"><code>rustic-maps-sdk-web-v0.1.0.tgz</code></a> — the same module with the manifest, licenses and notices</td></tr>
-<tr><td>React Native</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz"><code>rustic-maps-sdk-rn-v0.1.0.tgz</code></a> — the TurboModule source package (<code>@angoratek/rustic-maps-sdk</code>): generated TypeScript, JSI C++, podspec and CMake glue. The compiled native payload is built by <code>scripts/build-rn.sh</code> (or packed in with <code>package-rn-npm.sh --with-native-payload</code>)</td></tr>
-<tr><td>All platforms</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>rustic-maps-sdk-notices-v0.1.0.md</code></a> — the third-party dependency notices that accompany your own distribution</td></tr>
+<tr><td>Android (<code>MapView</code> wrapper)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar"><code>rustic-maps-sdk-android-ui-v0.1.0.aar</code></a> — the <code>MapView</code> and its Compose wrapper; add it beside the bindings AAR · 101 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
+<tr><td>Android (bindings)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar"><code>rustic-maps-sdk-android-v0.1.0.aar</code></a> — Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64 · 14.4 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
+<tr><td>iOS</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip"><code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code></a> — the XCFramework (arm64 device and simulator slices) for a Swift Package Manager binary target · 93.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip.sha256"><code>sha256</code></a></td></tr>
+<tr><td>All platforms</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>rustic-maps-sdk-notices-v0.1.0.md</code></a> — the third-party dependency notices that accompany your distribution · 55 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>sha256</code></a></td></tr>
+<tr><td>React Native</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz"><code>rustic-maps-sdk-rn-v0.1.0.tgz</code></a> — the TurboModule source package (<code>@angoratek/rustic-maps-sdk</code>) · 229 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz.sha256"><code>sha256</code></a></td></tr>
+<tr><td>WebAssembly (module)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tar.gz"><code>rustic-maps-sdk-web-v0.1.0.tar.gz</code></a> — the wasm module, its JavaScript shim and both type files · 1.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tar.gz.sha256"><code>sha256</code></a></td></tr>
+<tr><td>WebAssembly (npm package)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz"><code>rustic-maps-sdk-web-v0.1.0.tgz</code></a> — the module with the manifest, licenses and notices · 1.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz.sha256"><code>sha256</code></a></td></tr>
 </tbody>
 </table>
 </div>
+<!-- downloads-table:end -->
 <p>Each artifact file and <code>SHA256SUMS.txt</code> also have a <code>.sigstore.json</code>
 signature bundle, attached by the release workflow when it publishes a
 release; the checksum files above are always present.</p>
