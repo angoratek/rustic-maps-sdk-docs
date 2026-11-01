@@ -28,7 +28,7 @@ order.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.dispatch_trip_started" class="method"><a class="src rightside" href="../../src/map_navigation/observer.rs.html#291-297">Source</a><h4 class="code-header">pub fn <a href="#method.dispatch_trip_started" class="fn">dispatch_trip_started</a>(
     &amp;self,
     current_state: &amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>,
-    unit_system: UnitSystem,
+    unit_system: <a class="enum" href="../../geospatial_types/route/enum.UnitSystem.html" title="enum geospatial_types::route::UnitSystem">UnitSystem</a>,
 ) -&gt; <a class="enum" href="enum.NavigationDispatchOutcome.html" title="enum map_navigation::observer::NavigationDispatchOutcome">NavigationDispatchOutcome</a></h4></section></summary><div class="docblock"><p>Dispatches the state produced by a
 <a href="../reducer/enum.NavigationEvent.html#variant.StartTrip" title="variant map_navigation::reducer::NavigationEvent::StartTrip"><code>NavigationEvent::StartTrip</code></a>
 event: the initial instruction payload is delivered; no deviation or
@@ -37,7 +37,7 @@ phase transitions exist yet.</p>
     &amp;self,
     previous_state: &amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>,
     current_state: &amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>,
-    unit_system: UnitSystem,
+    unit_system: <a class="enum" href="../../geospatial_types/route/enum.UnitSystem.html" title="enum geospatial_types::route::UnitSystem">UnitSystem</a>,
 ) -&gt; <a class="enum" href="enum.NavigationDispatchOutcome.html" title="enum map_navigation::observer::NavigationDispatchOutcome">NavigationDispatchOutcome</a></h4></section></summary><div class="docblock"><p>Dispatches the transition a
 <a href="../reducer/enum.NavigationEvent.html#variant.LocationUpdated" title="variant map_navigation::reducer::NavigationEvent::LocationUpdated"><code>NavigationEvent::LocationUpdated</code></a>
 event produced: <code>previous_state</code> is the state before the fix,
@@ -46,7 +46,7 @@ event produced: <code>previous_state</code> is the state before the fix,
     &amp;self,
     previous_state: &amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>,
     current_state: &amp;<a class="struct" href="../state/struct.TripNavigationState.html" title="struct map_navigation::state::TripNavigationState">TripNavigationState</a>,
-    unit_system: UnitSystem,
+    unit_system: <a class="enum" href="../../geospatial_types/route/enum.UnitSystem.html" title="enum geospatial_types::route::UnitSystem">UnitSystem</a>,
 ) -&gt; <a class="enum" href="enum.NavigationDispatchOutcome.html" title="enum map_navigation::observer::NavigationDispatchOutcome">NavigationDispatchOutcome</a></h4></section></summary><div class="docblock"><p>Dispatches the transition a
 <a href="../reducer/enum.NavigationEvent.html#variant.RerouteProvided" title="variant map_navigation::reducer::NavigationEvent::RerouteProvided"><code>NavigationEvent::RerouteProvided</code></a>
 event produced. The <code>RerouteApplied</code> phase transition is delivered

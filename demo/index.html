@@ -21,6 +21,18 @@
             aria-roledescription="interactive map" aria-label="Interactive map"
             aria-describedby="map-keyboard-instructions"
             aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown Home"></canvas>
+    <!-- The turn banner at the map's top-center during a simulated trip
+         (docs/ReferenceAppUX.md §1/§7.1): the first thing the driver must
+         read, with the then line under it and the deviation alert beneath
+         both. The navigation panel keeps the progress rows and controls. -->
+    <div id="navigation-banner-overlay" hidden aria-live="polite">
+      <div class="turn-banner">
+        <p id="banner-distance-phrase-text" class="turn-banner-distance"></p>
+        <p id="banner-instruction-text" class="turn-banner-text"></p>
+      </div>
+      <p id="upcoming-instruction-text" class="then-line"></p>
+      <p id="deviation-alert-preview" hidden></p>
+    </div>
     <aside id="controls" tabindex="-1" aria-label="Live demo controls">
       <header id="controls-header">
         <div class="demo-title">
@@ -79,9 +91,9 @@
             <path d="m16.2 16.2 4.3 4.3" />
           </svg>
           <input id="trip-destination-input" type="search"
-                 placeholder="Where to?" autocomplete="off"
+                 placeholder="Search a destination" autocomplete="off"
                  aria-label="Search a destination"
-                 data-ui-label="plan.destination_hint"
+                 data-ui-label="plan.destination_placeholder"
                  data-ui-label-attribute="placeholder"
                  data-ui-label-aria="plan.destination_placeholder" />
           <button id="trip-destination-search-control" type="button"
@@ -108,6 +120,9 @@
         <p id="trip-plan-route-reason" class="reason-strip">Enter an origin and a
           destination to plan the route.</p>
         <p id="trip-route-result" class="trip-route-result" hidden></p>
+        <!-- The trip card's ETA-distance line while a trip runs: the same
+             prefix and labelled remaining values the native drawers show. -->
+        <p id="trip-navigation-eta-line" class="then-line" hidden></p>
         <div class="trip-actions">
           <button id="trip-plan-route-control" type="button" disabled
                   data-ui-label="plan.plan_route_action">Plan route</button>
@@ -133,23 +148,6 @@
       <details id="advanced-panel" class="control-group">
         <summary>Advanced</summary>
         <div id="advanced-content">
-
-<section class="control-group" id="base-map-controls" aria-describedby="base-map-status">
-        <h2 class="group-label">Base map</h2>
-        <div id="base-map-toggle" role="group" aria-label="Base map tiles"></div>
-        <label class="base-map-style-row" id="vector-style-row" hidden>Vector style
-          <select id="vector-style-select" aria-label="Vector base style"></select>
-        </label>
-        <p id="base-map-status" class="reason-strip" hidden></p>
-        <!-- The same limit the three native shells state in their base-map
-             menu: the vector pipeline draws land, water and roads, and its
-             label pass paints point-placed Latin place and point-of-interest
-             names (road names wait for the line-placement slice). -->
-        <p class="base-map-labels-note" id="base-map-labels-note">
-          Vector styles draw land, water, roads with their names, and Latin
-          place names.
-        </p>
-      </section>
 
 <section class="control-group" id="camera-controls">
         <h2 class="group-label" data-ui-label="camera.presets_heading">Camera presets</h2>
@@ -221,22 +219,14 @@
           <button id="navigation-voice-control" type="button"
                   aria-pressed="false"
                   data-ui-label="navigation.voice_toggle">Voice guidance</button>
-          <div class="turn-banner">
-            <p id="banner-distance-phrase-text" class="turn-banner-distance"></p>
-            <p id="banner-instruction-text" class="turn-banner-text"></p>
-          </div>
-          <p id="upcoming-instruction-text" class="then-line"></p>
+          <!-- The drawer's one ETA-distance line (§7.2): the same prefix and
+               labelled remaining values the native drawers show. -->
           <p id="navigation-eta-line" class="then-line"><span
-               data-ui-label="navigation.eta_prefix">ETA</span>
-            <span id="navigation-eta-value">—</span></p>
-          <ul class="navigation-progress">
-            <li><span class="progress-label">Distance to maneuver</span><span id="progress-distance-to-maneuver-value"></span></li>
-            <li><span class="progress-label"
-                      data-ui-label="navigation.eta_distance_label">Distance remaining</span><span id="progress-distance-remaining-value"></span></li>
-            <li><span class="progress-label"
-                      data-ui-label="navigation.eta_duration_label">Duration remaining</span><span id="progress-duration-remaining-value"></span></li>
-          </ul>
-          <p id="deviation-alert-preview" hidden></p>
+               data-ui-label="navigation.eta_prefix">ETA</span>:
+            <span data-ui-label="navigation.eta_distance_label">Distance remaining</span>
+            <span id="navigation-eta-distance-value">—</span> ·
+            <span data-ui-label="navigation.eta_duration_label">Duration remaining</span>
+            <span id="navigation-eta-duration-value">—</span></p>
           <p id="navigation-demo-preview-notice" class="reason-strip"></p>
         </div>
       </details>
@@ -286,6 +276,26 @@
               <canvas id="provider-tile-canvas" width="128" height="128" hidden
                       aria-label="Fetched tile preview"></canvas>
             </div>
+          </section>
+          <!-- The base-map flow every platform serves from Settings
+               (docs/ReferenceAppUX.md §4.1): the serving base row opens a
+               menu of the registry's raster sources and vector styles. -->
+          <section class="settings-section" id="base-map-controls"
+                   aria-describedby="base-map-status">
+            <h3 class="settings-section-title">Base map</h3>
+            <div id="base-map-toggle" role="group" aria-label="Base map tiles"></div>
+            <label class="base-map-style-row" id="vector-style-row" hidden>Vector style
+              <select id="vector-style-select" aria-label="Vector base style"></select>
+            </label>
+            <p id="base-map-status" class="reason-strip" hidden></p>
+            <!-- The same limit the three native shells state in their base-map
+                 menu: the vector pipeline draws land, water and roads, and its
+                 label pass paints point-placed Latin place and point-of-interest
+                 names (road names wait for the line-placement slice). -->
+            <p class="base-map-labels-note" id="base-map-labels-note">
+              Vector styles draw land, water, roads with their names, and Latin
+              place names.
+            </p>
           </section>
           <section class="settings-section" id="appearance-controls">
             <h3 class="settings-section-title" data-ui-label="theme.heading">Theme</h3>

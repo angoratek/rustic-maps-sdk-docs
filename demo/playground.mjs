@@ -13,13 +13,9 @@
         SACRAMENTO_OVERLAY_SCENE_LABELS,
         REFERENCE_SCENE_ARTIFACT,
       } from './overlay_scenes.mjs';
-      import { fetchAndBuildVectorOverlays } from './vector_layer.mjs';
       import {
         TILE_LAYER_MODES,
-        DEFAULT_TILE_SIZE_PIXELS,
         applyTileLayerMode,
-        cancelVectorBaseLoad,
-        loadVectorBaseOverlays,
         vectorStyleIdForDescriptor,
       } from './tile_switch.mjs';
 
@@ -433,6 +429,14 @@
       const PROVIDER_TILE_DEMO_ZOOM_LEVEL = 14;
       const PROVIDER_TILE_DEMO_TILE_X = 2661;
       const PROVIDER_TILE_DEMO_TILE_Y = 6286;
+      // The trip planner's route options (the contract's `RouteOptions`):
+      // pedestrian, fastest, metric — the pair every native reference app
+      // plans with, so the live and recorded answers describe one route.
+      const TRIP_PLANNER_ROUTE_OPTIONS = Object.freeze({
+        transportationMode: 'pedestrian',
+        routeStrategy: 'fastest',
+        unitSystem: 'metric',
+      });
       // The credential rows by provider key; declared here so the persistence
       // toggle's listener (below) can clear remembered keys.
       const provider_credential_controls_by_key = new Map();
@@ -1335,11 +1339,12 @@
                 recorded_route.route, origin_endpoint, destination_endpoint, true);
               return;
             }
-            const live_route = await window.mapTest.calculateRoute(
+            const live_route = await window.mapTest.calculateRouteWithOptions(
               origin_endpoint.latitude,
               origin_endpoint.longitude,
               destination_endpoint.latitude,
               destination_endpoint.longitude,
+              TRIP_PLANNER_ROUTE_OPTIONS,
             );
             show_trip_route(live_route, origin_endpoint, destination_endpoint, false);
           } catch (error) {
@@ -1453,7 +1458,14 @@
               OFFLINE_ROUTE_END_LONGITUDE_DEGREES,
             );
             const polyline = route_polyline_coordinates(route);
-            offline_route_overlays = [
+            // The offline route becomes the planner's route (the native
+            // reference apps' `plannedRoute` rule): Start walks it, the A/B
+            // framing and the route summary describe it, and a previously
+            // selected demo plan no longer wins the trip.
+            clear_selected_demo_plan();
+            planned_route_record = route;
+            offline_route_overlays = [];
+            trip_route_overlays = [
               { kind: 'routePolyline', coordinates: polyline },
             ];
             apply_overlays();
@@ -1469,6 +1481,13 @@
             offline_route_facts.textContent =
               `${format_distance_text(distance_meters)} · ${duration_text}`;
             offline_route_result.hidden = false;
+            // The route summary names the offline route and its honest note,
+            // the same pair the native route summaries show.
+            trip_route_result.hidden = false;
+            trip_route_result.textContent =
+              `${ui_label_text('offline.recorded_graph_route_title')}: ` +
+              `${format_distance_text(distance_meters)} · ${duration_text} — ` +
+              ui_label_text('offline.recorded_graph_note');
             clear_error_report();
           } catch (offline_failure) {
             offline_route_overlays = [];
@@ -1699,13 +1718,6 @@
       // a string exception; it surfaces on the error report and the status
       // line, and the previously accepted list stays in force.
       //
-      // The content list composes over a vector base: the base's own geometry
-      // is a base layer delivered through the same overlay seam, so the two
-      // must share one drawn list (base first) instead of replacing each
-      // other — otherwise choosing a vector base would silently erase the
-      // scene toggles (round 36 field report).
-      let vector_base_overlays = [];
-
       /** The page's own overlays: the toggled demo scenes, in scene order. */
       function content_overlay_list() {
         return [
@@ -1721,14 +1733,13 @@
         ];
       }
 
-      /** Pushes the composed list for the active base layer. */
+      /** Pushes the page's own overlays; the canvas paints the vector base
+       * beneath them from its own installed source (M31's renderer-internal
+       * ruling), so the two never fight over one drawn list. */
       function apply_overlays() {
         if (renderer_mode !== 'gpu' || !gpu_map_canvas) return;
-        const overlay_list = current_tile_mode === TILE_LAYER_MODES.vector
-          ? [...vector_base_overlays, ...content_overlay_list()]
-          : content_overlay_list();
         try {
-          gpu_map_canvas.setOverlays(overlay_list);
+          gpu_map_canvas.setOverlays(content_overlay_list());
         } catch (overlay_failure) {
           const overlay_failure_message = String(overlay_failure?.message ?? overlay_failure);
           status_line_element.textContent = `Overlay rejected: ${overlay_failure_message}`;
@@ -1779,24 +1790,11 @@
         'positron-light': Object.freeze(
           { red: 0.949, green: 0.953, blue: 0.941, alpha: 1.0 }),
       });
-      const VECTOR_BASE_TILE_SIZE_PIXELS = DEFAULT_TILE_SIZE_PIXELS;
-      const VECTOR_BASE_TILE_RADIUS = 1;
-      // The Latin glyph range the demo's label pass draws with. The committed
-      // fixture is served same-origin by the dev server (the recorded raster
-      // tiles' pattern); the payload itself names the font stack it carries,
-      // so the renderer uses whichever families the range declares.
-      const VECTOR_LABEL_FONT_STACK = 'Noto Sans Regular';
-      const VECTOR_LABEL_GLYPH_RANGE = '0-255';
-      // Relative to this module, not the site root: the demo is served both at
-      // `/` (the dev server) and at `/demo/` (the published site), and an
-      // absolute `/glyphs/…` path 404s under `/demo/` — which silently removed
-      // every label from the live demo while the dev server looked fine.
-      const VECTOR_LABEL_GLYPH_RANGE_URL = new URL(
-        `./glyphs/${encodeURIComponent(VECTOR_LABEL_FONT_STACK)}/${VECTOR_LABEL_GLYPH_RANGE}.pbf`,
-        import.meta.url,
-      ).toString();
-      let label_glyph_status = null;
-      const VECTOR_BASE_RELOAD_DEBOUNCE_MILLISECONDS = 180;
+      // The zoom span the canvas' vector base requests. The lower bound is the
+      // web-mercator grid's origin (a camera below it clamps up); the upper
+      // bound comes from the descriptor's own declared ceiling.
+      const VECTOR_BASE_MINIMUM_ZOOM_LEVEL = 0;
+      const VECTOR_BASE_DEFAULT_MAXIMUM_ZOOM_LEVEL = 19;
       // Every raster base layer a registry descriptor declares (their fixture
       // routes back the demo canvas' recorded imagery).
       const RASTER_BASE_MAP_DESCRIPTORS = providers_registry.providers
@@ -1819,13 +1817,6 @@
           (provider_descriptor.vector_styles ?? []).some(
             (style_choice) => style_choice.style_id === 'bright-light',
           )) ?? VECTOR_BASE_MAP_DESCRIPTORS[0])?.provider_key ?? null;
-      let vector_base_reload_timer = null;
-      // The camera pose the latest vector-base request covers. Recording the
-      // request (rather than only the completed load) keeps the render loop
-      // from scheduling a second, superseding load on every frame while the
-      // first one fetches; a real camera move still differs and refreshes.
-      let vector_base_requested_center = null;
-      let vector_base_requested_zoom = null;
       const base_map_toggle_element = document.getElementById('base-map-toggle');
       const base_map_status_element = document.getElementById('base-map-status');
       const vector_style_row_element = document.getElementById('vector-style-row');
@@ -1876,7 +1867,7 @@
       vector_style_select_element.addEventListener('change', () => {
         current_vector_style_id = vector_style_select_element.value;
         apply_vector_base_clear_color();
-        refresh_vector_base();
+        install_vector_base_source();
         schedule_render();
       });
 
@@ -1973,87 +1964,83 @@
         );
       }
 
-      /** Re-lists and decodes the vector base for the current camera. */
-      async function refresh_vector_base() {
+      /** The attribution line the active style's own terms require. */
+      function active_vector_style_attribution(vector_descriptor) {
+        const style_id = active_vector_style_id();
+        const style_choice = (vector_descriptor.vector_styles ?? []).find(
+          (candidate) => candidate.style_id === style_id);
+        return style_choice?.attribution_text
+          ?? vector_descriptor.attribution_text
+          ?? '';
+      }
+
+      /**
+       * Installs the selected vector source on the canvas (M31's
+       * renderer-internal base): the canvas fetches, decodes, styles and
+       * labels the tiles itself through the registry's URL template, so the
+       * page no longer composes vector geometry or label descriptors.
+       */
+      function install_vector_base_source() {
         if (current_tile_mode !== TILE_LAYER_MODES.vector
           || renderer_mode !== 'gpu' || !gpu_map_canvas) {
           return;
         }
         const vector_descriptor = selected_vector_descriptor();
         if (vector_descriptor === null) return;
-        const camera_snapshot = {
-          latitude: camera_state.latitude,
-          longitude: camera_state.longitude,
-          zoom: camera_state.zoom,
-        };
-        vector_base_requested_center = camera_snapshot;
-        vector_base_requested_zoom = camera_snapshot.zoom;
-        set_base_map_status(`Loading the ${vector_descriptor.display_name} vector base…`);
-        let vector_result = null;
+        const style_id = active_vector_style_id();
+        if (style_id === null) return;
+        set_base_map_status(
+          `Loading the ${vector_descriptor.display_name} vector base…`);
         try {
-          vector_result = await loadVectorBaseOverlays({
-            canvas: gpu_map_canvas,
-            descriptors: [vector_descriptor],
-            cameraState: camera_snapshot,
-            tileSizePixels: VECTOR_BASE_TILE_SIZE_PIXELS,
-            tileRadius: VECTOR_BASE_TILE_RADIUS,
-            // The registry offers its named styles; the picker (or the
-            // resolved theme when the visitor has not picked one) selects the
-            // palette the base paints (Bright, Fiord, Positron, …).
-            styleTheme: resolved_theme_name(),
-            selectedStyleId: active_vector_style_id(),
-            // The page's own overlays (scene toggles, later the planned route)
-            // paint over the base in the same drawn list.
-            contentOverlays: content_overlay_list(),
-            fetchAndBuildVectorOverlays,
+          gpu_map_canvas.setVectorTileSource({
+            urlTemplate: vector_descriptor.url_template,
+            sourceName: vector_descriptor.provider_key,
+            attributionText: active_vector_style_attribution(vector_descriptor),
+            styleId: style_id,
+            minimumZoomLevel: VECTOR_BASE_MINIMUM_ZOOM_LEVEL,
+            maximumZoomLevel: Number.isInteger(vector_descriptor.maximum_zoom_level)
+              ? vector_descriptor.maximum_zoom_level
+              : VECTOR_BASE_DEFAULT_MAXIMUM_ZOOM_LEVEL,
           });
         } catch (vector_failure) {
-          set_base_map_status(`The vector base failed: ${String(vector_failure)}`);
+          set_base_map_status(
+            `The vector base failed: ${String(
+              vector_failure?.message ?? vector_failure)}`);
           return;
-        }
-        if (current_tile_mode !== TILE_LAYER_MODES.vector) return;
-        // A newer camera pose replaced this load: its result paints nothing,
-        // so publishing it would flash an empty base-map status.
-        if (vector_result.superseded) return;
-        // Remember the base's own geometry so a later scene toggle recomposes
-        // without re-fetching, and recompose once for toggles that landed
-        // while this load was in flight.
-        vector_base_overlays = vector_result.overlays;
-        apply_overlays();
-        const label_status_suffix =
-          `${vector_result.labelCount} labels` +
-          (label_glyph_status === null
-            ? ' (glyphs unavailable, so none draw)'
-            : '');
-        if (vector_result.failures.length === 0) {
-          set_base_map_status(
-            `Vector base · ${vector_descriptor.display_name} · ` +
-            `${active_vector_style_id()}: ` +
-            `${vector_result.overlayCount} styled features and ` +
-            `${label_status_suffix} over ` +
-            `${(2 * VECTOR_BASE_TILE_RADIUS + 1) ** 2} tiles.`);
-        } else {
-          const first_failure = vector_result.failures[0];
-          set_base_map_status(
-            `Vector base · ${vector_descriptor.display_name}: ` +
-            `${vector_result.overlayCount} styled features, ` +
-            `${label_status_suffix}; ` +
-            `${vector_result.failures.length} tiles failed — ` +
-            `${first_failure?.error ?? 'unknown failure'}`);
         }
         schedule_render();
       }
 
-      /** Debounces a vector-base reload while the camera moves. */
-      function schedule_vector_base_refresh() {
-        if (current_tile_mode !== TILE_LAYER_MODES.vector) return;
-        if (vector_base_reload_timer !== null) {
-          clearTimeout(vector_base_reload_timer);
+      /** Reflects the canvas' vector-source status in the base-map line. */
+      function refresh_vector_base_status() {
+        if (current_tile_mode !== TILE_LAYER_MODES.vector
+          || renderer_mode !== 'gpu' || !gpu_map_canvas) {
+          return;
         }
-        vector_base_reload_timer = setTimeout(() => {
-          vector_base_reload_timer = null;
-          refresh_vector_base();
-        }, VECTOR_BASE_RELOAD_DEBOUNCE_MILLISECONDS);
+        const vector_descriptor = selected_vector_descriptor();
+        if (vector_descriptor === null) return;
+        let status;
+        try {
+          status = gpu_map_canvas.vectorTileSourceStatus();
+        } catch {
+          return;
+        }
+        if (!status.isConfigured) {
+          set_base_map_status(null);
+          return;
+        }
+        if (status.drawnTileCount === 0 && status.failedTileCount === 0) {
+          set_base_map_status(
+            `Loading the ${vector_descriptor.display_name} vector base…`);
+          return;
+        }
+        const failure_suffix = status.lastFailureDetail === null
+          ? ''
+          : ` — ${status.lastFailureDetail}`;
+        set_base_map_status(
+          `Vector base · ${vector_descriptor.display_name} · ${status.styleId}: ` +
+          `${status.drawnTileCount} tiles drawn, ` +
+          `${status.failedTileCount} failed${failure_suffix}`);
       }
 
       /**
@@ -2082,14 +2069,10 @@
           current_vector_provider_key = next_provider_key;
         }
         refresh_base_map_toggle_pressed_state();
-        // A provider or mode switch is a fresh layer, even at the same pose.
-        vector_base_requested_center = null;
-        vector_base_requested_zoom = null;
         if (next_mode === TILE_LAYER_MODES.raster) {
-          // A load that started before this switch must not apply its list
-          // after the raster layer is back: it would paint the vector base
-          // over the imagery (the superposition the cancel exists to stop).
-          cancelVectorBaseLoad();
+          // Removing the source makes the canvas draw the raster tier again;
+          // the frame after this switch has no vector geometry or labels.
+          gpu_map_canvas.clearVectorTileSource();
           applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.raster });
           gpu_map_canvas.setBackgroundColor(
             VECTOR_BASE_RASTER_CLEAR_COLOR.red,
@@ -2097,12 +2080,6 @@
             VECTOR_BASE_RASTER_CLEAR_COLOR.blue,
             VECTOR_BASE_RASTER_CLEAR_COLOR.alpha,
           );
-          vector_base_overlays = [];
-          // The raster base paints its own imagery: the vector base's labels
-          // leave with it.
-          if (renderer_mode === 'gpu' && gpu_map_canvas) {
-            gpu_map_canvas.clearLabels();
-          }
           set_overlay_controls_enabled(
             renderer_mode === 'gpu',
             'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
@@ -2113,16 +2090,15 @@
         } else {
           applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.vector });
           apply_vector_base_clear_color();
-          // The scene toggles and a planned route compose over the vector
-          // base in one drawn list, so they stay available while it draws.
-          vector_base_overlays = [];
+          // The scene toggles and a planned route stay in the page's own
+          // overlay list; the canvas paints the base beneath them.
           set_overlay_controls_enabled(
             renderer_mode === 'gpu',
             'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
           );
           render_vector_style_picker();
           apply_overlays();
-          refresh_vector_base();
+          install_vector_base_source();
         }
         schedule_render();
       }
@@ -2133,11 +2109,11 @@
           || renderer_mode !== 'gpu' || !gpu_map_canvas) {
           return;
         }
-        // The theme may have changed which offered style is the default.
+        // The theme may have changed which offered style is the default; the
+        // source carries the style id, so a reinstall paints the new palette.
         render_vector_style_picker();
         apply_vector_base_clear_color();
-        vector_base_requested_center = null;
-        refresh_vector_base();
+        install_vector_base_source();
       }
 
       window.mapTileMode = () => current_tile_mode;
@@ -2157,6 +2133,14 @@
       const navigation_demo_preview_notice =
         document.getElementById('navigation-demo-preview-notice');
       const deviation_alert_element = document.getElementById('deviation-alert-preview');
+      // The turn banner's map placement (§1/§7.1): shown while guidance has an
+      // active maneuver, hidden between trips.
+      const navigation_banner_overlay =
+        document.getElementById('navigation-banner-overlay');
+      // The trip card's own ETA-distance line (the web drawer-equivalent line,
+      // visible beside the playback controls while a trip runs).
+      const trip_navigation_eta_line =
+        document.getElementById('trip-navigation-eta-line');
       // Voice guidance (§7.3): the platform speech engine speaks the
       // snapshot's own speech channel — the contract's text-to-speech variant,
       // never the banner sentence re-used as speech.
@@ -2246,6 +2230,7 @@
         }
         navigation_demo_reason.hidden = true;
         navigation_demo_preview_notice.hidden = true;
+        navigation_banner_overlay.hidden = false;
         const instruction = snapshot.instruction;
         document.getElementById('navigation-phase-value').textContent =
           navigation_phase_label_text(snapshot.phase);
@@ -2261,14 +2246,23 @@
           instruction.upcomingManeuver === null
             ? ''
             : `Then: ${instruction.upcomingManeuver.displayText}`;
-        document.getElementById('progress-distance-to-maneuver-value').textContent =
-          format_distance_text(instruction.progress.distanceToNextManeuverMeters);
-        document.getElementById('progress-distance-remaining-value').textContent =
+        // The drawer's one ETA-distance line (§7.2): the same labelled
+        // remaining values the native drawers show, in the same order.
+        const remaining_distance_text =
           format_distance_text(instruction.progress.distanceRemainingMeters);
-        document.getElementById('progress-duration-remaining-value').textContent =
+        const remaining_duration_text =
           format_duration_text(instruction.progress.durationRemainingSeconds);
-        document.getElementById('navigation-eta-value').textContent =
-          format_eta_clock_text(instruction.progress.durationRemainingSeconds);
+        document.getElementById('navigation-eta-distance-value').textContent =
+          remaining_distance_text;
+        document.getElementById('navigation-eta-duration-value').textContent =
+          remaining_duration_text;
+        trip_navigation_eta_line.hidden = false;
+        trip_navigation_eta_line.textContent =
+          `${ui_label_text('navigation.eta_prefix')}: ` +
+          `${ui_label_text('navigation.eta_distance_label')} ` +
+          `${remaining_distance_text} · ` +
+          `${ui_label_text('navigation.eta_duration_label')} ` +
+          `${remaining_duration_text}`;
         speak_navigation_speech(instruction.activeManeuver.speechText ?? '');
         if (snapshot.deviation === null) {
           deviation_alert_element.hidden = true;
@@ -2290,15 +2284,16 @@
         navigation_demo_reason.hidden = false;
         navigation_demo_reason.textContent = reason_text;
         navigation_demo_preview_notice.hidden = true;
+        navigation_banner_overlay.hidden = true;
         document.getElementById('navigation-phase-value').textContent =
           ui_label_text('navigation.phase_not_started');
         document.getElementById('banner-distance-phrase-text').textContent = '';
         document.getElementById('banner-instruction-text').textContent = '';
         document.getElementById('upcoming-instruction-text').textContent = '';
-        document.getElementById('progress-distance-to-maneuver-value').textContent = '—';
-        document.getElementById('progress-distance-remaining-value').textContent = '—';
-        document.getElementById('progress-duration-remaining-value').textContent = '—';
-        document.getElementById('navigation-eta-value').textContent = '—';
+        document.getElementById('navigation-eta-distance-value').textContent = '—';
+        document.getElementById('navigation-eta-duration-value').textContent = '—';
+        trip_navigation_eta_line.hidden = true;
+        trip_navigation_eta_line.textContent = '';
         if (typeof window.speechSynthesis?.cancel === 'function') {
           window.speechSynthesis.cancel();
         }
@@ -2483,22 +2478,16 @@
           : `${(distance_meters / METERS_PER_KILOMETER).toFixed(1)} km`;
       }
 
-      // Formats one progress duration in whole minutes.
+      // Formats one duration the way the native shells do: whole minutes and
+      // the remaining seconds, or seconds alone under a minute (the shared
+      // `formatDurationSeconds` rule), so a route reads the same everywhere.
       function format_duration_text(duration_seconds) {
-        const duration_minutes = Math.round(duration_seconds / SECONDS_PER_MINUTE);
-        return `${duration_minutes} min`;
-      }
-
-      /**
-       * Formats the arrival clock the ETA prefix names: the local wall-clock
-       * time the trip's remaining duration reaches, as 24-hour `HH:MM`.
-       */
-      function format_eta_clock_text(duration_remaining_seconds) {
-        const arrival_instant = new Date(
-          Date.now() + duration_remaining_seconds * MILLISECONDS_PER_SECOND);
-        const hours_text = String(arrival_instant.getHours()).padStart(2, '0');
-        const minutes_text = String(arrival_instant.getMinutes()).padStart(2, '0');
-        return `${hours_text}:${minutes_text}`;
+        const whole_minutes = Math.floor(duration_seconds / SECONDS_PER_MINUTE);
+        const remainder_seconds =
+          duration_seconds - whole_minutes * SECONDS_PER_MINUTE;
+        return whole_minutes > 0
+          ? `${whole_minutes} min ${Math.round(remainder_seconds)} s`
+          : `${Math.round(duration_seconds)} s`;
       }
 
       // Camera state; the camera object itself is rebuilt on every change
@@ -2531,10 +2520,6 @@
       refresh_base_map_toggle_enabled_state();
       window.mapRendererMode = () => renderer_mode;
       window.mapLastFrameStats = () => last_frame_statistics;
-      // The decoded glyph range the label layer draws with (font stack name,
-      // glyph count and atlas page size), read by the label suite; null until
-      // the range loaded or when it failed.
-      window.mapLabelGlyphStatus = () => label_glyph_status;
       // The live camera state, read by the UX tests (docs/ReferenceAppUX.md
       // §10.1) instead of parsing the readout's presentation text.
       window.mapCameraState = () => ({ ...camera_state, rendererMode: renderer_mode });
@@ -3036,11 +3021,7 @@
           refresh_performance_readout();
           diagnostics_facts_element.textContent = diagnostics_facts_text();
           if (current_tile_mode === TILE_LAYER_MODES.vector) {
-            const center_or_zoom_changed = vector_base_requested_center === null
-              || vector_base_requested_center.latitude !== camera_state.latitude
-              || vector_base_requested_center.longitude !== camera_state.longitude
-              || vector_base_requested_zoom !== camera_state.zoom;
-            if (center_or_zoom_changed) schedule_vector_base_refresh();
+            refresh_vector_base_status();
           }
         } finally {
           render_busy = false;
@@ -4305,20 +4286,6 @@
             tile_resolution,
           );
           renderer_detail = `GPU adapter ${await gpu_map_canvas.initialize()}`;
-          // The vector base's label pass needs the glyph range before any
-          // label can draw; the dev server serves the committed recorded
-          // range same-origin (the raster tiles' fixture pattern). A missing
-          // range leaves `label_glyph_status` null and the base simply draws
-          // without labels, never an error the map cannot recover from.
-          try {
-            const glyph_range_response = await fetch(VECTOR_LABEL_GLYPH_RANGE_URL);
-            if (glyph_range_response.ok) {
-              label_glyph_status = gpu_map_canvas.setGlyphRange(
-                new Uint8Array(await glyph_range_response.arrayBuffer()));
-            }
-          } catch (glyph_failure) {
-            label_glyph_status = null;
-          }
           // Fixtures cover the recorded demo area only. The registry's live
           // raster descriptor fills every other address, so a visitor can pan
           // anywhere in the world without the map going blank; a registered

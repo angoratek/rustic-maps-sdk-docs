@@ -5,7 +5,7 @@ same data the <code>L.mapquest.trafficLayer()</code> overlay of the mapquest-js
 SDK draws. Each feature carries <code>properties.traffic</code> with one of the
 documented overlay buckets (<code>green</code>, <code>yellow</code>, <code>red</code>, <code>black</code>) and a
 <code>MultiLineString</code> of Web-Mercator road segments; no per-segment speeds
-are reported, so [<code>TrafficFlowData</code>] observations carry the congestion
+are reported, so <a href="../../geospatial_types/traffic/struct.TrafficFlowData.html" title="struct geospatial_types::traffic::TrafficFlowData"><code>TrafficFlowData</code></a> observations carry the congestion
 level only (<code>current_speed_kilometers_per_hour</code> is <code>None</code>).</p>
 </div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.FlowViewParameters.html" title="struct mapquest_provider::traffic_flow::FlowViewParameters">Flow<wbr>View<wbr>Parameters</a></dt><dd>Request geometry for one flow call: the Web-Mercator zoom level chosen
 for the bounding box, its documented <code>mapScale</code>, and the square pixel

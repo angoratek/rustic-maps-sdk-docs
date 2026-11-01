@@ -1092,20 +1092,46 @@
         background: var(--surface-color);
       }
       .turn-banner-distance { margin: 0; font-size: var(--type-maneuver-size); color: var(--text-secondary-color); }
-      .turn-banner-text { margin: 0 0 var(--stack-tight); font-size: var(--type-maneuver-size); font-weight: var(--type-body-strong-weight); }
+      .turn-banner-text { margin: 0; font-size: var(--type-maneuver-size); font-weight: var(--type-body-strong-weight); line-height: 1.25; }
       .then-line { margin: var(--stack-tight) 0 0; color: var(--text-secondary-color); }
-      .navigation-progress {
-        margin: var(--stack-tight) 0 0;
-        padding: 0;
-        list-style: none;
-      }
-      .navigation-progress li {
+      /* The turn banner's map placement (docs/ReferenceAppUX.md §1/§7.1):
+         top-center of the map, clear of the readiness chip, with the then
+         line and the deviation alert beneath it. It holds no controls, so it
+         never intercepts a pointer. */
+      #navigation-banner-overlay {
+        position: fixed;
+        top: calc(var(--gutter-block) + var(--stack-group) * 2);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(440px, calc(100vw - 2 * var(--gutter-inline)));
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
         gap: var(--stack-tight);
-        margin-top: 4px;
+        pointer-events: none;
+        z-index: 4;
       }
-      .progress-label { color: var(--text-secondary-color); font-weight: 400; }
+      #navigation-banner-overlay[hidden] { display: none; }
+      #navigation-banner-overlay .turn-banner {
+        margin-top: 0;
+        padding: var(--stack-tight) 14px;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      #navigation-banner-overlay .then-line {
+        margin: 0;
+        padding: 0 14px;
+        font-size: var(--type-caption-size);
+      }
+      #navigation-banner-overlay #deviation-alert-preview {
+        margin: 0;
+        padding: var(--stack-tight) 14px;
+        border-radius: var(--radius-inline);
+        background: var(--surface-color);
+        box-shadow: var(--elevation-surface);
+        font-size: var(--type-caption-size);
+      }
+      #navigation-banner-overlay #deviation-alert-preview[hidden] { display: none; }
       #deviation-alert-preview {
         margin: var(--stack-tight) 0 0;
         color: var(--warning-color);
