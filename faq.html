@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,76 +176,68 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="faq-and-troubleshooting"><a class="header" href="#faq-and-troubleshooting">FAQ and troubleshooting</a></h1>
-<p>The caveats integrators actually hit, collected from the code and the
-reference applications. The <a href="performance.html">performance page</a> carries
-the tuning guidance; this page carries what to check when something
-misbehaves.</p>
-<h2 id="web-gpu-and-browser-support"><a class="header" href="#web-gpu-and-browser-support">Web GPU and browser support</a></h2>
-<p><strong>The browser surface needs WebGPU; there is no WebGL fallback.</strong> The
-wasm canvas fails its <code>initialize()</code> when no WebGPU adapter supports the
-canvas or the device request fails, and then reports the error verbatim.
-Your page should catch it and present the degradation message: name the
-missing capability (<code>navigator.gpu</code> is the feature test), and link
-MDN’s compatibility table. Version floor: Chromium-based browsers since
-113 (flag-free), Safari since 26, Firefox since 141 (desktop first), and
-always a secure context (HTTPS or localhost). No user-agent sniffing.</p>
-<p><strong>The map stays empty on an Android emulator after rendering starts.</strong>
-Android emulators render through SwiftShader over ANGLE, a software
-graphics stack; that is an expected emulator fact, not a failure. On the
-emulator the GPU surface negotiates through the GL backend: set
-<code>WGPU_BACKEND=gl</code> in your build’s environment as the reference
-application does. On real hardware the line is redundant and harmless.</p>
+<p>These are the problems that come up most often when you integrate the SDK,
+with the check that resolves each. <a href="performance.html">Performance and profiling</a>
+carries tuning guidance; this page covers failures.</p>
+<h2 id="webgpu-and-browser-support"><a class="header" href="#webgpu-and-browser-support">WebGPU and browser support</a></h2>
+<p><strong>The browser surface needs WebGPU; there is no WebGL fallback.</strong> The wasm
+canvas fails its <code>initialize()</code> when no WebGPU adapter supports the canvas or
+the device request fails, and reports the error. Catch it and present a
+degradation message: name the missing capability (<code>navigator.gpu</code> is the
+feature test) and link MDN’s compatibility table. The version floor is
+Chromium 113 flag-free, Safari 26, and Firefox 141 on desktop, always in a
+secure context (HTTPS or localhost). Do not sniff the user agent.</p>
+<p><strong>The map stays empty on an Android emulator after rendering starts.</strong> Android
+emulators render through SwiftShader over ANGLE, a software graphics stack, so
+this is expected emulator behavior. The GPU surface negotiates through the GL
+backend: set <code>WGPU_BACKEND=gl</code> in the environment. On real hardware the setting
+is harmless.</p>
 <h2 id="api-key-and-provider-failures"><a class="header" href="#api-key-and-provider-failures">API key and provider failures</a></h2>
-<p><strong>How do I supply the provider key?</strong> Read it at runtime — from your app’s
-own secure configuration or a settings surface — and pass it to the
-provider registration call. Never commit it or bake it into an app
-bundle. The reference applications ship keyless and take the key from
-their settings view, with opt-in secure-device storage; their UI suites
-inject one through a launch intent/environment for automated runs.</p>
+<p><strong>How do I supply the provider key?</strong> Read it at runtime: from your app’s own
+secure configuration or a settings screen, and pass it to the provider
+registration call. Never commit it or bake it into an app bundle. The shipped
+apps start keyless, take the key from their settings screen, and optionally
+remember it in the device’s secure store. Automated tests inject a key through
+a launch value.</p>
 <p><strong>The SDK throws immediately at registration when the key is refused.</strong>
-<code>setProviderCredential</code> answers with the provider’s verbatim detail;
-surface it, do not catch-and-continue.</p>
+<code>setProviderCredential</code> returns the provider’s detail. Surface it; do not
+catch and continue.</p>
 <p><strong>Calls throw <code>RateLimitExhausted</code>.</strong> The shared token-bucket limiter is
-exhausted. The bucket refills on its own schedule, so retry after the
-next refill instead of surfacing an error; cache-then-network behavior
-around every provider contract keeps repeated identical requests free of
-quota.</p>
-<p><strong>Calls throw <code>ProviderNotConfigured</code> naming a contract.</strong> That contract
-has no registered implementation on the <code>MapSdk</code> object. Registration is
-per object: re-registration replaces every slot, so a second
-<code>setProviderCredential</code> call is safe, but a second <code>MapSdk()</code> needs
-its own registration.</p>
+exhausted. The bucket refills on its own schedule, so retry after the next
+refill rather than surfacing an error. Cache-then-network behavior around every
+provider contract keeps repeated identical requests free of quota.</p>
+<p><strong>Calls throw <code>ProviderNotConfigured</code> naming a contract.</strong> That contract has no
+registered implementation on the <code>MapSdk</code> object. Registration is per object:
+re-registration replaces every slot, so a second <code>setProviderCredential</code> call
+is safe, but a second <code>MapSdk()</code> needs its own registration.</p>
 <p><strong>Elevation throws <code>ProviderNotConfigured</code> even with the provider set
-installed.</strong> The elevation contract has no provider implementation yet;
-its calls keep refusing until one lands.</p>
+installed.</strong> The shipped providers include no elevation implementation, so
+elevation calls throw <code>ProviderNotConfigured</code>.</p>
 <h2 id="offline-behavior"><a class="header" href="#offline-behavior">Offline behavior</a></h2>
-<p><strong>Tiles render but routes fail offline, or the other way around.</strong> The
-two offline layers are separate. Tile imagery answers from the disk
-cache you registered (<code>setProviderCredentialWithTileCache</code>), within
-its byte budget and time-to-live. Routing answers from a compiled
-routing archive, independent of the imagery cache; check that the
-archive you compiled covers the queried region (see the next item).</p>
-<p><strong>A route refusal comes back offline.</strong> The offline graph refuses,
-rather than guessing, in three cases: bytes that fail the archive
-validation, a coordinate outside every node’s snap tolerance, and a
-request pair the graph cannot connect. Check the archive covers the
-areas you query; a small extract is the usual cause.</p>
-<p><strong>Maneuver text has no street names offline.</strong> The archived graph
-carries no street-name strings, so the offline maneuver texts name the
-turn direction and the distance and stay honest about what they do not
-know. Named maneuver text arrives from the online provider.</p>
+<p><strong>Tiles render but routes fail offline, or the other way around.</strong> The two
+offline layers are separate. Tile imagery comes from the disk cache you
+registered with <code>setProviderCredentialWithTileCache</code>, within its byte budget
+and time-to-live. Routing comes from a compiled routing archive, independent
+of the imagery cache. Check that the archive covers the queried region.</p>
+<p><strong>A route refusal comes back offline.</strong> The offline graph refuses rather than
+guessing in three cases: bytes that fail archive validation, a coordinate
+outside every node’s snap tolerance, and a request pair the graph cannot
+connect. Check that the archive covers the areas you query; a small extract is
+the usual cause.</p>
+<p><strong>Maneuver text has no street names offline.</strong> The archived graph carries no
+street-name strings. Offline maneuver text names the turn direction and the
+distance and states what it does not know. A named maneuver comes from the
+online provider.</p>
 <h2 id="tile-cache"><a class="header" href="#tile-cache">Tile cache</a></h2>
-<p><strong>A tuned time-to-live does not stick after re-registration.</strong>
-Registration is a reset: a freshly registered cache starts again at the
-category default, so re-apply the override after registering. The
-<code>rasterTileCacheTerms</code> readback shows the effective value.</p>
-<p><strong>A large requested time-to-live is accepted but the cache still
-expires entries.</strong> The installed provider’s declared terms ceiling
-(compliance-bound at 30 calendar days for the imagery) clamps what the
-cache retains. Read the ceiling from
+<p><strong>A tuned time-to-live does not stick after re-registration.</strong> Registration
+resets the cache to the category default. Re-apply the override after
+registering. The <code>rasterTileCacheTerms</code> readback shows the effective value.</p>
+<p><strong>A large requested time-to-live is accepted but the cache still expires
+entries.</strong> The installed provider’s declared ceiling, 30 calendar days for the
+imagery, clamps what the cache retains. Read the ceiling from
 <code>rasterTileCacheTerms</code> and display it next to the effective value.</p>
-<p><strong>Setting a zero time-to-live throws.</strong> A zero value would expire every
-entry on capture; the refusal names the mistake.</p>
+<p><strong>Setting a zero time-to-live throws.</strong> A zero value would expire every entry
+on capture. The refusal names the mistake.</p>
 <h2 id="compliance"><a class="header" href="#compliance">Compliance</a></h2>
 <p><strong>Attribution.</strong> Keep the attribution line visible in your application:
 imagery © MapQuest; map data © OpenStreetMap contributors (ODbL). If you

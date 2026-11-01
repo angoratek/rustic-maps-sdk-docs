@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,32 +180,27 @@
 <p><a href="demo/">Open the live wasm demo</a></p>
 </div>
 
-<p>The demo runs the SDK’s own browser build — the same wasm module the
-WebAssembly package ships — drawing rendered map imagery on a WebGPU canvas
-with pan, zoom, bearing and pitch controls, in-page overlays, recorded route
-planning, a simulated trip with live turn-by-turn guidance from the SDK’s own
-navigator, and offline routing over a compiled archive. It is static, keyless
-and served from this site’s <code>/demo</code> path.</p>
+<p>Try the SDK in your browser: pan and zoom a rendered map, plan a recorded
+route, follow a simulated trip with turn-by-turn guidance, and route over a
+compiled archive. The demo runs the same WebAssembly module the package
+ships, draws on a WebGPU canvas, and works without a provider key.</p>
 <h2 id="what-the-demo-needs-in-a-browser"><a class="header" href="#what-the-demo-needs-in-a-browser">What the demo needs in a browser</a></h2>
 <ul>
-<li><strong>WebGPU.</strong> Chromium-based browsers support it flag-free since 113;
-Safari ships it from version 26; Firefox ships it since 141, with
-desktop first. MDN’s WebGPU page carries the live compatibility table.</li>
-<li><strong>A secure context.</strong> The browser resolves WebGPU only over HTTPS or
+<li><strong>WebGPU.</strong> Chromium-based browsers support it flag-free since 113. Safari
+ships it from version 26, and Firefox since 141 with desktop first. MDN’s
+WebGPU page carries the live compatibility table.</li>
+<li><strong>A secure context.</strong> The browser enables WebGPU only over HTTPS or
 localhost.</li>
-<li><strong>Keyless by default.</strong> The demo renders bundled demo imagery, plans the
-recorded demo routes, drives the simulated trip and answers offline routes
-from a bundled archive. The gear in the panel header
-opens <strong>Settings</strong>, where a provider key can be applied at runtime for live
-geocoding, routing and tile probes (MapQuest today; the provider registry
-is designed for more); the key stays in the page’s memory and is never
-persisted.</li>
+<li><strong>A runtime key for live calls.</strong> Keyless, the demo renders recorded tiles,
+plans recorded routes, drives the simulated trip, and serves offline
+routes. Open <strong>Settings</strong> from the gear in the panel header to apply a
+MapQuest key for live geocoding, routing, and tiles. The key stays in
+the page’s memory and is never persisted.</li>
 </ul>
-<h2 id="running-the-same-loop-locally"><a class="header" href="#running-the-same-loop-locally">Running the same loop locally</a></h2>
-<p>Every tutorial in the <a href="SUMMARY.html">Guides</a> group ships a WebAssembly tab with
-the same surface the demo shows, so you can run the stack yourself from the
-wasm package: install it once and the <a href="first-map.html">Your first map</a> tutorial
-covers the whole loop.</p>
+<h2 id="run-the-same-loop-locally"><a class="header" href="#run-the-same-loop-locally">Run the same loop locally</a></h2>
+<p>Every guide in this book has a WebAssembly tab that uses the same surface.
+Install the wasm package and follow <a href="first-map.html">Your first map</a> for the
+whole loop.</p>
 
                     </main>
 

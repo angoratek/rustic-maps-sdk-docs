@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,28 +176,25 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="versions-and-support"><a class="header" href="#versions-and-support">Versions and support</a></h1>
-<p>This page states how versions are chosen, what a released version line
-receives, and how changes reach it. The workspace version is 0.1.0, and
-the first stable release is still being prepared; the
-<a href="downloads.html">Downloads</a> page lists the artifacts when it lands. The
-<a href="requirements.html">Requirements and distributions</a> page carries the
-per-platform requirement facts.</p>
+<p>This page explains how versions are numbered, what a released version line
+receives, and how to report a problem. The current version is 0.1.0.
+<a href="requirements.html">Requirements and distributions</a> lists the per-platform
+requirements, and <a href="downloads.html">Downloads</a> lists the released artifacts.</p>
 <h2 id="version-numbering"><a class="header" href="#version-numbering">Version numbering</a></h2>
-<p>Versions follow semantic versioning as <code>MAJOR.MINOR.PATCH</code>. One
-workspace version is the single source of truth: the Android, iOS, React
-Native, and WebAssembly packages are all stamped from it at release
-time, so one version string identifies one core.</p>
-<p>The SDK is pre-1.0. The <a href="udl-contract.html">FFI contract</a> is addition-only,
-so existing members keep their signature and meaning across an upgrade.
-Packaging can still change while the release is 0.x: an artifact-set
-change or a renamed target bumps the minor version, and a pre-1.0 minor
-may break a build even when the contract did not change. Treat a minor
-upgrade as one to test, not one to assume.</p>
+<p>Versions follow semantic versioning as <code>MAJOR.MINOR.PATCH</code>. One workspace
+version is the single source of truth: the Android, iOS, React Native, and
+WebAssembly packages are all stamped from it at release time, so one version
+string identifies one core.</p>
+<p>The SDK is pre-1.0. The <a href="udl-contract.html">FFI contract</a> is addition-only, so
+existing members keep their signature and meaning across an upgrade. Packaging
+can still change while the release is 0.x: an artifact-set change or a renamed
+target bumps the minor version, and a pre-1.0 minor can break a build even when
+the contract did not change. Test a minor upgrade; do not assume it.</p>
 <h2 id="pin-exact-versions"><a class="header" href="#pin-exact-versions">Pin exact versions</a></h2>
-<p>Release archives are immutable and carry the version in the file name,
-for example <code>rustic-maps-sdk-android-vX.Y.Z.aar</code>. Keep the exact version
-you validated against and upgrade deliberately. The version you pin also
-names the notices file that accompanies it.</p>
+<p>Release archives are immutable and carry the version in the file name, for
+example <code>rustic-maps-sdk-android-v0.1.0.aar</code>. Keep the exact version you
+validated against and upgrade deliberately. The version you pin also names the
+notices file that accompanies it.</p>
 <h2 id="two-release-tracks"><a class="header" href="#two-release-tracks">Two release tracks</a></h2>
 <div class="table-wrapper">
 <table>
@@ -210,33 +207,27 @@ names the notices file that accompanies it.</p>
 </tbody>
 </table>
 </div>
-<p>Tags are never moved, and a broken release is superseded by a new tag;
-the failed release’s assets and checksums stay.</p>
+<p>Tags are never moved, and a broken release is superseded by a new tag. The
+failed release’s assets and checksums stay.</p>
 <h2 id="support-window"><a class="header" href="#support-window">Support window</a></h2>
-<p>Each released minor line is intended to receive fixes for a stated
-window after the next minor line releases. That window length is not yet
-fixed and is published here with the first stable release. Until it is
-published, plan to upgrade to the newest minor line for fixes.</p>
+<p>Fixes target the newest minor line; upgrade to it to keep receiving fixes.</p>
 <h2 id="deprecation"><a class="header" href="#deprecation">Deprecation</a></h2>
-<p>The contract’s addition-only rule means a released contract member keeps
-its signature and meaning; a new release adds members rather than
-removing them. A deprecation can still mark a member or a packaging
-detail as superseded, and it is announced in the release notes and the
-changelog before the release that retires it. The exact deprecation lead
-time is not yet fixed and is published here with the first stable
-release.</p>
+<p>The contract’s addition-only rule means a released contract member keeps its
+signature and meaning; a new release adds members rather than removing them. A
+deprecation can still mark a member or a packaging detail as superseded.
+Release notes and the changelog announce it before the release that retires
+it.</p>
 <h2 id="checking-the-loaded-version"><a class="header" href="#checking-the-loaded-version">Checking the loaded version</a></h2>
-<p>The compiled SDK answers <code>getSdkCompiledVersion</code> on every surface.
-Compare it with the artifact you shipped. A mismatch means the loaded
-core and your dependency declaration disagree, and a diagnostics screen
-should show the value.</p>
+<p>The compiled SDK exposes <code>getSdkCompiledVersion</code> on every surface. Compare it
+with the artifact you shipped. A mismatch means the loaded core and your
+dependency declaration disagree, and a diagnostics screen should show the
+value.</p>
 <h2 id="getting-support"><a class="header" href="#getting-support">Getting support</a></h2>
-<p>Report a problem through the project’s issue tracker with four things:
-the <code>getSdkCompiledVersion</code> output, your platform and operating
-system version, the exact SDK version you pinned, and a minimal
-reproduction. For a rendering problem, include the <code>FrameStatistics</code>
-of an affected frame. For a provider problem, include the <code>SdkError</code>
-variant and its verbatim detail.</p>
+<p>Report a problem through the project’s issue tracker with four things: the
+<code>getSdkCompiledVersion</code> output, your platform and operating system version,
+the exact SDK version you pinned, and a minimal reproduction. For a rendering
+problem, include the <code>FrameStatistics</code> of an affected frame. For a provider
+problem, include the <code>SdkError</code> variant and its detail.</p>
 
                     </main>
 

@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,9 +176,10 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
-<p>The SDK is pre-1.0, and no versioned package release has been published yet.
-The entries below describe the capabilities in the current source build. They
-are grouped by area, with the most recently completed work first.</p>
+<p>The SDK is pre-1.0. Version 0.1.0 artifacts are published on the
+<a href="downloads.html">downloads page</a>; the entries below describe the capabilities
+they carry. They are grouped by area, with the most recently completed work
+first.</p>
 <p>The FFI contract is <strong>addition-only</strong>: existing members keep their signature
 and meaning across an upgrade, so a release adds to the surface rather than
 rewriting your calls. The <a href="versions-and-support.html">versions and support</a> page
@@ -204,6 +205,19 @@ failed tile counts of the last resolved frame, and the last tile failure
 detail, so an application can show an honest loading or unavailable state.</li>
 <li>A Mapbox Vector Tile v2.1 decoder turns fetched tiles into layers, features
 and geometries, with typed errors on every malformed path.</li>
+</ul>
+<h2 id="positioning"><a class="header" href="#positioning">Positioning</a></h2>
+<ul>
+<li>The Rust <code>map-positioning</code> crate validates the fixes a device source reports,
+ignores stationary repeats when averaging course, smooths the course around
+the circle (so 350° and 10° average to north), tracks staleness and records
+source failures, so the location indicator, follow camera and navigation
+controller read one consistent stream.</li>
+<li>A simulated position source walks a route with course and accuracy for tests,
+demos and desktop applications before a platform source is wired.</li>
+<li>The controller is available to Rust applications now; a host supplies the
+fixes from its own location API, so a Rust application keeps the permission
+and lifecycle decisions where the operating system requires them.</li>
 </ul>
 <h2 id="mapview-and-the-reference-applications"><a class="header" href="#mapview-and-the-reference-applications">MapView and the reference applications</a></h2>
 <ul>

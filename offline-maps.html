@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,10 +176,10 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="offline-maps"><a class="header" href="#offline-maps">Offline maps</a></h1>
-<p>Keep map imagery and routing working without a network. The SDK’s
-offline story has two layers: a disk response cache that holds raster
-tile imagery under your byte budget, and a compiled routing archive that
-answers routes with no network round trip at all.</p>
+<p>Keep map imagery and routing working without a network. Two independent
+layers do it: a disk response cache that holds raster tile imagery under your
+byte budget, and a compiled routing archive that returns routes with no
+network round trip.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -190,11 +190,10 @@ answers routes with no network round trip at all.</p>
 
 <div class="platform-tab-panel" data-platform-panel="android">
 <h3 id="register-the-providers-with-a-tile-cache"><a class="header" href="#register-the-providers-with-a-tile-cache">Register the providers with a tile cache</a></h3>
-<p>One registration call installs the map-platform provider set and wraps
-the raster-tile contract in the disk response cache. The reference
-application’s offline-maps demo runs exactly this:</p>
+<p>One registration call installs the map-platform provider set and wraps the
+raster-tile contract in the disk response cache:</p>
 <pre><code class="language-kotlin">val tileCacheDatabaseFile = File(context.cacheDir, "reference-tile-cache.sqlite")
-val tileCacheBudgetBytes = 16777216UL   // 16 MiB, the demo's absolute budget
+val tileCacheBudgetBytes = 16777216UL   // 16 MiB
 
 mapSdk.setProviderCredentialWithTileCache(
     providerApiKey,
@@ -202,12 +201,13 @@ mapSdk.setProviderCredentialWithTileCache(
     tileCacheBudgetBytes,
 )
 </code></pre>
-<p>The call opens (or creates) the SQLite response cache at the path. A
-refusal (unusable path, non-positive budget) surfaces verbatim.</p>
+<p>The call opens or creates the SQLite response cache at the path. A refusal,
+such as an unusable path or a non-positive budget, returns the reason
+verbatim.</p>
 <h3 id="read-and-tune-the-caching-terms"><a class="header" href="#read-and-tune-the-caching-terms">Read and tune the caching terms</a></h3>
-<p>The cache starts at the tiles category’s default time-to-live, 30
-calendar days — the imagery-provider terms ceiling. Tune the live value
-and read what went into force:</p>
+<p>The cache starts at the tiles category’s default time-to-live of 30 calendar
+days, the imagery-provider terms ceiling. Tune the live value and read the
+value in force:</p>
 <pre><code class="language-kotlin">mapSdk.setRasterTileCacheTimeToLive(timeToLiveSeconds)
 val terms = mapSdk.rasterTileCacheTerms()
 // terms.effectiveTimeToLiveSeconds
@@ -224,19 +224,18 @@ ceiling clamps what the cache retains; the readback shows the effective
 value, so display it in your offline-maps settings screen.</p>
 <h3 id="pre-warm-the-tiles-you-need"><a class="header" href="#pre-warm-the-tiles-you-need">Pre-warm the tiles you need</a></h3>
 <p>Cached tile responses render whenever the network is unavailable: a
-cache miss goes to the network and back-fills, and a cache hit answers
-from disk. Render the regions your users expect to revisit once while
+cache miss goes to the network and back-fills, and a cache hit comes from
+disk. Render the regions your users expect to revisit once while
 online, and the cache holds them until the budget or time-to-live says
 otherwise.</p>
 <h3 id="route-without-the-network"><a class="header" href="#route-without-the-network">Route without the network</a></h3>
 <p>The offline routing layer runs inside the SDK: a compiled routing
 archive — OpenStreetMap extract in, self-describing archive file out —
-answers routes with A* over the archive’s graph, honoring recorded
-turn restrictions and deriving maneuver text from the geometry’s bearing
-change.</p>
-<p>The contract carries the route call on every surface: pass the archive
-bytes, not a path, so the same call works on Android, iOS, React Native
-and the browser.</p>
+returns routes with A* over the archive’s graph, honoring recorded turn
+restrictions and deriving maneuver text from the geometry’s bearing change.</p>
+<p>The contract carries the route call on every surface. Pass the archive bytes,
+not a path, so the same call works on Android, iOS, React Native, and the
+browser.</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
 import uniffi.rustic_maps.offlineRouteFromArchiveBytes
 
@@ -248,12 +247,11 @@ val plannedRoute = offlineRouteFromArchiveBytes(
     GeographicCoordinate(latitude = 0.001, longitude = 0.002),
 )
 </code></pre>
-<p>The request uses the archive profile’s default options (automobile,
-fastest, metric). A corrupt archive throws <code>OfflineRoutingFailure</code>. An
-offline routing decorator also lets you retry over the archive when your
-online provider fails — you wrap the provider yourself; the SDK registers
-no fallback on your behalf. Maneuver texts stay honest where the extract
-carries no street names.</p>
+<p>The request uses the archive profile’s default options: automobile, fastest,
+metric. A corrupt archive throws <code>OfflineRoutingFailure</code>. The SDK does not
+fall back to the archive when the online provider fails; catch the online
+failure and call the archive route yourself. Maneuver texts stay honest where
+the extract carries no street names.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="ios">
@@ -283,8 +281,8 @@ let terms = try mapSdk.rasterTileCacheTerms()
 // let terms = try offlineManager.tileCacheTerms()
 </code></pre>
 <h3 id="pre-warm-and-render-offline"><a class="header" href="#pre-warm-and-render-offline">Pre-warm and render offline</a></h3>
-<p>Cached tiles render whenever the network is unavailable. Render the
-regions your users revisit while online; the cache answers from disk.</p>
+<p>Cached tiles render whenever the network is unavailable. Render the regions
+your users revisit while online; the cache serves them from disk.</p>
 <h3 id="route-without-the-network-1"><a class="header" href="#route-without-the-network-1">Route without the network</a></h3>
 <p>The offline routing layer runs inside the SDK over a compiled archive:
 A* on the archive’s graph, recorded turn restrictions honored, maneuver
@@ -299,17 +297,16 @@ let plannedRoute = try await offlineRouteFromArchiveBytes(
     end: GeographicCoordinate(latitude: 0.001, longitude: 0.002)
 )
 </code></pre>
-<p>The request uses the archive profile’s default options (automobile,
-fastest, metric). A corrupt archive throws <code>OfflineRoutingFailure</code>. You
-can also wrap your online provider with the offline fallback decorator
-yourself; the SDK registers no fallback on your behalf.</p>
+<p>The request uses the archive profile’s default options: automobile, fastest,
+metric. A corrupt archive throws <code>OfflineRoutingFailure</code>. The SDK does not
+fall back to the archive when the online provider fails; catch the online
+failure and call the archive route yourself.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="register-the-providers-with-a-tile-cache-2"><a class="header" href="#register-the-providers-with-a-tile-cache-2">Register the providers with a tile cache</a></h3>
-<p>The package’s one SDK handle installs the provider set and wraps the
-raster-tile contract in the disk response cache. The reference application’s
-offline card reports the registration it installed:</p>
+<p>The package’s SDK handle installs the provider set and wraps the raster-tile
+contract in the disk response cache:</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
 async function createMapSdkWithTileCache(providerKey, providerApiKey) {
@@ -330,9 +327,9 @@ credential, never a file path. A refusal resolves with <code>isApplied: false</c
 the provider’s verbatim <code>detailText</code>. Re-registration replaces the raster-tile
 slot, cache included.</p>
 <h3 id="read-and-tune-the-caching-terms-2"><a class="header" href="#read-and-tune-the-caching-terms-2">Read and tune the caching terms</a></h3>
-<p>The cache starts at the tiles category’s default time-to-live, 30 calendar
-days — the imagery-provider terms ceiling. Tune the live value and read what
-went into force:</p>
+<p>The cache starts at the tiles category’s default time-to-live of 30 calendar
+days, the imagery-provider terms ceiling. Tune the live value and read the
+value in force:</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
 const mapSdk = await MapsSdk.create();
@@ -354,11 +351,10 @@ goes to the network and back-fills, and a cache hit answers from disk. Render
 the regions your users expect to revisit once while online, and the cache
 holds them until the budget or time-to-live says otherwise.</p>
 <h3 id="route-without-the-network-2"><a class="header" href="#route-without-the-network-2">Route without the network</a></h3>
-<p>The compiled routing archive — the OpenStreetMap extract in, the
-self-describing archive file out — answers routes with A* over the
-archive’s graph, honoring recorded turn restrictions and deriving maneuver
-text from the geometry. The generated bindings carry the contract’s
-archive-route call; pass the bytes, not a path:</p>
+<p>The compiled routing archive returns routes with A* over its graph, honoring
+recorded turn restrictions and deriving maneuver text from the geometry. The
+generated bindings carry the contract’s archive-route call; pass the bytes,
+not a path:</p>
 <pre><code class="language-js">import { offlineRouteFromArchiveBytes } from '@angoratek/rustic-maps-sdk';
 
 // The compiled RMOG archive's bytes, bundled with the app or downloaded.
@@ -370,20 +366,20 @@ const plannedOfflineRoute = await offlineRouteFromArchiveBytes(
   { latitude: 0.001, longitude: 0.002 },
 );
 </code></pre>
-<p>The request uses the archive profile’s default options (automobile,
-fastest, metric). A corrupt archive rejects with <code>OfflineRoutingFailure</code>.
-The SDK registers no fallback on your behalf.</p>
+<p>The request uses the archive profile’s default options: automobile, fastest,
+metric. A corrupt archive rejects with <code>OfflineRoutingFailure</code>. The SDK does
+not fall back to the archive when an online route fails; handle that failure
+in your own code.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
-<h3 id="scope-note"><a class="header" href="#scope-note">Scope note</a></h3>
-<p>A page can persist files, but the SDK owns no browser cache: there is no
-SQLite tile cache, no byte budget and no pack manager on this surface. The
-cache-terms and pre-warm tile steps of the native tabs have no counterpart
-here. What the WebAssembly build carries is the routing archive: archive
-bytes in, contract-shaped route records out, with no provider and no network
-round trip. The same compiled archive serves the native platforms, so one
-compiler run feeds every target.</p>
+<h3 id="what-the-browser-surface-carries"><a class="header" href="#what-the-browser-surface-carries">What the browser surface carries</a></h3>
+<p>The browser surface has no SDK-owned cache: there is no SQLite tile cache, no
+byte budget, and no pack manager. The cache-terms and pre-warm steps of the
+native tabs have no counterpart here. What the WebAssembly build carries is
+the routing archive: archive bytes in, route records out, with no provider and
+no network round trip. The same compiled archive serves the native platforms,
+so one compile feeds every target.</p>
 <h3 id="route-over-the-archive"><a class="header" href="#route-over-the-archive">Route over the archive</a></h3>
 <pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/map_web_bindings.js';
 
@@ -398,11 +394,12 @@ const plannedRoute = await offlineRouteFromArchiveBytes(
   endLongitude,
 );
 </code></pre>
-<p>The answer is the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code> record the live route
+<p>The result is the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code> record the live route
 call returns, so the route overlay and framing steps from <a href="search-and-routing.html">Search and
-routing</a> apply unchanged. The call rejects verbatim
-when the bytes fail archive validation, a coordinate falls outside every
-node’s snap tolerance, or the two points are not connected in the graph.</p>
+routing</a> apply unchanged. The call rejects with the
+reason when the bytes fail archive validation, a coordinate falls outside
+every node’s snap tolerance, or the two points are not connected in the
+graph.</p>
 <p>Where the bytes come from is the page’s decision: ship the archive with the
 app, fetch it once and keep it in the browser’s own storage, or read it from
 <code>&lt;input type="file"&gt;</code> for a local preview.</p>
@@ -419,7 +416,7 @@ app, fetch it once and keep it in the browser’s own storage, or read it from
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="provider-capabilities-android.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="provider-capabilities-rust.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -433,7 +430,7 @@ app, fetch it once and keep it in the browser’s own storage, or read it from
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="provider-capabilities-android.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="provider-capabilities-rust.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

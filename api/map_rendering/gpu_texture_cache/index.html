@@ -13,6 +13,6 @@ encoded-payload pool’s byte budget idea: as with the pool, a single
 oversized texture is kept alone rather than flash the map.</p>
 </div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.GpuTileTextureCache.html" title="struct map_rendering::gpu_texture_cache::GpuTileTextureCache">GpuTile<wbr>Texture<wbr>Cache</a></dt><dd>LRU cache of uploaded tile textures, bounded in GPU bytes.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.GPU_TILE_TEXTURE_CACHE_DEFAULT_MAXIMUM_BYTES.html" title="constant map_rendering::gpu_texture_cache::GPU_TILE_TEXTURE_CACHE_DEFAULT_MAXIMUM_BYTES">GPU_<wbr>TILE_<wbr>TEXTURE_<wbr>CACHE_<wbr>DEFAULT_<wbr>MAXIMUM_<wbr>BYTES</a></dt><dd>Default GPU byte budget, sized as a heuristic for one complete 16 × 16
 tile grid of 256-px RGBA8 tiles — the payload size platform raster tile
-sources produce today. Budgets size the cache, not the textures: the
+sources typically produce. Budgets size the cache, not the textures: the
 upload path textures whatever a payload decodes to, so a 512-px payload
 holds half as many tiles in the same byte budget.</dd></dl></section></div></main></body></html>

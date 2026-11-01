@@ -3,6 +3,6 @@
 <code>byte = 255 - (64 + 32 × distance_px)</code>, so the zero-distance contour — the
 glyph outline — sits at <code>(256 − 64)/256 = 0.75</code>, not at 0.5. Thresholding at
 0.5 dilates every glyph by <code>(0.75 − 0.5) × 8 = 2</code> atlas pixels per side,
-which closes counters and fattens strokes; MapLibre Native uses the same
-0.75 edge (<code>inner_edge</code> in its <code>symbol_sdf</code> fragment shader).</p>
+which closes counters and fattens strokes. Thresholding at 0.75 keeps the
+outline faithful to the font.</p>
 </div></details></section></div></main></body></html>

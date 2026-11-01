@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,11 +176,10 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="requirements-and-distributions"><a class="header" href="#requirements-and-distributions">Requirements and distributions</a></h1>
-<p>The SDK ships as release archives you download and install into your
-project; it publishes through no package registry. This page lists what
-each platform needs to build against the SDK, what the artifacts weigh,
-and how versions are stamped. The <a href="downloads.html">Downloads</a> page names
-the released files.</p>
+<p>The SDK ships as release archives that you download and install into your
+project. This page lists the minimum platform versions, the artifact each
+platform installs, and what each artifact weighs. <a href="downloads.html">Downloads</a>
+lists the released files and their checksums.</p>
 <h2 id="android"><a class="header" href="#android">Android</a></h2>
 <div class="table-wrapper">
 <table>
@@ -196,13 +195,15 @@ the released files.</p>
 </tbody>
 </table>
 </div>
-<p>The Android release ships two AARs: the bindings and runtime
-(<code>com.angoratek:rustic-maps-sdk</code>) carrying the Kotlin bindings plus the
-Rust dynamic library for three ABIs, and the <code>MapView</code> widget and Compose
-wrapper (<code>rustic-maps-sdk-android-ui-v&lt;version&gt;.aar</code>) that depends on it.
-Measured sizes (2026-10-29, bindings AAR): 16 MiB; the stripped per-ABI
-<code>.so</code> libraries measure arm64-v8a 12 MiB, armeabi-v7a 8.7 MiB, and x86_64
-13 MiB.</p>
+<p>The release ships two AARs:</p>
+<ul>
+<li><code>rustic-maps-sdk-android-v0.1.0.aar</code> — the Kotlin bindings and the Rust
+library for arm64-v8a, armeabi-v7a, and x86_64. The bindings AAR measures
+16 MiB; its stripped libraries measure 12 MiB for arm64-v8a, 8.7 MiB for
+armeabi-v7a, and 13 MiB for x86_64.</li>
+<li><code>rustic-maps-sdk-android-ui-v0.1.0.aar</code> — the <code>MapView</code> and its Compose
+wrapper. It depends on the bindings AAR, so add both.</li>
+</ul>
 <h2 id="ios"><a class="header" href="#ios">iOS</a></h2>
 <div class="table-wrapper">
 <table>
@@ -216,71 +217,64 @@ Measured sizes (2026-10-29, bindings AAR): 16 MiB; the stripped per-ABI
 </tbody>
 </table>
 </div>
-<p>The iOS artifact is an XCFramework containing the static library, its
-headers and modulemaps, consumed by Swift Package Manager through the
-release’s checksummed zip (the <code>RusticMapsSDK</code> product). Measured sizes
-(2026-10-29): 217 MiB per slice, 207 MiB after <code>strip -x</code>. A static
-archive carries every compiled object and the consumer’s final link
-discards unused code, so these archive sizes are not the size your
-application adds; the per-architecture measurement is a recorded open
-decision on whether the iOS artifact later moves to a dynamic slice.</p>
+<p>The artifact is
+<code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code>: the XCFramework containing the
+static library, its headers, and module maps, packaged for a Swift Package
+Manager binary target. Each slice measures 217 MiB, and 207 MiB after
+<code>strip -x</code>. A static archive carries every compiled object, and your final
+link discards unused code, so these archive sizes are not the size your
+application adds.</p>
 <h2 id="react-native"><a class="header" href="#react-native">React Native</a></h2>
-<p>The React Native artifact is a TurboModule package
-(<code>@angoratek/rustic-maps-sdk</code>) generated from the contract. It carries the
-generated TypeScript surface, the JSI C++ glue, and the podspec/CMake wiring.</p>
-<p>Two facts bound what it can do for you:</p>
+<p>The artifact is <code>rustic-maps-sdk-rn-v0.1.0.tgz</code>, the TurboModule source
+package (<code>@angoratek/rustic-maps-sdk</code>). It carries the generated TypeScript
+surface, the JSI C++ glue, and the podspec and CMake wiring.</p>
 <ul>
-<li><strong>It is generated for a React Native version range</strong>, not for every version:
-<code>platform/rn/package.json</code> declares the peer range the generated glue was
-produced against (React Native ≥ 0.88, React ≥ 19 at the time of writing).
-Outside that range, regenerate with the matching <code>ubrn</code> — the pinned
-generator is what produces the glue.</li>
-<li><strong>It ships as a source package.</strong> The compiled native payload
-(<code>jniLibs/&lt;abi&gt;/libmap_native_core.a</code> and the iOS
-<code>AngoratekRusticMapsSdkFramework.xcframework</code>) is produced by
-<code>scripts/build-rn.sh</code> on a host with the Android NDK and Xcode;
-<code>scripts/package-rn-npm.sh --with-native-payload</code> packs it into the tarball.
-A tarball without that payload builds the Rust code in your own project on
-first build.</li>
+<li><strong>React Native and React versions.</strong> The generated glue targets React
+Native 0.88 or later and React 19 or later. For another version, regenerate
+the glue with a matching generator version.</li>
+<li><strong>Source package.</strong> The compiled native payload is optional. With it, the
+package installs ready to run. Without it, your project builds the Rust code
+on the first build.</li>
 </ul>
 <h2 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h2>
-<p>The wasm artifact (<code>@angoratek/rustic-maps-sdk-web</code>) is the
-<code>wasm-bindgen</code> ES module emit. Measured size (2026-10-29): 3.6 MiB
-downloaded, of which the wasm module is 3.4 MiB.</p>
-<p>The browser surface renders through WebGPU. Chromium-based browsers have
-supported it flag-free since 113 (2023); Safari ships it from version 26;
-Firefox ships it since 141, with desktop first. WebGPU is a
-secure-context API, so your page must be served over HTTPS or from
-localhost, and <code>navigator.gpu</code> is the feature test to use — no
-user-agent sniffing. MDN’s WebGPU page carries the live compatibility
-table.</p>
+<p>The wasm artifacts are:</p>
+<ul>
+<li><code>rustic-maps-sdk-web-v0.1.0.tar.gz</code> — the wasm module, its JavaScript shim,
+and both type files.</li>
+<li><code>rustic-maps-sdk-web-v0.1.0.tgz</code> — the same module with the npm manifest,
+licenses, and notices.</li>
+</ul>
+<p>The package downloads 3.6 MiB, of which the wasm module is 3.4 MiB.</p>
+<p>The browser surface renders through WebGPU. Chromium-based browsers support it
+flag-free since 113 (2023), Safari from version 26, and Firefox since 141 with
+desktop first. WebGPU is a secure-context API, so serve your page over HTTPS
+or from localhost, and test for <code>navigator.gpu</code> rather than sniffing the
+user agent. MDN’s WebGPU page carries the live compatibility table.</p>
+<h2 id="notices"><a class="header" href="#notices">Notices</a></h2>
+<p><code>rustic-maps-sdk-notices-v0.1.0.md</code> carries the third-party dependency notices
+that accompany your own distribution.</p>
 <h2 id="versions-policy"><a class="header" href="#versions-policy">Versions policy</a></h2>
 <ul>
-<li><strong>Pin exact versions.</strong> Release archives are immutable and carry a
-version in their file name (<code>rustic-maps-sdk-android-v0.4.0.aar</code> and
-the like); keep the version you validated against, and upgrade
-deliberately.</li>
-<li><strong>One version line.</strong> The Cargo workspace version is the single source
-of truth: the Android Maven publication, the npm packages, and the
-Swift manifest are all stamped from it at release time. The compiled SDK
-also answers the version probe (<code>getSdkCompiledVersion</code> across the FFI),
-so your diagnostics screen can verify the loaded library matches the
-artifacts you shipped.</li>
+<li><strong>Pin exact versions.</strong> Release archives are immutable and carry a version
+in the file name, for example <code>rustic-maps-sdk-android-v0.1.0.aar</code>. Keep the
+version you validated against, and upgrade deliberately.</li>
+<li><strong>One version line.</strong> The Cargo workspace version is the single source of
+truth: the Android Maven publication, the npm packages, and the Swift
+manifest are all stamped from it at release time. The compiled SDK also
+returns its version through <code>getSdkCompiledVersion</code> across the FFI, so your
+diagnostics screen can verify the loaded library matches the artifacts you
+shipped.</li>
 <li><strong>The FFI contract changes addition-only.</strong> Existing members keep their
 signature and meaning, so a minor-version upgrade keeps your compiled
-bindings valid; packaging changes (an artifact set or renamed target)
-bump the minor version while the release is 0.x.</li>
-<li><strong>Semantic versioning from 0.1.0.</strong> Versioned tags (<code>vX.Y.Z</code>) are the
-release trigger; tags are never moved, and a broken release is
-superseded by a new tag.</li>
+bindings valid. Packaging changes, such as an artifact-set change or a
+renamed target, bump the minor version while the release is 0.x.</li>
+<li><strong>Semantic versioning from 0.1.0.</strong> A <code>vX.Y.Z</code> tag triggers a release. Tags
+are never moved, and a broken release is superseded by a new tag.</li>
 <li><strong>Checksums and signatures.</strong> Every release carries a per-asset SHA-256
-checksum, an aggregated checksum manifest, and Sigstore signature
-bundles; verifying them is part of the <a href="downloads.html">Downloads</a> flow.</li>
+checksum, an aggregated checksum manifest, and Sigstore signature bundles.
+Verifying them is part of the <a href="downloads.html">Downloads</a> flow.</li>
 </ul>
-<p>Where the numbers come from: the sizes and tool versions above are
-copied from the packaging design’s recorded measurements and the build
-scripts that produce the artifacts, and they travel with the release
-notes of each tag.</p>
+<p>The sizes above are measured from the 0.1.0 artifacts.</p>
 
                     </main>
 

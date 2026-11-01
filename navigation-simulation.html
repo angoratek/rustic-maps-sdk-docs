@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,13 +176,11 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="turn-by-turn-navigation"><a class="header" href="#turn-by-turn-navigation">Turn-by-turn navigation</a></h1>
-<p>Start a trip on a route, deliver position fixes, and receive the banner
-instruction, deviation status, phase, and speech-trigger channels. This
-tutorial rehearses the reference application’s simulated trip, the recorded
-Capitol Park ⇔ Tower Bridge drive: the route you planned in
-<a href="search-and-routing.html">Search and routing</a> becomes a simulated drive with
-guidance. Every snippet compiles against the
-<a href="udl-contract.html">FFI contract</a>.</p>
+<p>Start a trip on a route, deliver position fixes, and receive turn-by-turn
+guidance: the banner instruction, speech triggers, deviation status, and
+phase. This guide turns the route you planned in <a href="search-and-routing.html">Search and
+routing</a> into a simulated Capitol Park to Tower Bridge
+drive. Every code block compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -193,9 +191,8 @@ guidance. Every snippet compiles against the
 
 <div class="platform-tab-panel" data-platform-panel="android">
 <h3 id="build-the-controller-and-subscribe-first"><a class="header" href="#build-the-controller-and-subscribe-first">Build the controller and subscribe first</a></h3>
-<p>Subscribe to the topics before you start the trip, so the initial
-instruction dispatch of the trip start is received. The listener
-implements the four callbacks the contract carries:</p>
+<p>Subscribe before you start the trip, so you receive the initial instruction
+dispatch. The listener implements the four callbacks the contract carries:</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.Navigator
 import uniffi.rustic_maps.NavigationListener
 
@@ -237,8 +234,8 @@ val subscription = navigationController.addNavigationListener(listener)
 <p>A subscription is cancelled with its handle when your screen leaves;
 dropping the reference does not unsubscribe.</p>
 <h3 id="start-the-trip"><a class="header" href="#start-the-trip">Start the trip</a></h3>
-<p>Use the SDK’s default policies unless your product measured different
-ones:</p>
+<p>Use the default policies unless you measured different ones for your
+product:</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.defaultDeviationPolicy
 import uniffi.rustic_maps.defaultStepAdvancePolicy
 import uniffi.rustic_maps.UnitSystem
@@ -253,8 +250,8 @@ navigationController.startNavigation(
 <p>The initial instruction payload dispatches before the call returns; the
 banner shows the first maneuver.</p>
 <h3 id="deliver-position-fixes"><a class="header" href="#deliver-position-fixes">Deliver position fixes</a></h3>
-<p>One fix at a time, exactly like a live location source or a recorded
-trace replay would:</p>
+<p>Deliver one fix at a time, as a live location source or a recorded trace
+does:</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.NavigationLocationUpdate
 
 suspend fun replayFixes(
@@ -279,10 +276,9 @@ suspend fun replayFixes(
 judged for deviation, so a simulated source must carry its accuracy
 like a real fix does.</p>
 <h3 id="draw-the-trip-on-the-map"><a class="header" href="#draw-the-trip-on-the-map">Draw the trip on the map</a></h3>
-<p>Navigation state is only half the experience — the map has to show the
-route and follow the vehicle. Two calls do it, and both are contract
-members you already have: the route polyline goes on as an overlay, and
-each instruction rebuilds the camera.</p>
+<p>Navigation state is half the experience; the map also has to show the route
+and follow the vehicle. Two calls do it: the route polyline goes on as an
+overlay, and each fix rebuilds the camera.</p>
 <pre><code class="language-kotlin">// Once, when the route arrives: the route geometry as one polyline.
 val routeOverlay = MapOverlay(
     kind = MapOverlayKind.ROUTE_POLYLINE,
@@ -310,9 +306,8 @@ mapView.setCamera(followCamera)
 </code></pre>
 <p>Keep the bearing smoothed rather than raw: a fix-to-fix course jitters at
 low speed, and a camera that follows it reads as shaky. When the user pans
-away, stop drawing the follow camera until they ask to be re-centered —
-the reference applications break follow on a gesture and re-engage it from
-the location control.</p>
+away, stop drawing the follow camera until they tap the location control to
+re-center.</p>
 <h3 id="voice-the-speech-channel"><a class="header" href="#voice-the-speech-channel">Voice the speech channel</a></h3>
 <p>The platform owns playback; the SDK owns when a line is newsworthy.
 When <code>onSpeechInstruction</code> delivers a <code>SpeechInstruction</code>, hand its
@@ -330,8 +325,7 @@ textToSpeechEngine.speak(
 its identity across repeats.</p>
 <h3 id="reroute-when-guidance-freezes"><a class="header" href="#reroute-when-guidance-freezes">Reroute when guidance freezes</a></h3>
 <p>A deviating trip asks for a replacement route through the controller’s
-gates. Keep the state machine in your own coordinator, exactly as the
-reference application’s trip driver does:</p>
+checks. Keep the state machine in your own coordinator:</p>
 <pre><code class="language-kotlin">if (tripState.deviation?.gradeKind == DeviationGradeKind.FULLY_OFF_ROUTE &amp;&amp;
     navigationController.beginRerouteCalculation()
 ) {
@@ -356,7 +350,8 @@ navigationController.stopNavigation()
 
 <div class="platform-tab-panel" data-platform-panel="ios">
 <h3 id="build-the-controller-and-subscribe-first-1"><a class="header" href="#build-the-controller-and-subscribe-first-1">Build the controller and subscribe first</a></h3>
-<p>The same four callbacks arrive as a Swift conforming object:</p>
+<p>The same four callbacks arrive on a Swift object that conforms to
+<code>NavigationListener</code>:</p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class GuidanceListener: NavigationListener {
@@ -467,11 +462,8 @@ navigationController.stopNavigation()
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="build-the-controller-and-subscribe-first-2"><a class="header" href="#build-the-controller-and-subscribe-first-2">Build the controller and subscribe first</a></h3>
-<p>Subscribe to the topics before you start the trip, so the initial instruction
-dispatch of the trip start is received. The package exposes the same
-navigation controller to JavaScript; the reference application drives its
-simulated trip from its native host module and forwards each payload to this
-listener, so the calls below are the JavaScript path over the same contract:</p>
+<p>Subscribe before you start the trip, so you receive the initial instruction
+dispatch. The package exposes the same navigation controller to JavaScript:</p>
 <pre><code class="language-js">import {
   Navigator,
   UnitSystem,
@@ -504,14 +496,12 @@ const listener = {
 
 const subscription = navigationController.addNavigationListener(listener);
 </code></pre>
-<p>The listener implements the four callback methods the contract carries
-(<code>onNavigationInstruction</code>, <code>onSpeechInstruction</code>,
-<code>onDeviationStatusChange</code>, <code>onNavigationPhaseChange</code>); each invocation
-delivers the same payloads the native platforms receive, with lower
-camel case field names. A subscription is cancelled with its handle when your
-screen leaves; dropping the reference does not unsubscribe.</p>
+<p>Each callback delivers the same payloads the native platforms receive, with
+lower camel case field names. Cancel the subscription with its handle when
+your screen leaves; dropping the reference does not unsubscribe.</p>
 <h3 id="start-the-trip-2"><a class="header" href="#start-the-trip-2">Start the trip</a></h3>
-<p>Use the SDK’s default policies unless your product measured different ones:</p>
+<p>Use the default policies unless you measured different ones for your
+product:</p>
 <pre><code class="language-js">navigationController.startNavigation(
   route,
   UnitSystem.Metric,
@@ -522,7 +512,7 @@ screen leaves; dropping the reference does not unsubscribe.</p>
 <p>The initial instruction payload dispatches before the call returns; the
 banner shows the first maneuver.</p>
 <h3 id="deliver-position-fixes-2"><a class="header" href="#deliver-position-fixes-2">Deliver position fixes</a></h3>
-<p>One fix per sample of your location source (or of its recorded trace):</p>
+<p>Deliver one fix per sample of your location source or its recorded trace:</p>
 <pre><code class="language-js">navigationController.updateLocation({
   coordinate: { latitude: sampleLatitude, longitude: sampleLongitude },
   horizontalAccuracyMeters: 8.0,
@@ -557,8 +547,8 @@ const routeOverlay = {
 mapView.setOverlays([routeOverlay]);
 
 // On every accepted fix: the 3D course-up follow camera (z17, 45° pitch,
-// the reference apps' constants). The handle takes the same five-value pose
-// the other tabs use, and the guided arrow sits over the vehicle.
+// the shared demo values). The handle takes the same five-value pose the
+// other tabs use, and the guided arrow sits over the vehicle.
 const FOLLOW_ZOOM_LEVEL = 17.0;
 const FOLLOW_PITCH_DEGREES = 45.0;
 const followCamera = {
@@ -626,16 +616,15 @@ navigationController.stopNavigation();
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="start-the-navigator-on-the-route"><a class="header" href="#start-the-navigator-on-the-route">Start the navigator on the route</a></h3>
-<p>The browser seam carries the navigator’s <strong>driving and readback</strong> core:
-<code>startNavigation</code>, <code>updateLocation</code>, <code>applyReroute</code>, <code>stopNavigation</code> and
-<code>currentTripState</code> on a <code>Navigator</code> class (plus a <code>hasActiveTrip</code> helper).
-The listener, speech-trigger and reroute-recalculation members stay native
-until the browser seam has a foreign-listener contract; the frozen
-contract itself is unchanged.</p>
+<p>The browser <code>Navigator</code> carries the driving and readback calls:
+<code>startNavigation</code>, <code>updateLocation</code>, <code>applyReroute</code>, <code>stopNavigation</code>, and
+<code>currentTripState</code>, plus <code>hasActiveTrip</code>. <code>addNavigationListener</code> registers a
+JavaScript callback that receives one event per topic: instruction, phase,
+deviation, speech, or stop. <code>removeNavigationListener</code> removes it by id.</p>
 <p>Create the navigator on the route you planned and drive it with the same
-walker the native tabs use. Each <code>updateLocation</code> answers the trip
-snapshot; the phase, the instruction payload, the progress numbers and the
-deviation all come from that one call:</p>
+walker the native tabs use. Each <code>updateLocation</code> returns the trip snapshot;
+the phase, the instruction payload, the progress numbers, and the deviation
+all come from that one call:</p>
 <pre><code class="language-js">import { Navigator, RouteSimulator } from './web/map_web_bindings.js';
 
 const navigationController = new Navigator();
@@ -667,11 +656,11 @@ const secondsRemaining = tripSnapshot.instruction.progress.durationRemainingSeco
 const deviationMeters = tripSnapshot.deviation?.distanceFromRouteMeters ?? null;
 </code></pre>
 <p>A fix without an accuracy is never judged and never advances a step, so a
-simulated source carries its accuracy like a real fix. <code>stopNavigation</code>
-ends the trip; <code>applyReroute</code> swaps the route without restarting the
-navigator. The banner keeps the native cards’ two lines: the phrase names
-the distance and <code>providerDisplayText</code> is the provider’s own sentence, so
-the distance is not printed twice.</p>
+simulated source carries its accuracy like a real fix. <code>stopNavigation</code> ends
+the trip, and <code>applyReroute</code> swaps the route without restarting the
+navigator. The banner keeps two lines: <code>distancePhraseText</code> names the
+distance and <code>providerDisplayText</code> is the provider’s own sentence, so the
+distance is not printed twice.</p>
 <h3 id="simulate-the-trip-and-follow-it"><a class="header" href="#simulate-the-trip-and-follow-it">Simulate the trip and follow it</a></h3>
 <p>Create the simulator once from the planned route and a pace, then ask it for
 a fix at an elapsed time. The fix carries a <code>coordinate</code>, the
