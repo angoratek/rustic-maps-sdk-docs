@@ -1,0 +1,1027 @@
+<!DOCTYPE HTML>
+<html lang="en" class="coal sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>WebAssembly - Rustic Maps SDK</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A native map SDK in Rust with UniFFI bindings for Android, iOS and React Native, and a first-class WebAssembly target.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="additional-css/product-docs-593a0290.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "coal";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-39fd423e.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('coal')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rustic Maps SDK</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
+<blockquote>
+<p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
+</blockquote>
+<p>The WebAssembly package gives a browser page a WebGPU map canvas, camera math, search and routing calls, an offline routing seam, diagnostics and a turn-by-turn controller. There is no native view: you supply an <code>HTMLCanvasElement</code>, and the canvas owns the surface and the frame. Values cross the boundary as plain JavaScript objects in <code>camelCase</code>; failures are thrown as verbatim strings.</p>
+<h2 id="before-you-start"><a class="header" href="#before-you-start">Before you start</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Requirement</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>Browser</td><td>WebGPU: Chromium 113 or newer, Safari 26 or newer, Firefox 141 or newer</td></tr>
+<tr><td>Package</td><td><code>@angoratek/rustic-maps-sdk-web</code></td></tr>
+<tr><td>Module</td><td><code>map_web_bindings.js</code> with its <code>.d.ts</code> and <code>.wasm</code></td></tr>
+<tr><td>Serving</td><td>A static server over HTTPS or <code>localhost</code></td></tr>
+<tr><td>Provider credential</td><td>Passed at runtime; never bundled</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="mapssdk"><a class="header" href="#mapssdk">MapsSdk</a></h2>
+<p>The browser SDK root (<code>MapsSdk.create()</code>): the object a page creates once and hands to its [<code>crate::canvas::MapView</code>], mirroring the native <code>MapSdk</code> construction shape. The wasm runtime is module-global, so this root carries the readiness result and the compiled version rather than a second runtime; provider and engine members will hang off it as the wasm seam grows.</p>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Property</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>compiledVersion</code></td><td><code>string</code></td><td>The compiled SDK version (the workspace package version).</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>create</code></td><td><code>static async create(): Promise&lt;MapsSdk&gt;</code></td><td>Asynchronous. Returns <code>MapsSdk</code>. Throws the verbatim failure message as a string.</td><td>Creates the SDK root and resolves once the browser runtime is ready (the same work the legacy [<code>start_sdk</code>] performs). The returned root is what <code>new MapView(canvas, maps)</code> expects.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="mapview"><a class="header" href="#mapview">MapView</a></h2>
+<p>The browser GPU map canvas the page owns. Construct it over an <code>HTMLCanvasElement</code>, [<code>MapView::initialize</code>] it once (acquiring the adapter and device and building the tile pipeline), then call [<code>MapView::render_frame</code>] per wanted frame; each call re-schedules the visible tiles and redraws.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(canvas: HTMLCanvasElement, maps: MapsSdk, tileResolution: TileResolution | null)</code></td><td>Builds the canvas renderer over the page’s canvas element, bound to the SDK root it was created with (<code>new MapView(canvas, maps)</code>). The tile pixel resolution is optional: omitted, it follows the same device-pixel-ratio rule as <code>retinaDevicePixelRatioThreshold()</code>; supplied, it is honoured verbatim (the golden harness pins it). Fails when the element cannot host a GPU surface (for example after another context already claimed the element). Call [<code>MapView::initialize</code>] before the first [<code>MapView::render_frame</code>].</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Property</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>sdkCompiledVersion</code></td><td><code>string</code></td><td>Compiled version of the SDK root this view was constructed with.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>initialize</code></td><td><code>async initialize(): Promise&lt;string&gt;</code></td><td>Asynchronous. Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Acquires the adapter and device, picks the pass-through surface format, and builds the tile pipeline. Resolves to the adapter description (graphics backend and adapter name) for the page’s status line, or fails when no WebGPU adapter supports this canvas — the page then degrades to the 2D tile grid overlay. Never callable twice on the same canvas.</td></tr>
+<tr><td><code>renderFrame</code></td><td><code>async renderFrame(camera: MapCamera, fieldOfViewDegrees: number): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Renders one map frame for the camera pose into the canvas, resolving freshly visible tiles from the same-origin <code>/tiles</code> route first. Resolves to a statistics object the page’s readout consumes: <code>requestedTiles</code> (tiles the camera listed at the fetch zoom), <code>drawnTiles</code> (tiles with pooled imagery over their span this frame), <code>drawnFragments</code> (draw quads after world-copy fragment splitting), <code>missingTiles</code> (requested tiles with no pooled imagery this frame), <code>tileZoomLevel</code> (the fetch zoom, clamped to the recorded fixtures), <code>tileResolution</code> (the resolution the frame’s fixtures were fetched and sampled at) and <code>overlayTriangles</code> (triangles in the cached world-space overlay layer drawn over the tiles this frame; zero without overlays; the GPU clips copies and near-plane fragments). With the raster tile layer hidden through [<code>MapView::set_tile_layer_visible</code>] the frame skips the whole tile pipeline and reports <code>requestedTiles</code>, <code>drawnTiles</code>, <code>drawnFragments</code> and <code>missingTiles</code> as zero while still presenting the overlay and indicator layers. The camera binding is consumed by value (the <code>wasm-bindgen</code> class parameter semantics); the page builds a fresh camera per changed pose, exactly as it already does. Two overlapping calls are a construction-time borrow violation — the page serializes its frames behind a busy flag and never overlaps.</td></tr>
+<tr><td><code>stageParentTile</code></td><td><code>async stageParentTile(fallbackTileX: number, fallbackTileY: number, fallbackZoomLevel: number, parentTileX: number, parentTileY: number, parentZoomLevel: number): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws the verbatim failure message as a string.</td><td>Stages a deliberate parent-fallback for one requested tile, mirroring the native golden image harness (<code>fill_pool_and_prepare</code> in <code>map-rendering</code>’s golden test): the fallback tile is evicted from the pool and marked unavailable forever, and its coarser parent’s recorded fixture is pooled instead, so the scheduler resolves the fallback tile as <code>FallsBackTo { parent }</code> every frame and the frame samples the parent texture. The committed golden frames were produced with the last visible scene tile resolved exactly this way, so the browser golden-compare page calls this before rendering a golden scene to reproduce the reference imagery byte-for-byte. Fetches the parent fixture from the same-origin <code>/tiles</code> route. A missing or undecodable parent fixture is an error, not a silent skip: the caller wants the fallback imagery or nothing. The parent coordinates must describe the fallback tile’s direct parent.</td></tr>
+<tr><td><code>setOverlays</code></td><td><code>setOverlays(overlays: any[]): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the overlay list drawn over the tiles in every following [<code>MapView::render_frame</code>], replacing any earlier list in order (later list entries draw over earlier ones); an empty array clears. Each entry is a plain JavaScript object describing one overlay shape, selected by its <code>kind</code> field: * <code>{kind: "routePolyline", coordinates: [{latitude, longitude}...], color?, widthPixels?}</code> — a routed path drawn as a thick line, * <code>{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...], color?}</code> — an ear-clip triangulated ring fill, * <code>{kind: "pointMarkers", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — screen-facing octagon markers, * <code>{kind: "pointPins", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — teardrop pins anchored at their tip with a hollow head center, * <code>{kind: "trafficFlow", segments: [{shapeCoordinates: [{latitude, longitude}...], congestionLevel: CanvasTrafficFlowCongestionLevel}...], widthPixels?}</code> — congestion-colored traffic lines. An absent <code>color</code>/<code>widthPixels</code>/<code>radiusPixels</code> override keeps the documented map-rendering default style; the fields exist exactly where the native overlay structs have them. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; widths and radii are positive finite screen pixel values. Every invalid descriptor (wrong shape, missing or wrong-typed field, out-of-range coordinate or channel, unknown <code>kind</code> or congestion value) rejects the whole call with a string-valued error and keeps the previous list in force; nothing panics.</td></tr>
+<tr><td><code>addOverlay</code></td><td><code>addOverlay(overlay: any): string</code></td><td>Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Adds one overlay descriptor to the drawn list and answers the generated opaque identifier addressing it (<code>overlay-1</code>, <code>overlay-2</code>, …; monotonic per view, never reused). Validation is exactly <code>set_overlays</code>’ single-descriptor rule: a refused descriptor throws and adds nothing. The new overlay draws last, over the entries already in the list.</td></tr>
+<tr><td><code>updateOverlay</code></td><td><code>updateOverlay(identifier: string, overlay: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Replaces the overlay addressed by <code>identifier</code> in its draw position. An invalid descriptor throws and keeps the previous overlay; an unknown identifier throws a string-valued error naming it.</td></tr>
+<tr><td><code>removeOverlay</code></td><td><code>removeOverlay(identifier: string): boolean</code></td><td>Returns <code>boolean</code>.</td><td>Removes the overlay addressed by <code>identifier</code>; answers whether the identifier was present (an unknown identifier is not an error).</td></tr>
+<tr><td><code>clearOverlays</code></td><td><code>clearOverlays(): void</code></td><td>—</td><td>Clears the overlay list; following frames draw the tiles alone until [<code>MapView::set_overlays</code>] or [<code>MapView::add_overlay</code>] supplies a new list. Clears the bulk list and every addressed overlay alike.</td></tr>
+<tr><td><code>setLabels</code></td><td><code>setLabels(labels: any[]): number</code></td><td>Returns <code>number</code>. Throws the verbatim failure message as a string.</td><td>Replaces the label candidates drawn over the overlays in every following [<code>MapView::render_frame</code>], and answers how many the call accepted. Each descriptor carries its text, geographic anchor, paint, halos, size and collision fields; [<code>MapView::set_glyph_range</code>] must supply the glyphs before anything draws. Every invalid descriptor rejects the whole call with a string-valued error and keeps the previous list in force; nothing panics.</td></tr>
+<tr><td><code>clearLabels</code></td><td><code>clearLabels(): void</code></td><td>—</td><td>Clears the label candidate list; following frames draw no labels until [<code>MapView::set_labels</code>] supplies a new list.</td></tr>
+<tr><td><code>setGlyphRange</code></td><td><code>setGlyphRange(glyphRangeBytes: Uint8Array): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Decodes one Mapbox glyph-protocol range and packs it into the <code>R8Unorm</code> atlas the label layer draws with. Answers the decoded font stack name, glyph count and page dimensions for the page’s status readout. A malformed payload or an un-packable range is a string-valued rejection and keeps the previous font in force.</td></tr>
+<tr><td><code>setLocationIndicator</code></td><td><code>setLocationIndicator(stateValue: any, styleValue: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the location-indicator layer drawn over the overlays in every following [<code>MapView::render_frame</code>] (the native surface’s top layer, round 10), replacing any earlier layer. The state descriptor is <code>{coordinate: {latitude, longitude}, courseHeadingDegrees?, horizontalAccuracyMeters?}</code>; the style descriptor is <code>{visualKind: "trackingDot" \| "guidedCourseArrow", radiusPixels?, rgbaColor?, showAccuracyRing?}</code>, where every omitted style field keeps the documented map-rendering default. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; the radius is a positive finite screen-pixel value. The optional scalars pass through verbatim (the native indicator state’s rule) while the style’s own range rules mirror the native record conversion. Every invalid descriptor rejects the whole call with a string-valued error and keeps the previous layer in force; nothing panics.</td></tr>
+<tr><td><code>clearLocationIndicator</code></td><td><code>clearLocationIndicator(): void</code></td><td>—</td><td>Clears the location-indicator layer; following frames draw no indicator until [<code>MapView::set_location_indicator</code>] supplies a new one.</td></tr>
+<tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Installs a styled vector base map (M31 — the UDL <code>MapView.set_vector_tile_source</code> contract member, now served by the browser canvas too). The descriptor is one plain JavaScript object carrying the UDL <code>UrlTemplateVectorTileSource</code> fields in lower camel case: <code>{urlTemplate, sourceName, attributionText, styleId, minimumZoomLevel, maximumZoomLevel}</code>. The template must be an absolute <code>http</code>/<code>https</code> URL carrying <code>{z}</code>, <code>{x}</code> and <code>{y}</code>; the style id must name one of the committed style artifacts (<code>bright-light</code>, <code>fiord-dark</code>, …). The whole source builds before this view changes, so a refused call (a malformed template, an empty name, an inverted zoom range or an unknown style id) throws a string-valued error and leaves the previous base in force. While a source is installed the canvas hides the raster base and paints the style’s own background, exactly like the native surface; the source’s overlays and place names draw beneath every overlay the page supplies. Installing while a frame resolves is refused.</td></tr>
+<tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Removes the vector base map (M31 — the UDL <code>MapView.clear_vector_tile_source</code> contract member): following frames draw raster tiles and overlays alone. Refused while a frame resolves, like installing.</td></tr>
+<tr><td><code>vectorTileSourceStatus</code></td><td><code>vectorTileSourceStatus(): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Reads the vector base source’s status (M31 — the UDL <code>MapView.vector_tile_source_status</code> contract member): the configured source’s style, name, attribution and zoom ceiling plus the last resolved frame’s drawn and failed tile counts. A pure query — it never fetches or draws — and it answers an honest not-configured status with no source installed.</td></tr>
+<tr><td><code>setBaseMapVisible</code></td><td><code>setBaseMapVisible(visible: boolean): void</code></td><td>—</td><td>Shows or hides the raster tile base layer in every following [<code>MapView::render_frame</code>]. Hidden frames still clear the surface and draw the overlay and location-indicator layers, so the page can paint a vector base map through [<code>MapView::set_overlays</code>] while this raster layer is hidden. A hidden frame skips the tile listing, same-origin fetches, scheduler warm/resolve, texture uploads and tile draws, and reports <code>requestedTiles: 0</code>, <code>drawnTiles: 0</code> and <code>missingTiles: 0</code> while keeping the current <code>tileZoomLevel</code>, <code>tileResolution</code> and <code>overlayTriangles</code> statistics. Showing the layer again resolves tiles normally on the next frame (the texture cache survives hidden frames).</td></tr>
+<tr><td><code>setRasterTileSource</code></td><td><code>setRasterTileSource(urlTemplate: string, maximumZoomLevel: number): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets (or clears, with a blank template) the live raster fallback: a <code>{z}/{x}/{y}</code> URL template from a provider registry descriptor that the frame fetches when no recorded fixture exists at an address, so a camera over unrecorded ground still draws imagery. The template must carry all three placeholders; the maximum zoom level caps the fetch zoom to what the tile service actually serves. The fallback runs only after the recorded-fixture fetch fails, so the local harness keeps its deterministic fixture demo, and a registered live provider (a runtime credential) is consulted before the template.</td></tr>
+<tr><td><code>setBackgroundColor</code></td><td><code>setBackgroundColor(red: number, green: number, blue: number, alpha: number): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the frame pass’s clear color (each channel 0..=1), the background behind any tiles or overlays that do not cover the surface. The default is the shared dark clear; the page paints a light clear around a vector base so the gaps between its fills do not read as a black map. A channel outside 0..=1 or a non-finite value is refused.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="mapcamera"><a class="header" href="#mapcamera">MapCamera</a></h2>
+<p>Anchored map camera (geographic center, zoom, bearing, pitch) mirroring the native [<code>map_rendering::MapCamera</code>]. The ground point under the center always sits at the viewport center.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(centerLatitude: number, centerLongitude: number, zoomLevel: number, bearingDegrees: number, pitchDegrees: number)</code></td><td>Builds a camera, clamping zoom and pitch and wrapping the bearing into <code>[0, 360)</code>, exactly like the native constructor.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fittingBounds</code></td><td><code>static fittingBounds(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number, widthPixels: number, heightPixels: number, insetTopPixels: number, insetRightPixels: number, insetBottomPixels: number, insetLeftPixels: number, maximumZoomLevel: number): MapCamera</code></td><td>Returns <code>MapCamera</code>. Throws the verbatim failure message as a string.</td><td>Builds the camera that frames a bounding box inside the viewport’s inset region, mirroring the contract’s <code>fit_bounds</code> constructor: top-down and north-up, zoomed to the largest level that keeps the whole box inside the inset area (clamped to <code>maximum_zoom_level</code>), and centered on the inset region’s center. Fails with a message when the corners, viewport, insets or maximum zoom are unusable.</td></tr>
+<tr><td><code>projectToScreen</code></td><td><code>projectToScreen(latitude: number, longitude: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Projects a coordinate to viewport pixels (origin top-left, y down), as <code>{x, y}</code>. Fails with a message when the point lies behind the camera.</td></tr>
+<tr><td><code>screenToGroundCoordinate</code></td><td><code>screenToGroundCoordinate(screenX: number, screenY: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Unprojects a viewport pixel onto the ground plane, as <code>{latitude, longitude}</code>. Fails with a message when the ray misses the ground (typically below the horizon at steep pitch).</td></tr>
+<tr><td><code>visibleTileKeys</code></td><td><code>visibleTileKeys(widthPixels: number, heightPixels: number, fieldOfViewDegrees: number, tileZoomLevel: number): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Every tile at <code>tile_zoom_level</code> whose area intersects the visible ground, as an array of <code>{tileX, tileY, zoomLevel}</code> sorted row-major from the north, mirroring the native <code>visible_tile_keys</code>.</td></tr>
+<tr><td><code>groundMetersPerScreenPixel</code></td><td><code>groundMetersPerScreenPixel(widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): number</code></td><td>Returns <code>number</code>. Throws the verbatim failure message as a string.</td><td>Ground meters represented by one screen pixel at the camera’s center (the scale bars’ helper, round 10). The viewport and field-of-view arguments mirror the projection methods’ shape and the viewport is validated like everywhere else; the flat-centered approximation (the contract’s doc term) is itself independent of both.</td></tr>
+<tr><td><code>center</code></td><td><code>center(): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>The camera’s center, as <code>{latitude, longitude}</code> — the contract’s <code>center()</code> getter. The getters make a fitted camera’s chosen framing readable (round-9 ask, contract members since M17).</td></tr>
+<tr><td><code>zoomLevel</code></td><td><code>zoomLevel(): number</code></td><td>Returns <code>number</code>.</td><td>The camera’s zoom level — the contract’s <code>zoom_level()</code> getter.</td></tr>
+<tr><td><code>bearingDegrees</code></td><td><code>bearingDegrees(): number</code></td><td>Returns <code>number</code>.</td><td>The camera’s bearing in degrees — the contract’s <code>bearing_degrees()</code> getter.</td></tr>
+<tr><td><code>pitchDegrees</code></td><td><code>pitchDegrees(): number</code></td><td>Returns <code>number</code>.</td><td>The camera’s pitch in degrees — the contract’s <code>pitch_degrees()</code> getter.</td></tr>
+<tr><td><code>tileZoomLevel</code></td><td><code>tileZoomLevel(): number</code></td><td>Returns <code>number</code>.</td><td>Nearest whole zoom level a tile fetch should use for this camera, mirroring the native <code>tile_zoom_level</code>.</td></tr>
+<tr><td><code>panByScreenPixels</code></td><td><code>panByScreenPixels(deltaXPixels: number, deltaYPixels: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Pans the camera by a pointer travel of <code>delta_x_pixels</code> x <code>delta_y_pixels</code> (screen pixels): the ground point the pointer just moved over becomes the new camera center, so map content tracks the pointer exactly. Answers the input camera pose unchanged when the delta’s ray misses the ground plane, as the contract member documents. The free <code>panCameraByScreenPixels</code> helper stays as an alias for the M3 demo call sites.</td></tr>
+<tr><td><code>zoomByLevelsAroundScreenPoint</code></td><td><code>zoomByLevelsAroundScreenPoint(deltaZoomLevels: number, focalXPixels: number, focalYPixels: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Zooms the camera by <code>delta_zoom_levels</code> keeping the world point under <code>focal_x_pixels</code>/<code>focal_y_pixels</code> fixed under that pixel; the camera’s own zoom range clamps the answer, and the uncorrected zoom answers when the focal ray misses the ground plane.</td></tr>
+<tr><td><code>rotateByDegreesAroundScreenPoint</code></td><td><code>rotateByDegreesAroundScreenPoint(deltaBearingDegrees: number, focalXPixels: number, focalYPixels: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Rotates the camera bearing by <code>delta_bearing_degrees</code> (degrees clockwise, wrapping into <code>[0, 360)</code>) keeping the world point under <code>focal_x_pixels</code>/<code>focal_y_pixels</code> fixed under that pixel; the uncorrected rotation answers when the focal ray misses the ground plane.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="navigator"><a class="header" href="#navigator">Navigator</a></h2>
+<p>Turn-by-turn navigation over a planned route, mirroring the driving and readback core of the contract’s <code>Navigator</code>.</p>
+<p>Build it with <code>new Navigator()</code>; <code>startNavigation(route, unitSystem)</code> begins a trip over a <code>Route</code> exactly as <code>calculateRoute</code> answers it (<code>unitSystem</code> is <code>"metric"</code> or <code>"imperial"</code>), <code>updateLocation(update)</code> consumes one <code>NavigationLocationUpdate</code> and answers the trip snapshot (or <code>null</code> without a trip), <code>applyReroute(route)</code> swaps the active trip’s route, <code>stopNavigation()</code> clears it, and <code>currentTripState()</code> answers the latest snapshot (<code>null</code> without a trip).</p>
+<p>The snapshot’s <code>phase</code> is <code>"navigating"</code>, <code>"offRoute"</code> or <code>"arrived"</code> (the contract’s <code>Navigating</code>/<code>OffRoute</code>/<code>Arrived</code>); <code>instruction</code> is the composed payload (<code>activeManeuver</code> with <code>distancePhraseText</code> and <code>displayText</code>, an optional <code>upcomingManeuver</code>, <code>progress</code>, and the <code>isArrival</code>/<code>isReroutingRequired</code> markers); <code>deviation</code> is <code>{statusChangeKind, distanceFromRouteMeters}</code> exactly while the phase is off route; <code>snappedCoordinate</code> is <code>{latitude, longitude}</code> once a fix has been processed. The listener, speech and reroute-recalculation members of the contract’s <code>Navigator</code> stay native until the wasm seam carries a foreign-listener contract; <code>hasActiveTrip()</code> is the wasm-only helper.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor()</code></td><td>Builds the controller with no active trip.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>addNavigationListener</code></td><td><code>addNavigationListener(listener: Function): number</code></td><td>Returns <code>number</code>.</td><td>Registers one navigation listener and answers its identifier. The callback receives one plain event per topic: <code>{topic, snapshot, speechText?, phaseChange?}</code> where <code>topic</code> is <code>"instruction"</code>, <code>"phase"</code>, <code>"deviation"</code>, <code>"speech"</code> or <code>"stop"</code>. This is the wasm seam’s event bridge (the contract’s foreign-listener trait cannot cross the wasm-bindgen boundary); the topics and payloads mirror the native navigation listener’s.</td></tr>
+<tr><td><code>removeNavigationListener</code></td><td><code>removeNavigationListener(listenerId: number): boolean</code></td><td>Returns <code>boolean</code>.</td><td>Removes one listener; answers whether it was registered.</td></tr>
+<tr><td><code>startNavigation</code></td><td><code>startNavigation(route: any, unitSystem: string): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Begins navigating <code>route</code> with the SDK default policies, replacing any active trip. Throws a message for a route the conversion cannot parse or a unit system other than <code>"metric"</code>/<code>"imperial"</code>.</td></tr>
+<tr><td><code>updateLocation</code></td><td><code>updateLocation(update: any): any</code></td><td>Returns <code>any</code>. Throws the verbatim failure message as a string.</td><td>Delivers one position fix to the active trip and answers the resulting snapshot, or <code>null</code> without an active trip (the fix is then dropped). Throws a message for a malformed update object.</td></tr>
+<tr><td><code>applyReroute</code></td><td><code>applyReroute(route: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Replaces the active trip’s route (a reroute); without an active trip the route is dropped. Throws a message for a route the conversion cannot parse.</td></tr>
+<tr><td><code>stopNavigation</code></td><td><code>stopNavigation(): void</code></td><td>—</td><td>Ends the active trip: <code>currentTripState()</code> answers <code>null</code> afterwards and location updates and reroutes are dropped until the next <code>startNavigation</code>.</td></tr>
+<tr><td><code>currentTripState</code></td><td><code>currentTripState(): any</code></td><td>Returns <code>any</code>. Throws the verbatim failure message as a string.</td><td>The latest trip snapshot, or <code>null</code> without an active trip.</td></tr>
+<tr><td><code>hasActiveTrip</code></td><td><code>hasActiveTrip(): boolean</code></td><td>Returns <code>boolean</code>.</td><td>Whether a trip is active.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="routesimulator"><a class="header" href="#routesimulator">RouteSimulator</a></h2>
+<p>An immutable simulated trip along the planned route’s own geometry, mirroring the contract’s <code>RouteSimulator</code> (M27).</p>
+<p>Construct it with a <code>Route</code>-shaped plain object (the same shape <code>calculateRoute</code> answers) and a <code>SimulatedTripPace</code>-shaped plain object; both fix methods then answer <code>SimulatedTripFix</code>-shaped plain objects. The SDK carries no pacing policy.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(route: any, pace: any)</code></td><td>Builds the walker over <code>route</code> at <code>pace</code>. Throws with a message when the route carries no usable geometry or the pace cannot drive a trip.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>totalDistanceMeters</code></td><td><code>totalDistanceMeters(): number</code></td><td>Returns <code>number</code>.</td><td>Total length of the route’s flattened polyline, in meters.</td></tr>
+<tr><td><code>totalDurationSeconds</code></td><td><code>totalDurationSeconds(): number</code></td><td>Returns <code>number</code>.</td><td>Total simulated travel time at the chosen pace, in seconds.</td></tr>
+<tr><td><code>fixAtTravelledMeters</code></td><td><code>fixAtTravelledMeters(travelledMeters: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>The fix at <code>travelled_meters</code> from the route start, clamped into <code>[0, totalDistanceMeters()]</code>.</td></tr>
+<tr><td><code>fixAtElapsedSeconds</code></td><td><code>fixAtElapsedSeconds(elapsedSeconds: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>The fix at <code>elapsed_seconds</code> of simulated travel, clamped into <code>[0, totalDurationSeconds()]</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="routes-geometry-and-version"><a class="header" href="#routes-geometry-and-version">Routes, geometry and version</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinateToNormalizedWorld</code></td><td><code>coordinateToNormalizedWorld(latitude: number, longitude: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Maps a coordinate to normalized world coordinates in <code>[0, 1]²</code>, as <code>{x, y}</code>; latitude is clamped to the Mercator cutoffs, mirroring the native <code>coordinate_to_normalized_world</code>.</td></tr>
+<tr><td><code>tileKeyForCoordinate</code></td><td><code>tileKeyForCoordinate(latitude: number, longitude: number, zoomLevel: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>The XYZ address of the tile containing the coordinate at the zoom level, as <code>{tileX, tileY, zoomLevel}</code>, mirroring the native <code>tile_key_for_coordinate</code>.</td></tr>
+<tr><td><code>tilesCovering</code></td><td><code>tilesCovering(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number, zoomLevel: number): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Every XYZ tile whose area intersects the spanning box, as an array of <code>{tileX, tileY, zoomLevel}</code> ordered row-major from the north, mirroring the native <code>tiles_covering</code>.</td></tr>
+<tr><td><code>getSdkCompiledVersion</code></td><td><code>getSdkCompiledVersion(): string</code></td><td>Returns <code>string</code>.</td><td>Semver of the compiled SDK, equal to the workspace package version.</td></tr>
+<tr><td><code>initializeSdk</code></td><td><code>initializeSdk(): Promise&lt;any&gt;</code></td><td>Returns <code>Promise&lt;any&gt;</code>.</td><td>Legacy readiness starter: installs the browser runtime, sets the <code>window.__sdkReady</code> flag and resolves to the compiled version. Prefer <code>await MapsSdk.create()</code>; this alias stays for existing harness code.</td></tr>
+<tr><td><code>offlineRouteFromArchiveBytes</code></td><td><code>offlineRouteFromArchiveBytes(archiveBytes: Uint8Array, startLatitude: number, startLongitude: number, endLatitude: number, endLongitude: number): Promise&lt;any&gt;</code></td><td>Returns <code>Promise&lt;any&gt;</code>. Throws the verbatim failure message as a string.</td><td>Routes between two coordinates over an offline routing graph loaded from in-memory archive bytes: the wasm milestone-M7 seam of <code>PRD.md</code> §4.6 — the browser has no <code>mmap</code>, so the compiled archive arrives as a <code>Uint8Array</code> (e.g. the committed routing-grid fixture served same-origin at <code>/offline-graph/routing_grid.rmog</code>) and is validated in memory before routing, exactly like the native <code>Memory</code> source seam. The request routes through the in-repo [<code>map_core::offline_routing::ArchiveOfflineRoutingProvider</code>] (its A* engine, snap, restricts and derived maneuver steps) under the automobile / fastest / metric request the offline graph profile serves (<code>RouteOptions</code> defaults). The answer mirrors the frozen contract’s <code>RouteData</code>/<code>RouteLeg</code>/<code>RouteStep</code> dictionaries field for field (lower camel case; <code>maneuverType</code> the stable snake-case label). The browser half of the contract’s <code>offline_route_from_archive_bytes</code> free helper: both delegate to [<code>map_core::offline_routing::calculate_offline_route_from_archive_bytes</code>], so the native and wasm answers cannot drift. Failures throw the plain verbatim error string (the harness’s established shape): bytes that fail archive validation, a coordinate within no graph node’s snap tolerance, or a request pair the graph cannot connect — refused, never guessed.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="provider-registration-and-live-calls"><a class="header" href="#provider-registration-and-live-calls">Provider registration and live calls</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>registerProvider</code></td><td><code>registerProvider(providerKey: string, credential: string, baseUrl: string | null): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Registers a provider for live browser calls. The caller names the shared registry’s provider key; a blank credential is refused. The credential lives in module memory only and is never logged.</td></tr>
+<tr><td><code>clearProvider</code></td><td><code>clearProvider(): void</code></td><td>—</td><td>Clears the active registration (the settings surface’s Clear act; the running page keeps nothing afterwards).</td></tr>
+<tr><td><code>setProviderCredential</code></td><td><code>setProviderCredential(apiKey: string, baseUrl: string | null): void</code></td><td>Throws the verbatim failure message as a string.</td><td>The contract’s single-credential registration spelling (<code>MapSdk:: set_provider_credential</code>) on the wasm seam: registers the MapQuest provider set through the generic dispatch table.</td></tr>
+<tr><td><code>clearMapquestProviders</code></td><td><code>clearMapquestProviders(): void</code></td><td>—</td><td>Addition-only alias for the pre-M15 vendor-named export: clears the active registration.</td></tr>
+<tr><td><code>forwardGeocode</code></td><td><code>async forwardGeocode(queryText: string): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Forward-geocodes through the active live provider, answering the same row shape the native refapps consume. Fails with a message when no provider is registered or the provider refuses the query.</td></tr>
+<tr><td><code>suggestPlaces</code></td><td><code>async suggestPlaces(queryText: string): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Returns fast completion candidates while the visitor types, through the active provider’s search-place surface — the same rows the native reference apps consume from <code>MapSdk::suggest</code>. Fails with a verbatim message when no provider is registered or the provider refuses the query.</td></tr>
+<tr><td><code>suggestPlacesInBoundary</code></td><td><code>async suggestPlacesInBoundary(queryText: string, southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>[<code>suggest_places</code>] narrowed to a ranking boundary (the contract’s <code>MapSdk::suggest</code> boundary argument).</td></tr>
+<tr><td><code>searchPlaces</code></td><td><code>async searchPlaces(queryText: string): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Returns full search results for a settled query through the active provider’s search-place surface — the same rows the native reference apps consume from <code>MapSdk::search</code>.</td></tr>
+<tr><td><code>searchPlacesInBoundary</code></td><td><code>async searchPlacesInBoundary(queryText: string, southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>[<code>search_places</code>] narrowed to a ranking boundary (the contract’s <code>MapSdk::search</code> boundary argument).</td></tr>
+<tr><td><code>calculateRoute</code></td><td><code>async calculateRoute(originLatitude: number, originLongitude: number, destinationLatitude: number, destinationLongitude: number): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Plans a two-waypoint route through the active live provider (M13), answering the same plain JavaScript shape [<code>crate::exports::offline_route_from_archive_bytes</code>] does: <code>distanceMeters</code>, <code>durationSeconds</code>, <code>boundingBox</code> and <code>legs</code> of <code>steps</code> carrying the stable snake-case <code>maneuverType</code> label and the provider’s end-anchored instruction texts. The request is the demo’s default: automobile, fastest, metric — <code>RouteOptions::default()</code>, which is also the mode the recorded Directions fixture was recorded with (its maneuvers declare <code>transportMode: "car"</code>). Failures throw the seam’s plain verbatim string: no registration, an invalid coordinate, or the provider’s own refusal.</td></tr>
+<tr><td><code>calculateRouteWithOptions</code></td><td><code>async calculateRouteWithOptions(originLatitude: number, originLongitude: number, destinationLatitude: number, destinationLongitude: number, options: any): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Plans a two-waypoint route with the contract’s full <code>RouteOptions</code> (<code>MapSdk::calculate_route</code>’s options argument): transportation mode, strategy, unit system, avoids and an optional departure instant. The options arrive as one plain object; omitted fields take the contract defaults, and an unknown enum name is refused before the provider is asked. The answer is the same route shape [<code>calculate_route_live</code>] produces.</td></tr>
+<tr><td><code>calculateDistanceMatrix</code></td><td><code>async calculateDistanceMatrix(originCoordinates: number[], destinationCoordinates: number[], transportationMode: string): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Calculates a travel-time matrix through the active provider’s distance-matrix surface — the contract’s <code>MapSdk::calculate_distance_matrix</code> on the wasm seam. Coordinates arrive as flat <code>[latitude, longitude, …]</code> arrays; the mode is the contract enum’s name (or the common lowercase spelling). Answers <code>{originIndex, destinationIndex, distanceMeters, durationSeconds}</code> rows.</td></tr>
+<tr><td><code>fetchTrafficIncidents</code></td><td><code>async fetchTrafficIncidents(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Fetches traffic disruptions intersecting the bounding box — the contract’s <code>MapSdk::fetch_traffic_incidents</code> on the wasm seam. The row shape is the contract’s <code>TrafficIncident</code> with lower-camel field names and enum names as text (<code>incidentType</code>, <code>severity</code>).</td></tr>
+<tr><td><code>fetchTrafficFlow</code></td><td><code>async fetchTrafficFlow(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Fetches per-segment traffic flow inside the bounding box — the contract’s <code>MapSdk::fetch_traffic_flow</code> on the wasm seam. The row shape is the contract’s <code>TrafficFlowData</code> with lower-camel field names, speed values or null, and the congestion level’s enum name as text.</td></tr>
+<tr><td><code>fetchRasterTile</code></td><td><code>async fetchRasterTile(zoomLevel: number, tileX: number, tileY: number): Promise&lt;Uint8Array&gt;</code></td><td>Asynchronous. Returns <code>Uint8Array</code>. Throws the verbatim failure message as a string.</td><td>Fetches one raster tile through the active live provider (M13), answering the PNG bytes as a <code>Uint8Array</code>. The request is the standard-resolution PNG form of the provider’s documented Tiles API path (the playground’s fixture route serves the same address shape). Failures throw the seam’s plain verbatim string: no registration, a zoom or tile address outside the Tiles API’s documented bounds, or the provider’s own refusal.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="diagnostics"><a class="header" href="#diagnostics">Diagnostics</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>subscribeToDiagnosticEvents(minimumSeverity: SdkLogSeverity): void</code></td><td>—</td><td>Lowers the recording gate to the requested severity: from that moment on, events at the severity or above record into the bounded rings (the gate never raises back — the same rule the native sink documents). Installs the ring subscriber on the first call; a no-op gate-wise when the page’s host already installed its own global subscriber (the ring then stays empty and the flush seam answers an empty list — the subscriber’s own <code>enabled</code> is never consulted).</td></tr>
+<tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>flushRecentDiagnosticEvents(minimumSeverity: SdkLogSeverity, maximumCount: number): any[]</code></td><td>Returns <code>any[]</code>.</td><td>Reads the most recent events the rings recorded at the requested severity or above, oldest first, capped at <code>maximum_count</code>, as an array of <code>{timestampMillisecondsSinceEpoch, severity, subsystemTarget, messageLine}</code> objects. Coordinates in the messages are already rounded to the sink’s decimals (the sink’s privacy scrub, the native contract rule).</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="vector-tile-helpers"><a class="header" href="#vector-tile-helpers">Vector tile helpers</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>vectorTileOverlayDescriptors</code></td><td><code>vectorTileOverlayDescriptors(tileBytes: Uint8Array, tileZoomLevel: number, tileX: number, tileY: number): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Decodes and styles one vector tile into the overlay descriptor list the WebGPU canvas consumes. <code>tile_bytes</code> is the wire body a provider served — plain MVT protobuf or a gzip-wrapped body, which is sniffed and unwrapped here — and the tile address is validated against the zoom grid before decoding. The result is a plain JavaScript array of <code>set_overlays</code> descriptors in style-layer order (later style layers paint over earlier ones). A malformed payload, an out-of-grid address, an empty body or an undecompressable gzip envelope rejects with a string-valued error; nothing throws across the wasm boundary as a panic.</td></tr>
+<tr><td><code>vectorTileOverlayDescriptorsForStyle</code></td><td><code>vectorTileOverlayDescriptorsForStyle(tileBytes: Uint8Array, tileZoomLevel: number, tileX: number, tileY: number, styleId: string): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>The same decode-and-style conversion, painted with the committed style a style id names (<code>carto-light</code>, <code>carto-dark</code>, <code>openmaptiles-light</code>, <code>openmaptiles-dark</code>). The page joins a registry descriptor’s style schema with the active theme, so one provider can serve a light and a dark base map without a page-side style table. An unknown style id rejects with the documented list of known ids.</td></tr>
+<tr><td><code>vectorTileLabelDescriptors</code></td><td><code>vectorTileLabelDescriptors(tileBytes: Uint8Array, tileZoomLevel: number, tileX: number, tileY: number): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Decodes and styles one vector tile into the label descriptors the WebGPU canvas’ [<code>crate::canvas::MapView::set_labels</code>] consumes. A point-placed symbol candidate carries its anchor; a line-placed one (a road name) also carries the line geometry the canvas runs the text along. The address and wire bytes are validated exactly like the overlay export, and the labels come from the same style conversion (the symbol layers’ text fallbacks, paint, size stops, priority, rank and overlap rule), so the overlay and label halves of one tile cannot disagree. Size stops evaluate at the tile’s own integer zoom level — the page lists tiles at the camera’s rounded zoom — and the canvas places the labels at the exact frame camera pose. A malformed payload or an out-of-grid address rejects with a string-valued error; nothing throws across the wasm boundary as a panic.</td></tr>
+<tr><td><code>vectorTileLabelDescriptorsForStyle</code></td><td><code>vectorTileLabelDescriptorsForStyle(tileBytes: Uint8Array, tileZoomLevel: number, tileX: number, tileY: number, styleId: string): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>The same label conversion painted with the committed style a style id names; an unknown style id rejects with the documented list of known ids.</td></tr>
+<tr><td><code>vectorTileGeographicBounds</code></td><td><code>vectorTileGeographicBounds(tileZoomLevel: number, tileX: number, tileY: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>The geographic bounds of one web-mercator tile, as <code>{northWest: {latitude, longitude}, southEast: {latitude, longitude}}</code>. The demo uses this to focus its camera on a fetched tile and the browser suites use it to check decoded overlay coordinates against the tile they came from. The conversion is the same [<code>tile_local_point_to_coordinate</code>] the overlay seam applies, so bounds and geometry share one source of truth. An out-of-grid address rejects with a string-valued error.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="camera-interaction-aliases"><a class="header" href="#camera-interaction-aliases">Camera interaction aliases</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>panCameraByScreenPixels</code></td><td><code>panCameraByScreenPixels(camera: MapCamera, deltaXPixels: number, deltaYPixels: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Pans the camera by a pointer travel of <code>delta_x_pixels</code> x <code>delta_y_pixels</code> (screen pixels), answering the resulting <code>{latitude, longitude, zoomLevel, bearingDegrees, pitchDegrees}</code> pose. Alias of [<code>MapCamera::pan_by_screen_pixels</code>].</td></tr>
+<tr><td><code>zoomCameraByLevelsAroundScreenPoint</code></td><td><code>zoomCameraByLevelsAroundScreenPoint(camera: MapCamera, deltaZoomLevels: number, focalXPixels: number, focalYPixels: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Zooms the camera by <code>delta_zoom_levels</code> around the focal pixel, answering the resulting pose. Alias of [<code>MapCamera::zoom_by_levels_around_screen_point</code>].</td></tr>
+<tr><td><code>rotateCameraByDegreesAroundScreenPoint</code></td><td><code>rotateCameraByDegreesAroundScreenPoint(camera: MapCamera, deltaBearingDegrees: number, focalXPixels: number, focalYPixels: number, widthPixels: number, heightPixels: number, fieldOfViewDegrees: number): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Rotates the camera bearing by <code>delta_bearing_degrees</code> around the focal pixel, answering the resulting pose. Alias of [<code>MapCamera::rotate_by_degrees_around_screen_point</code>].</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="device-and-base-map-helpers"><a class="header" href="#device-and-base-map-helpers">Device and base-map helpers</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>devicePixelRatioThreshold</code></td><td><code>devicePixelRatioThreshold(): number</code></td><td>Returns <code>number</code>.</td><td>Reports the device-pixel ratio from which the playground’s JavaScript chooses between [<code>CanvasTileResolution::Retina</code>] and [<code>CanvasTileResolution::Standard</code>]: at or above the threshold the page passes retina. The threshold lives in Rust so the seam stays one source of truth.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<h3 id="sdklogseverity"><a class="header" href="#sdklogseverity">SdkLogSeverity</a></h3>
+<p>Severity classification of a diagnostics event, mirroring the contract’s <code>SdkLogSeverity</code> at the JavaScript seam (the shared record type cannot itself carry <code>wasm-bindgen</code> attributes; the same pattern as [<code>crate::canvas::CanvasTileResolution</code>] and friends).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Trace</code></td><td><code>0</code></td></tr>
+<tr><td><code>Debug</code></td><td><code>1</code></td></tr>
+<tr><td><code>Info</code></td><td><code>2</code></td></tr>
+<tr><td><code>Warn</code></td><td><code>3</code></td></tr>
+<tr><td><code>Error</code></td><td><code>4</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="tileresolution"><a class="header" href="#tileresolution">TileResolution</a></h3>
+<p>Tile pixel resolution the GPU canvas fetches and samples, mirroring [<code>geospatial_types::RasterTileResolution</code>] at the JavaScript seam: the shared record type cannot itself carry <code>wasm-bindgen</code> attributes, so the page passes this enum and the canvas converts it.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Standard</code></td><td><code>0</code></td></tr>
+<tr><td><code>Retina</code></td><td><code>1</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowcongestionlevel"><a class="header" href="#trafficflowcongestionlevel">TrafficFlowCongestionLevel</a></h3>
+<p>Congestion classification a traffic-flow segment paints with, mirroring [<code>geospatial_types::TrafficFlowCongestionLevel</code>] at the JavaScript seam: the shared record type cannot itself carry <code>wasm-bindgen</code> attributes, so the page passes this enum and the canvas converts it (the same pattern as [<code>CanvasTileResolution</code>]).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FreeFlow</code></td><td><code>0</code></td></tr>
+<tr><td><code>Slow</code></td><td><code>1</code></td></tr>
+<tr><td><code>Congested</code></td><td><code>2</code></td></tr>
+<tr><td><code>Blocked</code></td><td><code>3</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="record-shapes"><a class="header" href="#record-shapes">Record shapes</a></h2>
+<h3 id="geographiccoordinate"><a class="header" href="#geographiccoordinate">GeographicCoordinate</a></h3>
+<p>A position on the WGS 84 ellipsoid in decimal degrees.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>latitude</code></td><td><code>number</code></td><td>/** Latitude in decimal degrees, valid within <code>[-90, 90]</code>. */</td></tr>
+<tr><td><code>longitude</code></td><td><code>number</code></td><td>/** Longitude in decimal degrees, valid within <code>[-180, 180]</code>. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="boundingbox"><a class="header" href="#boundingbox">BoundingBox</a></h3>
+<p>Rectangular area between a south-west and a north-east corner; boxes never span the antimeridian.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>southWest</code></td><td><code>GeographicCoordinate</code></td><td>/** South-west corner (minimum latitude and longitude). */</td></tr>
+<tr><td><code>northEast</code></td><td><code>GeographicCoordinate</code></td><td>/** North-east corner (maximum latitude and longitude). */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="simulatedtrippace"><a class="header" href="#simulatedtrippace">SimulatedTripPace</a></h3>
+<p>Pace chosen by the application for a simulated trip (M27). The SDK carries no default pace; both values must be finite and strictly positive, and their product must stay finite. Mirrors the UDL <code>SimulatedTripPace</code> dictionary.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>speedMetersPerSecond</code></td><td><code>number</code></td><td>/** Baseline travel speed in meters per second. */</td></tr>
+<tr><td><code>speedMultiplier</code></td><td><code>number</code></td><td>/** Multiplier applied to the baseline speed (for example 1, 2, 4, 8). */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="simulatedtripfix"><a class="header" href="#simulatedtripfix">SimulatedTripFix</a></h3>
+<p>One position of a simulated trip along the planned route’s own polyline (M27). Mirrors the UDL <code>SimulatedTripFix</code> dictionary; the wasm <code>RouteSimulator</code>’s <code>fixAtTravelledMeters</code>/<code>fixAtElapsedSeconds</code> answer exactly this shape.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>/** Position on the planned route’s geometry. */</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>number \| null</code></td><td>Direction of travel along the active segment, in degrees clockwise from true north, or <code>null</code> when the route has no segment. */</td></tr>
+<tr><td><code>travelledMeters</code></td><td><code>number</code></td><td>/** Distance travelled from the route start, in meters. */</td></tr>
+<tr><td><code>remainingMeters</code></td><td><code>number</code></td><td>/** Distance left to the route end, in meters. */</td></tr>
+<tr><td><code>elapsedSeconds</code></td><td><code>number</code></td><td>/** Simulated elapsed time from the trip start, in seconds. */</td></tr>
+<tr><td><code>isArrived</code></td><td><code>boolean</code></td><td>/** True exactly when the fix sits at the route’s final coordinate. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routestep"><a class="header" href="#routestep">RouteStep</a></h3>
+<p>One maneuver within a route leg. Mirrors the UDL <code>RouteStep</code> dictionary: the offline archive route (<code>offlineRouteFromArchiveBytes</code>) and the live route call answer this shape, and the maneuver classification rides as the contract’s stable snake-case <code>maneuverType</code> label.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceMeters</code></td><td><code>number</code></td><td>/** Distance of this step in meters. */</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>number</code></td><td>/** Travel time of this step in seconds. */</td></tr>
+<tr><td><code>maneuverType</code></td><td><code>string</code></td><td>/** Maneuver classification as a stable snake-case text label. */</td></tr>
+<tr><td><code>instructionDisplayText</code></td><td><code>string</code></td><td>/** Human-readable instruction in the display language. */</td></tr>
+<tr><td><code>instructionSpeechText</code></td><td><code>string</code></td><td>/** Instruction tuned for text-to-speech engines. */</td></tr>
+<tr><td><code>shape</code></td><td><code>GeographicCoordinate[] }</code></td><td>/** Step geometry from the previous step end to this maneuver point. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routeleg"><a class="header" href="#routeleg">RouteLeg</a></h3>
+<p>Leg between two consecutive waypoints. Mirrors the UDL <code>RouteLeg</code> dictionary.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceMeters</code></td><td><code>number</code></td><td>/** Leg distance in meters. */</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>number</code></td><td>/** Leg travel time in seconds. */</td></tr>
+<tr><td><code>steps</code></td><td><code>RouteStep[] }</code></td><td>/** Maneuver steps in traversal order. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="route"><a class="header" href="#route">Route</a></h3>
+<p>A complete calculated route. Mirrors the UDL <code>Route</code> dictionary; the offline archive seam answers exactly this shape.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceMeters</code></td><td><code>number</code></td><td>/** Total distance across all legs, in meters. */</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>number</code></td><td>/** Total travel time across all legs, in seconds. */</td></tr>
+<tr><td><code>boundingBox</code></td><td><code>BoundingBox</code></td><td>/** Geographic bounds of the full route geometry. */</td></tr>
+<tr><td><code>legs</code></td><td><code>RouteLeg[] }</code></td><td>/** Legs, one per consecutive waypoint pair. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigatorlocationupdate"><a class="header" href="#navigatorlocationupdate">NavigatorLocationUpdate</a></h3>
+<p>One position fix handed to the wasm <code>Navigator</code>’s <code>updateLocation</code>. Mirrors the UDL <code>NavigationLocationUpdate</code> dictionary field for field: the raw position before route snapping, the horizontal-accuracy radius, the course heading and the fix instant, each nullable when the source does not report it. Fixes without an accuracy report never trigger a step advance and are never judged by the deviation detector.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>/** Raw position on the WGS 84 ellipsoid, before route snapping. */</td></tr>
+<tr><td><code>horizontalAccuracyMeters</code></td><td><code>number \| null</code></td><td>Radius, in meters, of the 68% horizontal-accuracy envelope, or <code>null</code> when the source does not report accuracy. */</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>number \| null</code></td><td>Direction of travel in degrees clockwise from true north, or <code>null</code> when the source does not report a course. */</td></tr>
+<tr><td><code>timestampSeconds</code></td><td><code>number \| null</code></td><td>Fix instant in seconds since the Unix epoch, or <code>null</code> for untimed sources. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigatordeviation"><a class="header" href="#navigatordeviation">NavigatorDeviation</a></h3>
+<p>The active deviation of a trip snapshot. Mirrors the UDL <code>DeviationStatusChange</code> shape where the snapshot flattens it: the snapshot is <code>null</code> on route, so a present deviation always reports the <code>OffRoute</code> status kind, and the measured distance replaces the nested deviation-info record. The contract’s wrong-step grade (which leaves the phase <code>Navigating</code>) is guidance feedback and is not surfaced here.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>statusChangeKind</code></td><td><code>"OffRoute" \| "OnRoute"</code></td><td>/** Which form the status update takes (the contract’s enum spelling). */</td></tr>
+<tr><td><code>distanceFromRouteMeters</code></td><td><code>number</code></td><td>/** Distance, in meters, from the raw fix to the remaining route line. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigatorinstruction"><a class="header" href="#navigatorinstruction">NavigatorInstruction</a></h3>
+<p>The composed turn-by-turn instruction payload of a trip snapshot, mirroring the UDL <code>NavigationInstruction</code> record: the active maneuver’s two banner lines, the following maneuver when the route has one, progress along the remaining trip, and the arrival/rerouting markers.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>activeManeuver</code></td><td><code>{ /** Canonical distance phrase text (for example </code>“130 meters”<code>, or * </code>“now”<code>when the maneuver is immediate). */ readonly distancePhraseText: string; /** Composed instruction text: the live distance prefix plus the * provider-authored display text. */ readonly displayText: string; /** Provider-authored banner text, verbatim, or</code>null<code>when the * provider authored none. The native cards show this beside the * separately phrased distance;</code>displayText<code> repeats the distance * inside the sentence. */ readonly providerDisplayText: string \| null; /** The text-to-speech variant (the speech text with the same distance * prefix); empty when the provider authored no text. */ readonly speechText: string; }</code></td><td>/** The banner maneuver currently being traversed. */</td></tr>
+<tr><td><code>upcomingManeuver</code></td><td><code>{ /** Composed instruction text of the following step. */ readonly displayText: string; /** The text-to-speech variant of the following step. */ readonly speechText: string; } \| null</code></td><td>The maneuver after the active one, or <code>null</code> on the final step and after arrival. */</td></tr>
+<tr><td><code>progress</code></td><td><code>{ /** Distance, in meters, to the end of the current step (the next * maneuver point). */ readonly distanceToNextManeuverMeters: number; /** Total remaining distance, in meters. */ readonly distanceRemainingMeters: number; /** Total remaining travel time, in seconds. */ readonly durationRemainingSeconds: number; }</code></td><td>/** Progress along the remaining trip. */</td></tr>
+<tr><td><code>isArrival</code></td><td><code>boolean</code></td><td>/** True exactly while the trip has arrived with zero remaining progress. */</td></tr>
+<tr><td><code>isReroutingRequired</code></td><td><code>boolean</code></td><td>True exactly while the trip is off route: the instruction must not be presented as current guidance. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigatortripstate"><a class="header" href="#navigatortripstate">NavigatorTripState</a></h3>
+<p>The trip snapshot the wasm <code>Navigator</code>’s <code>currentTripState()</code> and <code>updateLocation()</code> methods answer, projecting the UDL <code>TripNavigationState</code>/<code>NavigationInstruction</code> pair into the fields the browser turn-by-turn card consumes.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>phase</code></td><td><code>"navigating" \| "offRoute" \| "arrived"</code></td><td>High-level trip phase: <code>"navigating"</code>, <code>"offRoute"</code> or <code>"arrived"</code> (the contract’s <code>Navigating</code>/<code>OffRoute</code>/<code>Arrived</code>). */</td></tr>
+<tr><td><code>instruction</code></td><td><code>NavigatorInstruction</code></td><td>/** The composed instruction payload of the current state. */</td></tr>
+<tr><td><code>deviation</code></td><td><code>NavigatorDeviation \| null</code></td><td>/** The active deviation, or <code>null</code> while the trip is on route. */</td></tr>
+<tr><td><code>snappedCoordinate</code></td><td><code>GeographicCoordinate \| null</code></td><td>Position snapped onto the current step, or <code>null</code> until the first location update has been processed. */</td></tr>
+<tr><td><code>isArrived</code></td><td><code>boolean</code></td><td>/** True exactly while the trip has arrived. */</td></tr>
+<tr><td><code>currentStepIndex</code></td><td><code>number</code></td><td>/** Traversal-ordered index of the step currently traversed. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="screenpoint"><a class="header" href="#screenpoint">ScreenPoint</a></h3>
+<p>Position on the viewport in physical pixels (origin top-left, <code>y</code> down).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>x</code></td><td><code>number</code></td><td>/** Horizontal position in pixels. */</td></tr>
+<tr><td><code>y</code></td><td><code>number</code></td><td>/** Vertical position in pixels. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="normalizedworldcoordinate"><a class="header" href="#normalizedworldcoordinate">NormalizedWorldCoordinate</a></h3>
+<p>A world position in normalized world coordinates, both axes within <code>[0, 1]</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>x</code></td><td><code>number</code></td><td>/** Eastward position from the antimeridian. */</td></tr>
+<tr><td><code>y</code></td><td><code>number</code></td><td>/** Southward position from the north pole. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="tilekey"><a class="header" href="#tilekey">TileKey</a></h3>
+<p>One web-mercator XYZ tile address.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tileX</code></td><td><code>number</code></td><td>/** Tile column, in <code>0..2^zoom_level</code>. */</td></tr>
+<tr><td><code>tileY</code></td><td><code>number</code></td><td>/** Tile row, counted from the north, in <code>0..2^zoom_level</code>. */</td></tr>
+<tr><td><code>zoomLevel</code></td><td><code>number</code></td><td>/** Zoom level this tile belongs to. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="viewportsize"><a class="header" href="#viewportsize">ViewportSize</a></h3>
+<p>Viewport dimensions in physical pixels.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>widthPixels</code></td><td><code>number</code></td><td>/** Horizontal extent in pixels. */</td></tr>
+<tr><td><code>heightPixels</code></td><td><code>number</code></td><td>/** Vertical extent in pixels. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="edgeinsets"><a class="header" href="#edgeinsets">EdgeInsets</a></h3>
+<p>Screen-space insets kept clear of map content: distances from each viewport edge in pixels, so UI overlays — route cards, attribution, sheet panels — never cover the content the camera guarantees visible.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>left</code></td><td><code>number</code></td><td>/** Pixels kept clear from the left viewport edge. */</td></tr>
+<tr><td><code>top</code></td><td><code>number</code></td><td>/** Pixels kept clear from the top viewport edge. */</td></tr>
+<tr><td><code>right</code></td><td><code>number</code></td><td>/** Pixels kept clear from the right viewport edge. */</td></tr>
+<tr><td><code>bottom</code></td><td><code>number</code></td><td>/** Pixels kept clear from the bottom viewport edge. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="overlaycolor"><a class="header" href="#overlaycolor">OverlayColor</a></h3>
+<p>Solid RGBA overlay style, every channel in <code>[0, 1]</code>. Mirrors the UDL <code>OverlayColor</code> dictionary (round 8, surface slice) and the wasm canvas’ <code>color</code> plain object. A descriptor without a color keeps the documented map-rendering default style of its kind; every present channel must lie in the range or the whole call refuses.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>red</code></td><td><code>number</code></td><td>/** Red channel in <code>[0, 1]</code>. */</td></tr>
+<tr><td><code>green</code></td><td><code>number</code></td><td>/** Green channel in <code>[0, 1]</code>. */</td></tr>
+<tr><td><code>blue</code></td><td><code>number</code></td><td>/** Blue channel in <code>[0, 1]</code>. */</td></tr>
+<tr><td><code>alpha</code></td><td><code>number</code></td><td>/** Alpha channel in <code>[0, 1]</code> (the overlay pipeline alpha-blends). */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="urltemplatevectortilesource"><a class="header" href="#urltemplatevectortilesource">UrlTemplateVectorTileSource</a></h3>
+<p>The styled vector base source the wasm canvas installs (M31): the UDL <code>UrlTemplateVectorTileSource</code> record in the seam’s lower-camel spelling. Passed to <code>MapView.setVectorTileSource</code>; the canvas fetches, decodes, styles and labels the tileset itself, so no page-side vector geometry is needed (<code>setLabels</code> remains only for the isolated text-quality probe).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>urlTemplate</code></td><td><code>string</code></td><td>/** The <code>{z}/{x}/{y}</code> URL template the tileset publishes. */</td></tr>
+<tr><td><code>sourceName</code></td><td><code>string</code></td><td>/** The tileset’s name, used verbatim in every diagnostic it raises. */</td></tr>
+<tr><td><code>attributionText</code></td><td><code>string</code></td><td>/** The attribution line the tileset’s terms require. */</td></tr>
+<tr><td><code>styleId</code></td><td><code>string</code></td><td>/** The committed style id the base paints with. */</td></tr>
+<tr><td><code>minimumZoomLevel</code></td><td><code>number</code></td><td>/** Lowest zoom level the tileset serves. */</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>number</code></td><td>/** Highest zoom level the tileset serves. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="vectortilesourcestatus"><a class="header" href="#vectortilesourcestatus">VectorTileSourceStatus</a></h3>
+<p>The vector base source’s status readback (M31): the UDL <code>VectorTileSourceStatus</code> record, answered by <code>MapView.vectorTileSourceStatus</code> without drawing or fetching.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>isConfigured</code></td><td><code>boolean</code></td><td>/** Whether the view carries a vector base source at all. */</td></tr>
+<tr><td><code>styleId</code></td><td><code>string</code></td><td>/** The active style id; empty when no source is configured. */</td></tr>
+<tr><td><code>sourceName</code></td><td><code>string</code></td><td>/** The tileset’s name; empty when no source is configured. */</td></tr>
+<tr><td><code>attributionText</code></td><td><code>string</code></td><td>/** The attribution line the tileset’s terms require. */</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>number</code></td><td>/** Highest zoom level the tileset serves; zero with no source. */</td></tr>
+<tr><td><code>drawnTileCount</code></td><td><code>number</code></td><td>/** Tile addresses the last resolved frame drew. */</td></tr>
+<tr><td><code>failedTileCount</code></td><td><code>number</code></td><td>/** Tile addresses the last frame skipped after a fetch or decode failure. */</td></tr>
+<tr><td><code>lastFailureDetail</code></td><td><code>string \| null</code></td><td>/** The last resolved frame’s last failure detail, or null. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mapoverlay"><a class="header" href="#mapoverlay">MapOverlay</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>kind</code></td><td><code>MapOverlayKind</code></td><td>/** Which overlay shape this descriptor configures. */</td></tr>
+<tr><td><code>coordinates?</code></td><td><code>readonly GeographicCoordinate[] /** Route polyline, filled polygon and point markers: color override, or * absent for the kind's documented default. */ readonly rgbaColor?: OverlayColor; /** Route polyline and traffic flow: line width in screen pixels * (positive and finite), or absent for the documented default. */ readonly widthPixels?: number; /** </code>FilledPolygon<code>: the outer ring without a repeated closing vertex. */ readonly ringCoordinates?: readonly GeographicCoordinate[]; /** </code>PointMarkers<code>and</code>PointPins<code>: the geographic anchor of every marker * (a pin's anchor is its tip). */ readonly pointMarkerPositions?: readonly GeographicCoordinate[]; /** Point markers and point pins: radius in screen pixels (positive and * finite); a pin's radius is its head radius. */ readonly pointMarkerRadiusPixels?: number; /** </code>TrafficFlow<code>: the flow observations to paint (see </code>TrafficFlowData<code>). */ readonly trafficFlowSegments?: readonly TrafficFlowData[]; }</code></td><td>/** <code>RoutePolyline</code>: the traversal-order polyline (required for the kind). */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowdata"><a class="header" href="#trafficflowdata">TrafficFlowData</a></h3>
+<p>Flow condition for one road segment inside the traffic-flow overlay payload. Mirrors the UDL <code>TrafficFlowData</code> record field for field (the <code>fetch_traffic_flow</code> return on the async provider surface; the overlay slice now references the same record). The wasm seam does not surface the provider calls yet, so this mirror enters through the overlay payload.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>shapeCoordinates</code></td><td><code>readonly GeographicCoordinate[] /** Currently observed speed in kilometers per hour, when reported. */ readonly currentSpeedKilometersPerHour?: number; /** Unconstrained (free-flow) speed, when reported. */ readonly freeFlowSpeedKilometersPerHour?: number; /** Congestion classification from the speed ratio or provider buckets. */ readonly congestionLevel: TrafficFlowCongestionLevel; }</code></td><td>/** Segment geometry, ordered along the road. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="surfacehandle"><a class="header" href="#surfacehandle">SurfaceHandle</a></h3>
+<p>The platform window surface handle foreign code hands to the native <code>MapView::attach</code>: exactly one platform pointer is set, the rest stay null (the <code>u64?</code> members). Mirrors the UDL <code>SurfaceHandle</code> record (round 8, surface slice); the browsers’ wasm seam never attaches a native window, so this mirror is documentation of the native contract for shared consumers — the canvas owns its <code>&lt;canvas&gt;</code> element directly.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>appkitViewPointer?</code></td><td><code>number \| null</code></td><td>/** macOS: pointer to the <code>NSView</code> the surface renders into. */</td></tr>
+<tr><td><code>iosViewPointer?</code></td><td><code>number \| null</code></td><td>/** iOS: pointer to the <code>UIView</code> the surface renders into. */</td></tr>
+<tr><td><code>androidNativeWindowPointer?</code></td><td><code>number \| null</code></td><td>/** Android: pointer to the <code>ANativeWindow</code> from the platform <code>Surface</code>. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="placerow"><a class="header" href="#placerow">PlaceRow</a></h3>
+<p>One place row the wasm geocoding and search calls answer (M31): the contract’s <code>Place</code> record flattened to the seam’s scalar field names. Returned by <code>forwardGeocode</code>, <code>suggestPlaces</code>, <code>suggestPlacesInBoundary</code>, <code>searchPlaces</code> and <code>searchPlacesInBoundary</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>structuredAddressText</code></td><td><code>string</code></td><td>/** Display string the provider produced for this place. */</td></tr>
+<tr><td><code>latitudeDegrees</code></td><td><code>number</code></td><td>/** Resolved latitude in decimal degrees. */</td></tr>
+<tr><td><code>longitudeDegrees</code></td><td><code>number</code></td><td>/** Resolved longitude in decimal degrees. */</td></tr>
+<tr><td><code>qualityText</code></td><td><code>string</code></td><td>/** Structural precision reached for this resolution (the contract enum’s name). */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distancematrixentry"><a class="header" href="#distancematrixentry">DistanceMatrixEntry</a></h3>
+<p>One origin-destination cell of the wasm distance-matrix answer (M31): the contract’s <code>DistanceMatrixEntry</code> record with the seam’s camel-case field names. Returned by <code>calculateDistanceMatrix</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>originIndex</code></td><td><code>number</code></td><td>/** Index into the request’s origins. */</td></tr>
+<tr><td><code>destinationIndex</code></td><td><code>number</code></td><td>/** Index into the request’s destinations. */</td></tr>
+<tr><td><code>distanceMeters</code></td><td><code>number</code></td><td>/** Distance for this cell in meters. */</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>number</code></td><td>/** Travel time for this cell in seconds. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficincidentrow"><a class="header" href="#trafficincidentrow">TrafficIncidentRow</a></h3>
+<p>One traffic incident row the wasm <code>fetchTrafficIncidents</code> call answers (M31): the contract’s <code>TrafficIncident</code> record with lower-camel field names and its <code>incidentType</code>/<code>severity</code> enums as text (the seam’s enum-name convention, like a place row’s <code>qualityText</code>).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>identifier</code></td><td><code>string</code></td><td>/** Provider-stable incident identifier. */</td></tr>
+<tr><td><code>incidentType</code></td><td><code>string</code></td><td>/** Class of disruption (the contract enum’s variant name). */</td></tr>
+<tr><td><code>severity</code></td><td><code>string</code></td><td>/** Severity ranking (the contract enum’s variant name). */</td></tr>
+<tr><td><code>shortDescriptionText</code></td><td><code>string</code></td><td>/** Provider display text for this incident. */</td></tr>
+<tr><td><code>startCoordinate</code></td><td><code>GeographicCoordinate</code></td><td>/** Position where the incident starts. */</td></tr>
+<tr><td><code>endCoordinate</code></td><td><code>GeographicCoordinate \| null</code></td><td>/** Position where the incident ends, when reported. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowrow"><a class="header" href="#trafficflowrow">TrafficFlowRow</a></h3>
+<p>One traffic-flow row the wasm <code>fetchTrafficFlow</code> call answers (M31): the contract’s <code>TrafficFlowData</code> record with lower-camel field names, nullable speeds and the congestion level’s enum name as text.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>shapeCoordinates</code></td><td><code>readonly GeographicCoordinate[] /** Currently observed speed in kilometers per hour, when reported. */ readonly currentSpeedKilometersPerHour: number \| null; /** Unconstrained speed in kilometers per hour, when reported. */ readonly freeFlowSpeedKilometersPerHour: number \| null; /** Congestion classification (the contract enum's variant name). */ readonly congestionLevel: string; }</code></td><td>/** Segment geometry, ordered along the road. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routeoptionsobject"><a class="header" href="#routeoptionsobject">RouteOptionsObject</a></h3>
+<p>The plain options object the wasm <code>calculateRouteWithOptions</code> call accepts (M31): the contract’s <code>RouteOptions</code> and <code>AvoidOptions</code> records with lower-camel field names. Every field is optional; an omitted field takes the contract default (automobile, fastest, metric, no avoids, depart now). Enum fields take the contract variant name or its lowercase spelling.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>transportationMode?</code></td><td><code>string</code></td><td>/** Mode of transport: automobile, bicycle or pedestrian. */</td></tr>
+<tr><td><code>routeStrategy?</code></td><td><code>string</code></td><td>/** Optimization target: fastest or shortest. */</td></tr>
+<tr><td><code>unitSystem?</code></td><td><code>string</code></td><td>/** Display units: metric or imperial. */</td></tr>
+<tr><td><code>avoidOptions?</code></td><td><code>{ readonly tollRoads?: boolean; readonly limitedAccessHighways?: boolean; readonly ferries?: boolean; readonly unpavedRoads?: boolean; }</code></td><td>/** Features to avoid; every flag defaults to false. */</td></tr>
+<tr><td><code>departureTimestampSeconds?</code></td><td><code>number</code></td><td>/** Departure instant in seconds since the Unix epoch; omit to depart now. */</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigatorevent"><a class="header" href="#navigatorevent">NavigatorEvent</a></h3>
+<p>One navigation event’s shape. <code>snapshot</code> is the plain trip snapshot the <code>currentTripState</code> read returns, or <code>null</code> for the stop topic.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>topic</code></td><td><code>NavigatorEventTopic</code></td><td>—</td></tr>
+<tr><td><code>snapshot</code></td><td><code>NavigatorTripState \| null</code></td><td>—</td></tr>
+<tr><td><code>speechText?</code></td><td><code>string</code></td><td>/** Present on a <code>speech</code> event: the contract’s speech text. */</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="union-and-alias-shapes"><a class="header" href="#union-and-alias-shapes">Union and alias shapes</a></h2>
+<h3 id="sdkerror"><a class="header" href="#sdkerror">SdkError</a></h3>
+<p>Failures the contract throws across the binding surface, mirroring the UDL <code>SdkError</code> variants one to one with their payload fields. On the wasm seam the failures are currently thrown as the plain, verbatim detail string (see the <code>failure</code> helper in <code>map-web-bindings</code> <code>exports.rs</code>), so a wasm catch handler compares messages; the discriminated union below is the structured contract shape the native surfaces receive.</p>
+<p><code>\| { readonly variant: "InvalidCoordinateInput"; readonly detail: string } \| { readonly variant: "NetworkRequestFailed"; readonly detail: string } \| { readonly variant: "ResponseParsingFailure"; readonly detail: string } \| { readonly variant: "ProviderRequestRejected"; readonly detail: string } \| { readonly variant: "RateLimitExhausted" } \| { readonly variant: "ProviderNotConfigured"; readonly contractName: string } \| { readonly variant: "InvalidNavigationInput"; readonly detail: string } \| { readonly variant: "InvalidRenderInput"; readonly detail: string } \| { readonly variant: "RenderingSurfaceUnavailable"; readonly detail: string } \| { readonly variant: "CacheOperationFailure"; readonly detail: string } \| { readonly variant: "OfflineRoutingFailure"; readonly detail: string }</code></p>
+<h3 id="mapoverlaykind"><a class="header" href="#mapoverlaykind">MapOverlayKind</a></h3>
+<p>Which overlay shape one descriptor configures. The values are the wasm canvas’ plain-object <code>kind</code> strings (<code>MapView::setOverlays</code> accepts exactly these); the UDL <code>enum MapOverlayKind</code> variants carry the CamelCase spellings (<code>RoutePolyline</code>, <code>FilledPolygon</code>, <code>PointMarkers</code>, <code>TrafficFlow</code>, <code>PointPins</code>), which Kotlin’s generated bindings keep and Swift’s camel lowering reproduces as these strings.</p>
+<p><code>\| "routePolyline" \| "filledPolygon" \| "pointMarkers" \| "trafficFlow" \| "pointPins"</code></p>
+<h3 id="trafficflowcongestionlevel-1"><a class="header" href="#trafficflowcongestionlevel-1">TrafficFlowCongestionLevel</a></h3>
+<p>Congestion classification of a traffic-flow overlay segment, mirroring the UDL <code>TrafficFlowCongestionLevel</code> enum. The values are the camel-lower tags the wasm canvas’ plain objects use (the canvas itself passes the numeric wasm-bindgen enum discriminants); the UDL variants carry the CamelCase spellings.</p>
+<p><code>\| "freeFlow" \| "slow" \| "congested" \| "blocked"</code></p>
+<h3 id="navigatoreventtopic"><a class="header" href="#navigatoreventtopic">NavigatorEventTopic</a></h3>
+<p>One navigation event delivered to a listener registered through the wasm <code>Navigator.addNavigationListener</code> (M31): the contract’s foreign <code>NavigationListener</code> topics modelled over wasm-bindgen. <code>instruction</code> arrives for every dispatched fix, <code>phase</code> once per transition (with its <code>phaseChange</code> name), <code>deviation</code> when the deviation judgment changes, <code>speech</code> when a new non-empty instruction carries speech text, and the wasm-only <code>stop</code> when the trip ends (with a null snapshot).</p>
+<p><code>\| "instruction" \| "phase" \| "deviation" \| "speech" \| "stop"</code></p>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<p>The WebAssembly surface throws plain strings, not typed objects. A catch handler compares the message; the message is the verbatim reason, and the native surfaces carry the same reasons as typed error variants.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Payload</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>InvalidCoordinateInput</code></td><td>detail: string</td><td>A coordinate, viewport extent or box corner failed validation.</td></tr>
+<tr><td><code>NetworkRequestFailed</code></td><td>detail: string</td><td>The network transport failed; carries the transport’s verbatim detail.</td></tr>
+<tr><td><code>ResponseParsingFailure</code></td><td>detail: string</td><td>The provider answered with a payload the parser could not use.</td></tr>
+<tr><td><code>ProviderRequestRejected</code></td><td>detail: string</td><td>The provider returned a documented application-level failure status.</td></tr>
+<tr><td><code>RateLimitExhausted</code></td><td>None</td><td>The token-bucket rate limiter is exhausted; retry after the next refill.</td></tr>
+<tr><td><code>ProviderNotConfigured</code></td><td>contractName: string</td><td>No provider implementation is registered for the requested contract.</td></tr>
+<tr><td><code>InvalidNavigationInput</code></td><td>detail: string</td><td>A navigation input (a route record or a navigation policy) failed validation.</td></tr>
+<tr><td><code>InvalidRenderInput</code></td><td>detail: string</td><td>An overlay descriptor did not describe a usable overlay (wrong kind payload, an out-of-range color channel, or a non-positive or non-finite width or radius), or a surface input was structurally unusable (a null, zero or ambiguous platform surface pointer, or a non-positive viewport extent).</td></tr>
+<tr><td><code>RenderingSurfaceUnavailable</code></td><td>detail: string</td><td>Live rendering could not proceed on the platform surface: the platform handle or surface was unusable, the graphics context could not be acquired, the surface format could not be negotiated or configured, the frame texture could not be acquired, or the frame’s render state was busy in another draw.</td></tr>
+<tr><td><code>CacheOperationFailure</code></td><td>detail: string</td><td>A cache read, write or eviction failed (an unavailable store, a corrupt entry, or a byte-budget refusal). The detail names the reason verbatim.</td></tr>
+<tr><td><code>OfflineRoutingFailure</code></td><td>detail: string</td><td>An offline routing graph failed validation or could not be read: a truncated or foreign archive, an unsupported version, or a malformed section. The detail names the reason verbatim.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="async-and-threading"><a class="header" href="#async-and-threading">Async and threading</a></h2>
+<ul>
+<li>The wasm runtime is module-global; create one root and one <code>MapView</code> per canvas.</li>
+<li>Asynchronous calls return a <code>Promise</code> and reject with a verbatim string.</li>
+<li>Frames are explicit and serialized. A second overlapping <code>renderFrame</code> is a borrow violation; keep a busy flag.</li>
+<li><code>renderFrame</code> consumes its <code>MapCamera</code> by value; build a fresh camera for each changed pose.</li>
+<li>The navigation listener callback and diagnostics delivery are synchronous on the calling thread; do not block.</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
+<ul>
+<li><a href="first-map.html">Your first map</a> builds the same scenario step by step.</li>
+<li><a href="search-and-routing.html">Search and routing</a> drives the live calls.</li>
+<li><a href="navigation-simulation.html">Turn-by-turn navigation</a> drives the controller.</li>
+<li><a href="offline-maps.html">Offline maps</a> routes from an in-memory offline graph.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="api-reference-react-native.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="udl-contract.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="api-reference-react-native.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="udl-contract.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="additional-js/platform-tabs-b49149f3.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -138,6 +138,13 @@ export class MapView {
      */
     clearOverlays(): void;
     /**
+     * Removes the vector base map (M31 — the UDL
+     * `MapView.clear_vector_tile_source` contract member): following frames
+     * draw raster tiles and overlays alone. Refused while a frame resolves,
+     * like installing.
+     */
+    clearVectorTileSource(): void;
+    /**
      * Acquires the adapter and device, picks the pass-through surface
      * format, and builds the tile pipeline. Resolves to the adapter
      * description (graphics backend and adapter name) for the page's status
@@ -294,6 +301,28 @@ export class MapView {
      */
     setRasterTileSource(url_template: string, maximum_zoom_level: number): void;
     /**
+     * Installs a styled vector base map (M31 — the UDL
+     * `MapView.set_vector_tile_source` contract member, now served by the
+     * browser canvas too).
+     *
+     * The descriptor is one plain JavaScript object carrying the UDL
+     * `UrlTemplateVectorTileSource` fields in lower camel case:
+     * `{urlTemplate, sourceName, attributionText, styleId,
+     * minimumZoomLevel, maximumZoomLevel}`. The template must be an absolute
+     * `http`/`https` URL carrying `{z}`, `{x}` and `{y}`; the style id must
+     * name one of the committed style artifacts (`bright-light`,
+     * `fiord-dark`, …). The whole source builds before this view changes, so
+     * a refused call (a malformed template, an empty name, an inverted zoom
+     * range or an unknown style id) throws a string-valued error and leaves
+     * the previous base in force.
+     *
+     * While a source is installed the canvas hides the raster base and paints
+     * the style's own background, exactly like the native surface; the
+     * source's overlays and place names draw beneath every overlay the page
+     * supplies. Installing while a frame resolves is refused.
+     */
+    setVectorTileSource(source: any): void;
+    /**
      * Stages a deliberate parent-fallback for one requested tile, mirroring
      * the native golden image harness (`fill_pool_and_prepare` in
      * `map-rendering`'s golden test): the fallback tile is evicted from the
@@ -317,6 +346,15 @@ export class MapView {
      * unknown identifier throws a string-valued error naming it.
      */
     updateOverlay(identifier: string, overlay: any): void;
+    /**
+     * Reads the vector base source's status (M31 — the UDL
+     * `MapView.vector_tile_source_status` contract member): the configured
+     * source's style, name, attribution and zoom ceiling plus the last
+     * resolved frame's drawn and failed tile counts. A pure query — it never
+     * fetches or draws — and it answers an honest not-configured status with
+     * no source installed.
+     */
+    vectorTileSourceStatus(): object;
     /**
      * Compiled version of the SDK root this view was constructed with.
      */
@@ -874,6 +912,7 @@ export interface InitOutput {
     readonly mapview_clearLabels: (a: number) => void;
     readonly mapview_clearLocationIndicator: (a: number) => void;
     readonly mapview_clearOverlays: (a: number) => void;
+    readonly mapview_clearVectorTileSource: (a: number, b: number) => void;
     readonly mapview_initialize: (a: number) => number;
     readonly mapview_new: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_removeOverlay: (a: number, b: number, c: number) => number;
@@ -886,8 +925,10 @@ export interface InitOutput {
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setRasterTileSource: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly mapview_setVectorTileSource: (a: number, b: number, c: number) => void;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
     readonly mapview_updateOverlay: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly mapview_vectorTileSourceStatus: (a: number, b: number) => void;
     readonly navigator_addNavigationListener: (a: number, b: number) => number;
     readonly navigator_applyReroute: (a: number, b: number, c: number) => void;
     readonly navigator_currentTripState: (a: number, b: number) => void;
@@ -920,12 +961,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1619: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1619_83: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1619_84: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7885: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7906: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1416: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1469: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1469_86: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1469_87: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7946: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7967: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_6236: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

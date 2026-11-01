@@ -1,0 +1,1710 @@
+<!DOCTYPE HTML>
+<html lang="en" class="coal sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Android - Rustic Maps SDK</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A native map SDK in Rust with UniFFI bindings for Android, iOS and React Native, and a first-class WebAssembly target.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="additional-css/product-docs-593a0290.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "coal";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-39fd423e.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('coal')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rustic Maps SDK</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
+<blockquote>
+<p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
+</blockquote>
+<p>The Android artifact exposes the provider-neutral SDK through Kotlin bindings generated from the SDK contract, together with the shipped map view. This page documents every contract type and member the Kotlin surface exposes: what it does, how it is constructed, its parameters, its return value, the failures it raises, and its async and threading rules. The shipped <code>com.angoratek.rusticmaps</code> map view and its facade are described in the platform guides.</p>
+<h2 id="names-and-conventions"><a class="header" href="#names-and-conventions">Names and conventions</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>Spelling</th></tr>
+</thead>
+<tbody>
+<tr><td>Type</td><td>PascalCase</td></tr>
+<tr><td>Member</td><td>camelCase</td></tr>
+<tr><td>Enum variant</td><td>UPPER_SNAKE_CASE</td></tr>
+<tr><td>Record field</td><td>camelCase</td></tr>
+<tr><td>Error type</td><td><code>SdkException</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="namespace-functions"><a class="header" href="#namespace-functions">Namespace functions</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>getSdkCompiledVersion</code></td><td><code>fun getSdkCompiledVersion(): String</code></td><td>Returns <code>String</code>.</td><td>Version of the SDK build, for example <code>0.12.0</code>.</td></tr>
+<tr><td><code>coordinateToNormalizedWorld</code></td><td><code>fun coordinateToNormalizedWorld(coordinate: GeographicCoordinate): NormalizedWorldCoordinate</code></td><td>Returns <code>NormalizedWorldCoordinate</code>. Throws <code>SdkException</code>.</td><td>Projects a geographic coordinate into the normalized world square. # Parameters - <code>coordinate</code> — a WGS 84 coordinate in decimal degrees. # Returns The position in <code>[0, 1]</code> on both axes: x eastward from the antimeridian, y southward from the north pole. A latitude beyond the Web Mercator cutoff is clamped to the cutoff. # Errors Throws <code>InvalidCoordinateInput</code> when the latitude is outside <code>[-90, 90]</code>, the longitude is outside <code>[-180, 180]</code>, or a component is not finite.</td></tr>
+<tr><td><code>tileKeyForCoordinate</code></td><td><code>fun tileKeyForCoordinate(coordinate: GeographicCoordinate, zoomLevel: UByte): TileKey</code></td><td>Returns <code>TileKey</code>. Throws <code>SdkException</code>.</td><td>Returns the XYZ address of the tile that contains the coordinate at the given zoom level. # Parameters - <code>coordinate</code> — a WGS 84 coordinate. - <code>zoom_level</code> — tile zoom level. # Errors Throws <code>InvalidCoordinateInput</code> when the coordinate is not valid.</td></tr>
+<tr><td><code>tilesCovering</code></td><td><code>fun tilesCovering(boundingBox: BoundingBox, zoomLevel: UByte): List&lt;TileKey&gt;</code></td><td>Returns <code>List&lt;TileKey&gt;</code>. Throws <code>SdkException</code>.</td><td>Lists every XYZ tile whose area intersects the bounding box, ordered row-major from the north. # Parameters - <code>bounding_box</code> — area to cover; its corners must be ordered. - <code>zoom_level</code> — tile zoom level. # Errors Throws <code>InvalidCoordinateInput</code> for an invalid corner or an inverted box.</td></tr>
+<tr><td><code>offlineRouteFromArchiveBytes</code></td><td><code>suspend fun offlineRouteFromArchiveBytes(archiveBytes: ByteArray, start: GeographicCoordinate, end: GeographicCoordinate): Route</code></td><td>Asynchronous. Returns <code>Route</code>. Throws <code>SdkException</code>.</td><td>Calculates a route between two coordinates over an offline routing graph supplied as archive bytes. The archive is a self-describing RMOG container compiled from an OpenStreetMap extract. It is validated in memory before routing, and no provider registration is required. The request uses the graph profile’s default options (automobile, fastest, metric). # Parameters - <code>archive_bytes</code> — the compiled routing archive. - <code>start</code> — route origin. - <code>end</code> — route destination. # Returns The calculated route. # Errors Throws <code>OfflineRoutingFailure</code> when the archive fails validation or cannot be read, <code>InvalidCoordinateInput</code> when a coordinate lies beyond the graph’s snap tolerance, and <code>ProviderRequestRejected</code> when the graph cannot connect the pair. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>defaultStepAdvancePolicy</code></td><td><code>fun defaultStepAdvancePolicy(): StepAdvancePolicy</code></td><td>Returns <code>StepAdvancePolicy</code>.</td><td>The default step-advance policy: advance when a position fix comes within 20 meters of the end of the current step.</td></tr>
+<tr><td><code>defaultDeviationPolicy</code></td><td><code>fun defaultDeviationPolicy(): DeviationPolicy</code></td><td>Returns <code>DeviationPolicy</code>.</td><td>The default deviation policy: judge a fix off route when it lies more than 25 meters from the remaining route line.</td></tr>
+<tr><td><code>defaultReroutePolicy</code></td><td><code>fun defaultReroutePolicy(): ReroutePolicy</code></td><td>Returns <code>ReroutePolicy</code>.</td><td>The default reroute-recalculation policy: a 5 second cooldown and a 50 meter movement threshold.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="interfaces"><a class="header" href="#interfaces">Interfaces</a></h2>
+<h3 id="mapcamera"><a class="header" href="#mapcamera">MapCamera</a></h3>
+<p>Anchored map camera: geographic center, zoom level, bearing and pitch. The ground point under the center always sits at the viewport center; zoom and pitch are clamped to their valid ranges and bearing wraps into <code>[0, 360)</code>.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(center: GeographicCoordinate, zoomLevel: Double, bearingDegrees: Double, pitchDegrees: Double)</code></td><td>Builds a camera at the given center, zoom level, bearing and pitch. # Parameters - <code>center</code> — geographic point placed at the viewport center. - <code>zoom_level</code> — zoom level, clamped to the valid range. - <code>bearing_degrees</code> — clockwise rotation from north, wrapped into <code>[0, 360)</code>. - <code>pitch_degrees</code> — tilt from straight down, clamped to the valid range. # Errors Throws <code>InvalidCoordinateInput</code> when the center is not a valid coordinate or when a numeric argument is not finite.</td></tr>
+<tr><td><code>fitBounds</code></td><td><code>fun fitBounds(boundingBox: BoundingBox, viewport: ViewportSize, edgeInsets: EdgeInsets, maximumZoomLevel: Double): MapCamera</code></td><td>Builds the camera that frames a bounding box inside the viewport’s inset region: top-down and north-up by construction (pitch and bearing zero), zoomed to the largest level keeping the whole box inside the inset area and clamped to <code>maximum_zoom_level</code>; the center is anchored on the inset region’s center. # Parameters - <code>bounding_box</code> — the area to frame. - <code>viewport</code> — viewport extent in pixels. - <code>edge_insets</code> — pixels kept clear on each viewport edge. - <code>maximum_zoom_level</code> — upper zoom bound for the fitted camera. # Errors Throws when the insets or the maximum zoom are not finite usable values, when the insets are negative or leave no inset area, or when the box spans no positive world area.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>projectToScreen</code></td><td><code>fun projectToScreen(coordinate: GeographicCoordinate, viewport: ViewportSize, fieldOfViewDegrees: Double): ScreenPoint?</code></td><td>Returns <code>ScreenPoint?</code>. Throws <code>SdkException</code>.</td><td>Projects a coordinate to viewport pixels (origin top-left, y down). # Parameters - <code>coordinate</code> — the point to project. - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. # Returns The screen position, or null when the point lies behind the camera. # Errors Throws <code>InvalidCoordinateInput</code> for an invalid coordinate or viewport.</td></tr>
+<tr><td><code>screenToGroundCoordinate</code></td><td><code>fun screenToGroundCoordinate(screenPoint: ScreenPoint, viewport: ViewportSize, fieldOfViewDegrees: Double): GeographicCoordinate?</code></td><td>Returns <code>GeographicCoordinate?</code>. Throws <code>SdkException</code>.</td><td>Unprojects a viewport pixel back onto the ground plane. # Parameters - <code>screen_point</code> — the pixel to unproject. - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. # Returns The ground coordinate, or null when the ray misses the ground (typically below the horizon at steep pitch). # Errors Throws <code>InvalidCoordinateInput</code> for an invalid viewport.</td></tr>
+<tr><td><code>visibleTileKeys</code></td><td><code>fun visibleTileKeys(viewport: ViewportSize, fieldOfViewDegrees: Double, tileZoomLevel: UByte): List&lt;TileKey&gt;</code></td><td>Returns <code>List&lt;TileKey&gt;</code>. Throws <code>SdkException</code>.</td><td>Lists every tile at <code>tile_zoom_level</code> whose area intersects the visible ground, sorted row-major from the north. # Parameters - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. - <code>tile_zoom_level</code> — zoom level of the listed tiles. # Errors Throws <code>InvalidCoordinateInput</code> for an invalid viewport.</td></tr>
+<tr><td><code>tileZoomLevel</code></td><td><code>fun tileZoomLevel(): UByte</code></td><td>Returns <code>UByte</code>.</td><td>Nearest whole zoom level a tile fetch should use for this camera.</td></tr>
+<tr><td><code>panByScreenPixels</code></td><td><code>fun panByScreenPixels(deltaXPixels: Double, deltaYPixels: Double, viewport: ViewportSize, fieldOfViewDegrees: Double): MapCamera</code></td><td>Returns <code>MapCamera</code>. Throws <code>SdkException</code>.</td><td>Pans by a pointer travel of <code>delta_x_pixels</code> x <code>delta_y_pixels</code> (screen pixels, x right / y down): the ground point the pointer just moved over becomes the new camera center, so map content tracks the pointer exactly. Answers the camera unchanged when the delta’s ground ray misses the plane (above the horizon at steep pitch). Gesture recognition stays in your UI layer; this call performs the camera math. # Parameters - <code>delta_x_pixels</code> — horizontal pointer travel in pixels. - <code>delta_y_pixels</code> — vertical pointer travel in pixels. - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. # Errors Throws <code>InvalidCoordinateInput</code> when the viewport extent is not positive.</td></tr>
+<tr><td><code>zoomByLevelsAroundScreenPoint</code></td><td><code>fun zoomByLevelsAroundScreenPoint(deltaZoomLevels: Double, focalPoint: ScreenPoint, viewport: ViewportSize, fieldOfViewDegrees: Double): MapCamera</code></td><td>Returns <code>MapCamera</code>. Throws <code>SdkException</code>.</td><td>Zooms by <code>delta_zoom_levels</code> (levels; positive zooms in) keeping the world point under <code>focal_point</code> fixed under it. Answers the zoom without the focal correction when the focal ray misses the ground plane (above the horizon at steep pitch). Zoom clamps to the camera’s own level range before the focal correction applies, so a clamped zoom still holds the focal point. # Parameters - <code>delta_zoom_levels</code> — zoom change in levels. - <code>focal_point</code> — screen pixel that stays fixed during the zoom. - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. # Errors Throws <code>InvalidCoordinateInput</code> when the viewport extent is not positive.</td></tr>
+<tr><td><code>rotateByDegreesAroundScreenPoint</code></td><td><code>fun rotateByDegreesAroundScreenPoint(deltaBearingDegrees: Double, focalPoint: ScreenPoint, viewport: ViewportSize, fieldOfViewDegrees: Double): MapCamera</code></td><td>Returns <code>MapCamera</code>. Throws <code>SdkException</code>.</td><td>Rotates the bearing by <code>delta_bearing_degrees</code> (degrees clockwise, wrapping into <code>[0, 360)</code>) keeping the world point under <code>focal_point</code> fixed under it. Answers the rotation without the focal correction when the focal ray misses the ground plane, which produces the touch-point turn a two-finger gesture implies. # Parameters - <code>delta_bearing_degrees</code> — bearing change in degrees. - <code>focal_point</code> — screen pixel that stays fixed during the rotation. - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. # Errors Throws <code>InvalidCoordinateInput</code> when the viewport extent is not positive.</td></tr>
+<tr><td><code>center</code></td><td><code>fun center(): GeographicCoordinate</code></td><td>Returns <code>GeographicCoordinate</code>.</td><td>Reads the camera’s state back as it was constructed. The getters make the framing chosen by <code>fit_bounds</code> readable: the fitted zoom level, its anchored center, and the constructed bearing and pitch. Read-only: the camera has no setters, so a new pose is a new camera.</td></tr>
+<tr><td><code>zoomLevel</code></td><td><code>fun zoomLevel(): Double</code></td><td>Returns <code>Double</code>.</td><td>The camera’s zoom level.</td></tr>
+<tr><td><code>bearingDegrees</code></td><td><code>fun bearingDegrees(): Double</code></td><td>Returns <code>Double</code>.</td><td>The camera’s bearing in degrees clockwise from north, within <code>[0, 360)</code>.</td></tr>
+<tr><td><code>pitchDegrees</code></td><td><code>fun pitchDegrees(): Double</code></td><td>Returns <code>Double</code>.</td><td>The camera’s pitch in degrees.</td></tr>
+<tr><td><code>groundMetersPerScreenPixel</code></td><td><code>fun groundMetersPerScreenPixel(viewport: ViewportSize, fieldOfViewDegrees: Double): Double</code></td><td>Returns <code>Double</code>. Throws <code>SdkException</code>.</td><td>Ground meters represented by one screen pixel at the camera’s center: the equatorial ground meters per pixel at the camera’s zoom level times the cosine of the center latitude, so the answer shrinks toward the poles exactly like the projected ground. At any nonzero pitch this is an approximation valid at the viewport’s center column: the value is computed for a flat center and does not fold pitch into the answer. # Parameters - <code>viewport</code> — viewport extent in pixels. - <code>field_of_view_degrees</code> — vertical field of view of the projection. # Errors Throws <code>InvalidCoordinateInput</code> for an invalid viewport.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="geocodingprovider"><a class="header" href="#geocodingprovider">GeocodingProvider</a></h3>
+<p>Geocoding provider contract. Implement this interface and register the implementation with <code>MapSdk::register_geocoding_provider_from_foreign</code> to serve the SDK’s forward and reverse geocoding calls.</p>
+<p>Implement this interface in Kotlin; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>forwardGeocode</code></td><td><code>suspend fun forwardGeocode(addressText: String): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Resolves a free-form address text into candidate places, best match first. # Parameters - <code>address_text</code> — the address to resolve. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+<tr><td><code>reverseGeocode</code></td><td><code>suspend fun reverseGeocode(coordinate: GeographicCoordinate): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Resolves a coordinate into candidate places describing that position. # Parameters - <code>coordinate</code> — the position to describe. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="rastertileprovider"><a class="header" href="#rastertileprovider">RasterTileProvider</a></h3>
+<p>Raster-tile provider contract. Implement this interface and register the implementation with <code>MapSdk::register_raster_tile_provider_from_foreign</code> to serve the SDK’s raster-tile calls.</p>
+<p>Implement this interface in Kotlin; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fetchRasterTile</code></td><td><code>suspend fun fetchRasterTile(tileX: UInt, tileY: UInt, zoomLevel: UByte, imageFormat: RasterImageFormat, tileResolution: RasterTileResolution): RasterTileData</code></td><td>Asynchronous. Returns <code>RasterTileData</code>. Throws <code>SdkException</code>.</td><td>Fetches one web-mercator XYZ raster tile at the requested resolution. # Parameters - <code>tile_x</code> — tile column. - <code>tile_y</code> — tile row, counted from the north. - <code>zoom_level</code> — zoom level of the tile. - <code>image_format</code> — requested image encoding. - <code>tile_resolution</code> — requested pixel resolution. # Returns The fetched tile, reporting the format and resolution it actually contains. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mapsdk"><a class="header" href="#mapsdk">MapSdk</a></h3>
+<p>Provider entry point of the SDK: resolves every call through the providers registered on the object. Construct the object with no providers, then register them: native integrations through the SDK’s own registration calls and foreign integrations through the <code>register_*_from_foreign</code> methods (see the provider contract interfaces above). A call into a contract with no registered provider throws <code>ProviderNotConfigured</code> naming the contract.</p>
+<p>The calls cover geocoding (forward and reverse), routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles. Elevation and offline routing have no provider contract here: offline routing is the standalone <code>offline_route_from_archive_bytes</code> function.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor()</code></td><td>Creates the SDK with no providers registered. Register providers before the first call that needs one.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>registerGeocodingProviderFromForeign</code></td><td><code>fun registerGeocodingProviderFromForeign(geocodingProvider: GeocodingProvider): Unit</code></td><td>—</td><td>Registers a geocoding implementation. The provider starts serving <code>forward_geocode</code> and <code>reverse_geocode</code> once this call returns.</td></tr>
+<tr><td><code>registerRasterTileProviderFromForeign</code></td><td><code>fun registerRasterTileProviderFromForeign(rasterTileProvider: RasterTileProvider): Unit</code></td><td>—</td><td>Registers a raster-tile implementation. The provider starts serving <code>fetch_raster_tile</code> once this call returns.</td></tr>
+<tr><td><code>forwardGeocode</code></td><td><code>suspend fun forwardGeocode(addressText: String): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Resolves a free-form address text into candidate places, best match first. # Parameters - <code>address_text</code> — the address to resolve. # Errors Throws <code>ProviderNotConfigured</code> without a geocoding provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>reverseGeocode</code></td><td><code>suspend fun reverseGeocode(coordinate: GeographicCoordinate): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Resolves a coordinate into candidate places describing that position. # Parameters - <code>coordinate</code> — the position to describe. # Errors Throws <code>ProviderNotConfigured</code> without a geocoding provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>calculateRoute</code></td><td><code>suspend fun calculateRoute(waypoints: List&lt;GeographicCoordinate&gt;, routeOptions: RouteOptions): Route</code></td><td>Asynchronous. Returns <code>Route</code>. Throws <code>SdkException</code>.</td><td>Calculates a route through the ordered waypoints with the given options. # Parameters - <code>waypoints</code> — ordered route points; every one must be a valid coordinate. - <code>route_options</code> — transport mode, strategy, units and avoid options. # Errors Throws <code>ProviderNotConfigured</code> without a routing provider, <code>InvalidCoordinateInput</code> for an invalid waypoint, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>calculateDistanceMatrix</code></td><td><code>suspend fun calculateDistanceMatrix(origins: List&lt;GeographicCoordinate&gt;, destinations: List&lt;GeographicCoordinate&gt;, transportationMode: TransportationMode): DistanceMatrix</code></td><td>Asynchronous. Returns <code>DistanceMatrix</code>. Throws <code>SdkException</code>.</td><td>Calculates durations and distances for every origin-destination pair. # Parameters - <code>origins</code> — origin points. - <code>destinations</code> — destination points. - <code>transportation_mode</code> — mode of transport for the matrix. # Errors Throws <code>ProviderNotConfigured</code> without a routing provider, <code>InvalidCoordinateInput</code> for an invalid point, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>suggest</code></td><td><code>suspend fun suggest(queryText: String, searchBoundary: BoundingBox?): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns fast completion candidates while the user types. # Parameters - <code>query_text</code> — the text being typed. - <code>search_boundary</code> — optional area that restricts the search. # Errors Throws <code>ProviderNotConfigured</code> without a place-search provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>search</code></td><td><code>suspend fun search(queryText: String, searchBoundary: BoundingBox?): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns full search results for a settled query. # Parameters - <code>query_text</code> — the settled query. - <code>search_boundary</code> — optional area that restricts the search. # Errors Throws <code>ProviderNotConfigured</code> without a place-search provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>fetchTrafficIncidents</code></td><td><code>suspend fun fetchTrafficIncidents(boundingBox: BoundingBox): List&lt;TrafficIncident&gt;</code></td><td>Asynchronous. Returns <code>List&lt;TrafficIncident&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns incidents that intersect the bounding box. # Parameters - <code>bounding_box</code> — area to query. # Errors Throws <code>ProviderNotConfigured</code> without a traffic-incidents provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>fetchTrafficFlow</code></td><td><code>suspend fun fetchTrafficFlow(boundingBox: BoundingBox): List&lt;TrafficFlowData&gt;</code></td><td>Asynchronous. Returns <code>List&lt;TrafficFlowData&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns per-segment flow observations inside the bounding box. # Parameters - <code>bounding_box</code> — area to query. # Errors Throws <code>ProviderNotConfigured</code> without a traffic-flow provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>fetchRasterTile</code></td><td><code>suspend fun fetchRasterTile(tileX: UInt, tileY: UInt, zoomLevel: UByte, imageFormat: RasterImageFormat, tileResolution: RasterTileResolution): RasterTileData</code></td><td>Asynchronous. Returns <code>RasterTileData</code>. Throws <code>SdkException</code>.</td><td>Fetches one web-mercator XYZ raster tile at the requested resolution. # Parameters - <code>tile_x</code> — tile column. - <code>tile_y</code> — tile row, counted from the north. - <code>zoom_level</code> — zoom level of the tile. - <code>image_format</code> — requested image encoding. - <code>tile_resolution</code> — requested pixel resolution. # Errors Throws <code>ProviderNotConfigured</code> without a raster-tile provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>setProviderCredential</code></td><td><code>fun setProviderCredential(credential: String): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
+<tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>fun setProviderCredentialWithTileCache(mapquestApiKey: String, tileCacheDatabasePath: String, tileCacheAbsoluteMaximumBytes: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
+<tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>fun registerUrlTemplateRasterTileSource(source: UrlTemplateRasterTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers a provider-neutral raster base map: any web-mercator XYZ tileset that publishes a <code>{z}/{x}/{y}</code> URL template. The registration replaces the raster-tile contract only; every other provider keeps serving. It also drops any installed tile cache, because the cache’s terms belong to the provider that installed it; a later <code>raster_tile_cache_terms</code> then throws the not-configured error rather than reporting another provider’s ceiling. Re-registering replaces the source. # Parameters - <code>source</code> — the tile source and its terms. # Errors A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving.</td></tr>
+<tr><td><code>setRasterTileCacheTimeToLive</code></td><td><code>fun setRasterTileCacheTimeToLive(timeToLiveSeconds: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds. A zero value is refused, because it would expire every entry on capture and store nothing. A value above the installed provider’s declared terms ceiling is accepted, and the ceiling clamps what the cache stores; <code>raster_tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store, and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
+<tr><td><code>rasterTileCacheTerms</code></td><td><code>fun rasterTileCacheTerms(): TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkException</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache, for display on a settings page. Reports the time-to-live currently in force (the category default, or the last accepted override clamped to the provider’s ceiling), the provider’s declared ceiling, and the category default. Read-only: the readback never mutates the cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store.</td></tr>
+<tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>fun subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): Unit</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
+<tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>fun flushRecentDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity, maximumCount: UInt): UInt</code></td><td>Returns <code>UInt</code>.</td><td>Delivers up to <code>maximum_count</code> of the most recent buffered events at <code>minimum_severity</code> or above to the listener, oldest first, and returns how many were delivered. The flush does not remove events, so a later flush can deliver them again. The flush is bounded and synchronous; the listener must not block. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered. - <code>maximum_count</code> — upper bound on delivered events. # Returns The number of events delivered.</td></tr>
+<tr><td><code>latestProviderFailureDiagnostics</code></td><td><code>fun latestProviderFailureDiagnostics(): List&lt;ProviderFailureDiagnostic&gt;</code></td><td>Returns <code>List&lt;ProviderFailureDiagnostic&gt;</code>.</td><td>Returns the retained diagnostics of failed provider calls made by foreign provider implementations, oldest first. A failure is recorded whether the implementation threw one of the contract’s <code>SdkError</code> variants or failed without a mapped error. The buffer keeps a bounded number of the most recent failures and drops older ones. Reading is non-destructive: the call neither records nor clears entries. The typed error still surfaces at the failing call; this readback lets a failure be classified after the fact. See <code>ProviderFailureDiagnostic</code> for the fields of an entry. # Returns The retained entries, oldest first.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigationlistener"><a class="header" href="#navigationlistener">NavigationListener</a></h3>
+<p>Navigation event listener. Implement this interface and subscribe it on <code>Navigator</code>; each subscription delivers only the topic it was registered for.</p>
+<h1 id="threading-callbacks-run-synchronously-on-the-thread-that-drives-the-controller-and-must-not-block-a-callback-that-calls-back-into-the-controller-while-a-dispatch-is-in-flight-is-suppressed-the-state-change-behind-it-is-already-applied-and-only-its-broadcast-is-skipped"><a class="header" href="#threading-callbacks-run-synchronously-on-the-thread-that-drives-the-controller-and-must-not-block-a-callback-that-calls-back-into-the-controller-while-a-dispatch-is-in-flight-is-suppressed-the-state-change-behind-it-is-already-applied-and-only-its-broadcast-is-skipped">Threading Callbacks run synchronously on the thread that drives the controller and must not block. A callback that calls back into the controller while a dispatch is in flight is suppressed: the state change behind it is already applied, and only its broadcast is skipped.</a></h1>
+<p>Implement this interface in Kotlin; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>onNavigationInstruction</code></td><td><code>fun onNavigationInstruction(instruction: NavigationInstruction): Unit</code></td><td>—</td><td>Receives the composed instruction payload of every dispatched state change (the instructions topic).</td></tr>
+<tr><td><code>onDeviationStatusChange</code></td><td><code>fun onDeviationStatusChange(deviationStatusChange: DeviationStatusChange): Unit</code></td><td>—</td><td>Receives a deviation-status update (the deviation topic): off route on entry and on every recorded measurement update while the deviation persists, and on route when it clears.</td></tr>
+<tr><td><code>onNavigationPhaseChange</code></td><td><code>fun onNavigationPhaseChange(navigationPhaseChange: NavigationPhaseChange): Unit</code></td><td>—</td><td>Receives one phase transition per dispatched trip-state transition (the phase topic).</td></tr>
+<tr><td><code>onSpeechInstruction</code></td><td><code>fun onSpeechInstruction(speechInstruction: SpeechInstruction): Unit</code></td><td>—</td><td>Receives one utterance trigger when the controller’s distance-band policy judges the current fix newsworthy, for example when a trigger band is crossed. The text is the composed speech text, verbatim and never rewritten; playback and speech synthesis remain the application’s responsibility.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="subscription"><a class="header" href="#subscription">Subscription</a></h3>
+<p>Handle for exactly one <code>(topic, listener)</code> subscription. Cancelling is explicit and idempotent; dropping the handle does not unsubscribe.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cancel</code></td><td><code>fun cancel(): Unit</code></td><td>—</td><td>Cancels this subscription, so the listener stops receiving the subscription’s topic from the next dispatch on. Idempotent.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigator"><a class="header" href="#navigator">Navigator</a></h3>
+<p>The navigation controller: starts and stops trips, accepts position fixes and reroutes, broadcasts every state change to the registered listeners, and answers read-only state and instruction queries. Obtain routes from <code>MapSdk::calculate_route</code> or <code>offline_route_from_archive_bytes</code> and start a trip on them with this controller.</p>
+<p>The listener callbacks run synchronously on the thread that drives the controller call; a listener calling back into the controller while a dispatch is still in flight is suppressed, and only the broadcast is skipped. The controller never holds its state lock across a listener callback.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor()</code></td><td>Builds the controller with no active trip and no subscriptions.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>subscribeToNavigationInstructions</code></td><td><code>fun subscribeToNavigationInstructions(listener: NavigationListener): Subscription</code></td><td>Returns <code>Subscription</code>.</td><td>Subscribes the listener to the instructions topic: the composed instruction payload of every dispatched state change, in registration order.</td></tr>
+<tr><td><code>subscribeToDeviationStatus</code></td><td><code>fun subscribeToDeviationStatus(listener: NavigationListener): Subscription</code></td><td>Returns <code>Subscription</code>.</td><td>Subscribes the listener to the deviation-status topic, in registration order.</td></tr>
+<tr><td><code>subscribeToPhaseChanges</code></td><td><code>fun subscribeToPhaseChanges(listener: NavigationListener): Subscription</code></td><td>Returns <code>Subscription</code>.</td><td>Subscribes the listener to the phase-transition topic, in registration order.</td></tr>
+<tr><td><code>startNavigation</code></td><td><code>fun startNavigation(route: Route, unitSystem: UnitSystem, stepAdvancePolicy: StepAdvancePolicy, deviationPolicy: DeviationPolicy): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Begins navigating <code>route</code> with the given policies, replacing any active trip. The initial instruction payload is dispatched; no deviation or phase transitions exist yet. A route without traversable steps represents an already-arrived trip. # Parameters - <code>route</code> — the route to navigate. - <code>unit_system</code> — units used in composed instruction text. - <code>step_advance_policy</code> — step-advance strategy and thresholds. - <code>deviation_policy</code> — off-route detection thresholds. # Errors Throws <code>InvalidNavigationInput</code> for policies with non-finite or negative thresholds, or for a route whose step maneuver label the SDK does not recognize.</td></tr>
+<tr><td><code>updateLocation</code></td><td><code>fun updateLocation(locationUpdate: NavigationLocationUpdate): Unit</code></td><td>—</td><td>Delivers one position fix to the active trip; without an active trip the fix is dropped. Fixes without an accuracy report never trigger a step advance and are never judged by the deviation detector.</td></tr>
+<tr><td><code>applyReroute</code></td><td><code>fun applyReroute(route: Route, stepAdvancePolicy: StepAdvancePolicy): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Replaces the route of the active trip (a reroute). The replacement route must be anchored at the trip’s current snapped coordinate. The step-advance strategy for the new route is configured by <code>step_advance_policy</code>; the deviation policy persists. A reroute offered to an arrived trip is ignored, and without an active trip the event is dropped. An in-flight reroute calculation is settled by this call whether the route is applied or ignored, so the calculation gate reopens after the integrator acts. # Errors Throws <code>InvalidNavigationInput</code> for an invalid policy or an unrecognized maneuver label.</td></tr>
+<tr><td><code>beginRerouteCalculation</code></td><td><code>fun beginRerouteCalculation(): Boolean</code></td><td>Returns <code>Boolean</code>.</td><td>Applies the reroute-recalculation gates to one reroute request. Returns true when every gate passes (no calculation in flight, outside the cooldown window and, when both fix references exist, beyond the movement threshold) and a calculation is marked as in flight, readable as the trip state’s <code>is_calculating_new_route</code>; returns false when the request is refused. A request without an open, still-navigable trip (no trip, or an arrived trip) is refused before the gates are consulted. A caller that receives true owes a settle: either the eventual <code>apply_reroute</code> (applied or ignored) or <code>cancel_reroute_calculation</code>. The trip’s first attempt always passes the cooldown and movement gates. # Returns True when the request passed the gates and a calculation is in flight.</td></tr>
+<tr><td><code>cancelRerouteCalculation</code></td><td><code>fun cancelRerouteCalculation(): Unit</code></td><td>—</td><td>Settles an in-flight reroute calculation without applying a route, for example when the integrator abandons the request. The calculation gate reopens; the cooldown keeps running from the calculation’s beginning and the movement reference stays where it was. Idempotent.</td></tr>
+<tr><td><code>configureReroutePolicy</code></td><td><code>fun configureReroutePolicy(reroutePolicy: ReroutePolicy): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Replaces the reroute-recalculation hysteresis policy in force, keeping the gate’s recorded state. # Parameters - <code>reroute_policy</code> — cooldown and movement thresholds. # Errors Throws <code>InvalidNavigationInput</code> when a threshold is not finite or is negative; the policy in force is then untouched.</td></tr>
+<tr><td><code>currentTripState</code></td><td><code>fun currentTripState(): TripNavigationState?</code></td><td>Returns <code>TripNavigationState?</code>.</td><td>The state of the active trip, or null without one.</td></tr>
+<tr><td><code>currentInstructions</code></td><td><code>fun currentInstructions(): NavigationInstruction?</code></td><td>Returns <code>NavigationInstruction?</code>.</td><td>The composed turn-by-turn instruction payload of the current trip state, or null without an active trip. Repeated reads of an unchanged state return the same payload.</td></tr>
+<tr><td><code>subscribeToSpeechInstructions</code></td><td><code>fun subscribeToSpeechInstructions(listener: NavigationListener): Subscription</code></td><td>Returns <code>Subscription</code>.</td><td>Subscribes the listener to the speech-instruction trigger topic, in registration order. The controller decides when a line is worth speaking. Trigger bands reuse the display phrase’s distance bands, so a spoken “in 100 meters” matches the phrase shown in the payload; each band announces at most once per step, and a minimum inter-utterance spacing and repeat distance suppress chatter. Speech synthesis and playback remain the application’s responsibility.</td></tr>
+<tr><td><code>addNavigationListener</code></td><td><code>fun addNavigationListener(listener: NavigationListener): Subscription</code></td><td>Returns <code>Subscription</code>.</td><td>Subscribes one listener to all four navigation topics (instructions, deviation status, phase changes and speech instructions) in one call and answers the composite subscription that cancels all four. Delivery semantics match the four individual <code>subscribe_to_*</code> calls: the listener receives each topic on its own method, in registration order, and <code>cancel()</code> removes every one of the four registrations (idempotent, like a single-topic subscription).</td></tr>
+<tr><td><code>stopNavigation</code></td><td><code>fun stopNavigation(): Unit</code></td><td>—</td><td>Ends the active trip and clears the trip state: after this call <code>current_trip_state</code> and <code>current_instructions</code> answer null, and location updates, reroutes and reroute requests are dropped until <code>start_navigation</code> begins a new trip. The speech-trigger band memory and the reroute-recalculation gate are reset with the trip; utterance identifiers stay monotonic across the stop and the configured reroute policy persists. Listener subscriptions are untouched and keep delivering the next trip’s events. Stopping without an active trip is a no-op.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routesimulator"><a class="header" href="#routesimulator">RouteSimulator</a></h3>
+<p>An immutable simulated trip over one planned route: distance-parameterized interpolation along the route’s own polyline at a caller-chosen pace. The SDK carries no pacing policy and no default speed.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(route: Route, pace: SimulatedTripPace)</code></td><td>Builds the simulator over <code>route</code>. # Parameters - <code>route</code> — the planned route to simulate. - <code>pace</code> — travel speed and multiplier. # Errors Throws when the pace’s speed or multiplier is non-finite or not strictly positive, or when the route’s legs and steps carry no usable geometry.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>totalDistanceMeters</code></td><td><code>fun totalDistanceMeters(): Double</code></td><td>Returns <code>Double</code>.</td><td>Total length of the route’s flattened polyline, in meters.</td></tr>
+<tr><td><code>totalDurationSeconds</code></td><td><code>fun totalDurationSeconds(): Double</code></td><td>Returns <code>Double</code>.</td><td>Total simulated travel time at the chosen pace, in seconds.</td></tr>
+<tr><td><code>fixAtTravelledMeters</code></td><td><code>fun fixAtTravelledMeters(travelledMeters: Double): SimulatedTripFix</code></td><td>Returns <code>SimulatedTripFix</code>.</td><td>The fix at <code>travelled_meters</code> from the route start, clamped into <code>[0, total_distance_meters()]</code>.</td></tr>
+<tr><td><code>fixAtElapsedSeconds</code></td><td><code>fun fixAtElapsedSeconds(elapsedSeconds: Double): SimulatedTripFix</code></td><td>Returns <code>SimulatedTripFix</code>.</td><td>The fix at <code>elapsed_seconds</code> of simulated travel, clamped into <code>[0, total_duration_seconds()]</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mapview"><a class="header" href="#mapview">MapView</a></h3>
+<p>The native map surface view: renders the camera-driven tiled map plus the overlay list onto a live platform window surface. Construct it with the <code>MapSdk</code> whose registered raster-tile provider the attached surface draws from; the provider is resolved at attach time, so with no registered provider <code>attach</code> throws <code>ProviderNotConfigured</code>.</p>
+<h1 id="lifecycle"><a class="header" href="#lifecycle">Lifecycle</a></h1>
+<p><code>attach</code> wraps the platform handle, acquires the surface-compatible graphics context, negotiates the surface format, configures the initial extent and resolves the tile provider. Each step’s failure throws: <code>RenderingSurfaceUnavailable</code> for the GPU or surface path, <code>InvalidRenderInput</code> for a bad handle or extent, and <code>ProviderNotConfigured</code> for the missing provider. <code>resize</code>, called from the platform’s surface-size callback, reconfigures the surface and rejects a zero extent. <code>detach</code> releases the surface state until a re-attach.</p>
+<p>Overlay state outlives attach and detach cycles: <code>set_overlays</code>, <code>add_overlay</code>, <code>update_overlay</code>, <code>remove_overlay</code> and <code>clear_overlays</code> all work detached, and the next attach draws the stored list. Generated overlay identifiers also survive detach and attach, so an overlay added while detached stays addressable.</p>
+<h1 id="draw-model"><a class="header" href="#draw-model">Draw model</a></h1>
+<p>Frames are explicit: the platform view calls <code>draw</code> once per rendered frame from its own cadence (a display link, a choreographer, or a resize-then-once pattern) with the current <code>MapCamera</code>. The SDK runs no internal render thread and no continuous redraw loop. Each draw lists the camera’s visible tiles, fetches pooled misses from the surface-attached provider within a per-frame budget, and renders tiles then overlays alpha-blended, presenting to the surface. A failed frame throws and leaves the previous frame on screen.</p>
+<p>Draws on one view are serialized: a draw holding the view’s render state reports a concurrent <code>draw</code> or <code>resize</code> with <code>RenderingSurfaceUnavailable</code>, and the platform cadence retries on the next frame.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(mapSdk: MapSdk)</code></td><td>Builds the view over the SDK state it draws from.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>attach</code></td><td><code>fun attach(surfaceHandle: SurfaceHandle, widthPixels: UInt, heightPixels: UInt): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Attaches the platform surface at the given initial physical-pixel extent. The extent must be non-zero; a platform view that is not laid out yet waits for <code>resize</code>. The call validates the handle, acquires the graphics context, negotiates the format, configures the surface and resolves the raster provider. Attaching an already attached view is refused. # Parameters - <code>surface_handle</code> — exactly one platform pointer. - <code>width_pixels</code> — initial surface width in physical pixels. - <code>height_pixels</code> — initial surface height in physical pixels. # Errors Throws <code>InvalidRenderInput</code> for a bad handle or a zero extent, <code>RenderingSurfaceUnavailable</code> for a GPU or surface failure, and <code>ProviderNotConfigured</code> when no raster-tile provider is registered.</td></tr>
+<tr><td><code>resize</code></td><td><code>fun resize(widthPixels: UInt, heightPixels: UInt): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Reconfigures the surface to the new physical-pixel extent; both extents must be non-zero. A resize during a draw reports the busy state, and the next draw or resize picks up the new extent. # Errors Throws <code>InvalidRenderInput</code> for a zero extent and <code>RenderingSurfaceUnavailable</code> when a draw owns the surface.</td></tr>
+<tr><td><code>setDevicePixelRatio</code></td><td><code>fun setDevicePixelRatio(devicePixelRatio: Double): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Sets the drawing buffer’s device pixels per point or CSS pixel, so labels and overlay screen sizes keep their declared point size on a 2x or 3x surface. The built-in styles declare point sizes while the surface draws device pixels; each draw multiplies every placed glyph size, route and traffic line width, and marker and pin radius by this ratio exactly once. The ratio outlives attach and detach cycles like the overlay list. The default is 1.0 until your platform code reports the surface’s own. # Parameters - <code>device_pixel_ratio</code> — device pixels per point. # Errors Throws <code>InvalidRenderInput</code> for a non-finite or non-positive ratio; the previous ratio stays in force.</td></tr>
+<tr><td><code>detach</code></td><td><code>fun detach(): Unit</code></td><td>—</td><td>Detaches: releases the surface, its renderer and its scheduler. Overlay state persists, and re-attach rebuilds the drawing machinery. Safe against a draw still in flight; that frame completes and the state is then dropped without being restored.</td></tr>
+<tr><td><code>setOverlays</code></td><td><code>fun setOverlays(overlayDescriptors: List&lt;MapOverlay&gt;): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Replaces the drawn overlay list in one call, in order (later entries draw over earlier ones); an empty list clears. Every descriptor must be valid for its kind, and no partial list is kept. This call replaces the whole drawn list, including overlays added through <code>add_overlay</code>, and drops the addressed bookkeeping, so an identifier returned by <code>add_overlay</code> before this call no longer addresses anything afterwards. Use it for a list owned whole, and <code>add_overlay</code>, <code>update_overlay</code> and <code>remove_overlay</code> for individually managed overlays; a later <code>add_overlay</code> appends to the replaced list and works alongside its unaddressed entries. # Errors Throws <code>InvalidRenderInput</code> when any descriptor is invalid; the previous list stays in force.</td></tr>
+<tr><td><code>addOverlay</code></td><td><code>fun addOverlay(overlay: MapOverlay): String</code></td><td>Returns <code>String</code>. Throws <code>SdkException</code>.</td><td>Adds one overlay to the drawn list and returns the generated opaque identifier that addresses it, such as <code>overlay-1</code>. Identifiers come from a monotonic per-view sequence and are never reused, not even after <code>clear_overlays</code> or <code>set_overlays</code>. Validation matches <code>set_overlays</code>’ all-or-nothing rule for the single descriptor: a refused descriptor throws and adds nothing, leaving the drawn list and the identifier sequence unchanged. The new overlay draws last, over the entries already in the list. # Returns The identifier addressing the added overlay. # Errors Throws <code>InvalidRenderInput</code> when the descriptor is invalid.</td></tr>
+<tr><td><code>updateOverlay</code></td><td><code>fun updateOverlay(overlayIdentifier: String, overlay: MapOverlay): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Replaces the overlay addressed by <code>overlay_identifier</code>. # Parameters - <code>overlay_identifier</code> — an identifier returned by <code>add_overlay</code>. - <code>overlay</code> — the replacement descriptor. # Errors Throws <code>InvalidRenderInput</code> for an unknown identifier (never generated, invalidated by a later <code>set_overlays</code> or <code>clear_overlays</code>, or already removed), with a detail naming the reason. An invalid descriptor throws and keeps the previously addressed overlay in force.</td></tr>
+<tr><td><code>removeOverlay</code></td><td><code>fun removeOverlay(overlayIdentifier: String): Boolean</code></td><td>Returns <code>Boolean</code>.</td><td>Removes the overlay addressed by <code>overlay_identifier</code> and answers whether that identifier was present. Removing an unknown identifier is not an error: it answers false and leaves the drawn list unchanged. # Returns True when the identifier was present and its overlay was removed.</td></tr>
+<tr><td><code>clearOverlays</code></td><td><code>fun clearOverlays(): Unit</code></td><td>—</td><td>Clears the whole drawn overlay list, including the list supplied through <code>set_overlays</code> and every added addressed overlay, so following frames draw the tiles alone until <code>set_overlays</code> or <code>add_overlay</code> supplies new content. Identifiers generated earlier no longer address anything afterwards.</td></tr>
+<tr><td><code>draw</code></td><td><code>suspend fun draw(camera: MapCamera): FrameStatistics</code></td><td>Asynchronous. Returns <code>FrameStatistics</code>. Throws <code>SdkException</code>.</td><td>Draws one frame for the camera: the camera’s visible tiles fetched and rendered, then overlaid and presented. # Parameters - <code>camera</code> — the camera pose for this frame. # Returns The frame’s tile and overlay statistics, so the platform render loop can report exactly what a frame drew. Drawn pixels this frame come from present and fallback tiles, while the deferred and unavailable counts mark where later frames may still change pixels. # Errors Throws when the view is detached, a draw is already in flight, or the frame’s rendering failed. A thrown draw leaves the previous frame on screen. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>setLocationIndicator</code></td><td><code>fun setLocationIndicator(state: LocationIndicatorState, style: LocationIndicatorStyle): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Sets the single location layer drawn after the tile pass and the overlay pass (topmost SDK layer), replacing any earlier state. Validation is all-or-nothing: a state or style that fails validation throws and keeps the earlier indicator. The state outlives attach and detach cycles like the overlay list. Every null style field resolves to the documented default. # Parameters - <code>state</code> — position, course and accuracy to draw. - <code>style</code> — visual form and style of the layer. # Errors Throws <code>InvalidRenderInput</code> for a state or style the layer cannot draw.</td></tr>
+<tr><td><code>clearLocationIndicator</code></td><td><code>fun clearLocationIndicator(): Unit</code></td><td>—</td><td>Clears the location layer; following frames draw tiles and overlays alone until <code>set_location_indicator</code> supplies new state.</td></tr>
+<tr><td><code>isFrameSettled</code></td><td><code>fun isFrameSettled(camera: MapCamera): Boolean</code></td><td>Returns <code>Boolean</code>. Throws <code>SdkException</code>.</td><td>Reads whether the view’s presented state would not change if <code>draw</code> ran again right now. Answers true when this camera value equals the last drawn camera, the overlay list and the location indicator are unchanged since that draw, and the last frame’s tile statistics resolved no pending pixels (no fallback, deferred or unavailable tiles). It answers false while a draw is in flight and before a frame has ever drawn. A pure query: it never draws, fetches or mutates state, so a platform render pump can call it every display frame and skip <code>draw</code> when it answers true, letting the presented frame stand and resuming on any change or on the next pending detail’s arrival. # Returns True when a redraw would not change the presented frame. # Errors Throws <code>RenderingSurfaceUnavailable</code> when the view is detached.</td></tr>
+<tr><td><code>setVectorTileSource</code></td><td><code>fun setVectorTileSource(source: UrlTemplateVectorTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid or a frame draw is in flight; install after the frame draws.</td></tr>
+<tr><td><code>clearVectorTileSource</code></td><td><code>fun clearVectorTileSource(): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, this throws while a frame draw is in flight. # Errors Throws when a frame draw is in flight.</td></tr>
+<tr><td><code>vectorTileSourceStatus</code></td><td><code>fun vectorTileSourceStatus(): VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. It never throws: with no source installed it answers a not-configured status.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="sdkdiagnosticeventlistener"><a class="header" href="#sdkdiagnosticeventlistener">SdkDiagnosticEventListener</a></h3>
+<p>Diagnostics listener contract. The SDK delivers its structured log events fire-and-forget: it copies an event and moves on immediately without awaiting the listener, so a slow listener can never slow the events it observes and a frame-path event never blocks on a foreign callback.</p>
+<p>Implement this interface in Kotlin; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>onDiagnosticEvent</code></td><td><code>fun onDiagnosticEvent(event: LogEvent): Unit</code></td><td>—</td><td>Receives one structured event, already gated by the subscription’s minimum severity.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="searchengine"><a class="header" href="#searchengine">SearchEngine</a></h3>
+<p>Search and geocoding facade over a <code>MapSdk</code>’s registered providers. A call into an unregistered contract throws <code>ProviderNotConfigured</code> with the contract name, exactly like the matching <code>MapSdk</code> member.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(mapSdk: MapSdk)</code></td><td>Builds the engine over the SDK whose providers serve its calls.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>search</code></td><td><code>suspend fun search(queryText: String, searchBoundary: BoundingBox?): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns full search results for a settled query. # Parameters - <code>query_text</code> — the settled query. - <code>search_boundary</code> — optional area that restricts the search. # Errors Throws <code>ProviderNotConfigured</code> without a place-search provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>suggest</code></td><td><code>suspend fun suggest(queryText: String, searchBoundary: BoundingBox?): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns fast completion candidates while the user types. # Parameters - <code>query_text</code> — the text being typed. - <code>search_boundary</code> — optional area that restricts the search. # Errors Throws <code>ProviderNotConfigured</code> without a place-search provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>reverseGeocode</code></td><td><code>suspend fun reverseGeocode(coordinate: GeographicCoordinate): List&lt;Place&gt;</code></td><td>Asynchronous. Returns <code>List&lt;Place&gt;</code>. Throws <code>SdkException</code>.</td><td>Resolves a coordinate into candidate places describing that position. # Parameters - <code>coordinate</code> — the position to describe, in canonical degrees. # Errors Throws <code>ProviderNotConfigured</code> without a geocoding provider, <code>InvalidCoordinateInput</code> for an invalid coordinate, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routingengine"><a class="header" href="#routingengine">RoutingEngine</a></h3>
+<p>Routing facade over a <code>MapSdk</code>’s registered providers. Construction and failure semantics match <code>SearchEngine</code>’s: the engine shares the SDK’s providers and behaves like the matching <code>MapSdk</code> members.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(mapSdk: MapSdk)</code></td><td>Builds the engine over the SDK whose providers serve its calls.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>calculateRoute</code></td><td><code>suspend fun calculateRoute(waypoints: List&lt;GeographicCoordinate&gt;, routeOptions: RouteOptions): Route</code></td><td>Asynchronous. Returns <code>Route</code>. Throws <code>SdkException</code>.</td><td>Calculates a route through the ordered waypoints with the given options. # Parameters - <code>waypoints</code> — ordered route points; every one must be a valid coordinate. - <code>route_options</code> — transport mode, strategy, units and avoid options. # Errors Throws <code>ProviderNotConfigured</code> without a routing provider, <code>InvalidCoordinateInput</code> for an invalid waypoint, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>calculateDistanceMatrix</code></td><td><code>suspend fun calculateDistanceMatrix(origins: List&lt;GeographicCoordinate&gt;, destinations: List&lt;GeographicCoordinate&gt;, transportationMode: TransportationMode): DistanceMatrix</code></td><td>Asynchronous. Returns <code>DistanceMatrix</code>. Throws <code>SdkException</code>.</td><td>Calculates durations and distances for every origin-destination pair. # Parameters - <code>origins</code> — origin points. - <code>destinations</code> — destination points. - <code>transportation_mode</code> — mode of transport for the matrix. # Errors Throws <code>ProviderNotConfigured</code> without a routing provider, <code>InvalidCoordinateInput</code> for an invalid point, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="offlinemanager"><a class="header" href="#offlinemanager">OfflineManager</a></h3>
+<p>Offline tile-cache settings facade over a <code>MapSdk</code>. The members behave like <code>MapSdk::raster_tile_cache_terms</code> and <code>MapSdk::set_raster_tile_cache_time_to_live</code>: without a cache installed through <code>set_provider_credential_with_tile_cache</code>, both throw <code>ProviderNotConfigured</code> naming <code>TileCache</code>.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(mapSdk: MapSdk)</code></td><td>Builds the manager over the SDK whose installed tile cache it reads and tunes.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tileCacheTerms</code></td><td><code>fun tileCacheTerms(): TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkException</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed.</td></tr>
+<tr><td><code>setTileTimeToLive</code></td><td><code>fun setTileTimeToLive(timeToLiveSeconds: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds; the provider’s declared terms ceiling still clamps what the cache stores, and <code>tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="diagnostics"><a class="header" href="#diagnostics">Diagnostics</a></h3>
+<p>Diagnostics facade over a <code>MapSdk</code>’s structured log events and buffers. The members behave like <code>MapSdk::subscribe_to_diagnostic_events</code> and <code>MapSdk::flush_recent_diagnostic_events</code>.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(mapSdk: MapSdk)</code></td><td>Builds the facade over the SDK whose diagnostics it observes.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>addListener</code></td><td><code>fun addListener(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): Unit</code></td><td>—</td><td>Subscribes the listener to the SDK’s structured log events at <code>minimum_severity</code> or above. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
+<tr><td><code>flushRecent</code></td><td><code>fun flushRecent(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity, maximumCount: UInt): UInt</code></td><td>Returns <code>UInt</code>.</td><td>Delivers up to <code>maximum_count</code> of the most recent buffered events at <code>minimum_severity</code> or above to the listener, oldest first, and answers how many were delivered. The flush is non-destructive and synchronous, and the listener must not block. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered. - <code>maximum_count</code> — upper bound on delivered events. # Returns The number of events delivered.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="records"><a class="header" href="#records">Records</a></h2>
+<h3 id="geographiccoordinate"><a class="header" href="#geographiccoordinate">GeographicCoordinate</a></h3>
+<p>A position on the WGS 84 ellipsoid in decimal degrees.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>latitude</code></td><td><code>Double</code></td><td>Latitude in decimal degrees, valid within <code>[-90, 90]</code>.</td></tr>
+<tr><td><code>longitude</code></td><td><code>Double</code></td><td>Longitude in decimal degrees, valid within <code>[-180, 180]</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="boundingbox"><a class="header" href="#boundingbox">BoundingBox</a></h3>
+<p>Rectangular area between a south-west and a north-east corner; boxes never span the antimeridian.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>southWest</code></td><td><code>GeographicCoordinate</code></td><td>South-west corner (minimum latitude and longitude).</td></tr>
+<tr><td><code>northEast</code></td><td><code>GeographicCoordinate</code></td><td>North-east corner (maximum latitude and longitude).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="screenpoint"><a class="header" href="#screenpoint">ScreenPoint</a></h3>
+<p>Position on the viewport in physical pixels (origin top-left, y down).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>x</code></td><td><code>Double</code></td><td>Horizontal position in pixels.</td></tr>
+<tr><td><code>y</code></td><td><code>Double</code></td><td>Vertical position in pixels.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="normalizedworldcoordinate"><a class="header" href="#normalizedworldcoordinate">NormalizedWorldCoordinate</a></h3>
+<p>A world position in normalized world coordinates, both axes within <code>[0, 1]</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>x</code></td><td><code>Double</code></td><td>Eastward position from the antimeridian.</td></tr>
+<tr><td><code>y</code></td><td><code>Double</code></td><td>Southward position from the north pole.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="tilekey"><a class="header" href="#tilekey">TileKey</a></h3>
+<p>One web-mercator XYZ tile address.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tileX</code></td><td><code>UInt</code></td><td>Tile column, in <code>0..2^zoom_level</code>.</td></tr>
+<tr><td><code>tileY</code></td><td><code>UInt</code></td><td>Tile row, counted from the north, in <code>0..2^zoom_level</code>.</td></tr>
+<tr><td><code>zoomLevel</code></td><td><code>UByte</code></td><td>Zoom level this tile belongs to.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="viewportsize"><a class="header" href="#viewportsize">ViewportSize</a></h3>
+<p>Viewport dimensions in physical pixels.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>widthPixels</code></td><td><code>Double</code></td><td>Horizontal extent in pixels.</td></tr>
+<tr><td><code>heightPixels</code></td><td><code>Double</code></td><td>Vertical extent in pixels.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="edgeinsets"><a class="header" href="#edgeinsets">EdgeInsets</a></h3>
+<p>Screen-space insets kept clear of map content: distances from each viewport edge in pixels, so UI overlays such as route cards, attribution and sheet panels never cover the content the camera guarantees visible.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>left</code></td><td><code>Double</code></td><td>Pixels kept clear from the left viewport edge.</td></tr>
+<tr><td><code>top</code></td><td><code>Double</code></td><td>Pixels kept clear from the top viewport edge.</td></tr>
+<tr><td><code>right</code></td><td><code>Double</code></td><td>Pixels kept clear from the right viewport edge.</td></tr>
+<tr><td><code>bottom</code></td><td><code>Double</code></td><td>Pixels kept clear from the bottom viewport edge.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="place"><a class="header" href="#place">Place</a></h3>
+<p>One resolved location returned by forward or reverse geocoding.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>structuredAddressText</code></td><td><code>String</code></td><td>Display string the provider produced for this place.</td></tr>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>Resolved position.</td></tr>
+<tr><td><code>geocodeQuality</code></td><td><code>GeocodeQuality</code></td><td>Structural precision reached for this resolution.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="avoidoptions"><a class="header" href="#avoidoptions">AvoidOptions</a></h3>
+<p>Road features a routing request can ask the provider to avoid; all disabled by default.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tollRoads</code></td><td><code>Boolean</code></td><td>Avoid toll roads.</td></tr>
+<tr><td><code>limitedAccessHighways</code></td><td><code>Boolean</code></td><td>Avoid limited-access highways and motorways.</td></tr>
+<tr><td><code>ferries</code></td><td><code>Boolean</code></td><td>Avoid ferry crossings.</td></tr>
+<tr><td><code>unpavedRoads</code></td><td><code>Boolean</code></td><td>Avoid unpaved roads.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routeoptions"><a class="header" href="#routeoptions">RouteOptions</a></h3>
+<p>Options controlling how a route is calculated.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>transportationMode</code></td><td><code>TransportationMode</code></td><td>Mode of transport.</td></tr>
+<tr><td><code>routeStrategy</code></td><td><code>RouteStrategy</code></td><td>Whether routing optimizes travel time or distance.</td></tr>
+<tr><td><code>unitSystem</code></td><td><code>UnitSystem</code></td><td>Display unit convention the provider should annotate.</td></tr>
+<tr><td><code>avoidOptions</code></td><td><code>AvoidOptions</code></td><td>Features to avoid.</td></tr>
+<tr><td><code>departureTimestampSeconds</code></td><td><code>ULong?</code></td><td>Departure instant as seconds since the Unix epoch; null for “depart now”.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routestep"><a class="header" href="#routestep">RouteStep</a></h3>
+<p>One maneuver within a route leg.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceMeters</code></td><td><code>Double</code></td><td>Distance of this step in meters.</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>Double</code></td><td>Travel time of this step in seconds.</td></tr>
+<tr><td><code>maneuverType</code></td><td><code>String</code></td><td>Maneuver classification as a stable snake-case label. The roundabout exit index (one-based) and the turn direction are part of the label, for example <code>roundabout-2</code> or <code>turn-left</code>.</td></tr>
+<tr><td><code>instructionDisplayText</code></td><td><code>String</code></td><td>Human-readable instruction in the display language.</td></tr>
+<tr><td><code>instructionSpeechText</code></td><td><code>String</code></td><td>Instruction tuned for text-to-speech engines.</td></tr>
+<tr><td><code>shape</code></td><td><code>List&lt;GeographicCoordinate&gt;</code></td><td>Step geometry from the previous step end to this maneuver point.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routeleg"><a class="header" href="#routeleg">RouteLeg</a></h3>
+<p>Leg between two consecutive waypoints.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceMeters</code></td><td><code>Double</code></td><td>Leg distance in meters.</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>Double</code></td><td>Leg travel time in seconds.</td></tr>
+<tr><td><code>steps</code></td><td><code>List&lt;RouteStep&gt;</code></td><td>Maneuver steps in traversal order.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="route"><a class="header" href="#route">Route</a></h3>
+<p>A complete calculated route.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceMeters</code></td><td><code>Double</code></td><td>Total distance across all legs, in meters.</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>Double</code></td><td>Total travel time across all legs, in seconds.</td></tr>
+<tr><td><code>boundingBox</code></td><td><code>BoundingBox</code></td><td>Geographic bounds of the full route geometry.</td></tr>
+<tr><td><code>legs</code></td><td><code>List&lt;RouteLeg&gt;</code></td><td>Legs, one per consecutive waypoint pair.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="simulatedtrippace"><a class="header" href="#simulatedtrippace">SimulatedTripPace</a></h3>
+<p>Pace chosen by the application for a simulated trip. No default pace exists; every application picks its own values. Both values must be finite and strictly positive, and their product must stay finite.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>speedMetersPerSecond</code></td><td><code>Double</code></td><td>Baseline travel speed in meters per second.</td></tr>
+<tr><td><code>speedMultiplier</code></td><td><code>Double</code></td><td>Multiplier applied to the baseline speed (for example 1, 2, 4 or 8).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="simulatedtripfix"><a class="header" href="#simulatedtripfix">SimulatedTripFix</a></h3>
+<p>One position of a simulated trip along the planned route’s own polyline.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>Position on the planned route’s geometry.</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>Double?</code></td><td>Direction of travel along the active segment, in degrees clockwise from true north, or null when the route has no segment.</td></tr>
+<tr><td><code>travelledMeters</code></td><td><code>Double</code></td><td>Distance travelled from the route start, in meters.</td></tr>
+<tr><td><code>remainingMeters</code></td><td><code>Double</code></td><td>Distance left to the route end, in meters.</td></tr>
+<tr><td><code>elapsedSeconds</code></td><td><code>Double</code></td><td>Simulated elapsed time from the trip start, in seconds.</td></tr>
+<tr><td><code>isArrived</code></td><td><code>Boolean</code></td><td>True exactly when the fix sits at the route’s final coordinate.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distancematrixentry"><a class="header" href="#distancematrixentry">DistanceMatrixEntry</a></h3>
+<p>One origin-destination cell of a distance matrix.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>originIndex</code></td><td><code>UInt</code></td><td>Origin index into the request’s origins.</td></tr>
+<tr><td><code>destinationIndex</code></td><td><code>UInt</code></td><td>Destination index into the request’s destinations.</td></tr>
+<tr><td><code>distanceMeters</code></td><td><code>Double</code></td><td>Distance for this cell in meters.</td></tr>
+<tr><td><code>durationSeconds</code></td><td><code>Double</code></td><td>Travel time for this cell in seconds.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distancematrix"><a class="header" href="#distancematrix">DistanceMatrix</a></h3>
+<p>Travel-time matrix for origins x destinations.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>entries</code></td><td><code>List&lt;DistanceMatrixEntry&gt;</code></td><td>Entries in row-major origin-major order.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficincident"><a class="header" href="#trafficincident">TrafficIncident</a></h3>
+<p>One reported disruption inside a queried bounding box.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>identifier</code></td><td><code>String</code></td><td>Provider-stable incident identifier.</td></tr>
+<tr><td><code>incidentType</code></td><td><code>TrafficIncidentType</code></td><td>Class of disruption.</td></tr>
+<tr><td><code>severity</code></td><td><code>TrafficIncidentSeverity</code></td><td>Severity ranking.</td></tr>
+<tr><td><code>shortDescriptionText</code></td><td><code>String</code></td><td>Provider display text for this incident.</td></tr>
+<tr><td><code>startCoordinate</code></td><td><code>GeographicCoordinate</code></td><td>Position where the incident starts.</td></tr>
+<tr><td><code>endCoordinate</code></td><td><code>GeographicCoordinate?</code></td><td>Position where the incident ends, if reported.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowdata"><a class="header" href="#trafficflowdata">TrafficFlowData</a></h3>
+<p>Flow condition for one road segment (or polyline of road segments) inside the queried box, in kilometers per hour when the provider reports speeds and as a congestion classification otherwise.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>shapeCoordinates</code></td><td><code>List&lt;GeographicCoordinate&gt;</code></td><td>Segment geometry, ordered along the road.</td></tr>
+<tr><td><code>currentSpeedKilometersPerHour</code></td><td><code>Double?</code></td><td>Currently observed speed in kilometers per hour, when reported.</td></tr>
+<tr><td><code>freeFlowSpeedKilometersPerHour</code></td><td><code>Double?</code></td><td>Unconstrained (free-flow) speed in kilometers per hour, when reported.</td></tr>
+<tr><td><code>congestionLevel</code></td><td><code>TrafficFlowCongestionLevel</code></td><td>Congestion classification from the speed ratio or provider buckets.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="rastertiledata"><a class="header" href="#rastertiledata">RasterTileData</a></h3>
+<p>One fetched web-mercator XYZ raster tile.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tileX</code></td><td><code>UInt</code></td><td>Tile column coordinate at the given zoom level.</td></tr>
+<tr><td><code>tileY</code></td><td><code>UInt</code></td><td>Tile row coordinate at the given zoom level.</td></tr>
+<tr><td><code>zoomLevel</code></td><td><code>UByte</code></td><td>Zoom level this tile belongs to.</td></tr>
+<tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>Encoding of the byte payload.</td></tr>
+<tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>Pixel resolution the payload was rendered at.</td></tr>
+<tr><td><code>imageBytes</code></td><td><code>List&lt;UByte&gt;</code></td><td>Encoded image bytes.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="urltemplaterastertilesource"><a class="header" href="#urltemplaterastertilesource">UrlTemplateRasterTileSource</a></h3>
+<p>One provider-neutral base-map tile source: a web-mercator XYZ raster tileset addressed by a <code>{z}/{x}/{y}</code> URL template.</p>
+<p>The SDK supplies no tile source of its own; you provide the URL template and the tileset’s terms. Every field is validated when the source is registered, so a malformed template or an inverted zoom range throws instead of failing on the first tile.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>urlTemplate</code></td><td><code>String</code></td><td>The <code>{z}/{x}/{y}</code> URL template the tileset publishes: an absolute <code>http</code>/<code>https</code> URL carrying those three placeholders and no other.</td></tr>
+<tr><td><code>sourceName</code></td><td><code>String</code></td><td>The tileset’s name, used verbatim in every diagnostic it raises.</td></tr>
+<tr><td><code>minimumZoomLevel</code></td><td><code>UByte</code></td><td>Lowest zoom level the tileset serves.</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>UByte</code></td><td>Highest zoom level the tileset serves.</td></tr>
+<tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>The image format the tileset serves. Fetched tiles report this format whatever the caller requests: the tile bytes are the truth, and the renderer decodes by the record it receives.</td></tr>
+<tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>The pixel resolution the tileset serves (the same rule as the format: the fetched tile reports what it contains).</td></tr>
+<tr><td><code>userAgent</code></td><td><code>String</code></td><td>The <code>User-Agent</code> header every tile request carries; empty sends none. A public tile service identifies its clients by it, and several usage policies refuse clients that send nothing.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="urltemplatevectortilesource"><a class="header" href="#urltemplatevectortilesource">UrlTemplateVectorTileSource</a></h3>
+<p>One provider-neutral vector base-map source: a web-mercator XYZ vector tileset addressed by a <code>{z}/{x}/{y}</code> URL template, painted with one of the SDK’s built-in styles.</p>
+<p>The SDK supplies no tile source or style list of its own; you provide the URL template, the attribution its terms require and the style id. The style is named by an id such as <code>bright-light</code>, <code>fiord-dark</code> or <code>positron-light</code>, and an unknown id throws here rather than on the first frame. Every field is validated when the source is installed, so a malformed template or an inverted zoom range throws instead of failing on the first tile.</p>
+<p>Draw order: while installed, the styled base replaces the raster tiles, and it paints beneath every overlay the view is asked to draw, so your markers, routes and location indicator stay above the base map.</p>
+<p>The built-in styles paint fills, lines and circles only; place labels and road shields are not rendered.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>urlTemplate</code></td><td><code>String</code></td><td>The <code>{z}/{x}/{y}</code> URL template the tileset publishes: an absolute <code>http</code>/<code>https</code> URL carrying those three placeholders and no other.</td></tr>
+<tr><td><code>sourceName</code></td><td><code>String</code></td><td>The tileset’s name, used verbatim in every diagnostic it raises.</td></tr>
+<tr><td><code>attributionText</code></td><td><code>String</code></td><td>The attribution line the tileset’s terms require wherever it is shown; the status readback reports it back for your UI to display.</td></tr>
+<tr><td><code>styleId</code></td><td><code>String</code></td><td>The built-in style id the base paints with.</td></tr>
+<tr><td><code>minimumZoomLevel</code></td><td><code>UByte</code></td><td>Lowest zoom level the tileset serves.</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>UByte</code></td><td>Highest zoom level the tileset serves.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="vectortilesourcestatus"><a class="header" href="#vectortilesourcestatus">VectorTileSourceStatus</a></h3>
+<p>The vector base source’s status: what the view is drawing a styled base with, and what its last resolved frame achieved. The counts are per frame, matching the raster tile statistics, so your UI can show an accurate “base map loading” or “base map unavailable” state.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>isConfigured</code></td><td><code>Boolean</code></td><td>Whether the view carries a vector base source at all.</td></tr>
+<tr><td><code>styleId</code></td><td><code>String</code></td><td>The active style id; empty when no source is configured.</td></tr>
+<tr><td><code>sourceName</code></td><td><code>String</code></td><td>The tileset’s name; empty when no source is configured.</td></tr>
+<tr><td><code>attributionText</code></td><td><code>String</code></td><td>The attribution line the tileset’s terms require; empty when no source is configured.</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>UByte</code></td><td>Highest zoom level the tileset serves; zero when no source is configured.</td></tr>
+<tr><td><code>drawnTileCount</code></td><td><code>UInt</code></td><td>Tile addresses the last resolved frame drew.</td></tr>
+<tr><td><code>failedTileCount</code></td><td><code>UInt</code></td><td>Tile addresses the last resolved frame skipped because their fetch or decode failed.</td></tr>
+<tr><td><code>lastFailureDetail</code></td><td><code>String?</code></td><td>The last resolved frame’s last tile failure detail; null when the frame had none (or no frame resolved yet).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="tilecacheterms"><a class="header" href="#tilecacheterms">TileCacheTerms</a></h3>
+<p>The effective raster-tile caching terms of the installed cache, shaped for display: the default, the provider’s ceiling and the value currently in force.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>effectiveTimeToLiveSeconds</code></td><td><code>ULong</code></td><td>Time-to-live currently in force on the installed cache, in seconds: the category default, or the last accepted override (clamped to the ceiling when the override exceeded it).</td></tr>
+<tr><td><code>providerTermsCeilingSeconds</code></td><td><code>ULong?</code></td><td>The installed provider’s declared caching-terms ceiling in seconds, or null when the provider declares no ceiling; the requested time-to-live then applies verbatim. For the MapQuest raster tiles this is thirty calendar days.</td></tr>
+<tr><td><code>defaultTimeToLiveSeconds</code></td><td><code>ULong</code></td><td>The cache category’s default time-to-live for raster tiles, in seconds (thirty days); the value a freshly registered cache starts at.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="deviationinfo"><a class="header" href="#deviationinfo">DeviationInfo</a></h3>
+<p>Description of an active deviation from the route. The grade kind distinguishes the holding fully-off grade from a wrong-step record: a wrong-step record is guidance feedback (“on the route, on a later step”) carried while the trip phase stays <code>Navigating</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>gradeKind</code></td><td><code>DeviationGradeKind</code></td><td>Which grade of deviation this is (see <code>DeviationGradeKind</code>).</td></tr>
+<tr><td><code>deviationFromRouteMeters</code></td><td><code>Double</code></td><td>Distance, in meters, from the raw fix that triggered (or most recently confirmed) the deviation to the remaining route line.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routestepposition"><a class="header" href="#routestepposition">RouteStepPosition</a></h3>
+<p>Location of one route step in traversal order across a route’s legs.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>legIndex</code></td><td><code>ULong</code></td><td>Index of the leg that owns this step in the route’s legs.</td></tr>
+<tr><td><code>stepIndex</code></td><td><code>ULong</code></td><td>Index of the step within its leg in the leg’s steps.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="tripprogress"><a class="header" href="#tripprogress">TripProgress</a></h3>
+<p>Progress along the remaining trip.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>distanceToNextManeuverMeters</code></td><td><code>Double</code></td><td>Distance, in meters, from the snapped position to the end of the current step, which is the point of the next maneuver.</td></tr>
+<tr><td><code>distanceRemainingMeters</code></td><td><code>Double</code></td><td>Total remaining distance, in meters, including the current step’s remainder.</td></tr>
+<tr><td><code>durationRemainingSeconds</code></td><td><code>Double</code></td><td>Total remaining travel time, in seconds, measured the same way as <code>distance_remaining_meters</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="tripnavigationstate"><a class="header" href="#tripnavigationstate">TripNavigationState</a></h3>
+<p>The full navigable state of an active trip, read-only for the application. The route’s steps are carried as traversal-ordered indices, never duplicated. The step-advance condition and deviation detector are configured through the navigation policies on the controller, not through this state.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>phase</code></td><td><code>NavigationPhase</code></td><td>Current phase of the trip.</td></tr>
+<tr><td><code>route</code></td><td><code>Route</code></td><td>The route being navigated.</td></tr>
+<tr><td><code>stepPositions</code></td><td><code>List&lt;RouteStepPosition&gt;</code></td><td>All steps across every leg, flattened in traversal order.</td></tr>
+<tr><td><code>currentStepPosition</code></td><td><code>ULong</code></td><td>Index into <code>step_positions</code> of the step currently traversed.</td></tr>
+<tr><td><code>progress</code></td><td><code>TripProgress</code></td><td>Progress along the remaining trip.</td></tr>
+<tr><td><code>snappedCoordinate</code></td><td><code>GeographicCoordinate?</code></td><td>Position snapped onto the current step’s shape; null until the first location update has been processed.</td></tr>
+<tr><td><code>deviation</code></td><td><code>DeviationInfo?</code></td><td>Active deviation, as judged by the deviation detector; a fully-off grade is set exactly while the phase is <code>OffRoute</code>, and a wrong-step (<code>OffStepOnRoute</code>) grade may be set while the phase stays <code>Navigating</code>.</td></tr>
+<tr><td><code>isCalculatingNewRoute</code></td><td><code>Boolean</code></td><td>Whether a reroute calculation is currently in flight. The controller tracks the wall-clock gate, so the value is read fresh on every readback.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distancephrase"><a class="header" href="#distancephrase">DistancePhrase</a></h3>
+<p>The unit-system-aware phrasing of the distance remaining to a maneuver, rounded into the named distance phrasing bands.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>phraseKind</code></td><td><code>DistancePhraseKind</code></td><td>Which form the phrase takes.</td></tr>
+<tr><td><code>magnitude</code></td><td><code>Double?</code></td><td>Rounded magnitude of the phrase; null for the immediate and suppressed forms.</td></tr>
+<tr><td><code>magnitudeUnit</code></td><td><code>DistanceUnit?</code></td><td>Unit the magnitude is expressed in; null for the immediate and suppressed forms.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="maneuverinstructiontext"><a class="header" href="#maneuverinstructiontext">ManeuverInstructionText</a></h3>
+<p>The text channels of one maneuver: provider-authored text is carried verbatim beside the composed strings.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>textKind</code></td><td><code>ManeuverInstructionTextKind</code></td><td>Which form the text takes.</td></tr>
+<tr><td><code>providerDisplayText</code></td><td><code>String?</code></td><td>Provider-authored display text, verbatim and never rephrased.</td></tr>
+<tr><td><code>providerSpeechText</code></td><td><code>String?</code></td><td>Provider-authored speech text, verbatim and never rephrased.</td></tr>
+<tr><td><code>composedDisplayText</code></td><td><code>String?</code></td><td>Banner variant: the live distance prefix plus the display variant.</td></tr>
+<tr><td><code>composedSpeechText</code></td><td><code>String?</code></td><td>Text-to-speech variant: the live distance prefix plus the speech variant.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="activemaneuverinstruction"><a class="header" href="#activemaneuverinstruction">ActiveManeuverInstruction</a></h3>
+<p>Instruction payload of the maneuver currently being traversed: the step the snapped position sits inside, with the distance measured to that step’s end, the maneuver point.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>instruction</code></td><td><code>ManeuverInstructionText</code></td><td>Composed display and speech text of the active step.</td></tr>
+<tr><td><code>distancePhrase</code></td><td><code>DistancePhrase</code></td><td>Unit-system-aware distance phrasing of the distance to the next maneuver.</td></tr>
+<tr><td><code>roundaboutExitIndex</code></td><td><code>UByte?</code></td><td>Structured exit index of a roundabout active step, starting at one.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="upcomingmaneuverinstruction"><a class="header" href="#upcomingmaneuverinstruction">UpcomingManeuverInstruction</a></h3>
+<p>Instruction payload of the maneuver after the active one (the “then” instruction), text-carrying only.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>instruction</code></td><td><code>ManeuverInstructionText</code></td><td>Composed display and speech text of the following step.</td></tr>
+<tr><td><code>roundaboutExitIndex</code></td><td><code>UByte?</code></td><td>Structured exit index when the following step is a roundabout.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigationinstruction"><a class="header" href="#navigationinstruction">NavigationInstruction</a></h3>
+<p>The emitted turn-by-turn instruction payload for one trip state; the same state yields the same payload on every read.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>activeManeuver</code></td><td><code>ActiveManeuverInstruction</code></td><td>The banner maneuver currently being traversed.</td></tr>
+<tr><td><code>upcomingManeuver</code></td><td><code>UpcomingManeuverInstruction?</code></td><td>The maneuver after the active one, where the route has a following step (always null on the route’s final step and after arrival).</td></tr>
+<tr><td><code>isArrival</code></td><td><code>Boolean</code></td><td>True exactly while the trip has arrived and the remaining progress is zero.</td></tr>
+<tr><td><code>isReroutingRequired</code></td><td><code>Boolean</code></td><td>True exactly while the trip is off route: the payload beneath the marker is the held last-on-route projection, whose distance phrase is suppressed rather than presented, and must not be presented as current guidance.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="deviationstatuschange"><a class="header" href="#deviationstatuschange">DeviationStatusChange</a></h3>
+<p>A deviation-topic update: the detector’s judgment changed between the previous and the current trip state, covering entry, measurement drift while the deviation persists, and clearing.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>statusChangeKind</code></td><td><code>DeviationStatusChangeKind</code></td><td>Which form the update takes.</td></tr>
+<tr><td><code>deviationInfo</code></td><td><code>DeviationInfo?</code></td><td>The recorded measurement of the deviation, set exactly on the off-route kind.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigationlocationupdate"><a class="header" href="#navigationlocationupdate">NavigationLocationUpdate</a></h3>
+<p>One raw position fix delivered to the navigation controller.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>Raw position on the WGS 84 ellipsoid, before route snapping.</td></tr>
+<tr><td><code>horizontalAccuracyMeters</code></td><td><code>Double?</code></td><td>Radius, in meters, of the 68% horizontal-accuracy envelope of this fix (null when the source does not report accuracy).</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>Double?</code></td><td>Direction of travel in degrees clockwise from true north (null when the source does not report a course).</td></tr>
+<tr><td><code>timestampSeconds</code></td><td><code>Double?</code></td><td>Fix instant in seconds since the Unix epoch (null for untimed sources).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="stepadvancepolicy"><a class="header" href="#stepadvancepolicy">StepAdvancePolicy</a></h3>
+<p>The step-advance policy of a trip.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>policyKind</code></td><td><code>StepAdvancePolicyKind</code></td><td>Which step-advance strategy the policy configures.</td></tr>
+<tr><td><code>advanceThresholdMeters</code></td><td><code>Double</code></td><td>Distance, in meters, of the advance threshold (the distance to the step’s end, or from the step’s polyline, depending on the kind).</td></tr>
+<tr><td><code>minimumHorizontalAccuracyMeters</code></td><td><code>Double</code></td><td>Fixes with a reported horizontal accuracy worse than this, in meters, never advance.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="deviationpolicy"><a class="header" href="#deviationpolicy">DeviationPolicy</a></h3>
+<p>The deviation-detection policy of a trip.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>policyKind</code></td><td><code>DeviationPolicyKind</code></td><td>Which deviation-detection strategy the policy configures.</td></tr>
+<tr><td><code>deviationThresholdMeters</code></td><td><code>Double</code></td><td>Distance, in meters, from the remaining route line beyond which a fix is judged off route (before any accuracy widening, strictly greater).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="reroutepolicy"><a class="header" href="#reroutepolicy">ReroutePolicy</a></h3>
+<p>The reroute-recalculation hysteresis policy of a navigation controller. Both thresholds must be finite and non-negative; the controller refuses otherwise (<code>InvalidNavigationInput</code>), leaving the policy in force untouched.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>recalculationCooldownSeconds</code></td><td><code>Double</code></td><td>Minimum wall-clock seconds between the beginnings of two reroute calculations (the SDK default: 5).</td></tr>
+<tr><td><code>recalculationMovementMeters</code></td><td><code>Double</code></td><td>Minimum displacement, in meters, between the raw position fix current at a calculation’s beginning and the one current at the previous calculation’s beginning (the SDK default: 50).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="overlaycolor"><a class="header" href="#overlaycolor">OverlayColor</a></h3>
+<p>Solid RGBA overlay style, every channel in <code>[0, 1]</code>. A null style field keeps the default style of the matching overlay kind.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>red</code></td><td><code>Double</code></td><td>Red channel in <code>[0, 1]</code>.</td></tr>
+<tr><td><code>green</code></td><td><code>Double</code></td><td>Green channel in <code>[0, 1]</code>.</td></tr>
+<tr><td><code>blue</code></td><td><code>Double</code></td><td>Blue channel in <code>[0, 1]</code>.</td></tr>
+<tr><td><code>alpha</code></td><td><code>Double</code></td><td>Alpha channel in <code>[0, 1]</code> (the overlay pipeline alpha-blends).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mapoverlay"><a class="header" href="#mapoverlay">MapOverlay</a></h3>
+<p>One overlay shape drawn over the map surface’s tiles in every frame, selected by <code>kind</code>. Each kind reads exactly its own payload fields and ignores the others. A descriptor whose kind-required payload is absent, or whose style field is unusable, rejects the whole <code>set_overlays</code> call and keeps the previous list in force. Absent style fields keep the documented default style; present style fields must be usable (channels in <code>[0, 1]</code>, widths and radii positive and finite).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>kind</code></td><td><code>MapOverlayKind</code></td><td>Which overlay shape this descriptor configures and which payload fields carry it.</td></tr>
+<tr><td><code>coordinates</code></td><td><code>List&lt;GeographicCoordinate&gt;?</code></td><td><code>RoutePolyline</code>: the traversal-order polyline; consecutive equal coordinates skip their degenerate segment. Required for the kind.</td></tr>
+<tr><td><code>rgbaColor</code></td><td><code>OverlayColor?</code></td><td>Route polyline, filled polygon and point markers: solid color override, or null for the kind’s documented default.</td></tr>
+<tr><td><code>widthPixels</code></td><td><code>Double?</code></td><td>Route polyline and traffic flow: line width in screen pixels (positive and finite), or null for the kind’s documented default.</td></tr>
+<tr><td><code>ringCoordinates</code></td><td><code>List&lt;GeographicCoordinate&gt;?</code></td><td><code>FilledPolygon</code>: the outer ring in traversal order without a repeated closing vertex (a repeated one is tolerated and dropped). Required for the kind.</td></tr>
+<tr><td><code>pointMarkerPositions</code></td><td><code>List&lt;GeographicCoordinate&gt;?</code></td><td><code>PointMarkers</code> and <code>PointPins</code>: the geographic anchor of every marker (a pin’s anchor is its tip). Required for both kinds.</td></tr>
+<tr><td><code>pointMarkerRadiusPixels</code></td><td><code>Double?</code></td><td><code>PointMarkers</code> and <code>PointPins</code>: marker radius in screen pixels (positive and finite), or null for the documented default. A pin’s radius is its head radius.</td></tr>
+<tr><td><code>trafficFlowSegments</code></td><td><code>List&lt;TrafficFlowData&gt;?</code></td><td><code>TrafficFlow</code>: the flow observations to paint, one per road segment (or polyline of segments), colored by <code>congestion_level</code>; the same <code>TrafficFlowData</code> records <code>fetch_traffic_flow</code> returns. Required for the kind.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="surfacehandle"><a class="header" href="#surfacehandle">SurfaceHandle</a></h3>
+<p>The platform window surface handle handed to <code>MapView::attach</code>: set exactly one platform pointer and leave the rest null. A null-or-ambiguous handle is refused with <code>InvalidRenderInput</code>; a null pointer is <code>u64 0</code> or null, never a zeroed pointer passed through.</p>
+<p>The object behind the pointer must outlive the attached view: the raw handles are the caller’s validity guarantee, and detach or drop releases the SDK side first, so dropping the platform view before <code>detach</code> is a caller bug.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>appkitViewPointer</code></td><td><code>ULong?</code></td><td>macOS: pointer to the <code>NSView</code> the surface renders into (Metal creates the layer from the view); null on the other platforms.</td></tr>
+<tr><td><code>iosViewPointer</code></td><td><code>ULong?</code></td><td>iOS: pointer to the <code>UIView</code> the surface renders into; null on the other platforms.</td></tr>
+<tr><td><code>androidNativeWindowPointer</code></td><td><code>ULong?</code></td><td>Android: pointer to the <code>ANativeWindow</code> obtained from the platform <code>Surface</code> (<code>ANativeWindow_fromSurface</code>); null on the other platforms.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="framestatistics"><a class="header" href="#framestatistics">FrameStatistics</a></h3>
+<p>One presented frame’s tile and overlay accounting. Every requested tile lands in exactly one of the four readiness counts, so <code>present + fallback + deferred + unavailable</code> always equals <code>requested</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>requestedTileCount</code></td><td><code>UInt</code></td><td>Tile requests the frame resolved. A request listing carrying duplicates costs one fetch but reports per request.</td></tr>
+<tr><td><code>presentTileCount</code></td><td><code>UInt</code></td><td>Tiles drawn at their own zoom level.</td></tr>
+<tr><td><code>fallbackTileCount</code></td><td><code>UInt</code></td><td>Tiles drawn from their nearest pooled ancestor.</td></tr>
+<tr><td><code>deferredTileCount</code></td><td><code>UInt</code></td><td>Tiles whose fetch was deferred by the per-frame budget.</td></tr>
+<tr><td><code>unavailableTileCount</code></td><td><code>UInt</code></td><td>Tiles the provider rejected this frame.</td></tr>
+<tr><td><code>overlayTriangleCount</code></td><td><code>UInt</code></td><td>Clip-space triangles the overlay layer contributed to the frame.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="locationindicatorstyle"><a class="header" href="#locationindicatorstyle">LocationIndicatorStyle</a></h3>
+<p>Style of the location layer; null fields keep the documented defaults. The disc and wedge are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>visualKind</code></td><td><code>LocationIndicatorVisualKind</code></td><td>Which visual form this layer draws.</td></tr>
+<tr><td><code>radiusPixels</code></td><td><code>Double?</code></td><td>Disc radius in screen pixels; null keeps the default.</td></tr>
+<tr><td><code>rgbaColor</code></td><td><code>OverlayColor?</code></td><td>Disc fill color; null keeps the default.</td></tr>
+<tr><td><code>showAccuracyRing</code></td><td><code>Boolean?</code></td><td>Accuracy ring drawn around the disc (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="locationindicatorstate"><a class="header" href="#locationindicatorstate">LocationIndicatorState</a></h3>
+<p>One frame’s location-layer state: position, optional course over ground and optional horizontal accuracy.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>Fix position.</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>Double?</code></td><td>Course over ground in degrees clockwise from true north; null when the source does not report one. The wedge renders only when this is set and the style carries <code>GuidedCourseArrow</code>.</td></tr>
+<tr><td><code>horizontalAccuracyMeters</code></td><td><code>Double?</code></td><td>Horizontal accuracy radius in meters; the accuracy ring renders when this is set and the style shows rings.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="speechinstruction"><a class="header" href="#speechinstruction">SpeechInstruction</a></h3>
+<p>When a spoken-trigger event fires and what carries it. The utterance text is the composed speech text verbatim; the SDK decides when a line is newsworthy, while playback and synthesis belong to the platform.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>utteranceSpeechText</code></td><td><code>String</code></td><td>The verbatim speech text, never rewritten by the trigger policy.</td></tr>
+<tr><td><code>triggerDistanceMeters</code></td><td><code>Double</code></td><td>The live distance to the maneuver in meters at emission time.</td></tr>
+<tr><td><code>utteranceId</code></td><td><code>ULong</code></td><td>The utterance identity: a stable monotonic id composed at emission, strictly increasing over every line the controller has emitted since construction and never reused. Identical text re-emitted receives a new id; deduplication and flushing decisions stay with your speaker.</td></tr>
+<tr><td><code>instructionKind</code></td><td><code>SpeechInstructionKind</code></td><td>What triggered this line (a crossed band, the immediate band, an off-route recovery, or the trip’s arrival).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="logevent"><a class="header" href="#logevent">LogEvent</a></h3>
+<p>One structured SDK log event, as delivered to a diagnostics listener or read back by a flush. Coordinates in event messages are rounded before delivery; raw coordinates at full precision and API keys are never included.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>timestampMillisecondsSinceEpoch</code></td><td><code>ULong</code></td><td>Wall-clock milliseconds since the Unix epoch, as the buffer recorded the event.</td></tr>
+<tr><td><code>severity</code></td><td><code>SdkLogSeverity</code></td><td>The event’s severity.</td></tr>
+<tr><td><code>subsystemTarget</code></td><td><code>String</code></td><td>The named per-subsystem target that logged it, for example <code>tile_fetch</code>.</td></tr>
+<tr><td><code>messageLine</code></td><td><code>String</code></td><td>The one-line already-scrubbed message.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="providerfailurediagnostic"><a class="header" href="#providerfailurediagnostic">ProviderFailureDiagnostic</a></h3>
+<p>One failed provider call made by a foreign provider implementation, as retained by <code>MapSdk::latest_provider_failure_diagnostics</code>. Everything here is known at the boundary where the foreign implementation is called; no data is invented beyond that.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>timestampMillisecondsSinceEpoch</code></td><td><code>ULong</code></td><td>Wall-clock milliseconds since the Unix epoch, as the failure was recorded.</td></tr>
+<tr><td><code>failureClassification</code></td><td><code>ProviderFailureClassification</code></td><td>Which failure shape this entry captured.</td></tr>
+<tr><td><code>providerContractName</code></td><td><code>String</code></td><td>The provider contract the foreign code implements, for example <code>GeocodingProvider</code>.</td></tr>
+<tr><td><code>providerMethodName</code></td><td><code>String</code></td><td>The contract method whose call failed, for example <code>forward_geocode</code>.</td></tr>
+<tr><td><code>failureDetail</code></td><td><code>String</code></td><td>The verbatim failure text: the binding runtime’s reason for the unclassified shape, or the thrown error’s display form for the mapped shape.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<h3 id="geocodequality"><a class="header" href="#geocodequality">GeocodeQuality</a></h3>
+<p>Structural precision a geocoder reached for one resolved location.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>POINT</code></td><td>Rooftop or feature point.</td></tr>
+<tr><td><code>STREET_ADDRESS</code></td><td>Street address matched to the building level.</td></tr>
+<tr><td><code>INTERSECTION</code></td><td>Street intersection.</td></tr>
+<tr><td><code>STREET</code></td><td>Street level without house number.</td></tr>
+<tr><td><code>POSTAL_CODE</code></td><td>Postal code area.</td></tr>
+<tr><td><code>CITY</code></td><td>Settlement level (village, town, city).</td></tr>
+<tr><td><code>COUNTY</code></td><td>County or administrative district.</td></tr>
+<tr><td><code>STATE</code></td><td>First-level administrative division.</td></tr>
+<tr><td><code>COUNTRY</code></td><td>Sovereign country level.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="transportationmode"><a class="header" href="#transportationmode">TransportationMode</a></h3>
+<p>Mode of transport used to calculate a route.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>AUTOMOBILE</code></td><td>Private car routing.</td></tr>
+<tr><td><code>BICYCLE</code></td><td>Bicycle routing.</td></tr>
+<tr><td><code>PEDESTRIAN</code></td><td>Walking routing.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="unitsystem"><a class="header" href="#unitsystem">UnitSystem</a></h3>
+<p>Length and speed conventions used when displaying a route.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>METRIC</code></td><td>Kilometers and kilometers per hour.</td></tr>
+<tr><td><code>IMPERIAL</code></td><td>Miles and miles per hour.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="routestrategy"><a class="header" href="#routestrategy">RouteStrategy</a></h3>
+<p>What a routing request optimizes for. The strategy applies to automobile routing only.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FASTEST</code></td><td>Minimize expected travel time.</td></tr>
+<tr><td><code>SHORTEST</code></td><td>Minimize traveled distance.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficincidenttype"><a class="header" href="#trafficincidenttype">TrafficIncidentType</a></h3>
+<p>Class of disruption reported in a traffic incident.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>CONSTRUCTION</code></td><td>Road construction.</td></tr>
+<tr><td><code>EVENT</code></td><td>Traffic-impacting event.</td></tr>
+<tr><td><code>ACCIDENT</code></td><td>Collision.</td></tr>
+<tr><td><code>WEATHER</code></td><td>Weather-related disruption.</td></tr>
+<tr><td><code>CLOSURE</code></td><td>Lane or road closure.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficincidentseverity"><a class="header" href="#trafficincidentseverity">TrafficIncidentSeverity</a></h3>
+<p>Severity ranking of a traffic incident.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>LOW</code></td><td>Minimal delay expected.</td></tr>
+<tr><td><code>MEDIUM</code></td><td>Noticeable delay expected.</td></tr>
+<tr><td><code>HIGH</code></td><td>Significant delay expected.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowcongestionlevel"><a class="header" href="#trafficflowcongestionlevel">TrafficFlowCongestionLevel</a></h3>
+<p>Congestion classification of a road segment.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FREE_FLOW</code></td><td>At or above free-flow speed.</td></tr>
+<tr><td><code>SLOW</code></td><td>Moderately below free-flow speed.</td></tr>
+<tr><td><code>CONGESTED</code></td><td>Stop-and-go traffic.</td></tr>
+<tr><td><code>BLOCKED</code></td><td>Roadway effectively closed.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="rasterimageformat"><a class="header" href="#rasterimageformat">RasterImageFormat</a></h3>
+<p>Encoded image formats a raster tile provider may deliver.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PNG</code></td><td>PNG imagery.</td></tr>
+<tr><td><code>JPEG</code></td><td>JPEG imagery.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="rastertileresolution"><a class="header" href="#rastertileresolution">RasterTileResolution</a></h3>
+<p>Pixel resolution a raster tile is rendered at; <code>Standard</code> is the plain tile form, <code>Retina</code> the <code>@2x</code> form with twice the texels per edge for the same logical tile span.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>STANDARD</code></td><td>One texel per logical tile pixel.</td></tr>
+<tr><td><code>RETINA</code></td><td>Twice the texels per logical tile pixel (the <code>@2x</code> request form).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigationphase"><a class="header" href="#navigationphase">NavigationPhase</a></h3>
+<p>High-level phase of a trip that has already been started. Rerouting is not a phase of its own: the controller moves Navigating to OffRoute and back within a trip, and Navigating to Arrived at its end.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>NAVIGATING</code></td><td>Following the route’s step sequence.</td></tr>
+<tr><td><code>OFF_ROUTE</code></td><td>The deviation detector judged the last graded fix off route; progress is held at the last on-route values until a graded fix recovers or a reroute replaces the route.</td></tr>
+<tr><td><code>ARRIVED</code></td><td>The final step has been completed; location updates no longer change the state.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="deviationgradekind"><a class="header" href="#deviationgradekind">DeviationGradeKind</a></h3>
+<p>Which grade of deviation a recorded deviation carries: the distinction between off the current step yet still on the route line, and completely off the route. Only the fully-off grade holds navigation; the wrong-step grade never does on its own.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FULLY_OFF_ROUTE</code></td><td>The fix projects onto neither the current step nor any future step of the remaining route line: the holding grade. The trip’s progress is held until a graded fix recovers or a reroute replaces the route.</td></tr>
+<tr><td><code>OFF_STEP_ON_ROUTE</code></td><td>The fix is off the current step but projects onto a future step of the remaining route line: “on route, wrong step”. The trip keeps navigating and counting down, and is never held by this grade alone.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distanceunit"><a class="header" href="#distanceunit">DistanceUnit</a></h3>
+<p>Length unit a distance-phrase magnitude is expressed in.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>METERS</code></td><td>Meters, used by the metric near and moderate bands.</td></tr>
+<tr><td><code>KILOMETERS</code></td><td>Kilometers, used by the metric far band.</td></tr>
+<tr><td><code>FEET</code></td><td>Feet, used by the imperial near and moderate bands.</td></tr>
+<tr><td><code>MILES</code></td><td>Miles, used by the imperial far band.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distancephrasekind"><a class="header" href="#distancephrasekind">DistancePhraseKind</a></h3>
+<p>Which form a distance phrase takes.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>IMMEDIATE</code></td><td>The position is closer than half a near-band increment to the maneuver point; no distance is phrased and composed text drops the prefix. The magnitude is null on this kind.</td></tr>
+<tr><td><code>QUANTITY</code></td><td>A rounded distance magnitude in a specific unit; the magnitude and unit are set on this kind.</td></tr>
+<tr><td><code>SUPPRESSED</code></td><td>No distance is phrased because the holding (fully-off-route) deviation grade applies: the projection is held, so any countdown composed from it would be a phantom measurement. The magnitude is null on this kind, and the composed text channels carry no distance prefix.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="maneuverinstructiontextkind"><a class="header" href="#maneuverinstructiontextkind">ManeuverInstructionTextKind</a></h3>
+<p>Which form an instruction text takes.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>COMPOSED</code></td><td>The provider authored instruction text for this maneuver.</td></tr>
+<tr><td><code>UNAVAILABLE</code></td><td>The provider authored no instruction text for this maneuver; nothing is invented to fill it. All four text fields are null on this kind.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="deviationstatuschangekind"><a class="header" href="#deviationstatuschangekind">DeviationStatusChangeKind</a></h3>
+<p>Which form a deviation-status update takes.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>OFF_ROUTE</code></td><td>The trip is judged deviating; the deviation description is set on this kind. The description’s grade kind distinguishes the holding fully-off grade from a wrong-step record, which is delivered while the trip phase stays <code>Navigating</code>.</td></tr>
+<tr><td><code>ON_ROUTE</code></td><td>A previously recorded deviation cleared; the trip is judged on route.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="navigationphasechange"><a class="header" href="#navigationphasechange">NavigationPhaseChange</a></h3>
+<p>A phase-transition event delivered on the phase topic.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>OFF_ROUTE_ENTERED</code></td><td>The trip entered the off-route phase from the navigating phase.</td></tr>
+<tr><td><code>OFF_ROUTE_CLEARED</code></td><td>A graded fix back on the route line lifted the deviation and returned the trip to the navigating phase.</td></tr>
+<tr><td><code>REROUTE_APPLIED</code></td><td>A reroute event replaced the route (delivered only when the event actually applied; an ignored reroute produces no transition).</td></tr>
+<tr><td><code>ARRIVED</code></td><td>The final step completed; the trip reached the arrived phase.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="stepadvancepolicykind"><a class="header" href="#stepadvancepolicykind">StepAdvancePolicyKind</a></h3>
+<p>Which step-advance strategy a navigation policy configures.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>MANUAL</code></td><td>Steps change only when driven programmatically; the trip still tracks progress. The threshold fields are ignored on this kind.</td></tr>
+<tr><td><code>DISTANCE_TO_END_OF_STEP</code></td><td>Advances when the position fix comes within the threshold of the end of the current step (eager advance).</td></tr>
+<tr><td><code>DISTANCE_FROM_STEP</code></td><td>Advances when the position fix moves farther from the current step’s polyline than the threshold (delayed advance).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="deviationpolicykind"><a class="header" href="#deviationpolicykind">DeviationPolicyKind</a></h3>
+<p>Which deviation-detection strategy a deviation policy configures.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DISTANCE_THRESHOLD</code></td><td>Flags a deviation when the raw fix is farther from the remaining route line than the configured threshold, widened by the fix’s reported accuracy.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mapoverlaykind"><a class="header" href="#mapoverlaykind">MapOverlayKind</a></h3>
+<p>Which overlay shape an overlay descriptor configures.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ROUTE_POLYLINE</code></td><td>A routed path drawn as a thick line.</td></tr>
+<tr><td><code>FILLED_POLYGON</code></td><td>A filled polygon: one outer ring, ear-clip triangulated.</td></tr>
+<tr><td><code>POINT_MARKERS</code></td><td>Screen-facing point markers (octagon fans).</td></tr>
+<tr><td><code>TRAFFIC_FLOW</code></td><td>Congestion-colored traffic-flow lines.</td></tr>
+<tr><td><code>POINT_PINS</code></td><td>Screen-facing teardrop pins anchored at their tip with a hollow head center (the A/B route-endpoint marker); uses <code>PointMarkers</code>’ payload fields.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="locationindicatorvisualkind"><a class="header" href="#locationindicatorvisualkind">LocationIndicatorVisualKind</a></h3>
+<p>Which visual form the location layer draws.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TRACKING_DOT</code></td><td>Plain disc (tracking mode: no course known or no route).</td></tr>
+<tr><td><code>GUIDED_COURSE_ARROW</code></td><td>Disc plus course-directed heading wedge (navigation follow mode).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="speechinstructionkind"><a class="header" href="#speechinstructionkind">SpeechInstructionKind</a></h3>
+<p>What triggered a <code>SpeechInstruction</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>MANEUVER_APPROACH</code></td><td>A trigger band was crossed this fix (the moderate or far threshold).</td></tr>
+<tr><td><code>IMMEDIATE_MANEUVER</code></td><td>The immediate band: the maneuver is imminent.</td></tr>
+<tr><td><code>OFF_ROUTE_RECOVERY</code></td><td>Guidance just recovered from off route.</td></tr>
+<tr><td><code>ARRIVAL</code></td><td>The trip arrived.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="sdklogseverity"><a class="header" href="#sdklogseverity">SdkLogSeverity</a></h3>
+<p>Severity of a diagnostic event, ordered from most to least detailed.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TRACE</code></td><td>Very fine-grained frame-path instrumentation (only delivered when a listener subscribed at this severity).</td></tr>
+<tr><td><code>DEBUG</code></td><td>Fine-grained internal state transitions.</td></tr>
+<tr><td><code>INFO</code></td><td>Coarse-grained progress (the default minimum for a subscription).</td></tr>
+<tr><td><code>WARN</code></td><td>A problem this event explains.</td></tr>
+<tr><td><code>ERROR</code></td><td>A failure this event explains.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="providerfailureclassification"><a class="header" href="#providerfailureclassification">ProviderFailureClassification</a></h3>
+<p>Which shape of foreign provider failure a diagnostic captured.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>UNCLASSIFIED_CALLBACK_FAILURE</code></td><td>The foreign implementation failed without a mapped error, for example by throwing an exception the contract does not define. The failure text is the binding runtime’s verbatim reason for it.</td></tr>
+<tr><td><code>MAPPED_CONTRACT_ERROR</code></td><td>The foreign implementation threw one of the contract’s <code>SdkError</code> variants, which is carried as a typed error: the failure text is the thrown error’s verbatim display form.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<h3 id="sdkerror"><a class="header" href="#sdkerror">SdkError</a></h3>
+<p>Failures returned by the SDK. The detail message of a variant is always passed through verbatim from the failing component.</p>
+<p>Each variant is a nested class of the <code>SdkException</code> sealed class.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Payload</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>InvalidCoordinateInput</code></td><td>detail: String</td><td>A coordinate, viewport extent or box corner failed validation.</td></tr>
+<tr><td><code>NetworkRequestFailed</code></td><td>detail: String</td><td>The network transport failed; carries the transport’s verbatim detail.</td></tr>
+<tr><td><code>ResponseParsingFailure</code></td><td>detail: String</td><td>The provider answered with a payload the parser could not use.</td></tr>
+<tr><td><code>ProviderRequestRejected</code></td><td>detail: String</td><td>The provider returned a documented application-level failure status.</td></tr>
+<tr><td><code>RateLimitExhausted</code></td><td>None</td><td>The token-bucket rate limiter is exhausted; retry after the next refill.</td></tr>
+<tr><td><code>ProviderNotConfigured</code></td><td>contractName: String</td><td>No provider implementation is registered for the requested contract.</td></tr>
+<tr><td><code>InvalidNavigationInput</code></td><td>detail: String</td><td>A navigation input (a route record or a navigation policy) failed validation.</td></tr>
+<tr><td><code>InvalidRenderInput</code></td><td>detail: String</td><td>An overlay descriptor did not describe a usable overlay (wrong kind payload, an out-of-range color channel, or a non-positive or non-finite width or radius), or a surface input was structurally unusable (a null, zero or ambiguous platform surface pointer, or a non-positive viewport extent).</td></tr>
+<tr><td><code>RenderingSurfaceUnavailable</code></td><td>detail: String</td><td>Live rendering could not proceed on the platform surface: the platform handle or surface was unusable, the graphics context could not be acquired, the surface format could not be negotiated or configured, the frame texture could not be acquired, or the frame’s render state was busy in another draw.</td></tr>
+<tr><td><code>CacheOperationFailure</code></td><td>detail: String</td><td>A cache read, write or eviction failed (an unavailable store, a corrupt entry, or a byte-budget refusal). The detail names the reason verbatim.</td></tr>
+<tr><td><code>OfflineRoutingFailure</code></td><td>detail: String</td><td>An offline routing graph failed validation or could not be read: a truncated or foreign archive, an unsupported version, or a malformed section. The detail names the reason verbatim.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="async-and-threading"><a class="header" href="#async-and-threading">Async and threading</a></h2>
+<p>These calls are asynchronous on Kotlin: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>.</p>
+<p>Asynchronous calls are <code>suspend</code> functions and do not block the calling thread. The shipped map view members expect the main thread.</p>
+<ul>
+<li><code>MapView.draw</code> is frame-driven: call it from the platform display callback. A concurrent draw or resize reports <code>RenderingSurfaceUnavailable</code>; retry the next frame.</li>
+<li>Navigation listener callbacks run synchronously on the thread that drives the controller. A listener must not block, and a callback made during an in-flight dispatch has its broadcast suppressed because the state change is already applied.</li>
+<li>A diagnostics listener is called fire-and-forget on the thread that produced the event; it never delays the event stream.</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
+<ul>
+<li><a href="first-map.html">Your first map</a></li>
+<li><a href="search-and-routing.html">Search and routing</a></li>
+<li><a href="navigation-simulation.html">Turn-by-turn navigation</a></li>
+<li><a href="offline-maps.html">Offline maps</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="api-reference-rust.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="api-reference-ios.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="api-reference-rust.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="api-reference-ios.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="additional-js/platform-tabs-b49149f3.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

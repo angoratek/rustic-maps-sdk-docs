@@ -408,6 +408,25 @@ export class MapView {
         wasm.mapview_clearOverlays(this.__wbg_ptr);
     }
     /**
+     * Removes the vector base map (M31 — the UDL
+     * `MapView.clear_vector_tile_source` contract member): following frames
+     * draw raster tiles and overlays alone. Refused while a frame resolves,
+     * like installing.
+     */
+    clearVectorTileSource() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_clearVectorTileSource(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Acquires the adapter and device, picks the pass-through surface
      * format, and builds the tile pipeline. Resolves to the adapter
      * description (graphics backend and adapter name) for the page's status
@@ -723,6 +742,41 @@ export class MapView {
         }
     }
     /**
+     * Installs a styled vector base map (M31 — the UDL
+     * `MapView.set_vector_tile_source` contract member, now served by the
+     * browser canvas too).
+     *
+     * The descriptor is one plain JavaScript object carrying the UDL
+     * `UrlTemplateVectorTileSource` fields in lower camel case:
+     * `{urlTemplate, sourceName, attributionText, styleId,
+     * minimumZoomLevel, maximumZoomLevel}`. The template must be an absolute
+     * `http`/`https` URL carrying `{z}`, `{x}` and `{y}`; the style id must
+     * name one of the committed style artifacts (`bright-light`,
+     * `fiord-dark`, …). The whole source builds before this view changes, so
+     * a refused call (a malformed template, an empty name, an inverted zoom
+     * range or an unknown style id) throws a string-valued error and leaves
+     * the previous base in force.
+     *
+     * While a source is installed the canvas hides the raster base and paints
+     * the style's own background, exactly like the native surface; the
+     * source's overlays and place names draw beneath every overlay the page
+     * supplies. Installing while a frame resolves is refused.
+     * @param {any} source
+     */
+    setVectorTileSource(source) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_setVectorTileSource(retptr, this.__wbg_ptr, addHeapObject(source));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Stages a deliberate parent-fallback for one requested tile, mirroring
      * the native golden image harness (`fill_pool_and_prepare` in
      * `map-rendering`'s golden test): the fallback tile is evicted from the
@@ -768,6 +822,30 @@ export class MapView {
             if (r1) {
                 throw takeObject(r0);
             }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Reads the vector base source's status (M31 — the UDL
+     * `MapView.vector_tile_source_status` contract member): the configured
+     * source's style, name, attribution and zoom ceiling plus the last
+     * resolved frame's drawn and failed tile counts. A pure query — it never
+     * fetches or draws — and it answers an honest not-configured status with
+     * no source installed.
+     * @returns {object}
+     */
+    vectorTileSourceStatus() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_vectorTileSourceStatus(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
         } finally {
             wasm.__wbindgen_add_to_stack_pointer(16);
         }
@@ -2822,7 +2900,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_7906(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_7967(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -3839,28 +3917,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2496, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7885);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2518, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7946);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 333, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1619);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 297, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1469);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 333, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1619_83);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 297, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1469_86);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 333, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1619_84);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 297, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1469_87);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 301, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1416);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2383, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6236);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -3934,18 +4012,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_1416(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_1416(arg0, arg1);
+function __wasm_bindgen_func_elem_6236(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6236(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_7906(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_7906(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_7967(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_7967(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_7885(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_7946(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_7885(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_7946(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3956,10 +4034,10 @@ function __wasm_bindgen_func_elem_7885(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1619(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1469(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1619(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1469(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3970,10 +4048,10 @@ function __wasm_bindgen_func_elem_1619(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1619_83(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1469_86(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1619_83(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1469_86(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3984,10 +4062,10 @@ function __wasm_bindgen_func_elem_1619_83(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1619_84(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1469_87(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1619_84(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1469_87(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {

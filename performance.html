@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ddfe75e0.js";
+            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-1539ac9a.js"></script>
+        <script src="toc-39fd423e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -179,13 +179,22 @@
 <p>This page is integration guidance: the practices that keep map rendering,
 routing, and navigation responsive, and the readbacks the SDK exposes so
 you can measure your own integration on your own hardware and scenes.</p>
-<p>The one figure the project publishes is the browser frame’s own breakdown. A
-1920 × 1080 vector base over the demo tiles, in a scripted pan on an Apple
-Silicon host with hardware WebGPU, spends about 6 ms a frame at the median
-(6.9 ms at p99), of which 5 ms is overlay tessellation; the raster base on
-the same ground spends 0.1 ms. Treat those as a starting point for your own
-measurement, not as a guarantee: any figure you quote should come from your
-own device and your own route mix.</p>
+<h2 id="measured-on-this-machine"><a class="header" href="#measured-on-this-machine">Measured on this machine</a></h2>
+<p>The browser frame has a committed, reproducible measurement. On an Apple
+Silicon host (<code>GPUAdapter.info: apple · metal-3</code>) with hardware WebGPU, a
+1920 × 1080 vector base over the recorded demo tiles and a four-second pan,
+<code>renderFrame</code> costs <strong>1.9 ms at the median and 2.2 ms at p95</strong>; every one of
+120 measured frames stayed inside the 16.7 ms 60 Hz budget. The p99 sample
+(11.6 ms) is the frame that re-tessellates the overlay layer, not the steady
+state. The raster base over the same ground costs 0.1 ms at the median.</p>
+<pre><code class="language-bash"># from platform/web
+node perf/run-frame-budget.mjs            # vector base
+node perf/run-frame-budget.mjs --layer raster
+</code></pre>
+<p>The runner launches the host’s own Chromium with hardware WebGPU and prints
+the machine, adapter, scenario and per-stage distributions. Treat the table
+above as a starting point for your own measurement, not a guarantee: quote
+figures from your own device, power state and route mix.</p>
 <h2 id="construct-the-sdk-once"><a class="header" href="#construct-the-sdk-once">Construct the SDK once</a></h2>
 <ul>
 <li>Build one <code>MapSdk</code> object and register your providers once at startup.
