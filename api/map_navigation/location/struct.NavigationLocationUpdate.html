@@ -4,9 +4,9 @@
     pub course_heading_degrees: <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>&gt;,
     pub timestamp_seconds: <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>&gt;,
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>One raw position fix delivered to the navigation state machine.</p>
-<p>Plain data by design: this record crosses the FFI boundary in a later
-slice, so it must stay serializable with no trait objects inside.
-Optionality mirrors how per-platform fix pipelines report fields — a fix
+<p>Plain data by design: this record crosses the language-binding boundary, so
+it stays serializable with no trait objects inside.
+Optionality mirrors how platform fix pipelines report fields — a fix
 always has a coordinate, but accuracy, course and a timestamp may be
 absent depending on the source.</p>
 </div></details><h2 id="fields" class="fields section-header">Fields<a href="#fields" class="anchor">§</a></h2><span id="structfield.coordinate" class="structfield section-header"><a href="#structfield.coordinate" class="anchor field">§</a><code>coordinate: <a class="struct" href="../../geospatial_types/coordinate/struct.GeographicCoordinate.html" title="struct geospatial_types::coordinate::GeographicCoordinate">GeographicCoordinate</a></code></span><div class="docblock"><p>Raw position on the WGS 84 ellipsoid, before route snapping.</p>
