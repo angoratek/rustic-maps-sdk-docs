@@ -35,7 +35,7 @@ import init, {
   initializeSdk,
   subscribeToDiagnosticEvents,
   flushRecentDiagnosticEvents,
-} from './pkg/map_web_bindings.js';
+} from './pkg/rustic_maps_web_bindings.js';
 
 window.mapTestReady = (async () => {
   await init();

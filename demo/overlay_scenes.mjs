@@ -1,7 +1,7 @@
 // Sacramento overlay demo scenes, derived from the shared reference-scene
 // artifact `platform/reference-scenes.json` (the refapp demo-content source
 // of truth, docs/ReferenceAppUX.md, "Shared demo-scene artifact"). The
-// artifact's coordinates mirror `crates/map-rendering/tests/overlay_golden.rs`
+// artifact's coordinates mirror `crates/rustic-maps-rendering/tests/overlay_golden.rs`
 // (the `ROUTE_*`, `POLYGON_RING_*`, `MARKER_*`, and `traffic_scene_flows`
 // constants) coordinate-for-coordinate: the same scenes the native golden
 // fixtures render. Shared by the playground (`index.html`) and the
@@ -10,10 +10,10 @@
 //
 // Every scene is one plain descriptor object in the wasm canvas
 // `setOverlays` vocabulary; no color or width override is given, so each
-// keeps the documented map-rendering default style the fixtures were
+// keeps the documented rustic-maps-rendering default style the fixtures were
 // rendered with.
 import scene_artifact from '../reference-scenes.json' with { type: 'json' };
-import { TrafficFlowCongestionLevel } from './pkg/map_web_bindings.js';
+import { TrafficFlowCongestionLevel } from './pkg/rustic_maps_web_bindings.js';
 
 // The artifact spells congestion levels with the enum's variant names; the
 // wasm canvas rejects unknown values, so an unmapped artifact name surfaces

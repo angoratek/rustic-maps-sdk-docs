@@ -63,7 +63,7 @@
           "method": "GET",
           "path_pattern": "^tiles/v1/render/latest/[a-z0-9_-]+/(?<tile_zoom_level>\\d+)/(?<tile_x>\\d+)/(?<tile_y>\\d+)/(?<size_segment>256|256@2x)/(?<format>png|jpeg)$",
           "fixture_kind": "tile_directory",
-          "fixture_directory": "crates/map-rendering/fixtures/render/tiles",
+          "fixture_directory": "crates/rustic-maps-rendering/fixtures/render/tiles",
           "image_format": "png",
           "standard_size_segment": "256",
           "retina_size_segment": "256@2x"
