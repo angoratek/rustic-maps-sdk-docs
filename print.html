@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2a24149d.js";
+            window.path_to_searchindex_js = "searchindex-76a5390f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-bc73b309.js"></script>
+        <script src="toc-e284b4f1.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2855,6 +2855,143 @@ app, fetch it once and keep it in the browser’s own storage, or read it from
 
 </div>
 
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="show-the-devices-location"><a class="header" href="#show-the-devices-location">Show the device’s location</a></h1>
+<p>Show the user’s position on the map: a tracking dot with the source’s accuracy
+ring, a camera centred on the fix, and an honest line when the permission is
+denied or the service is unavailable.</p>
+<p>The host owns the operating system’s location API and its permission prompt.
+Every host pushes its fixes into the same Rust <code>PositionController</code>, which
+validates them, ignores stationary repeats when smoothing course and tracks
+staleness. The renderer draws the dot; the camera and the navigation controller
+read the same stream.</p>
+<h2 id="the-shared-scenario"><a class="header" href="#the-shared-scenario">The shared scenario</a></h2>
+<ul>
+<li>Start the source after the permission is granted.</li>
+<li>Draw the renderer’s tracking dot with <code>showAccuracyRing</code> and the controller’s
+smoothed course.</li>
+<li>Centre the camera on each fix at follow zoom 15.</li>
+<li>Stop the source when the control is turned off and clear the layer.</li>
+<li>State a denied permission, a disabled service, an unavailable source and a
+timeout in the same words on every platform.</li>
+</ul>
+<h2 id="android-1"><a class="header" href="#android-1">Android</a></h2>
+<pre><code class="language-kotlin">import com.angoratek.rusticmaps.DeviceLocationSource
+import uniffi.rustic_maps.LocationIndicatorState
+import uniffi.rustic_maps.LocationIndicatorStyle
+import uniffi.rustic_maps.LocationIndicatorVisualKind
+import uniffi.rustic_maps.PositionController
+
+val positionController = PositionController()
+val deviceLocationSource = DeviceLocationSource(
+    context = context,
+    positionController = positionController,
+    onFix = { fix -&gt;
+        mapView.setLocationIndicator(
+            state = LocationIndicatorState(
+                coordinate = fix.coordinate,
+                courseHeadingDegrees = positionController.smoothedCourseDegrees(),
+                horizontalAccuracyMeters = fix.horizontalAccuracyMeters,
+            ),
+            style = LocationIndicatorStyle(
+                visualKind = LocationIndicatorVisualKind.TRACKING_DOT,
+                radiusPixels = null,
+                rgbaColor = null,
+                showAccuracyRing = true,
+            ),
+        )
+    },
+)
+// Request ACCESS_FINE_LOCATION at runtime first; then:
+if (!deviceLocationSource.start()) {
+    // Read positionController.sourceStatus() for the honest reason.
+}
+// Later, when the control is turned off:
+deviceLocationSource.stop()
+</code></pre>
+<h2 id="ios-1"><a class="header" href="#ios-1">iOS</a></h2>
+<!-- docs-snippet: skip — the snippet uses the MapNativeCoreUI view's location layer and its DeviceLocationSource, which the contract-only Swift snippet harness does not mirror. -->
+<pre><code class="language-swift">import MapNativeCoreUI
+import RusticMapsSDK
+
+let positionController = PositionController()
+let deviceLocationSource = DeviceLocationSource(
+    positionController: positionController,
+    onFix: { fix in
+        mapView.setLocationIndicator(
+            state: LocationIndicatorState(
+                coordinate: fix.coordinate,
+                courseHeadingDegrees: positionController.smoothedCourseDegrees(),
+                horizontalAccuracyMeters: fix.horizontalAccuracyMeters
+            ),
+            style: LocationIndicatorStyle(
+                visualKind: .trackingDot,
+                radiusPixels: nil,
+                rgbaColor: nil,
+                showAccuracyRing: true
+            )
+        )
+    }
+)
+// The Info.plist declares NSLocationWhenInUseUsageDescription.
+deviceLocationSource.requestWhenInUseAuthorization()
+deviceLocationSource.start()
+// Later:
+deviceLocationSource.stop()
+</code></pre>
+<h2 id="react-native-1"><a class="header" href="#react-native-1">React Native</a></h2>
+<pre><code class="language-ts">import { MapsSdk } from '@angoratek/rustic-maps-sdk';
+
+const sdk = await MapsSdk.create();
+const started = await sdk.startDeviceLocation();
+if (started) {
+  const fix = await sdk.latestDeviceFix();
+  const smoothedCourse = await sdk.deviceLocationSmoothedCourseDegrees();
+  // Present fix and smoothedCourse through the &lt;MapView&gt; handle's
+  // setLocationIndicator and setCamera calls.
+}
+// The failure name, when the source could not start:
+const sourceStatus = await sdk.deviceLocationSourceStatus();
+await sdk.stopDeviceLocation();
+</code></pre>
+<p>Ask for the Android runtime permission with <code>PermissionsAndroid</code> before
+<code>startDeviceLocation</code>; the iOS authorization prompt is raised by the source.</p>
+<h2 id="webassembly-1"><a class="header" href="#webassembly-1">WebAssembly</a></h2>
+<pre><code class="language-ts">import { PositionController } from './pkg/map_web_bindings.js';
+
+const positionController = new PositionController();
+const watchIdentifier = navigator.geolocation.watchPosition(
+  position =&gt; {
+    positionController.feedFix(
+      position.coords.latitude,
+      position.coords.longitude,
+      position.coords.accuracy,
+    );
+    // Draw the tracking dot with the controller's smoothed course and centre
+    // the camera through MapView.setLocationIndicator and setCamera.
+  },
+  error =&gt; {
+    positionController.sourceFailed(
+      error.code === 1 ? 'permissionDenied' : 'unavailable',
+    );
+  },
+);
+// Later:
+navigator.geolocation.clearWatch(watchIdentifier);
+</code></pre>
+<h2 id="rust"><a class="header" href="#rust">Rust</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use map_navigation::SimulatedTripPace;
+use map_positioning::{PositionController, SimulatedPositionSource};
+
+let source = SimulatedPositionSource::new(&amp;route, pace, 5.0)?;
+let mut controller = PositionController::new();
+controller.feed_fix(source.fix_at_elapsed_seconds(0.0))?;
+<span class="boring">}</span></code></pre>
+<p>A Rust application supplies fixes from its own OS source (or the simulated
+source above) and reads <code>latest_fix</code>, <code>smoothed_course_heading_degrees</code> and
+<code>is_stale</code>. See <a href="#use-the-sdk-from-rust">Use the SDK from Rust</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="provider-capabilities-in-rust"><a class="header" href="#provider-capabilities-in-rust">Provider capabilities in Rust</a></h1>
 <p>The Rust crates are the SDK’s implementation layer. A provider is a struct
