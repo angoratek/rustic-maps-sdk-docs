@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
+            window.path_to_searchindex_js = "searchindex-1be2239b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -317,7 +317,7 @@ automation seam; never compile it into the app.</p>
 <p>To keep registration generic over provider keys, the shipped facade
 dispatches the key to the matching SDK call. The facade’s <code>nativeSdk</code> is the
 one object the map view and every provider call use.</p>
-<pre><code class="language-kotlin">import com.angoratek.rusticmaps.MapsSdkFacade
+<pre><code class="language-kotlin">import com.rusticmaps.sdk.MapsSdkFacade
 
 val facade = MapsSdkFacade()
 facade.applyProviderCredential("mapquest", providerApiKey)
