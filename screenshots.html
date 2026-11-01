@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ddfe75e0.js";
+            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-1539ac9a.js"></script>
+        <script src="toc-39fd423e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,42 +176,44 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="screenshots"><a class="header" href="#screenshots">Screenshots</a></h1>
-<p>Every screenshot on this page was captured from the sample applications on a
-standing test device or in the browser, driving a planned route through the
-simulated trip. Provider credentials were supplied at runtime through each
-app’s settings surface or its automation seam; no build holds one.</p>
+<p>Each capture below comes from the reference application for that platform,
+on the same recorded Capitol Park ⇔ Tower Bridge trip, in the same state:
+the turn-by-turn banner with the next maneuver, the planned route polyline
+with its A and B pins, the ETA-distance line, the playback-speed controls
+and the exit control. All four were taken from one revision of the SDK
+without a provider credential stored in the build.</p>
 <h2 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application in a simulated trip along N Street in downtown Sacramento, with the readiness chip, the maneuver card for the next turn, the upcoming-step card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the playback-speed chips and the pause and exit controls"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application in a simulated trip along N Street in downtown Sacramento, with the readiness chip, the maneuver card for the next turn, the upcoming-step card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the playback-speed chips and the pause and exit controls"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application during a simulated trip through downtown Sacramento: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application during a simulated trip through downtown Sacramento: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"></span></label></p>
 <h2 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle, the playback-speed chips and pause and exit"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip, with the readiness chip, the maneuver card, the map control cluster, the scale bar and the trip’s drawer with the ETA line, the phase, the voice toggle, the playback-speed chips and pause and exit"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"></span></label></p>
 <h2 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application in a simulated trip through downtown Sacramento inside the shared JS shell, with the readiness chip, the maneuver card, the map control cluster, the scale bar, the compact attribution control at the map’s end edge and the trip’s drawer"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application in a simulated trip through downtown Sacramento inside the shared JS shell, with the readiness chip, the maneuver card, the map control cluster, the scale bar, the compact attribution control at the map’s end edge and the trip’s drawer"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application in the same simulated trip inside the shared TypeScript shell: the maneuver banner and then-line, the planned route polyline with its destination pin, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application in the same simulated trip inside the shared TypeScript shell: the maneuver banner and then-line, the planned route polyline with its destination pin, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"></span></label></p>
 <h2 id="webassembly--the-browser-build"><a class="header" href="#webassembly--the-browser-build">WebAssembly — the browser build</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application drawing a planned Capitol Park to Tower Bridge route on a WebGPU canvas, with the trip planner card, the recorded-route summary, the readiness chip, the map control cluster and the scale bar"><span class="img-wrapper"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application drawing a planned Capitol Park to Tower Bridge route on a WebGPU canvas, with the trip planner card, the recorded-route summary, the readiness chip, the map control cluster and the scale bar"></span></label></p>
-<p>The browser build runs the SDK’s own wasm module and draws through WebGPU, so
-it is the same core rather than a simulation. The capture shows its consumer
-surface: the trip planner card with both endpoints chosen, the routed distance
-and duration, and the same route drawn on the map. It is served keyless at
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, the trip card with the ETA-distance line and the speed chips, and the exit control"><span class="img-wrapper"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, the trip card with the ETA-distance line and the speed chips, and the exit control"></span></label></p>
+<p>The browser build runs the SDK’s own WebAssembly module and draws through
+WebGPU, so it is the same core rather than a simulation. The capture shows
+its consumer surface: the trip planner with both endpoints chosen, the route
+summary, and the live guidance on the map. It is served keyless at
 <a href="live-demo.html">the live demo</a>.</p>
 <h2 id="vector-base-with-place-labels"><a class="header" href="#vector-base-with-place-labels">Vector base with place labels</a></h2>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"><span class="img-wrapper"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"></span></label></p>
-<p>The labels are geometry like everything else: the decoder hands the renderer the
-<code>place</code> and <code>transportation_name</code> features, the style’s symbol layers name the
-text, and the glyph atlas supplies the shapes. Street names ride their own
-roads, rotated to the road’s bearing and skipped when the text would not fit;
-place names sit above them, and a collision pass keeps one from covering
-another. They arrive with the vector base — a raster base carries its imagery’s
-own labels instead. Every surface draws them: the browser, Android, iOS and both
-React Native shells.</p>
+<p>Labels are renderer output, not page markup: the decoder hands the renderer
+the <code>place</code> and <code>transportation_name</code> features, the style’s symbol layers
+name the text, and the embedded glyph atlas supplies the shapes. Street
+names ride their own roads, rotated to the road’s bearing and skipped when
+the text would not fit; place names sit above them, and a collision pass
+keeps one from covering another. They arrive with the vector base; a raster
+base carries its imagery’s own labels instead. Every surface draws them.</p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
-<p>The captures share one design language and walk the same flow: readiness,
-search, a planned route, then the simulated trip. They also share one
-vocabulary: <em>readiness chip</em>, <em>map control cluster</em>, <em>scale bar</em>, <em>compact
-attribution control</em>, and the <em>home sheet</em> (the browser’s <em>trip planner card</em>).
-Differences are the platform’s own chrome: Compose’s Material surface on
-Android, SwiftUI’s safe-area handling on iOS, the React Native host view, and
-the browser’s WebGPU canvas. The map content, control cluster, scale ladder and
-attribution control are the same.</p>
+<p>The captures share one design language and show the same moment of the same
+flow: readiness, search, a planned route, and the simulated trip. They also
+share one vocabulary: <em>maneuver banner</em>, <em>then line</em>, <em>route polyline</em>,
+<em>map control cluster</em>, <em>compass</em>, <em>scale bar</em>, <em>navigation drawer</em>, and the
+browser’s <em>trip card</em>. Differences are the platform’s own chrome:
+Compose’s Material surface on Android, SwiftUI’s safe-area handling on iOS,
+the React Native host view, and the browser’s WebGPU canvas. The map
+content, the guidance, the control cluster and the scale ladder are the
+same.</p>
 
                     </main>
 

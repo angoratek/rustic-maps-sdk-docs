@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ddfe75e0.js";
+            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-1539ac9a.js"></script>
+        <script src="toc-39fd423e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,149 +176,242 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
-<p>The SDK is in active development; everything below is unreleased. The FFI
-contract surface it describes changes <strong>addition-only</strong>: existing members
-keep their signature and meaning, so an upgrade never rewrites your calls.</p>
-<h2 id="imagery-and-caching"><a class="header" href="#imagery-and-caching">Imagery and caching</a></h2>
+<p>The SDK is pre-1.0, and no versioned package release has been published yet.
+The entries below describe the capabilities in the current source build. They
+are grouped by area, with the most recently completed work first.</p>
+<p>The FFI contract is <strong>addition-only</strong>: existing members keep their signature
+and meaning across an upgrade, so a release adds to the surface rather than
+rewriting your calls. The <a href="versions-and-support.html">versions and support</a> page
+explains the numbering and the release tracks.</p>
+<h2 id="vector-base-maps-and-labels"><a class="header" href="#vector-base-maps-and-labels">Vector base maps and labels</a></h2>
 <ul>
-<li>All seven MapQuest provider APIs are implemented against recorded provider responses.
-They cover routes with strategies and multiple legs, the route matrix,
-forward and reverse geocoding, search prediction, traffic incidents,
-traffic-flow congestion polylines, and raster tiles in standard and
-retina resolutions.</li>
-<li>A SQLite-backed response cache holds provider responses under an
-absolute byte budget, a share of free disk space, or both. It provides
-per-category time-to-live, LRU eviction, and cache-then-network
-behavior around every provider contract. Tile imagery caches heavily
-by default: <strong>30 calendar days</strong>, the common maximum under
-imagery-provider terms. Each provider contract declares its own caching
-terms, so an integrator tunes the cache knowingly per provider
-(<code>setRasterTileCacheTimeToLive</code>, read back through
-<code>rasterTileCacheTerms</code>). Values above a provider’s declared ceiling
-stay compliance-clamped.</li>
+<li>Install any <code>{z}/{x}/{y}</code> vector tileset as a styled base map. Five named
+styles ship: Bright and Positron (light), Fiord (dark) for
+OpenMapTiles-schema tilesets, and Carto Light and Carto Dark for the
+OpenStreetMap US Sourdough tileset. A style can be switched without
+refetching a tile: decoded geometry is restyled from the tile cache.</li>
+<li>A styled base replaces the raster tiles while it is installed and draws
+beneath every overlay, so markers, routes and the location indicator stay on
+top. The native surface paints the base’s background immediately and fills in
+tiles as they arrive; the browser resolves a frame’s tiles concurrently rather
+than one after another.</li>
+<li>Place names and road names draw from an SDF glyph atlas on every surface.
+Point-placed names sit at their feature; road names rotate along their own
+lines. Labels are filtered by feature rank and class, collision-rejected and
+capped per frame.</li>
+<li>A status readback reports the configured source and style, the drawn and
+failed tile counts of the last resolved frame, and the last tile failure
+detail, so an application can show an honest loading or unavailable state.</li>
+<li>A Mapbox Vector Tile v2.1 decoder turns fetched tiles into layers, features
+and geometries, with typed errors on every malformed path.</li>
 </ul>
-<h2 id="rendering"><a class="header" href="#rendering">Rendering</a></h2>
+<h2 id="mapview-and-the-reference-applications"><a class="header" href="#mapview-and-the-reference-applications">MapView and the reference applications</a></h2>
 <ul>
-<li>The project maintains its own minimal <code>wgpu</code> raster renderer. It
-implements web-mercator projection with exact frustum tile listing
-(Sutherland–Hodgman over the six frustum planes, with antimeridian
-world-copy handling), an anchored camera with fit-bounds and
-insets-aware framing and a <code>flyTo</code>-style hyperbolic arc, a byte-bounded
-GPU texture cache, and a tile scheduler with per-frame dedup, parent
-fallback, and a fetch budget. Route, polygon, marker, and traffic
-overlay layers sit on top of the tiles, and the renderer owns the
-location indicator (a tracking dot with accuracy ring, or a guided
-course arrow).</li>
-<li>The same renderer scene draws headless (for deterministic tests), into
-live Android/iOS surfaces, and in the browser through
-WebGPU. One WGSL/vertex pattern is byte-identical across the wasm and
-native paths.</li>
+<li>One <code>MapView</code> per platform owns the map surface, the frame pump, the
+lifecycle, gestures, the camera, overlays, the location indicator and the
+listener callbacks. Above it sit <code>MapSdk</code>, <code>Navigator</code> and the small engine
+objects.</li>
+<li>Frames are explicit: your display link, choreographer or render pump calls
+<code>draw</code> with a <code>MapCamera</code>. <code>draw</code> returns the frame’s tile and overlay
+statistics, and <code>isFrameSettled</code> lets the pump skip a frame when nothing has
+changed.</li>
+<li>Overlays are addressed by an identifier the view returns: add, update,
+remove, replace the whole list, or clear it. A rejected descriptor keeps the
+previous list in force. Overlay geometry is tessellated once, not rebuilt
+every frame.</li>
+<li>The camera is an immutable value with fit-bounds framing, projection and
+unprojection, and pan, zoom and rotate gestures that hold the point under
+your finger. The reference applications animate camera presets and frame a
+route preview with the same insets-aware constructor.</li>
+<li>The renderer owns the location indicator: a tracking dot with an accuracy
+ring, or a guided course arrow in navigation follow mode.</li>
+<li>Android (Compose), iOS (SwiftUI), React Native and the browser reference
+applications implement one shared design language: a bottom-sheet home, a
+five-control cluster, a follow camera, an offline tile-cache card, a
+readiness-chip diagnostics readout, and a Light / Dark / Auto theme whose Auto
+setting follows the operating system.</li>
 </ul>
-<h2 id="offline-routing"><a class="header" href="#offline-routing">Offline routing</a></h2>
-<ul>
-<li>The offline routing pipeline is in place. A deterministic compiler
-turns an OpenStreetMap PBF extract into a self-describing routing
-archive (nodes, a per-edge pack with road class, speed, and access
-columns, and turn restrictions). A memory-mapped reader validates the
-container’s alignment invariants. An offline routing provider answers
-routes with A* over the graph. It honors recorded turn restrictions
-and derives turn maneuvers (left/right/slight/sharp/U-turn) from the
-geometry’s bearing change; its texts stay honest where the archive
-carries no street names. A routing decorator retries over the offline
-graph when the primary (online) provider fails.</li>
-<li>The same graph runs in the browser: the wasm surface loads the compiled
-archive from in-memory bytes and answers the same route-shaped objects
-and typed refusals, so offline routing behavior is regression-tested in
-a plain browser run.</li>
-</ul>
-<h2 id="navigation"><a class="header" href="#navigation">Navigation</a></h2>
+<h2 id="navigation-and-simulated-trips"><a class="header" href="#navigation-and-simulated-trips">Navigation and simulated trips</a></h2>
 <ul>
 <li>Navigation state is deterministic: the same sequence of location updates
-always produces the same phase, step and instruction.
-It implements Ferrostar-pattern step-advance conditions (manual, eager
-distance-to-end, delayed current-step, Or/And combinators, and the
-fresh-instance reset contract), deviation detection with
-accuracy-aware allowances, and provider-verbatim instruction
-composition (banner and speech text; nothing rewritten).</li>
-<li>Deviation is graded. A fully-off-route state freezes the guidance and
-asks for a reroute; an off-step-but-on-route state keeps counting down
-and reconciles to the projected step. Speed runs advance through many
-steps per fix, and the advance is bounded and stack-safety-tested. The
-fully-off-route instruction text suppresses the countdown honestly
-rather than projecting it from a stale anchor.</li>
-<li>The SDK owns speech <em>triggering</em>: it publishes a speech-instruction
-topic over documented distance bands. Platforms voice that topic and
-keep their own pacing and focus policies.</li>
+produces the same phase, step and instruction. A trip moves through
+<code>Navigating</code>, <code>OffRoute</code> and <code>Arrived</code>.</li>
+<li>Step advance supports manual, distance-to-the-end-of-the-step and
+distance-from-the-step policies. A fix whose reported accuracy is worse than
+the policy’s minimum never advances.</li>
+<li>Deviation is graded. A fully-off-route fix freezes progress and asks for a
+reroute; an off-step-but-on-route fix keeps counting down and reconciles to
+the projected step.</li>
+<li>Instruction text is the provider’s own, never rephrased. The instruction
+payload carries the active maneuver, the next maneuver, a unit-aware distance
+phrase (immediate, a rounded quantity, or suppressed while progress is
+frozen), and the roundabout exit index where one applies.</li>
+<li>The SDK publishes speech triggers over documented distance bands. Each band
+announces at most once per step, with a minimum spacing and repeat distance to
+suppress chatter. The platform owns playback and synthesis, and every
+utterance carries a stable, monotonic identifier.</li>
+<li>Reroute requests pass through a cooldown and a movement threshold, with an
+in-flight gate and a readback that says whether a recalculation is running.
+The defaults are a five-second cooldown and a fifty-meter movement threshold.</li>
+<li>A subscription delivers one topic: instructions, deviation status, phase
+changes or speech. A composite subscription delivers all four, and <code>cancel</code>
+is explicit and idempotent.</li>
+<li><code>RouteSimulator</code> interpolates a trip along the planned route’s own polyline
+at a pace you choose, answers a fix at a travelled distance or an elapsed
+time, and marks arrival exactly when the fix reaches the final coordinate.</li>
 </ul>
-<h2 id="camera-and-gestures"><a class="header" href="#camera-and-gestures">Camera and gestures</a></h2>
+<h2 id="search-routing-and-traffic"><a class="header" href="#search-routing-and-traffic">Search, routing and traffic</a></h2>
 <ul>
-<li>The gesture-input camera seam keeps the camera math in the SDK.
-Platform recognizers forward plain deltas, and the SDK applies them:
-pan by screen pixels, focal-point zoom and rotation with an exact
-hold-the-focal-point correction, clamped through the camera’s own
-ranges.</li>
+<li><code>MapSdk</code> resolves every provider-backed call through one registry. The calls
+cover forward and reverse geocoding, search prediction, full search, routing
+with ordered waypoints, the distance matrix, traffic incidents, traffic flow
+and raster tiles. A call into an unregistered contract throws
+<code>ProviderNotConfigured</code> with the contract name.</li>
+<li>Route options cover automobile, bicycle and pedestrian modes; fastest and
+shortest strategies; metric and imperial units; avoiding toll roads,
+limited-access highways, ferries and unpaved roads; and a departure time.</li>
+<li>A route carries distance, duration, its bounding box and one leg per waypoint
+pair, with the maneuver steps inside each leg.</li>
+<li><code>SearchEngine</code>, <code>RoutingEngine</code>, <code>OfflineManager</code> and <code>Diagnostics</code> expose
+the same members as thin facades, so each capability has one object to hold.</li>
+<li>MapQuest implements the platform API set from one key: geocoding, search
+prediction, routing, the route matrix, traffic incidents, traffic flow and
+raster tiles in standard and retina resolutions. Requests share a token-bucket
+rate limiter, bounded retries for idempotent calls, and a status-to-error
+mapping.</li>
+<li>A URL-template provider serves any raster or vector tileset that publishes a
+<code>{z}/{x}/{y}</code> template, so a base map can come from a platform provider, an
+OpenStreetMap-based service or your own server without changing a call.</li>
+<li>Distance matrix and traffic results are available on the native, React Native
+and WebAssembly surfaces.</li>
 </ul>
-<h2 id="bindings-and-platforms"><a class="header" href="#bindings-and-platforms">Bindings and platforms</a></h2>
+<h2 id="offline-maps"><a class="header" href="#offline-maps">Offline maps</a></h2>
 <ul>
-<li>UniFFI drives the generated Kotlin/Swift bindings and the React Native
-bindings from a frozen, addition-only UDL contract. The wasm surface is
-a hand-reviewed TypeScript mirror regression-checked against the same
-UDL. Callback providers (geocoding, tiles) and a navigation controller
-with per-topic subscriptions cross the foreign callbacks seam. Exported
-async methods run on an SDK-owned runtime, so your application’s event
-loop never blocks on a provider call.</li>
-<li>Reference applications on Android (Compose), iOS (SwiftUI), and the
-browser reference app implement one shared design language. Each reaches
-search → route → simulated turn-by-turn with speech through a
-bottom-sheet home, a five-control cluster (zoom, scale bar,
-my-location, 2D/3D, compass), a follow camera, an offline tile-cache
-card, and a readiness-chip diagnostics readout. The web surface
-reaches reference-app parity with the native demos.</li>
+<li>A deterministic compiler turns an OpenStreetMap PBF extract into a
+self-describing <code>RMOG</code> routing archive: nodes, a per-edge pack with road
+class, speed and access columns, and turn restrictions.</li>
+<li>A validating reader opens the archive from memory-mapped storage or from
+in-memory bytes. The in-memory path runs in the browser.</li>
+<li>An offline routing provider answers routes with A* over the graph. It honors
+recorded turn restrictions and derives turn maneuvers from the bearing change
+in the geometry, and its instruction text stays honest where the archive
+carries no street names.</li>
+<li>When the online provider fails, an offline fallback answers from the graph.
+An archive that fails validation throws <code>OfflineRoutingFailure</code>.</li>
+<li>The same graph runs in the browser: the WebAssembly surface loads the
+compiled archive from in-memory bytes and answers the same route records and
+refusals as the native targets.</li>
+<li>Offline tile packs and the disk response cache keep raster imagery available
+when the network is not. The reference applications include an offline card
+that plans a route from the bundled archive.</li>
 </ul>
-<h2 id="vector-tiles"><a class="header" href="#vector-tiles">Vector tiles</a></h2>
+<h2 id="camera-and-rendering"><a class="header" href="#camera-and-rendering">Camera and rendering</a></h2>
 <ul>
-<li>A Mapbox Vector Tile v2.1 decoder turns fetched tiles into layers,
-features and geometries with typed errors on every malformed path. A
-data-only style pass maps decoded layers into the renderer’s fill,
-polyline and point overlays (an optional one-attribute text filter is
-supported). The OpenStreetMap US Sourdough tileset is the first
-vector-tile provider, with attribution and terms carried by its
-source descriptor.</li>
+<li>The SDK draws maps with its own minimal <code>wgpu</code> renderer. It implements
+web-mercator projection, lists exactly the tiles the camera covers (including
+across the antimeridian), and draws raster tiles from a byte-bounded GPU
+texture cache.</li>
+<li>The tile scheduler deduplicates requests within a frame, falls back to the
+nearest available parent tile, and respects a per-frame fetch budget. A tile
+that fails to decode is skipped and evicted so a later frame can refetch it.</li>
+<li>Route, polygon, marker, pin and traffic-flow overlays draw over the tiles, and
+the location indicator draws above every overlay.</li>
+<li>The same renderer draws into live Android and iOS surfaces and on a WebGPU
+canvas in the browser. High-density surfaces scale labels, line widths and
+marker radii by the surface’s device pixel ratio, so point sizes stay as
+designed.</li>
+<li>The camera math is the SDK’s: platform recognizers forward ordinary screen
+deltas, and the SDK applies pan, focal-point zoom and focal-point rotation
+through the camera’s own ranges.</li>
+</ul>
+<h2 id="imagery-providers-and-caching"><a class="header" href="#imagery-providers-and-caching">Imagery, providers and caching</a></h2>
+<ul>
+<li>Raster tiles come from MapQuest or from any <code>{z}/{x}/{y}</code> raster source, in
+standard or retina resolution. A source is validated when it is registered,
+so a malformed template or an inverted zoom range refuses immediately.</li>
+<li>A SQLite-backed response cache holds provider responses under an absolute
+byte budget, a share of free disk space, or both. It provides per-category
+time-to-live, LRU eviction, and cache-then-network behavior around every
+provider contract.</li>
+<li>Raster tiles cache for 30 days by default, the common ceiling under imagery
+provider terms. Each provider declares its own ceiling; a requested
+time-to-live above that ceiling is accepted and clamped, and the effective
+value, the ceiling and the category default are all readable.</li>
+<li>The provider surface is vendor-neutral. Ten provider contracts cover
+geocoding, routing, distance matrix, search, traffic incidents, traffic flow,
+elevation, raster tiles, offline routing and vector tiles, and a provider is
+selected by registration rather than by a change to the call.</li>
 </ul>
 <h2 id="provider-credentials"><a class="header" href="#provider-credentials">Provider credentials</a></h2>
 <ul>
-<li>The SDK never needs a provider key at build time: the reference
-applications start keyless and take credentials at runtime from a
-settings surface whose rows come from one shared provider registry; keys stay
-in memory unless the user opts in to device secure storage (Keychain
-or Android Keystore). Automated UI runs can inject a credential through
-a launch intent/environment; it is never persisted or logged.</li>
+<li>The SDK needs no provider key at build time. The reference applications start
+keyless: a URL-template base map draws without a credential, and provider
+calls answer once a credential is applied.</li>
+<li>Credentials are entered at runtime from a settings surface whose rows come
+from one shared provider registry. A key stays in memory unless the user opts
+in to the device’s secure storage (Keychain on iOS, Keystore on Android).</li>
+<li>Automated UI runs can inject a credential at launch. It is never persisted or
+logged.</li>
+<li>Registering a provider set again replaces every provider slot. Registering a
+URL-template base map also drops the installed tile cache, because the cache’s
+terms belong to the provider that installed it, and a fresh cache starts at
+its category default.</li>
 </ul>
-<h2 id="releases-and-the-live-demo"><a class="header" href="#releases-and-the-live-demo">Releases and the live demo</a></h2>
+<h2 id="errors-and-diagnostics"><a class="header" href="#errors-and-diagnostics">Errors and diagnostics</a></h2>
 <ul>
-<li>A release is cut from a tag and ships the Android AAR, the iOS
-XCFramework archive and the wasm package together, with SHA-256
-checksums, signature bundles and the third-party notices beside them.</li>
-<li>The same WebAssembly build powers a live, keyless demo at this site’s
-<code>/demo</code> path. Its provider panel can take a runtime key for live
-geocoding, routing and tile probes; the static demo defaults to the
-bundled demo imagery.</li>
+<li>Every failure crosses as one <code>SdkError</code> variant; a variant that carries a
+detail string carries it verbatim. The reference applications render the same
+sentence for the same failure across platforms.</li>
+<li>A diagnostics layer keeps bounded per-subsystem rings. Coordinates are
+rounded before an event reaches your listener, and only events at or above the
+severity you subscribe to are delivered.</li>
+<li>The native and WebAssembly surfaces provide subscribe and flush calls. A flush
+is bounded, synchronous and non-destructive, so the same event can be read
+again.</li>
+<li>A bounded per-object ring records failed calls to a provider you implemented
+in your own code, classified as a mapped contract error or an unclassified
+callback failure, with the contract, the method, the time and the verbatim
+failure text.</li>
 </ul>
-<h2 id="diagnostics-and-ops"><a class="header" href="#diagnostics-and-ops">Diagnostics and ops</a></h2>
+<h2 id="packaging-and-the-live-demo"><a class="header" href="#packaging-and-the-live-demo">Packaging and the live demo</a></h2>
 <ul>
-<li>A <code>tracing</code>-facade diagnostics layer provides bounded, per-subsystem
-rings, with coordinates removed before an event reaches your listener.
-Its severity gate never raises once finer events have been requested.
-Subscribe and flush seams on the native and wasm surfaces back the
-reference apps’ readouts and any log-sharing you add.</li>
+<li>
+<p>A tag-driven release pipeline builds and publishes, when a version tag is
+pushed:</p>
+<ul>
+<li>the Android bindings AAR and the <code>MapView</code> wrapper AAR;</li>
+<li>the iOS XCFramework zip and a generated Swift package manifest;</li>
+<li>the React Native npm tarball and the WebAssembly npm tarball;</li>
+<li>the bare WebAssembly archive.</li>
+</ul>
+<p>Each release carries per-asset SHA-256 checksums, an aggregate checksum
+manifest, Sigstore signature bundles, the third-party notices, the license
+texts and an install README.</p>
+</li>
+<li>
+<p>The same WebAssembly build powers a keyless live demo. It draws on a WebGPU
+canvas with pan, zoom, bearing and pitch controls, in-page overlays, recorded
+route planning, a simulated trip with the SDK’s own navigator, and offline
+routing from a compiled archive. Its provider panel accepts a runtime key for
+live geocoding, routing and tile probes.</p>
+</li>
+<li>
+<p>A hosted mobile demo runs the Android, iOS and React Native reference
+applications on a device.</p>
+</li>
+<li>
+<p><code>getSdkCompiledVersion</code> answers the loaded core’s version on every surface, so
+a diagnostics screen can compare it with the artifact you shipped.</p>
+</li>
 </ul>
 <h2 id="attribution"><a class="header" href="#attribution">Attribution</a></h2>
-<p>Each provider descriptor carries its own attribution line, and the
-reference applications render it from the shared registry. The bundled
-demo currently shows MapQuest imagery and OpenStreetMap data:
-map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL).
-Third-party dependency notices are regenerated into <a href="third-party-notices.html">their
-chapter</a>.</p>
+<p>Each provider descriptor carries its own attribution line and terms note, and
+the reference applications render the active provider’s line from the shared
+registry. The keyless demo draws OpenStreetMap data from the OpenFreeMap vector
+tileset in the Bright style, with the attribution that style requires. Keep the
+active provider’s attribution visible in your application. Third-party
+dependency notices are regenerated into
+<a href="third-party-notices.html">Third-party notices</a>.</p>
 
                     </main>
 
