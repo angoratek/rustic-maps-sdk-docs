@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ca0b0f2f.js";
+            window.path_to_searchindex_js = "searchindex-2f430d27.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-39fd423e.js"></script>
+        <script src="toc-bc73b309.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,10 +176,9 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="search-and-routing"><a class="header" href="#search-and-routing">Search and routing</a></h1>
-<p>Resolve a typed query into places with the geocoding and search
-contracts, then plan a route through the results. The tutorial builds on
-the <a href="first-map.html">first map</a> tutorial’s installed SDK; every snippet
-compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
+<p>Turn a typed query into places, plan a route between them, and draw it on
+the map. This guide continues from <a href="first-map.html">Your first map</a>; every
+code block compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -190,9 +189,8 @@ compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
 
 <div class="platform-tab-panel" data-platform-panel="android">
 <h3 id="resolve-a-query-into-places"><a class="header" href="#resolve-a-query-into-places">Resolve a query into places</a></h3>
-<p>The provider surface runs on Kotlin coroutines: every <code>MapSdk</code> call you
-see here is a <code>suspend fun</code>. Run it from a coroutine scope. The plan
-sheet’s two fields each resolve the text a user typed:</p>
+<p>Provider calls on Android are Kotlin <code>suspend fun</code>s. Run them from a
+coroutine scope. Each plan field resolves the text the user typed:</p>
 <!-- docs-snippet: begin search-and-routing/search-for-places android -->
 <pre><code class="language-kotlin">val originPlace: Place = mapSdk.forwardGeocode(originSearchQuery).firstOrNull()
     ?: return null
@@ -200,16 +198,14 @@ val destinationPlace: Place = mapSdk.forwardGeocode(destinationSearchQuery).firs
     ?: return null
 </code></pre>
 <!-- docs-snippet: end search-and-routing/search-for-places android -->
-<p><code>forwardGeocode</code> answers every candidate the provider resolved, most
-likely first; <code>suggest</code> answers fast completion candidates
-while the user types, and <code>search</code> answers full results for a
-settled query. Both search calls take an optional <code>BoundingBox</code> boundary
-that restricts the search.</p>
+<p><code>forwardGeocode</code> returns every candidate the provider resolved, most likely
+first. <code>suggest</code> returns fast completion candidates while the user types, and
+<code>search</code> returns full results for a settled query. Both search calls take an
+optional <code>BoundingBox</code> that restricts the search.</p>
 <h3 id="plan-the-route"><a class="header" href="#plan-the-route">Plan the route</a></h3>
-<p><code>calculateRoute</code> takes the ordered waypoints and the routing options. This
-is the shared demo request on every platform: exactly two waypoints, the
-pedestrian option set the reference applications plan every demo route
-with, fastest, metric, no avoids.</p>
+<p><code>calculateRoute</code> takes the ordered waypoints and the routing options. The
+request is the same on every platform: two waypoints, a pedestrian route,
+the fastest strategy, metric units, and no avoids.</p>
 <!-- docs-snippet: begin search-and-routing/plan-the-route android -->
 <pre><code class="language-kotlin">val routeOptions = RouteOptions(
     transportationMode = TransportationMode.PEDESTRIAN,
@@ -229,9 +225,8 @@ val plannedRoute = mapSdk.calculateRoute(
 )
 </code></pre>
 <!-- docs-snippet: end search-and-routing/plan-the-route android -->
-<p>The returned <code>Route</code> carries total distance and duration, the
-geometry’s bounding box, and one leg per waypoint pair, each with its
-maneuver steps.</p>
+<p>The returned <code>Route</code> carries the total distance and duration, the bounding
+box, and one leg per waypoint pair with its maneuver steps.</p>
 <h3 id="frame-the-route-preview"><a class="header" href="#frame-the-route-preview">Frame the route preview</a></h3>
 <p>Let the camera fit the route’s bounding box through the <code>fitBounds</code>
 constructor instead of hand-tuning zoom:</p>
@@ -256,8 +251,8 @@ val fittedCamera = try {
 destination never hides under your own panels.</p>
 <h3 id="draw-the-route"><a class="header" href="#draw-the-route">Draw the route</a></h3>
 <p>Build one route-polyline overlay from the planned geometry and hand it to
-the map view; the <a href="first-map.html">first map</a> tutorial’s overlay step covers
-the descriptor’s other fields.</p>
+the map view. The overlay step in <a href="first-map.html">Your first map</a> covers the
+descriptor’s other fields.</p>
 <!-- docs-snippet: begin search-and-routing/draw-the-route android -->
 <pre><code class="language-kotlin">val routeOverlay = MapOverlay(
     kind = MapOverlayKind.ROUTE_POLYLINE,
@@ -274,12 +269,11 @@ the descriptor’s other fields.</p>
 mapView.setOverlays(listOf(routeOverlay))
 </code></pre>
 <!-- docs-snippet: end search-and-routing/draw-the-route android -->
-<p>Then start a trip on the route in the <a href="navigation-simulation.html">navigation
-tutorial</a>.</p>
+<p>Then start a trip in <a href="navigation-simulation.html">Turn-by-turn navigation</a>.</p>
 <h3 id="group-the-calls-with-engines"><a class="header" href="#group-the-calls-with-engines">Group the calls with engines</a></h3>
 <p>The contract also groups these capabilities into small engine objects built
-over the same SDK. Each one delegates verbatim, with the same typed failures
-and detail text as the <code>MapSdk</code> member it wraps:</p>
+over the same SDK. Each one delegates to the SDK, with the same typed
+failures and detail text as the <code>MapSdk</code> member it wraps:</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.RoutingEngine
 import uniffi.rustic_maps.SearchEngine
 
@@ -293,7 +287,7 @@ val plannedRoute = routingEngine.calculateRoute(waypoints, routeOptions)
 
 <div class="platform-tab-panel" data-platform-panel="ios">
 <h3 id="resolve-a-query-into-places-1"><a class="header" href="#resolve-a-query-into-places-1">Resolve a query into places</a></h3>
-<p>The provider surface throws on failure and awaits its provider calls:</p>
+<p>Provider calls on iOS throw on failure and await the provider:</p>
 <!-- docs-snippet: begin search-and-routing/search-for-places ios -->
 <pre><code class="language-swift">let originResults = try await mapSdk.forwardGeocode(addressText: originSearchQuery)
 let destinationResults = try await mapSdk.forwardGeocode(
@@ -307,9 +301,9 @@ else {
 }
 </code></pre>
 <!-- docs-snippet: end search-and-routing/search-for-places ios -->
-<p><code>suggest</code> gives fast completion candidates for a query under
-construction, <code>search</code> gives full results for a settled one, and
-both take an optional <code>BoundingBox</code> boundary.</p>
+<p><code>suggest</code> returns fast completion candidates for a query under construction.
+<code>search</code> returns full results for a settled query. Both take an optional
+<code>BoundingBox</code>.</p>
 <h3 id="plan-the-route-1"><a class="header" href="#plan-the-route-1">Plan the route</a></h3>
 <!-- docs-snippet: begin search-and-routing/plan-the-route ios -->
 <pre><code class="language-swift">let routeOptions = RouteOptions(
@@ -333,9 +327,8 @@ let plannedRoute = try await mapSdk.calculateRoute(
 <p>The returned <code>Route</code> carries distance, duration, the bounding box,
 and one leg per waypoint pair with its steps.</p>
 <h3 id="frame-and-draw-the-preview"><a class="header" href="#frame-and-draw-the-preview">Frame and draw the preview</a></h3>
-<p>Fit the camera to the route’s bounding box through the insets-aware
-constructor (shown in the <a href="first-map.html">first map</a> tutorial), then hand
-the route’s geometry to the map view’s overlay list:</p>
+<p>Fit the camera to the route’s bounding box, as <a href="first-map.html">Your first map</a>
+shows, then hand the route geometry to the map view’s overlay list:</p>
 <pre><code class="language-swift">let fittedCamera = try MapCamera.fitBounds(
     boundingBox: plannedRoute.boundingBox,
     viewport: viewport,
@@ -361,8 +354,7 @@ _ = mapView.setOverlays([routeOverlay])
 </code></pre>
 <!-- docs-snippet: end search-and-routing/draw-the-route ios -->
 <h3 id="group-the-calls-with-engines-1"><a class="header" href="#group-the-calls-with-engines-1">Group the calls with engines</a></h3>
-<p>Each engine wraps the same SDK and delegates verbatim, keeping the typed
-failures and detail text:</p>
+<p>Each engine wraps the same SDK and keeps the typed failures and detail text:</p>
 <pre><code class="language-swift">let searchEngine = SearchEngine(mapSdk: mapSdk)
 let settledPlaces = try await searchEngine.search(
     queryText: "Capitol Park",
@@ -379,7 +371,7 @@ let plannedRoute = try await routingEngine.calculateRoute(
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="resolve-a-query-into-places-2"><a class="header" href="#resolve-a-query-into-places-2">Resolve a query into places</a></h3>
-<p>The package’s <code>MapsSdk</code> handle answers the contract’s search and routing
+<p>The package’s <code>MapsSdk</code> handle returns the contract’s search and routing
 calls as promises. Every record it resolves carries the same fields the other
 platforms see, in lower camel case:</p>
 <!-- docs-snippet: begin search-and-routing/search-for-places react-native -->
@@ -388,13 +380,12 @@ const destinationPlace =
   (await mapSdk.forwardGeocode(destinationSearchQuery))[0] ?? null;
 </code></pre>
 <!-- docs-snippet: end search-and-routing/search-for-places react-native -->
-<p>A query that resolves to no place leaves the field <code>null</code>; the example stops
-before planning rather than inventing a coordinate, exactly as the other tabs
-do.</p>
-<p>Pass <code>undefined</code> (or omit it) as the boundary to search worldwide, and pass
-a <code>BoundingBox</code> (<code>southWest</code>/<code>northEast</code> corners, lower camel case) to
-restrict the search. <code>suggest</code> answers fast completion candidates while the
-user types, and <code>search</code> answers full results for a settled query.</p>
+<p>A query that resolves to no place leaves the field <code>null</code>. The example stops
+before planning rather than inventing a coordinate.</p>
+<p>Pass <code>undefined</code> or omit the boundary to search worldwide. Pass a
+<code>BoundingBox</code> with <code>southWest</code> and <code>northEast</code> corners to restrict the search.
+<code>suggest</code> returns completion candidates while the user types; <code>search</code>
+returns full results for a settled query.</p>
 <h3 id="plan-the-route-2"><a class="header" href="#plan-the-route-2">Plan the route</a></h3>
 <!-- docs-snippet: begin search-and-routing/plan-the-route react-native -->
 <pre><code class="language-ts">const routeOptions: RouteOptions = {
@@ -417,9 +408,8 @@ const plannedRoute = await mapSdk.calculateRoute(
 <!-- docs-snippet: end search-and-routing/plan-the-route react-native -->
 <p>The route carries <code>distanceMeters</code>, <code>durationSeconds</code>, the bounding box and
 one leg per waypoint pair with its steps.</p>
-<p>A rejected promise carries the typed <code>SdkError</code>; surface it in your
-error state instead of retrying blindly (the rate limiter refills on its
-own).</p>
+<p>A rejected promise carries the typed <code>SdkError</code>. Surface it in your error
+state rather than retrying blindly; the rate limiter refills on its own.</p>
 <h3 id="frame-the-route-preview-1"><a class="header" href="#frame-the-route-preview-1">Frame the route preview</a></h3>
 <p>The map view’s <code>fitBounds</code> takes the same inset story as the other tabs:
 224 px clear on the left for the route card, 48 px top and right, 96 px
@@ -444,7 +434,7 @@ await mapView.setOverlays([routeOverlay]);
 </code></pre>
 <!-- docs-snippet: end search-and-routing/draw-the-route react-native -->
 <h3 id="keep-one-sdk-handle"><a class="header" href="#keep-one-sdk-handle">Keep one SDK handle</a></h3>
-<p>The package handle answers <code>search</code>, <code>suggest</code>, <code>forwardGeocode</code> and
+<p>The package handle exposes <code>search</code>, <code>suggest</code>, <code>forwardGeocode</code>, and
 <code>calculateRoute</code> directly, so a React Native screen needs no extra wrapper.
 The generated engine classes wrap a lower-level <code>MapSdk</code> instance, which would
 be a second SDK — with its own provider registry and tile cache — in the same
@@ -453,12 +443,11 @@ process. Keep the single handle from the <a href="first-map.html">first map</a> 
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="register-the-provider-at-runtime"><a class="header" href="#register-the-provider-at-runtime">Register the provider at runtime</a></h3>
-<p>A browser page has no settings sheet to open the key from. Provider
-registration is a free call whose first argument is the provider key from the
-shared registry; take the credential from your own runtime source — a form,
-a server-issued token, or a test’s environment. The demo runs without one: it
-searches a recorded place list and plans recorded routes until a visitor
-supplies a key.</p>
+<p>A browser page has no settings sheet. Provider registration is a free call;
+its first argument is the provider key from the shared registry. Take the
+credential from your own runtime source: a form, a server-issued token, or a
+test environment. Keyless, the demo searches recorded places and plans
+recorded routes.</p>
 <pre><code class="language-js">import { registerProvider } from './web/map_web_bindings.js';
 
 registerProvider('mapquest', providerCredential);
@@ -466,10 +455,12 @@ registerProvider('mapquest', providerCredential);
 <p>The calls below reject with the provider’s own error text when no provider is
 registered or the provider refuses.</p>
 <h3 id="resolve-the-queries-into-places-then-plan-the-route"><a class="header" href="#resolve-the-queries-into-places-then-plan-the-route">Resolve the queries into places, then plan the route</a></h3>
-<p><code>forwardGeocode</code> answers every candidate the provider resolved, most likely
-first. Its rows carry <code>structuredAddressText</code>, <code>latitudeDegrees</code> and
-<code>longitudeDegrees</code>. The route call takes the two coordinates and always plans
-the seam’s default request: automobile, fastest, metric.</p>
+<p><code>forwardGeocode</code> returns every candidate the provider resolved, most likely
+first. Its rows carry <code>structuredAddressText</code>, <code>latitudeDegrees</code>, and
+<code>longitudeDegrees</code>. <code>suggestPlaces</code> returns completion candidates, and
+<code>searchPlaces</code> returns full results for a settled query. The <code>calculateRoute</code>
+call takes two coordinates and uses the default request: automobile, fastest,
+metric.</p>
 <pre><code class="language-js">import { forwardGeocode, calculateRoute } from './web/map_web_bindings.js';
 
 const originSearchQuery = 'Capitol Park';
@@ -488,11 +479,9 @@ const plannedRoute = await calculateRoute(
   destinationPlace.longitudeDegrees,
 );
 </code></pre>
-<p>The browser seam carries no <code>suggest</code> or <code>search</code> export, so a completion list
-stays a native call. It also takes no <code>RouteOptions</code>: the native tabs plan the
-demo’s pedestrian option set, and a pedestrian route in the browser needs your
-own Rust build around the routing provider. The returned record has the same
-<code>distanceMeters</code>, <code>durationSeconds</code>, <code>boundingBox</code> and <code>legs</code>-of-<code>steps</code> shape
+<p>For a pedestrian route or explicit avoids, <code>calculateRouteWithOptions</code> takes
+the contract’s <code>RouteOptions</code>. The returned record has the same
+<code>distanceMeters</code>, <code>durationSeconds</code>, <code>boundingBox</code>, and <code>legs</code>-of-<code>steps</code> shape
 the other tabs read.</p>
 <h3 id="frame-the-route-preview-2"><a class="header" href="#frame-the-route-preview-2">Frame the route preview</a></h3>
 <p>Let the camera fit the route’s bounding box through the same fitted constructor
@@ -523,7 +512,7 @@ const fittedCamera = MapCamera.fittingBounds(
 );
 </code></pre>
 <p>The insets are the pixels your own panels keep clear, so the destination never
-hides under them. A refused fit throws verbatim; keep the previous camera.</p>
+hides under them. A refused fit throws the reason; keep the previous camera.</p>
 <h3 id="draw-the-route-2"><a class="header" href="#draw-the-route-2">Draw the route</a></h3>
 <p>Build one route-polyline overlay from the planned geometry and hand it to the
 view. The browser descriptor spells the color field <code>color</code>, not the native
@@ -539,8 +528,7 @@ const routeOverlay = {
 };
 mapView.setOverlays([routeOverlay]);
 </code></pre>
-<p>Then start a trip on the route in the <a href="navigation-simulation.html">navigation
-tutorial</a>.</p>
+<p>Then start a trip in <a href="navigation-simulation.html">Turn-by-turn navigation</a>.</p>
 </div>
 
 </div>
