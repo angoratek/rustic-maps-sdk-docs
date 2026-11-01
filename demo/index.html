@@ -297,6 +297,15 @@
               place names.
             </p>
           </section>
+          <section class="settings-section" id="location-controls"
+                   aria-describedby="device-location-status">
+            <h3 class="settings-section-title">Location</h3>
+            <p class="settings-note">Show this device's position on the map.
+              The browser asks for permission the first time.</p>
+            <button id="device-location-control" type="button" class="quiet"
+                    aria-pressed="false">Show my location</button>
+            <p id="device-location-status" class="reason-strip" role="status" hidden></p>
+          </section>
           <section class="settings-section" id="appearance-controls">
             <h3 class="settings-section-title" data-ui-label="theme.heading">Theme</h3>
             <button id="theme-toggle-control" type="button" aria-live="polite">Switch to light theme</button>

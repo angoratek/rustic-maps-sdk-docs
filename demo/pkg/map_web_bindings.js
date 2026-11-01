@@ -1080,6 +1080,143 @@ export class Navigator {
 if (Symbol.dispose) Navigator.prototype[Symbol.dispose] = Navigator.prototype.free;
 
 /**
+ * Validates, de-duplicates and smooths the page's position fixes.
+ */
+export class PositionController {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        PositionControllerFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_positioncontroller_free(ptr, 0);
+    }
+    /**
+     * Feeds one fix from the page's geolocation source. Every scalar is
+     * optional except the coordinate; the controller validates all of them
+     * and refuses an invalid fix with a string-valued error, keeping the
+     * previous state.
+     * @param {number} latitude
+     * @param {number} longitude
+     * @param {number | null} [horizontal_accuracy_meters]
+     * @param {number | null} [course_heading_degrees]
+     * @param {number | null} [timestamp_seconds]
+     */
+    feedFix(latitude, longitude, horizontal_accuracy_meters, course_heading_degrees, timestamp_seconds) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.positioncontroller_feedFix(retptr, this.__wbg_ptr, latitude, longitude, !isLikeNone(horizontal_accuracy_meters), isLikeNone(horizontal_accuracy_meters) ? 0 : horizontal_accuracy_meters, !isLikeNone(course_heading_degrees), isLikeNone(course_heading_degrees) ? 0 : course_heading_degrees, !isLikeNone(timestamp_seconds), isLikeNone(timestamp_seconds) ? 0 : timestamp_seconds);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Whether the latest fix is older than the staleness threshold at
+     * `now_seconds`.
+     * @param {number} now_seconds
+     * @returns {boolean}
+     */
+    isStale(now_seconds) {
+        const ret = wasm.positioncontroller_isStale(this.__wbg_ptr, now_seconds);
+        return ret !== 0;
+    }
+    /**
+     * The latest accepted fix, or null before the first one.
+     * @returns {object | undefined}
+     */
+    latestFix() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.positioncontroller_latestFix(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Builds an empty controller with the default smoothing window and
+     * staleness threshold.
+     */
+    constructor() {
+        const ret = wasm.positioncontroller_new();
+        this.__wbg_ptr = ret;
+        PositionControllerFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * The smoothed course in degrees clockwise from true north, or null when
+     * no accepted fix carried a course.
+     * @returns {number | undefined}
+     */
+    smoothedCourseDegrees() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.positioncontroller_smoothedCourseDegrees(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r2 = getDataViewMemory0().getFloat64(retptr + 8 * 1, true);
+            return r0 === 0 ? undefined : r2;
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * Records a source failure by its documented name (`permissionDenied`,
+     * `serviceDisabled`, `unavailable`, `timeout`). An unknown name is a
+     * string-valued error.
+     * @param {string} status_name
+     */
+    sourceFailed(status_name) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(status_name, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.positioncontroller_sourceFailed(retptr, this.__wbg_ptr, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * The last source failure's name, or null when the last event was a fix.
+     * @returns {string | undefined}
+     */
+    sourceStatus() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.positioncontroller_sourceStatus(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            let v1;
+            if (r0 !== 0) {
+                v1 = getStringFromWasm0(r0, r1);
+                wasm.__wbindgen_export4(r0, r1 * 1, 1);
+            }
+            return v1;
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+}
+if (Symbol.dispose) PositionController.prototype[Symbol.dispose] = PositionController.prototype.free;
+
+/**
  * An immutable simulated trip along the planned route's own geometry,
  * mirroring the contract's `RouteSimulator` (M27).
  *
@@ -2900,7 +3037,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_7967(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_7992(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -3917,28 +4054,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2518, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7946);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2524, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7971);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 297, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1469);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 303, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1494);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 297, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1469_86);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 303, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1494_93);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 297, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1469_87);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 303, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1494_94);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2383, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6236);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2389, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6261);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -4012,18 +4149,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_6236(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_6236(arg0, arg1);
+function __wasm_bindgen_func_elem_6261(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6261(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_7967(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_7967(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_7992(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_7992(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_7946(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_7971(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_7946(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_7971(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4034,10 +4171,10 @@ function __wasm_bindgen_func_elem_7946(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1469(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1494(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1469(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1494(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4048,10 +4185,10 @@ function __wasm_bindgen_func_elem_1469(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1469_86(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1494_93(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1469_86(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1494_93(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4062,10 +4199,10 @@ function __wasm_bindgen_func_elem_1469_86(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1469_87(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1494_94(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1469_87(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1494_94(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4168,6 +4305,9 @@ const MapsSdkFinalization = (typeof FinalizationRegistry === 'undefined')
 const NavigatorFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_navigator_free(ptr, 1));
+const PositionControllerFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_positioncontroller_free(ptr, 1));
 const RouteSimulatorFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_routesimulator_free(ptr, 1));

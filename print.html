@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2f430d27.js";
+            window.path_to_searchindex_js = "searchindex-33e7f773.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-bc73b309.js"></script>
@@ -4276,9 +4276,12 @@ source failures, so the location indicator, follow camera and navigation
 controller read one consistent stream.</li>
 <li>A simulated position source walks a route with course and accuracy for tests,
 demos and desktop applications before a platform source is wired.</li>
-<li>The controller is available to Rust applications now; a host supplies the
-fixes from its own location API, so a Rust application keeps the permission
-and lifecycle decisions where the operating system requires them.</li>
+<li>The controller is available to Rust applications, and the browser demo uses
+it with the Geolocation API: its Location settings show the device’s
+position, draw the tracking dot and centre the map, reporting denied,
+unavailable and timed-out sources honestly. Other hosts supply fixes from
+their own location API, so permission and lifecycle stay where the operating
+system requires them.</li>
 </ul>
 <h2 id="mapview-and-the-reference-applications"><a class="header" href="#mapview-and-the-reference-applications">MapView and the reference applications</a></h2>
 <ul>
@@ -11425,6 +11428,35 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
+<h2 id="positioncontroller"><a class="header" href="#positioncontroller">PositionController</a></h2>
+<p>Validates, de-duplicates and smooths the page’s position fixes.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor()</code></td><td>Builds an empty controller with the default smoothing window and staleness threshold.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>feedFix</code></td><td><code>feedFix(latitude: number, longitude: number, horizontalAccuracyMeters: number | null, courseHeadingDegrees: number | null, timestampSeconds: number | null): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Feeds one fix from the page’s geolocation source. Every scalar is optional except the coordinate; the controller validates all of them and refuses an invalid fix with a string-valued error, keeping the previous state.</td></tr>
+<tr><td><code>sourceFailed</code></td><td><code>sourceFailed(statusName: string): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Records a source failure by its documented name (<code>permissionDenied</code>, <code>serviceDisabled</code>, <code>unavailable</code>, <code>timeout</code>). An unknown name is a string-valued error.</td></tr>
+<tr><td><code>latestFix</code></td><td><code>latestFix(): object | null</code></td><td>Returns <code>object | null</code>. Throws the verbatim failure message as a string.</td><td>The latest accepted fix, or null before the first one.</td></tr>
+<tr><td><code>smoothedCourseDegrees</code></td><td><code>smoothedCourseDegrees(): number | null</code></td><td>Returns <code>number | null</code>.</td><td>The smoothed course in degrees clockwise from true north, or null when no accepted fix carried a course.</td></tr>
+<tr><td><code>isStale</code></td><td><code>isStale(nowSeconds: number): boolean</code></td><td>Returns <code>boolean</code>.</td><td>Whether the latest fix is older than the staleness threshold at <code>now_seconds</code>.</td></tr>
+<tr><td><code>sourceStatus</code></td><td><code>sourceStatus(): string | null</code></td><td>Returns <code>string | null</code>.</td><td>The last source failure’s name, or null when the last event was a fix.</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="routes-geometry-and-version"><a class="header" href="#routes-geometry-and-version">Routes, geometry and version</a></h2>
 <div class="table-wrapper">
 <table>
@@ -11826,6 +11858,22 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
+<h3 id="devicepositionfix"><a class="header" href="#devicepositionfix">DevicePositionFix</a></h3>
+<p>One device position fix the wasm <code>PositionController</code> accepted (M33): the Rust <code>map-positioning</code> record in the seam’s lower-camel spelling. Reported back by <code>latestFix</code>; the controller validates and smooths the same fixes the native targets will carry through the contract.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>latitude</code></td><td><code>number</code></td><td>/** Latitude in decimal degrees. */</td></tr>
+<tr><td><code>longitude</code></td><td><code>number</code></td><td>/** Longitude in decimal degrees. */</td></tr>
+<tr><td><code>horizontalAccuracyMeters</code></td><td><code>number \| null</code></td><td>/** The 68% horizontal-accuracy radius in meters, or null. */</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>number \| null</code></td><td>/** Direction of travel in degrees clockwise from true north, or null. */</td></tr>
+<tr><td><code>timestampSeconds</code></td><td><code>number \| null</code></td><td>/** The fix instant in seconds since the Unix epoch, or null. */</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="vectortilesourcestatus-3"><a class="header" href="#vectortilesourcestatus-3">VectorTileSourceStatus</a></h3>
 <p>The vector base source’s status readback (M31): the UDL <code>VectorTileSourceStatus</code> record, answered by <code>MapView.vectorTileSourceStatus</code> without drawing or fetching.</p>
 <div class="table-wrapper">
@@ -11979,6 +12027,9 @@ offline graph.</li>
 <h3 id="mapoverlaykind-3"><a class="header" href="#mapoverlaykind-3">MapOverlayKind</a></h3>
 <p>Which overlay shape one descriptor configures. The values are the wasm canvas’ plain-object <code>kind</code> strings (<code>MapView::setOverlays</code> accepts exactly these); the UDL <code>enum MapOverlayKind</code> variants carry the CamelCase spellings (<code>RoutePolyline</code>, <code>FilledPolygon</code>, <code>PointMarkers</code>, <code>TrafficFlow</code>, <code>PointPins</code>), which Kotlin’s generated bindings keep and Swift’s camel lowering reproduces as these strings.</p>
 <p><code>\| "routePolyline" \| "filledPolygon" \| "pointMarkers" \| "trafficFlow" \| "pointPins"</code></p>
+<h3 id="positionsourcestatusname"><a class="header" href="#positionsourcestatusname">PositionSourceStatusName</a></h3>
+<p>A positioning source’s failure name, as <code>PositionController.sourceFailed</code> accepts and <code>sourceStatus</code> reports it.</p>
+<p><code>\| "permissionDenied" \| "serviceDisabled" \| "unavailable" \| "timeout"</code></p>
 <h3 id="trafficflowcongestionlevel-1-1"><a class="header" href="#trafficflowcongestionlevel-1-1">TrafficFlowCongestionLevel</a></h3>
 <p>Congestion classification of a traffic-flow overlay segment, mirroring the UDL <code>TrafficFlowCongestionLevel</code> enum. The values are the camel-lower tags the wasm canvas’ plain objects use (the canvas itself passes the numeric wasm-bindgen enum discriminants); the UDL variants carry the CamelCase spellings.</p>
 <p><code>\| "freeFlow" \| "slow" \| "congested" \| "blocked"</code></p>

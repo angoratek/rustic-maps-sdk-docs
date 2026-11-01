@@ -464,6 +464,50 @@ export class Navigator {
 }
 
 /**
+ * Validates, de-duplicates and smooths the page's position fixes.
+ */
+export class PositionController {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Feeds one fix from the page's geolocation source. Every scalar is
+     * optional except the coordinate; the controller validates all of them
+     * and refuses an invalid fix with a string-valued error, keeping the
+     * previous state.
+     */
+    feedFix(latitude: number, longitude: number, horizontal_accuracy_meters?: number | null, course_heading_degrees?: number | null, timestamp_seconds?: number | null): void;
+    /**
+     * Whether the latest fix is older than the staleness threshold at
+     * `now_seconds`.
+     */
+    isStale(now_seconds: number): boolean;
+    /**
+     * The latest accepted fix, or null before the first one.
+     */
+    latestFix(): object | undefined;
+    /**
+     * Builds an empty controller with the default smoothing window and
+     * staleness threshold.
+     */
+    constructor();
+    /**
+     * The smoothed course in degrees clockwise from true north, or null when
+     * no accepted fix carried a course.
+     */
+    smoothedCourseDegrees(): number | undefined;
+    /**
+     * Records a source failure by its documented name (`permissionDenied`,
+     * `serviceDisabled`, `unavailable`, `timeout`). An unknown name is a
+     * string-valued error.
+     */
+    sourceFailed(status_name: string): void;
+    /**
+     * The last source failure's name, or null when the last event was a fix.
+     */
+    sourceStatus(): string | undefined;
+}
+
+/**
  * An immutable simulated trip along the planned route's own geometry,
  * mirroring the contract's `RouteSimulator` (M27).
  *
@@ -877,6 +921,7 @@ export interface InitOutput {
     readonly __wbg_mapssdk_free: (a: number, b: number) => void;
     readonly __wbg_mapview_free: (a: number, b: number) => void;
     readonly __wbg_navigator_free: (a: number, b: number) => void;
+    readonly __wbg_positioncontroller_free: (a: number, b: number) => void;
     readonly __wbg_routesimulator_free: (a: number, b: number) => void;
     readonly calculateDistanceMatrix: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
@@ -940,6 +985,13 @@ export interface InitOutput {
     readonly navigator_updateLocation: (a: number, b: number, c: number) => void;
     readonly offlineRouteFromArchiveBytes: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly panCameraByScreenPixels: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly positioncontroller_feedFix: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => void;
+    readonly positioncontroller_isStale: (a: number, b: number) => number;
+    readonly positioncontroller_latestFix: (a: number, b: number) => void;
+    readonly positioncontroller_new: () => number;
+    readonly positioncontroller_smoothedCourseDegrees: (a: number, b: number) => void;
+    readonly positioncontroller_sourceFailed: (a: number, b: number, c: number, d: number) => void;
+    readonly positioncontroller_sourceStatus: (a: number, b: number) => void;
     readonly registerProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly rotateCameraByDegreesAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly routesimulator_fixAtElapsedSeconds: (a: number, b: number, c: number) => void;
@@ -961,12 +1013,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1469: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1469_86: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1469_87: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7946: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7967: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_6236: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1494: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1494_93: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1494_94: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7971: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7992: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_6261: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
