@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-83cce045.js";
+            window.path_to_searchindex_js = "searchindex-c9020bb1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -196,10 +196,15 @@ shows its own failure state instead of a blank frame.</p>
 visitor. Nothing streams until you press Start, and a session lasts three
 minutes. When the month’s minutes are gone, the page says so and the demo
 rests until the month turns over.</p>
+<p>The <a href="demo/">browser demo</a> needs no session and no monthly budget. It runs the
+same SDK in your own browser, and the mobile page links to it whenever the
+hosted demo rests.</p>
 <h2 id="the-daily-limit"><a class="header" href="#the-daily-limit">The daily limit</a></h2>
 <p>Each visitor gets a limited number of sessions per day. When you have used
 today’s sessions, the page asks you to come back tomorrow. The daily limit
 keeps one visitor from spending the shared monthly budget.</p>
+<p>A refusal leaves the Start button in place, so a failure that turns out to be
+transient can be retried without reloading the page.</p>
 
                     </main>
 

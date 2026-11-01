@@ -76,7 +76,7 @@ when the focal ray misses the ground plane.</p>
     viewport: <a class="struct" href="../records/struct.ViewportSize.html" title="struct map_native_core::records::ViewportSize">ViewportSize</a>,
     field_of_view_degrees: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>,
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>, <a class="enum" href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError">SdkError</a>&gt;</h4></section></summary><div class="docblock"><p>Ground meters represented by one screen pixel at the camera’s center
-(round 10, the scale bars’ helper). The viewport and field-of-view
+(the scale bars’ helper). The viewport and field-of-view
 arguments mirror the projection methods’ shape — call sites pass the
 same camera context — and the viewport is validated here like
 everywhere else; the honest flat-centered approximation itself is

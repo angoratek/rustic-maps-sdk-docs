@@ -3,7 +3,7 @@
 viewport, and the tiles the <a href="../tile_scheduler/struct.TileScheduler.html" title="struct map_rendering::tile_scheduler::TileScheduler"><code>crate::tile_scheduler::TileScheduler</code></a>
 prepared for the frame, and produces the list of textured quads to draw in
 normalized world coordinates, including parent-fallback quads for tiles
-that are not yet pooled.</p>
+that the texture pool does not hold.</p>
 <p>Quads are projected into per-fragment clip-space vertex arrays: a world
 span is wrapped around the camera as one unit (never corner by corner) and
 split into at most one vertex array per world copy it reaches, so spans
