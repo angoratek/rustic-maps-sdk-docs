@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-33e7f773.js";
+            window.path_to_searchindex_js = "searchindex-0ed3fbd7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-bc73b309.js"></script>
@@ -215,12 +215,14 @@ source failures, so the location indicator, follow camera and navigation
 controller read one consistent stream.</li>
 <li>A simulated position source walks a route with course and accuracy for tests,
 demos and desktop applications before a platform source is wired.</li>
-<li>The controller is available to Rust applications, and the browser demo uses
-it with the Geolocation API: its Location settings show the device’s
-position, draw the tracking dot and centre the map, reporting denied,
-unavailable and timed-out sources honestly. Other hosts supply fixes from
-their own location API, so permission and lifecycle stay where the operating
-system requires them.</li>
+<li>The positioning controller and its fix and source-error records are part of
+the SDK contract, so Kotlin, Swift and TypeScript applications construct the
+same controller, feed it fixes and read the smoothed course and staleness.</li>
+<li>The browser demo uses it with the Geolocation API: its Location settings show
+the device’s position, draw the tracking dot and centre the map, reporting
+denied, unavailable and timed-out sources honestly. Other hosts supply fixes
+from their own location API, so permission and lifecycle stay where the
+operating system requires them.</li>
 </ul>
 <h2 id="mapview-and-the-reference-applications"><a class="header" href="#mapview-and-the-reference-applications">MapView and the reference applications</a></h2>
 <ul>
