@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fa082d3b.js";
+            window.path_to_searchindex_js = "searchindex-3bf3f0d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -186,7 +186,9 @@ Silicon host (<code>GPUAdapter.info: apple · metal-3</code>) with hardware WebG
 <code>renderFrame</code> costs <strong>1.4 ms at the median and 1.5 ms at p95</strong>; every one of
 120 measured frames stayed inside the 16.7 ms 60 Hz budget. The p99 sample
 (8.2 ms) is the frame that re-tessellates the overlay layer, not the steady
-state. The raster base over the same ground costs 0.2 ms at the median.</p>
+state. The render pass’s own GPU time is <strong>0.8 ms at the median and 0.89 ms
+at p99</strong>. The raster base over the same ground costs 0.2 ms at the median,
+with a 0.15 ms median GPU pass.</p>
 <pre><code class="language-bash"># from platform/web
 node perf/run-frame-budget.mjs            # vector base
 node perf/run-frame-budget.mjs --layer raster
@@ -294,9 +296,16 @@ suspicious session; the ring carries the contract, method, timestamp,
 and verbatim failure text for every failed foreign-callback provider
 call.</li>
 <li>Measure on your target device and your real scenes. The SDK reports
-what it did (tile counts, frame statistics, cache terms, and the frame’s
-own stage spans in the browser), so a slow frame can be attributed to
-geometry, encoding or submission instead of guessed at.</li>
+what it did (tile counts, frame statistics, cache terms, the frame’s
+own stage spans in the browser, and the GPU render pass time), so a slow
+frame can be attributed to geometry, encoding, submission or the GPU
+instead of guessed at.</li>
+<li>In the browser, the GPU pass time arrives one frame after the pass as
+<code>gpuPassMilliseconds</code>, read back without blocking the present. WebGPU
+implementations quantize timestamps, so treat the value as a coarse
+distribution, and read it next to the frame’s total. An adapter without
+timestamp-query support omits the field rather than reporting a
+placeholder; the SDK then reports the CPU-side stages alone.</li>
 <li>In the browser, the frame never blocks on the network: missing tiles are
 fetched on their own tasks and the frame draws what it already holds. A
 page that renders on demand should listen for the canvas’s

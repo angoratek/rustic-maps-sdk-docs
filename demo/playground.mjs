@@ -2633,6 +2633,10 @@
           // attributes a slow frame to geometry, encoding or submission from
           // these instead of inferring it from the total.
           stageMilliseconds: frame_statistics?.stageMilliseconds ?? null,
+          // The GPU pass time the frame statistics report from timestamp
+          // queries. It describes the previous frame's pass (the readback is
+          // lagged one frame) and is null when the adapter cannot measure it.
+          gpuPassMilliseconds: frame_statistics?.gpuPassMilliseconds ?? null,
         });
         if (frame_performance_samples.length > PERFORMANCE_SAMPLE_WINDOW_FRAMES) {
           frame_performance_samples.shift();
