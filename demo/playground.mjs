@@ -307,6 +307,8 @@
       const zoom_out_control = document.getElementById('zoom-out-control');
       const zoom_in_control = document.getElementById('zoom-in-control');
       const my_location_control = document.getElementById('my-location-control');
+      const device_location_control = document.getElementById('device-location-control');
+      const device_location_status = document.getElementById('device-location-status');
       const plane_toggle_control = document.getElementById('plane-toggle-control');
       const scale_bar_element = document.getElementById('scale-bar-overlay');
       const scale_bar_label_element = document.getElementById('scale-bar-label-text');
@@ -3117,6 +3119,157 @@
           'aria-label',
           is_recentering ? 'Re-center on my location' : 'Center on my location');
       }
+
+      // Device positioning (M33): the browser's Geolocation API feeds the
+      // Rust `PositionController`, which validates and smooths the fixes; the
+      // page then draws the renderer-owned tracking dot, centres the camera
+      // and shows the position honestly in the settings sheet.
+      const DEVICE_LOCATION_ZOOM_LEVEL = 15;
+      const DEVICE_LOCATION_PERMISSION_DENIED_TEXT =
+        'Location permission was denied. Allow it in the browser settings to use this.';
+      const DEVICE_LOCATION_UNAVAILABLE_TEXT =
+        'The browser could not determine a position right now.';
+      const DEVICE_LOCATION_TIMEOUT_TEXT =
+        'The browser timed out while determining a position.';
+      const DEVICE_LOCATION_UNAVAILABLE_SUPPORT_TEXT =
+        'This browser does not provide the Geolocation API.';
+      let device_location_watch_identifier = null;
+      let device_position_controller = null;
+
+      function refresh_device_location_control() {
+        const is_active = device_location_watch_identifier !== null;
+        device_location_control.setAttribute('aria-pressed', String(is_active));
+        device_location_control.textContent =
+          is_active ? 'Hide my location' : 'Show my location';
+      }
+
+      function set_device_location_status(status_text) {
+        device_location_status.hidden = status_text === null;
+        device_location_status.textContent = status_text ?? '';
+      }
+
+      function map_geolocation_error_name(error) {
+        switch (error?.code) {
+          case 1:
+            return 'permissionDenied';
+          case 3:
+            return 'timeout';
+          default:
+            return 'unavailable';
+        }
+      }
+
+      function map_geolocation_error_text(error) {
+        switch (error?.code) {
+          case 1:
+            return DEVICE_LOCATION_PERMISSION_DENIED_TEXT;
+          case 3:
+            return DEVICE_LOCATION_TIMEOUT_TEXT;
+          default:
+            return DEVICE_LOCATION_UNAVAILABLE_TEXT;
+        }
+      }
+
+      /** Feeds one browser fix through the controller and presents it. */
+      function apply_device_position(position) {
+        if (device_position_controller === null) return;
+        const coordinate = position.coords;
+        try {
+          device_position_controller.feedFix(
+            coordinate.latitude,
+            coordinate.longitude,
+            Number.isFinite(coordinate.accuracy) ? coordinate.accuracy : undefined,
+            Number.isFinite(coordinate.heading) ? coordinate.heading : undefined,
+            Date.now() / MILLISECONDS_PER_SECOND,
+          );
+        } catch (position_failure) {
+          set_device_location_status(String(position_failure?.message ?? position_failure));
+          return;
+        }
+        const smoothed_course = device_position_controller.smoothedCourseDegrees();
+        apply_location_indicator(
+          {
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            courseHeadingDegrees: smoothed_course,
+            horizontalAccuracyMeters:
+              Number.isFinite(coordinate.accuracy) ? coordinate.accuracy : null,
+          },
+          { visualKind: 'trackingDot', showAccuracyRing: true },
+        );
+        camera_state.latitude = coordinate.latitude;
+        camera_state.longitude = coordinate.longitude;
+        camera_state.zoom = Math.max(camera_state.zoom, DEVICE_LOCATION_ZOOM_LEVEL);
+        controls.zoom.value = camera_state.zoom;
+        refresh_control_labels();
+        schedule_render();
+        const accuracy_text = Number.isFinite(coordinate.accuracy)
+          ? ` · ±${Math.round(coordinate.accuracy)} m`
+          : '';
+        set_device_location_status(
+          `Position ${coordinate.latitude.toFixed(5)}, ` +
+          `${coordinate.longitude.toFixed(5)}${accuracy_text}.`,
+        );
+      }
+
+      function stop_device_location() {
+        if (device_location_watch_identifier !== null) {
+          navigator.geolocation.clearWatch(device_location_watch_identifier);
+          device_location_watch_identifier = null;
+        }
+        device_position_controller = null;
+        apply_location_indicator(null);
+        set_device_location_status('Location off.');
+        refresh_device_location_control();
+        schedule_render();
+      }
+
+      function start_device_location() {
+        if (typeof navigator.geolocation?.watchPosition !== 'function') {
+          set_device_location_status(DEVICE_LOCATION_UNAVAILABLE_SUPPORT_TEXT);
+          return;
+        }
+        if (typeof window.mapTest?.PositionController !== 'function') {
+          set_device_location_status(DEVICE_LOCATION_UNAVAILABLE_TEXT);
+          return;
+        }
+        device_position_controller = new window.mapTest.PositionController();
+        device_location_watch_identifier = navigator.geolocation.watchPosition(
+          (position) => apply_device_position(position),
+          (error) => {
+            const status_name = map_geolocation_error_name(error);
+            try {
+              device_position_controller?.sourceFailed(status_name);
+            } catch {
+              // An unknown status name leaves the controller unchanged.
+            }
+            set_device_location_status(map_geolocation_error_text(error));
+          },
+          { enableHighAccuracy: true, maximumAge: 1_000, timeout: 10_000 },
+        );
+        refresh_device_location_control();
+        set_device_location_status('Waiting for a position…');
+      }
+
+      device_location_control.addEventListener('click', () => {
+        if (device_location_watch_identifier !== null) {
+          stop_device_location();
+        } else {
+          start_device_location();
+        }
+      });
+
+      // The UX-test host contract: the controller's own state, so a browser
+      // suite can assert a fix reached it without reading page prose.
+      window.mapDeviceLocationState = () => ({
+        isActive: device_location_watch_identifier !== null,
+        fix: device_position_controller?.latestFix() ?? null,
+        smoothedCourseDegrees:
+          device_position_controller?.smoothedCourseDegrees() ?? null,
+        sourceStatus: device_position_controller?.sourceStatus() ?? null,
+        isStale:
+          device_position_controller?.isStale(Date.now() / MILLISECONDS_PER_SECOND) ?? null,
+      });
 
       // The location indicator (§4.2): the wasm seam draws the layer over
       // the overlays (the native surface's top layer); the state hook stays
