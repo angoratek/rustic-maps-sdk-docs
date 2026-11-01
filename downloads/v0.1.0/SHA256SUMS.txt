@@ -3,5 +3,5 @@
 534672c6ba3a7c0aec07b2fde7aad107aea66667c51b5828f4d5ca09f8e73736  rustic-maps-sdk-ios-v0.1.0.xcframework.zip
 30787ee1bf1cf7d8e4592868dcae0f27c584d196e79453d942304ff2adf8f057  rustic-maps-sdk-notices-v0.1.0.md
 5f71d8df8c2a7154b1de4e448ff224a3fdf213803f1ab8b62f0fe2e2c53f7dc7  rustic-maps-sdk-rn-v0.1.0.tgz
-9e0cfa6251f0021827c48356bdedadd6d3f7654fd6361fe126b680e9e4eaa2b2  rustic-maps-sdk-web-v0.1.0.tar.gz
-91d8af906bdd4bb602ac3803b263f2e0632b35b03dc95504a575a42b348cffb6  rustic-maps-sdk-web-v0.1.0.tgz
+559fb41d598f2736a2023f4b5d128fa1de85d1de712289ea5c1375c0af95afef  rustic-maps-sdk-web-v0.1.0.tar.gz
+e9404ebf32316ea90b023462fc89811fc396212108f531d0ded5dfb54001a379  rustic-maps-sdk-web-v0.1.0.tgz
