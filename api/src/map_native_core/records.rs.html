@@ -2239,4 +2239,85 @@
 <a href=#2239 id=2239 data-nosnippet>2239</a>    /// for the mapped shape.
 <a href=#2240 id=2240 data-nosnippet>2240</a>    </span><span class="kw">pub </span>failure_detail: String,
 <a href=#2241 id=2241 data-nosnippet>2241</a>}
+<a href=#2242 id=2242 data-nosnippet>2242</a>
+<a href=#2243 id=2243 data-nosnippet>2243</a><span class="comment">// ---------------------------------------------------------------------------
+<a href=#2244 id=2244 data-nosnippet>2244</a>// Device positioning records (M33): the contract-side mirrors of the
+<a href=#2245 id=2245 data-nosnippet>2245</a>// `map-positioning` controller's fix and source-failure types.
+<a href=#2246 id=2246 data-nosnippet>2246</a>// ---------------------------------------------------------------------------
+<a href=#2247 id=2247 data-nosnippet>2247</a>
+<a href=#2248 id=2248 data-nosnippet>2248</a></span><span class="doccomment">/// One device position report: a coordinate with the source's optional
+<a href=#2249 id=2249 data-nosnippet>2249</a>/// accuracy, course and timestamp.
+<a href=#2250 id=2250 data-nosnippet>2250</a></span><span class="attr">#[derive(Debug, Clone, PartialEq)]
+<a href=#2251 id=2251 data-nosnippet>2251</a></span><span class="kw">pub struct </span>PositionFix {
+<a href=#2252 id=2252 data-nosnippet>2252</a>    <span class="doccomment">/// The reported coordinate on the WGS 84 ellipsoid.
+<a href=#2253 id=2253 data-nosnippet>2253</a>    </span><span class="kw">pub </span>coordinate: GeographicCoordinate,
+<a href=#2254 id=2254 data-nosnippet>2254</a>    <span class="doccomment">/// The radius in meters of the 68% horizontal-accuracy envelope, when the
+<a href=#2255 id=2255 data-nosnippet>2255</a>    /// source reports one.
+<a href=#2256 id=2256 data-nosnippet>2256</a>    </span><span class="kw">pub </span>horizontal_accuracy_meters: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#2257 id=2257 data-nosnippet>2257</a>    <span class="doccomment">/// Direction of travel in degrees clockwise from true north, when the
+<a href=#2258 id=2258 data-nosnippet>2258</a>    /// source reports one.
+<a href=#2259 id=2259 data-nosnippet>2259</a>    </span><span class="kw">pub </span>course_heading_degrees: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#2260 id=2260 data-nosnippet>2260</a>    <span class="doccomment">/// The fix's instant in seconds since the Unix epoch, when the source
+<a href=#2261 id=2261 data-nosnippet>2261</a>    /// reports one.
+<a href=#2262 id=2262 data-nosnippet>2262</a>    </span><span class="kw">pub </span>timestamp_seconds: <span class="prelude-ty">Option</span>&lt;f64&gt;,
+<a href=#2263 id=2263 data-nosnippet>2263</a>}
+<a href=#2264 id=2264 data-nosnippet>2264</a>
+<a href=#2265 id=2265 data-nosnippet>2265</a><span class="kw">impl </span>PositionFix {
+<a href=#2266 id=2266 data-nosnippet>2266</a>    <span class="doccomment">/// Converts the contract record into the controller's fix.
+<a href=#2267 id=2267 data-nosnippet>2267</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>to_native_position_fix(
+<a href=#2268 id=2268 data-nosnippet>2268</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#2269 id=2269 data-nosnippet>2269</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;map_positioning::PositionFix, <span class="kw">crate</span>::error::SdkError&gt; {
+<a href=#2270 id=2270 data-nosnippet>2270</a>        <span class="prelude-val">Ok</span>(map_positioning::PositionFix {
+<a href=#2271 id=2271 data-nosnippet>2271</a>            coordinate: <span class="self">self</span>.coordinate.to_native_coordinate(),
+<a href=#2272 id=2272 data-nosnippet>2272</a>            horizontal_accuracy_meters: <span class="self">self</span>.horizontal_accuracy_meters,
+<a href=#2273 id=2273 data-nosnippet>2273</a>            course_heading_degrees: <span class="self">self</span>.course_heading_degrees,
+<a href=#2274 id=2274 data-nosnippet>2274</a>            timestamp_seconds: <span class="self">self</span>.timestamp_seconds,
+<a href=#2275 id=2275 data-nosnippet>2275</a>        })
+<a href=#2276 id=2276 data-nosnippet>2276</a>    }
+<a href=#2277 id=2277 data-nosnippet>2277</a>
+<a href=#2278 id=2278 data-nosnippet>2278</a>    <span class="doccomment">/// Converts the controller's fix into the contract record.
+<a href=#2279 id=2279 data-nosnippet>2279</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_native_position_fix(native_fix: <span class="kw-2">&amp;</span>map_positioning::PositionFix) -&gt; <span class="self">Self </span>{
+<a href=#2280 id=2280 data-nosnippet>2280</a>        <span class="self">Self </span>{
+<a href=#2281 id=2281 data-nosnippet>2281</a>            coordinate: GeographicCoordinate::from_native_coordinate(<span class="kw-2">&amp;</span>native_fix.coordinate),
+<a href=#2282 id=2282 data-nosnippet>2282</a>            horizontal_accuracy_meters: native_fix.horizontal_accuracy_meters,
+<a href=#2283 id=2283 data-nosnippet>2283</a>            course_heading_degrees: native_fix.course_heading_degrees,
+<a href=#2284 id=2284 data-nosnippet>2284</a>            timestamp_seconds: native_fix.timestamp_seconds,
+<a href=#2285 id=2285 data-nosnippet>2285</a>        }
+<a href=#2286 id=2286 data-nosnippet>2286</a>    }
+<a href=#2287 id=2287 data-nosnippet>2287</a>}
+<a href=#2288 id=2288 data-nosnippet>2288</a>
+<a href=#2289 id=2289 data-nosnippet>2289</a><span class="doccomment">/// Why a positioning source could not produce fixes.
+<a href=#2290 id=2290 data-nosnippet>2290</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+<a href=#2291 id=2291 data-nosnippet>2291</a></span><span class="kw">pub enum </span>PositionSourceError {
+<a href=#2292 id=2292 data-nosnippet>2292</a>    <span class="doccomment">/// The user denied the permission the source needs.
+<a href=#2293 id=2293 data-nosnippet>2293</a>    </span>PermissionDenied,
+<a href=#2294 id=2294 data-nosnippet>2294</a>    <span class="doccomment">/// Location services are disabled on the device or by policy.
+<a href=#2295 id=2295 data-nosnippet>2295</a>    </span>ServiceDisabled,
+<a href=#2296 id=2296 data-nosnippet>2296</a>    <span class="doccomment">/// No provider can answer right now.
+<a href=#2297 id=2297 data-nosnippet>2297</a>    </span>Unavailable,
+<a href=#2298 id=2298 data-nosnippet>2298</a>    <span class="doccomment">/// The source did not answer inside its timeout.
+<a href=#2299 id=2299 data-nosnippet>2299</a>    </span>Timeout,
+<a href=#2300 id=2300 data-nosnippet>2300</a>}
+<a href=#2301 id=2301 data-nosnippet>2301</a>
+<a href=#2302 id=2302 data-nosnippet>2302</a><span class="kw">impl </span>PositionSourceError {
+<a href=#2303 id=2303 data-nosnippet>2303</a>    <span class="doccomment">/// Converts the contract enum into the controller's source status.
+<a href=#2304 id=2304 data-nosnippet>2304</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>to_native_source_status(<span class="self">self</span>) -&gt; map_positioning::PositionSourceStatus {
+<a href=#2305 id=2305 data-nosnippet>2305</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#2306 id=2306 data-nosnippet>2306</a>            <span class="self">Self</span>::PermissionDenied =&gt; map_positioning::PositionSourceStatus::PermissionDenied,
+<a href=#2307 id=2307 data-nosnippet>2307</a>            <span class="self">Self</span>::ServiceDisabled =&gt; map_positioning::PositionSourceStatus::ServiceDisabled,
+<a href=#2308 id=2308 data-nosnippet>2308</a>            <span class="self">Self</span>::Unavailable =&gt; map_positioning::PositionSourceStatus::Unavailable,
+<a href=#2309 id=2309 data-nosnippet>2309</a>            <span class="self">Self</span>::Timeout =&gt; map_positioning::PositionSourceStatus::Timeout,
+<a href=#2310 id=2310 data-nosnippet>2310</a>        }
+<a href=#2311 id=2311 data-nosnippet>2311</a>    }
+<a href=#2312 id=2312 data-nosnippet>2312</a>
+<a href=#2313 id=2313 data-nosnippet>2313</a>    <span class="doccomment">/// Converts the controller's source status into the contract enum.
+<a href=#2314 id=2314 data-nosnippet>2314</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_native_source_status(status: map_positioning::PositionSourceStatus) -&gt; <span class="self">Self </span>{
+<a href=#2315 id=2315 data-nosnippet>2315</a>        <span class="kw">match </span>status {
+<a href=#2316 id=2316 data-nosnippet>2316</a>            map_positioning::PositionSourceStatus::PermissionDenied =&gt; <span class="self">Self</span>::PermissionDenied,
+<a href=#2317 id=2317 data-nosnippet>2317</a>            map_positioning::PositionSourceStatus::ServiceDisabled =&gt; <span class="self">Self</span>::ServiceDisabled,
+<a href=#2318 id=2318 data-nosnippet>2318</a>            map_positioning::PositionSourceStatus::Unavailable =&gt; <span class="self">Self</span>::Unavailable,
+<a href=#2319 id=2319 data-nosnippet>2319</a>            map_positioning::PositionSourceStatus::Timeout =&gt; <span class="self">Self</span>::Timeout,
+<a href=#2320 id=2320 data-nosnippet>2320</a>        }
+<a href=#2321 id=2321 data-nosnippet>2321</a>    }
+<a href=#2322 id=2322 data-nosnippet>2322</a>}
 </code></pre></div></section></main></body></html>
