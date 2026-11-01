@@ -304,6 +304,11 @@
               The browser asks for permission the first time.</p>
             <button id="device-location-control" type="button" class="quiet"
                     aria-pressed="false">Show my location</button>
+            <!-- Device-driven navigation (M33): the same location source then
+                 drives the planned route's guidance instead of the recorded
+                 trace, so the banner, ETA and camera follow real fixes. -->
+            <button id="device-navigation-control" type="button" class="quiet"
+                    aria-pressed="false">Navigate from my location</button>
             <p id="device-location-status" class="reason-strip" role="status" hidden></p>
           </section>
           <section class="settings-section" id="appearance-controls">

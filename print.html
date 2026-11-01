@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c9020bb1.js";
+            window.path_to_searchindex_js = "searchindex-fa082d3b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -2182,6 +2182,30 @@ suspend fun replayFixes(
 <p>Fixes without a reported accuracy never advance a step and are never
 judged for deviation, so a simulated source must carry its accuracy
 like a real fix does.</p>
+<h3 id="drive-the-trip-from-the-device"><a class="header" href="#drive-the-trip-from-the-device">Drive the trip from the device</a></h3>
+<p>A trip does not have to be simulated. Feed the <code>Navigator</code> the fixes your
+location source produces and the same banner, ETA line and deviation
+judgment follow the real journey. Start the trip on the planned route, then
+call <code>updateLocation</code> with each accepted fix’s coordinate, its horizontal
+accuracy and the <code>PositionController</code>’s smoothed course:</p>
+<pre><code class="language-kotlin">navigationController.startNavigation(route, UnitSystem.METRIC,
+    defaultStepAdvancePolicy(), defaultDeviationPolicy())
+// On every accepted device fix:
+navigationController.updateLocation(
+    NavigationLocationUpdate(
+        coordinate = fix.coordinate,
+        horizontalAccuracyMeters = fix.horizontalAccuracyMeters,
+        courseHeadingDegrees = positionController.smoothedCourseDegrees(),
+        timestampSeconds = null,
+    ),
+)
+</code></pre>
+<p>The reference applications put this behind one control in the Location
+group, <strong>Navigate from my location</strong> and <strong>Stop device navigation</strong>, which
+starts the location source when needed, ends a simulated trip first, and
+stops only the source it started. It states <em>Plan a route first; device
+navigation follows the route you planned.</em> when no route exists. See
+<a href="#show-the-devices-location">Show the device’s location</a> for obtaining the fixes.</p>
 <h3 id="draw-the-trip-on-the-map"><a class="header" href="#draw-the-trip-on-the-map">Draw the trip on the map</a></h3>
 <p>Navigation state is half the experience; the map also has to show the route
 and follow the vehicle. Two calls do it: the route polyline goes on as an
