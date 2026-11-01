@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DistancePhrase","DistanceUnit","ManeuverInstructionText"],"fn":["compose_navigation_instructions"],"struct":["ActiveManeuverInstruction","NavigationInstruction","UpcomingManeuverInstruction"]};

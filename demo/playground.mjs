@@ -216,7 +216,7 @@
       const LOCAL_DEMO_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
       const LIVE_TILES_OPT_IN_PARAMETER = 'liveTiles';
       // Diagnostics readout (§4.1): the gate drops to Debug here because the
-      // wasm closure's own events (map-rendering's tile-fetch tracing) are
+      // wasm closure's own events (rustic-maps-rendering's tile-fetch tracing) are
       // debug-severity; the native readouts subscribe at Info. The readout
       // keeps a smaller display window than the ring (the §4.1 readout
       // keeps its most recent lines only).

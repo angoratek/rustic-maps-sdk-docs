@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DeviationStatusChange","NavigationDispatchOutcome","NavigationPhaseChange"],"struct":["NavigationStateBroadcaster","TopicSubscription"],"trait":["NavigationStateChangeListener"]};

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b8d81c0f.js";
+            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -448,7 +448,7 @@ its first argument is the provider key from the shared registry. Take the
 credential from your own runtime source: a form, a server-issued token, or a
 test environment. Keyless, the demo searches recorded places and plans
 recorded routes.</p>
-<pre><code class="language-js">import { registerProvider } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { registerProvider } from './web/rustic_maps_web_bindings.js';
 
 registerProvider('mapquest', providerCredential);
 </code></pre>
@@ -461,7 +461,7 @@ first. Its rows carry <code>structuredAddressText</code>, <code>latitudeDegrees<
 <code>searchPlaces</code> returns full results for a settled query. The <code>calculateRoute</code>
 call takes two coordinates and uses the default request: automobile, fastest,
 metric.</p>
-<pre><code class="language-js">import { forwardGeocode, calculateRoute } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { forwardGeocode, calculateRoute } from './web/rustic_maps_web_bindings.js';
 
 const originSearchQuery = 'Capitol Park';
 const destinationSearchQuery = 'Tower Bridge';

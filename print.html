@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b8d81c0f.js";
+            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -1141,14 +1141,14 @@ Rust and have no platform dependency.</p>
 <tr><th>Crate</th><th>What it provides</th></tr>
 </thead>
 <tbody>
-<tr><td><code>map-rendering</code></td><td>The camera and projection model, the raster tile scheduler, overlays, labels and the headless <code>wgpu</code> renderer</td></tr>
-<tr><td><code>map-core</code></td><td>The provider registry, provider contracts, offline routing and the shared SDK operations</td></tr>
+<tr><td><code>rustic-maps-rendering</code></td><td>The camera and projection model, the raster tile scheduler, overlays, labels and the headless <code>wgpu</code> renderer</td></tr>
+<tr><td><code>rustic-maps-core</code></td><td>The provider registry, provider contracts, offline routing and the shared SDK operations</td></tr>
 <tr><td><code>geospatial-types</code></td><td>Coordinates, tiles, records and the shared error type</td></tr>
 <tr><td><code>geospatial-traits</code></td><td>The vendor-neutral provider traits a tileset, routing or geocoding service implements</td></tr>
-<tr><td><code>map-navigation</code></td><td>Route walking, instruction generation, deviation and reroute policy</td></tr>
-<tr><td><code>map-positioning</code></td><td>Position validation, course smoothing and the simulated position source</td></tr>
-<tr><td><code>map-vector-tiles</code> / <code>map-glyphs</code></td><td>Mapbox Vector Tile decoding and glyph-atlas packing</td></tr>
-<tr><td><code>map-offline-graph-archive</code></td><td>Reading compiled offline routing graphs</td></tr>
+<tr><td><code>rustic-maps-navigation</code></td><td>Route walking, instruction generation, deviation and reroute policy</td></tr>
+<tr><td><code>rustic-maps-positioning</code></td><td>Position validation, course smoothing and the simulated position source</td></tr>
+<tr><td><code>rustic-maps-vector-tiles</code> / <code>rustic-maps-glyphs</code></td><td>Mapbox Vector Tile decoding and glyph-atlas packing</td></tr>
+<tr><td><code>rustic-maps-offline-graph-archive</code></td><td>Reading compiled offline routing graphs</td></tr>
 </tbody>
 </table>
 </div>
@@ -1159,7 +1159,7 @@ the first Rust release.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use geospatial_types::GeographicCoordinate;
-use map_rendering::{DEFAULT_FIELD_OF_VIEW_DEGREES, MapCamera, ViewportPixels};
+use rustic_maps_rendering::{DEFAULT_FIELD_OF_VIEW_DEGREES, MapCamera, ViewportPixels};
 
 let center = GeographicCoordinate::from_degrees(38.5766, -121.4944)?;
 let camera = MapCamera::new(center, 12.0, 0.0, 0.0);
@@ -1173,7 +1173,7 @@ let screen_point = camera.project_to_screen(
 );
 <span class="boring">}</span></code></pre>
 <h2 id="rendering-a-frame"><a class="header" href="#rendering-a-frame">Rendering a frame</a></h2>
-<p><code>map-rendering</code>’s headless renderer draws into an offscreen <code>wgpu</code> target:
+<p><code>rustic-maps-rendering</code>’s headless renderer draws into an offscreen <code>wgpu</code> target:
 create a <code>HeadlessTileRenderer</code> over a <code>GraphicsContext</code>, resolve the camera’s
 visible tiles through a <code>TileScheduler</code>, and read the frame back as RGBA
 bytes. The renderer is the same one the native surfaces use, so what you see
@@ -1183,18 +1183,18 @@ binds them through a WebAssembly canvas adapter rather than a Rust surface.</p>
 <h2 id="providers"><a class="header" href="#providers">Providers</a></h2>
 <p>Implement the vendor-neutral traits from <code>geospatial-traits</code> — a raster or
 vector tileset, a routing engine, a geocoding service, a distance matrix or
-traffic — and register them in the <code>map-core</code> registry. The registry is what
+traffic — and register them in the <code>rustic-maps-core</code> registry. The registry is what
 the SDK’s operations dispatch through, so a Rust application and a platform
 binding share the same provider story. See
 <a href="#add-a-provider">Add a provider</a> for the descriptor fields and the
 registration path.</p>
 <h2 id="positioning"><a class="header" href="#positioning">Positioning</a></h2>
-<p><code>map-positioning::PositionController</code> validates the fixes your OS source
+<p><code>rustic-maps-positioning::PositionController</code> validates the fixes your OS source
 reports, smooths their course and tracks staleness, so a Rust application can
 feed the same stream to the renderer’s location layer, a follow camera and
 the navigation controller. <code>SimulatedPositionSource</code> walks a route for tests
 and demos:</p>
-<pre><code class="language-bash">cargo run -p map-positioning --example simulated_walk
+<pre><code class="language-bash">cargo run -p rustic-maps-positioning --example simulated_walk
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="your-first-map"><a class="header" href="#your-first-map">Your first map</a></h1>
@@ -1618,7 +1618,7 @@ from a same-origin path you host. The page keeps pointer handling; the
 view owns the surface and the frame.</p>
 <pre><code class="language-html">&lt;canvas id="map-canvas"&gt;&lt;/canvas&gt;
 </code></pre>
-<pre><code class="language-js">import init, { MapsSdk, MapView, registerProvider } from './web/map_web_bindings.js';
+<pre><code class="language-js">import init, { MapsSdk, MapView, registerProvider } from './web/rustic_maps_web_bindings.js';
 
 await init();
 const mapSdk = await MapsSdk.create();
@@ -2005,7 +2005,7 @@ its first argument is the provider key from the shared registry. Take the
 credential from your own runtime source: a form, a server-issued token, or a
 test environment. Keyless, the demo searches recorded places and plans
 recorded routes.</p>
-<pre><code class="language-js">import { registerProvider } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { registerProvider } from './web/rustic_maps_web_bindings.js';
 
 registerProvider('mapquest', providerCredential);
 </code></pre>
@@ -2018,7 +2018,7 @@ first. Its rows carry <code>structuredAddressText</code>, <code>latitudeDegrees<
 <code>searchPlaces</code> returns full results for a settled query. The <code>calculateRoute</code>
 call takes two coordinates and uses the default request: automobile, fastest,
 metric.</p>
-<pre><code class="language-js">import { forwardGeocode, calculateRoute } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { forwardGeocode, calculateRoute } from './web/rustic_maps_web_bindings.js';
 
 const originSearchQuery = 'Capitol Park';
 const destinationSearchQuery = 'Tower Bridge';
@@ -2565,7 +2565,7 @@ deviation, speech, or stop. <code>removeNavigationListener</code> removes it by 
 walker the native tabs use. Each <code>updateLocation</code> returns the trip snapshot;
 the phase, the instruction payload, the progress numbers, and the deviation
 all come from that one call:</p>
-<pre><code class="language-js">import { Navigator, RouteSimulator } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { Navigator, RouteSimulator } from './web/rustic_maps_web_bindings.js';
 
 const navigationController = new Navigator();
 navigationController.startNavigation(route, 'metric');
@@ -2607,7 +2607,7 @@ a fix at an elapsed time. The fix carries a <code>coordinate</code>, the
 <code>courseHeadingDegrees</code>, the travelled and remaining meters, and
 <code>isArrived</code>. Draw the route, place the location indicator on the fix, and
 present a course-up camera frame:</p>
-<pre><code class="language-js">import { RouteSimulator } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { RouteSimulator } from './web/rustic_maps_web_bindings.js';
 
 /** @type {any} */
 const plannedRoute = route;
@@ -2867,7 +2867,7 @@ the routing archive: archive bytes in, route records out, with no provider and
 no network round trip. The same compiled archive serves the native platforms,
 so one compile feeds every target.</p>
 <h3 id="route-over-the-archive"><a class="header" href="#route-over-the-archive">Route over the archive</a></h3>
-<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/rustic_maps_web_bindings.js';
 
 const archiveResponse = await fetch('/offline-graph/routing-grid.rmog');
 const archiveBytes = new Uint8Array(await archiveResponse.arrayBuffer());
@@ -2995,7 +2995,7 @@ await sdk.stopDeviceLocation();
 <p>Ask for the Android runtime permission with <code>PermissionsAndroid</code> before
 <code>startDeviceLocation</code>; the iOS authorization prompt is raised by the source.</p>
 <h2 id="webassembly-1"><a class="header" href="#webassembly-1">WebAssembly</a></h2>
-<pre><code class="language-ts">import { PositionController } from './pkg/map_web_bindings.js';
+<pre><code class="language-ts">import { PositionController } from './pkg/rustic_maps_web_bindings.js';
 
 const positionController = new PositionController();
 const watchIdentifier = navigator.geolocation.watchPosition(
@@ -3020,8 +3020,8 @@ navigator.geolocation.clearWatch(watchIdentifier);
 <h2 id="rust"><a class="header" href="#rust">Rust</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use map_navigation::SimulatedTripPace;
-use map_positioning::{PositionController, SimulatedPositionSource};
+</span>use rustic_maps_navigation::SimulatedTripPace;
+use rustic_maps_positioning::{PositionController, SimulatedPositionSource};
 
 let source = SimulatedPositionSource::new(&amp;route, pace, 5.0)?;
 let mut controller = PositionController::new();
@@ -3034,7 +3034,7 @@ source above) and reads <code>latest_fix</code>, <code>smoothed_course_heading_d
 <h1 id="provider-capabilities-in-rust"><a class="header" href="#provider-capabilities-in-rust">Provider capabilities in Rust</a></h1>
 <p>The Rust crates are the SDK’s implementation layer. A provider is a struct
 that implements one or more of the vendor-neutral traits in
-<code>geospatial-traits</code>; the core resolves it through <code>map_core::ProviderRegistry</code>.
+<code>geospatial-traits</code>; the core resolves it through <code>rustic_maps_core::ProviderRegistry</code>.
 The four application targets bind this same core through the contract.</p>
 <p>The repository publishes the Rust API reference, but it does not publish a
 Rust application package or a public Rust <code>MapsSdk</code>/<code>MapView</code> object. The
@@ -3098,8 +3098,8 @@ base reaches every target through the generic URL-template vector provider.</p>
 <tr><td>Raster tiles</td><td><code>RasterTileProvider</code>; <code>MapQuestRasterTileProvider</code>, <code>UrlTemplateRasterTileProvider</code></td></tr>
 <tr><td>Vector tiles</td><td><code>VectorTileProvider</code>; <code>UrlTemplateVectorTileProvider</code>, <code>OpenStreetMapUsVectorTileProvider</code></td></tr>
 <tr><td>Offline routing</td><td><code>OfflineRoutingProvider</code>, <code>ArchiveOfflineRoutingProvider</code>, <code>calculate_offline_route_from_archive_bytes</code></td></tr>
-<tr><td>Navigation</td><td><code>map-navigation</code>: reducer, policies, <code>RouteWalk</code>, <code>SimulatedTripPace</code></td></tr>
-<tr><td>Rendering</td><td><code>map-rendering</code>: <code>MapCamera</code>, headless renderer, surface renderer, committed vector styles</td></tr>
+<tr><td>Navigation</td><td><code>rustic-maps-navigation</code>: reducer, policies, <code>RouteWalk</code>, <code>SimulatedTripPace</code></td></tr>
+<tr><td>Rendering</td><td><code>rustic-maps-rendering</code>: <code>MapCamera</code>, headless renderer, surface renderer, committed vector styles</td></tr>
 </tbody>
 </table>
 </div>
@@ -3112,21 +3112,21 @@ base reaches every target through the generic URL-template vector provider.</p>
 <tbody>
 <tr><td><code>geospatial-types</code></td><td>Coordinates, bounding boxes, route records, tile data, and <code>SDKError</code></td></tr>
 <tr><td><code>geospatial-traits</code></td><td>The vendor-neutral provider traits</td></tr>
-<tr><td><code>map-core</code></td><td><code>ProviderRegistry</code>, cache-then-network policy, offline routing, and the offline routing fallback</td></tr>
+<tr><td><code>rustic-maps-core</code></td><td><code>ProviderRegistry</code>, cache-then-network policy, offline routing, and the offline routing fallback</td></tr>
 <tr><td><code>provider-transport</code></td><td>The portable HTTP transport seam: native <code>reqwest</code>, browser <code>fetch</code></td></tr>
 <tr><td><code>mapquest-provider</code></td><td>The MapQuest implementations of every supported contract</td></tr>
 <tr><td><code>url-template-raster-provider</code></td><td>A raster-tile provider over any <code>{z}/{x}/{y}</code> template</td></tr>
 <tr><td><code>url-template-vector-provider</code></td><td>A vector-tile provider over any <code>{z}/{x}/{y}</code> template</td></tr>
 <tr><td><code>openstreetmap-us-vector-provider</code></td><td>The OpenStreetMap US Sourdough vector tileset</td></tr>
-<tr><td><code>map-cache</code></td><td>The disk response cache and byte budget</td></tr>
-<tr><td><code>map-rendering</code></td><td>The <code>wgpu</code> renderer, camera, and vector styles</td></tr>
-<tr><td><code>map-vector-tiles</code></td><td>The MVT decoder</td></tr>
-<tr><td><code>map-glyphs</code></td><td>The glyph reader, range cache, and atlas packer</td></tr>
-<tr><td><code>map-navigation</code></td><td>The navigation reducer, policies, speech pacing, and route walk</td></tr>
-<tr><td><code>map-offline-graph-archive</code></td><td>The reader for compiled routing archives</td></tr>
-<tr><td><code>map-offline-graph-compiler</code></td><td>The OpenStreetMap to archive compiler</td></tr>
-<tr><td><code>map-native-core</code></td><td>The UniFFI binding crate behind the native targets</td></tr>
-<tr><td><code>map-web-bindings</code></td><td>The WebAssembly binding crate</td></tr>
+<tr><td><code>rustic-maps-cache</code></td><td>The disk response cache and byte budget</td></tr>
+<tr><td><code>rustic-maps-rendering</code></td><td>The <code>wgpu</code> renderer, camera, and vector styles</td></tr>
+<tr><td><code>rustic-maps-vector-tiles</code></td><td>The MVT decoder</td></tr>
+<tr><td><code>rustic-maps-glyphs</code></td><td>The glyph reader, range cache, and atlas packer</td></tr>
+<tr><td><code>rustic-maps-navigation</code></td><td>The navigation reducer, policies, speech pacing, and route walk</td></tr>
+<tr><td><code>rustic-maps-offline-graph-archive</code></td><td>The reader for compiled routing archives</td></tr>
+<tr><td><code>rustic-maps-offline-graph-compiler</code></td><td>The OpenStreetMap to archive compiler</td></tr>
+<tr><td><code>rustic-maps-native-core</code></td><td>The UniFFI binding crate behind the native targets</td></tr>
+<tr><td><code>rustic-maps-web-bindings</code></td><td>The WebAssembly binding crate</td></tr>
 </tbody>
 </table>
 </div>
@@ -3164,7 +3164,7 @@ when a slot is empty.</p>
 </span><span class="boring">fn main() {
 </span>use std::sync::Arc;
 use geospatial_traits::RoutingProvider;
-use map_core::ProviderRegistry;
+use rustic_maps_core::ProviderRegistry;
 
 fn registry_with(provider: Arc&lt;dyn RoutingProvider&gt;) -&gt; ProviderRegistry {
     let mut registry = ProviderRegistry::new();
@@ -3206,7 +3206,7 @@ call serves every target.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use geospatial_types::{GeographicCoordinate, SDKError};
-use map_core::calculate_offline_route_from_archive_bytes;
+use rustic_maps_core::calculate_offline_route_from_archive_bytes;
 
 async fn route_over_archive(archive_bytes: &amp;[u8]) -&gt; Result&lt;(), SDKError&gt; {
     let start = GeographicCoordinate {
@@ -3904,7 +3904,7 @@ be between 1 and 24. A blank template clears the fallback.</p>
 <p>Provider registration is a free call whose first argument is the provider
 key from the shared registry. The credential lives in module memory only;
 it is never persisted or logged.</p>
-<pre><code class="language-js">import init, { MapsSdk, registerProvider } from './web/map_web_bindings.js';
+<pre><code class="language-js">import init, { MapsSdk, registerProvider } from './web/rustic_maps_web_bindings.js';
 
 await init();
 const mapSdk = await MapsSdk.create();
@@ -4011,7 +4011,7 @@ slot; a call into an empty slot returns <code>ProviderNotConfigured</code>.</p>
 </span><span class="boring">fn main() {
 </span>use std::sync::Arc;
 use geospatial_traits::RoutingProvider;
-use map_core::ProviderRegistry;
+use rustic_maps_core::ProviderRegistry;
 
 fn registry_with(provider: Arc&lt;dyn RoutingProvider&gt;) -&gt; ProviderRegistry {
     let mut registry = ProviderRegistry::new();
@@ -4300,8 +4300,8 @@ downloaded.</p>
 <p>The Rust archive carries the workspace crates at this version. Unpack it and
 point a path dependency at the crates you use:</p>
 <pre><code class="language-toml">[dependencies]
-map-rendering = { path = "rustic-maps-sdk-rust-v0.1.0/crates/map-rendering" }
-map-navigation = { path = "rustic-maps-sdk-rust-v0.1.0/crates/map-navigation" }
+rustic-maps-rendering = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-rendering" }
+rustic-maps-navigation = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-navigation" }
 </code></pre>
 <p>The <a href="#use-the-sdk-from-rust">Rust guide</a> walks the same map, routing and navigation steps the
 other platforms use. A crates.io registry entry is not part of this version;
@@ -4752,7 +4752,7 @@ redistribute the SDK or ship an application built on it, reproduce the
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="third-party-notices"><a class="header" href="#third-party-notices">Third-Party Notices</a></h1>
 <p>Generated by <code>scripts/generate-third-party-notices</code> from the workspace dependency graph (<code>Cargo.toml</code> manifests + <code>Cargo.lock</code>, via <code>cargo metadata --offline</code> — no network access). License identities are additionally gated by <code>cargo-deny</code> (<code>deny.toml</code>). <strong>Regenerate and commit this file whenever any dependency changes.</strong> Output is deterministic, so a re-run on an unchanged graph is a byte-identical no-op.</p>
-<p>This file lists the third-party <em>software</em> the workspace depends on: 397 registry packages (338 reachable through normal dependency edges, 59 test/dev-only). The first-party workspace crates are not listed here; they carry the SDK’s own license (MIT OR Apache-2.0, see <code>Cargo.toml</code>).</p>
+<p>This file lists the third-party <em>software</em> the workspace depends on: 398 registry packages (339 reachable through normal dependency edges, 59 test/dev-only). The first-party workspace crates are not listed here; they carry the SDK’s own license (MIT OR Apache-2.0, see <code>Cargo.toml</code>).</p>
 <h2 id="map-data-attribution"><a class="header" href="#map-data-attribution">Map-data attribution</a></h2>
 <p>Separate from the software above: map imagery © MapQuest; map data © OpenStreetMap contributors, licensed under the Open Database License (ODbL). Every reference app renders this attribution in-app from the shared provider registry descriptors (<code>platform/providers.json</code>; the web playground reads the same file). Integrators must keep this attribution visible in their own apps and reproduce this notices file with their distribution.</p>
 <h2 id="license-summary"><a class="header" href="#license-summary">License summary</a></h2>
@@ -4783,13 +4783,13 @@ redistribute the SDK or ship an application built on it, reproduce the
 <tr><td><code>MIT OR Apache-2.0 OR Zlib</code></td><td>3</td></tr>
 <tr><td><code>MIT OR Zlib OR Apache-2.0</code></td><td>2</td></tr>
 <tr><td><code>MIT/Apache-2.0</code></td><td>19</td></tr>
-<tr><td><code>MPL-2.0</code></td><td>9</td></tr>
+<tr><td><code>MPL-2.0</code></td><td>10</td></tr>
 <tr><td><code>Unicode-3.0</code></td><td>18</td></tr>
 <tr><td><code>Unlicense OR MIT</code></td><td>6</td></tr>
 <tr><td><code>Unlicense/MIT</code></td><td>2</td></tr>
 <tr><td><code>Zlib</code></td><td>3</td></tr>
 <tr><td><code>Zlib OR Apache-2.0 OR MIT</code></td><td>9</td></tr>
-<tr><td><strong>Total</strong></td><td><strong>397</strong></td></tr>
+<tr><td><strong>Total</strong></td><td><strong>398</strong></td></tr>
 </tbody>
 </table>
 </div>
@@ -5362,7 +5362,7 @@ redistribute the SDK or ship an application built on it, reproduce the
 </table>
 </div>
 <p>† development/test-only dependency: compiled inside this repository’s own test harnesses, but not linked into a published SDK artifact.</p>
-<h3 id="mpl-20-9-packages"><a class="header" href="#mpl-20-9-packages"><code>MPL-2.0</code> (9 package(s))</a></h3>
+<h3 id="mpl-20-10-packages"><a class="header" href="#mpl-20-10-packages"><code>MPL-2.0</code> (10 package(s))</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -5370,6 +5370,7 @@ redistribute the SDK or ship an application built on it, reproduce the
 </thead>
 <tbody>
 <tr><td><code>uniffi</code></td><td>0.31.2</td><td><a href="https://mozilla.github.io/uniffi-rs">https://mozilla.github.io/uniffi-rs</a></td></tr>
+<tr><td><code>uniffi-runtime-wasm</code></td><td>0.31.0-6</td><td><a href="https://github.com/jhugman/uniffi-bindgen-react-native">https://github.com/jhugman/uniffi-bindgen-react-native</a></td></tr>
 <tr><td><code>uniffi_bindgen</code></td><td>0.31.2</td><td><a href="https://mozilla.github.io/uniffi-rs">https://mozilla.github.io/uniffi-rs</a></td></tr>
 <tr><td><code>uniffi_build</code></td><td>0.31.2</td><td><a href="https://mozilla.github.io/uniffi-rs">https://mozilla.github.io/uniffi-rs</a></td></tr>
 <tr><td><code>uniffi_core</code></td><td>0.31.2</td><td><a href="https://mozilla.github.io/uniffi-rs">https://mozilla.github.io/uniffi-rs</a></td></tr>
@@ -5731,7 +5732,7 @@ redistribute the SDK or ship an application built on it, reproduce the
 <li><a href="https://github.com/mozilla/uniffi-rs">UniFFI</a> — whose UDL-first, contract-as-single-source-of-truth binding approach this SDK adopts for its Kotlin/Swift/React Native FFI surface.</li>
 <li><a href="https://wgpu.rs/">wgpu</a> — the portable WebGPU-in-Rust stack that lets one GPU rendering path run natively, on mobile, and in the browser.</li>
 <li><a href="https://github.com/maplibre/navara">Navara</a> — MapLibre-affiliated web 3D-globe / GIS visualization engine (Rust/WASM headless GIS core); credited as surveyed prior art for headless-engine architecture, not reused and not a reference for this SDK’s navigation capabilities.</li>
-<li><a href="https://github.com/stadiamaps/ferrostar">Ferrostar</a> — Stadia Maps’ Rust navigation core. Its trip-state / step-advance-condition design is the reference this SDK’s <code>map-navigation</code> crate follows closely: the step-advance conditions and their recommended defaults are modeled on Ferrostar’s (including its rapid-double-advance hazard, which this SDK’s ports avoid), and its deviation-detection and spoken-instruction models informed this SDK’s seams. Because this SDK’s navigation logic is derived from Ferrostar’s design, its license text is retained in <code>docs/THIRD_PARTY_LICENSES/ferrostar-LICENSE.txt</code> (BSD 3-Clause, Copyright (c) 2023, Stadia Maps, Inc.); no file in this workspace is a verbatim copy, and this SDK’s own code remains MIT OR Apache-2.0.</li>
+<li><a href="https://github.com/stadiamaps/ferrostar">Ferrostar</a> — Stadia Maps’ Rust navigation core. Its trip-state / step-advance-condition design is the reference this SDK’s <code>rustic-maps-navigation</code> crate follows closely: the step-advance conditions and their recommended defaults are modeled on Ferrostar’s (including its rapid-double-advance hazard, which this SDK’s ports avoid), and its deviation-detection and spoken-instruction models informed this SDK’s seams. Because this SDK’s navigation logic is derived from Ferrostar’s design, its license text is retained in <code>docs/THIRD_PARTY_LICENSES/ferrostar-LICENSE.txt</code> (BSD 3-Clause, Copyright (c) 2023, Stadia Maps, Inc.); no file in this workspace is a verbatim copy, and this SDK’s own code remains MIT OR Apache-2.0.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="api-reference"><a class="header" href="#api-reference">API reference</a></h1>
@@ -5777,8 +5778,8 @@ messages as the matching root member.</p>
 <tr><td><code>RouteSimulator</code></td><td>Distance- or time-parameterized trip playback</td><td><code>RouteSimulator</code></td><td>generated <code>RouteSimulator</code></td><td><code>RouteSimulator</code></td><td><code>RouteWalk</code></td></tr>
 <tr><td><code>SearchEngine</code></td><td>Search, suggestions and reverse geocoding</td><td><code>SearchEngine</code></td><td>generated <code>SearchEngine</code></td><td>free functions</td><td><code>SearchPlaceProvider</code>, <code>GeocodingProvider</code></td></tr>
 <tr><td><code>RoutingEngine</code></td><td>Route calculation and distance matrix</td><td><code>RoutingEngine</code></td><td>generated <code>RoutingEngine</code></td><td>free functions</td><td><code>RoutingProvider</code>, <code>DistanceMatrixProvider</code></td></tr>
-<tr><td><code>OfflineManager</code></td><td>Tile-cache terms and time-to-live</td><td><code>OfflineManager</code></td><td>generated <code>OfflineManager</code></td><td>not exposed</td><td><code>map-core</code> cache policy</td></tr>
-<tr><td><code>Diagnostics</code></td><td>Structured log events</td><td><code>Diagnostics</code></td><td>generated <code>Diagnostics</code></td><td>free functions</td><td><code>tracing</code> events; <code>map-navigation</code> recorder</td></tr>
+<tr><td><code>OfflineManager</code></td><td>Tile-cache terms and time-to-live</td><td><code>OfflineManager</code></td><td>generated <code>OfflineManager</code></td><td>not exposed</td><td><code>rustic-maps-core</code> cache policy</td></tr>
+<tr><td><code>Diagnostics</code></td><td>Structured log events</td><td><code>Diagnostics</code></td><td>generated <code>Diagnostics</code></td><td>free functions</td><td><code>tracing</code> events; <code>rustic-maps-navigation</code> recorder</td></tr>
 </tbody>
 </table>
 </div>
@@ -5900,9 +5901,9 @@ offline graph.</li>
 <tbody>
 <tr><td><code>geospatial_types</code></td><td>Shared data records and the error model for the Maps SDK.</td></tr>
 <tr><td><code>geospatial_traits</code></td><td>Vendor-neutral provider contracts for the Maps SDK.</td></tr>
-<tr><td><code>map_core</code></td><td>Orchestration core of the Maps SDK: the provider registry, the cache-then-network policy and the typed value boundary between providers and the rest of the SDK.</td></tr>
-<tr><td><code>map_rendering</code></td><td>GPU map rendering: camera model, raster tile scheduling with parent fallback and a texture pool, vector-tile styling (fill, line, circle and symbol layers), overlays, and location indicators.</td></tr>
-<tr><td><code>map_navigation</code></td><td>Turn-by-turn navigation for a planned route.</td></tr>
+<tr><td><code>rustic_maps_core</code></td><td>Orchestration core of the Maps SDK: the provider registry, the cache-then-network policy and the typed value boundary between providers and the rest of the SDK.</td></tr>
+<tr><td><code>rustic_maps_rendering</code></td><td>GPU map rendering: camera model, raster tile scheduling with parent fallback and a texture pool, vector-tile styling (fill, line, circle and symbol layers), overlays, and location indicators.</td></tr>
+<tr><td><code>rustic_maps_navigation</code></td><td>Turn-by-turn navigation for a planned route.</td></tr>
 </tbody>
 </table>
 </div>
@@ -6127,7 +6128,7 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
-<h2 id="map_core"><a class="header" href="#map_core">map_core</a></h2>
+<h2 id="rustic_maps_core"><a class="header" href="#rustic_maps_core">rustic_maps_core</a></h2>
 <p>Orchestration core of the Maps SDK: the provider registry, the cache-then-network policy and the typed value boundary between providers and the rest of the SDK.</p>
 <p>Rendering, navigation and provider crates build on this crate. No concrete provider is wired in directly; applications register providers at startup through [<code>ProviderRegistry</code>].</p>
 <h3 id="module-crate-2"><a class="header" href="#module-crate-2">Module <code>crate</code></a></h3>
@@ -6218,7 +6219,7 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
-<h2 id="map_rendering"><a class="header" href="#map_rendering">map_rendering</a></h2>
+<h2 id="rustic_maps_rendering"><a class="header" href="#rustic_maps_rendering">rustic_maps_rendering</a></h2>
 <p>GPU map rendering: camera model, raster tile scheduling with parent fallback and a texture pool, vector-tile styling (fill, line, circle and symbol layers), overlays, and location indicators.</p>
 <p>The crate separates scene composition from GPU execution. Projection, camera math, tile scheduling, overlay and label assembly, and the quad assembly in [<code>renderer</code>] are free of <code>wgpu</code> types, so they build and run on every target, including WebAssembly. The native [<code>headless</code>] and [<code>surface</code>] renderers consume that composition and submit it to a <code>wgpu</code> device. On WebAssembly the host page drives WebGPU and consumes the same vertex and style contracts through the wasm bindings.</p>
 <h3 id="module-crate-3"><a class="header" href="#module-crate-3">Module <code>crate</code></a></h3>
@@ -6346,7 +6347,7 @@ offline graph.</li>
 <li>[<code>label_candidates_for_vector_tile</code>] walks a decoded tile’s symbol-layer features and reads each label’s text through the style’s ordered fallbacks. Candidates keep the style’s paint, size, priority, rank, placement and overlap rule. A symbol layer also filters before a feature becomes a candidate: its <code>rank</code> must pass the layer’s zoom-stepped rank ceiling, and its <code>class</code> must be useful at the frame’s zoom (a shop waits until the layer’s per-class minimum zoom). A [<code>VectorSymbolPlacement::Point</code>] layer anchors a candidate at each of the feature’s points; a [<code>VectorSymbolPlacement::Line</code>] layer carries the feature’s whole line geometry so the frame can place the text along it. 2. [<code>LabelLayer::place</code>] projects the candidates through the frame camera, sorts them by priority, then style order, then rank (the documented collision-priority rule: lower priority is more important), and greedily rejects any label whose padded screen rectangle intersects a label already placed. <code>allow_overlap</code> labels skip the test and never block later labels. The frame places at most [<code>MAXIMUM_LABELS_PER_FRAME</code>] labels: once that budget is spent, every remaining candidate is dropped even if it would fit, so a dense downtown cannot out-shout the places that matter. A label whose text repeats an already-placed label is dropped, so the buffered overlap between adjacent tiles cannot paint one place twice. The output order is a pure function of the input order and the camera.</li>
 </ol>
 <p>A line-placed label projects its geometry and takes its longest straight run (consecutive near-collinear segments) as the text’s run: the text is centered halfway along that run, rotated to its chord bearing, flipped so it always reads upright, and skipped when the run is shorter than the text plus the collision padding at each end. The collision rectangle is the axis-aligned box around the rotated text, so it rejects exactly like a point label’s. 3. [<code>LabelLayer::quad_vertices</code>] lays the glyph bitmaps out on the atlas and emits clip-space textured quads, halo first and text second. A rotated label rotates each glyph’s screen-space rectangle about the label’s anchor before converting it to clip space, so every backend that draws these vertices carries rotation without a second vertex format.</p>
-<p>Latin text is measured from the decoded glyph ranges and nothing here shapes complex scripts (see <code>map-glyphs</code>). A frame with no symbol layers or no glyphs produces no vertices, so the tiles-only pipelines stay byte-identical.</p>
+<p>Latin text is measured from the decoded glyph ranges and nothing here shapes complex scripts (see <code>rustic-maps-glyphs</code>). A frame with no symbol layers or no glyphs produces no vertices, so the tiles-only pipelines stay byte-identical.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -6621,7 +6622,7 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="module-vector_style"><a class="header" href="#module-vector_style">Module <code>vector_style</code></a></h3>
-<p>Vector-tile styling: a decoded [<code>map_vector_tiles::VectorTile</code>] becomes the renderer’s overlay primitives — filled polygons for polygon features, polylines for line features, point markers for point features — under a small explicit style.</p>
+<p>Vector-tile styling: a decoded [<code>rustic_maps_vector_tiles::VectorTile</code>] becomes the renderer’s overlay primitives — filled polygons for polygon features, polylines for line features, point markers for point features — under a small explicit style.</p>
 <p>The style is deliberately data-only: a layer entry names the source layer, the geometry kind it paints, an optional one-attribute text filter and the paint values (RGBA, line width, marker radius). A symbol layer declares the label style a text pass will use — ordered text-field fallbacks, font stack, size stops, text and halo paint, [<code>VectorSymbolPlacement</code>], priority and overlap — but paints no overlay primitive itself: the frame-level label pass ([<code>crate::labels</code>]) reads it and draws its text through the glyph atlas, either anchored at a point or run along a line feature. The style carries no expression language. The artifact [<code>DEFAULT_VECTOR_STYLE_ARTIFACT_JSON</code>] carries the default style; [<code>default_vector_tile_style</code>] parses it and [<code>in_code_default_vector_tile_style</code>] is the documented fallback when the artifact is missing or malformed.</p>
 <p>Polygon features paint every exterior ring with its interior rings subtracted through the overlay’s hole-aware fill (see [<code>crate::overlay::FilledPolygonOverlay</code>]), and the conversion groups its primitives into one [<code>VectorOverlayBatch</code>] per style layer, which a dedicated vector pipeline can consume.</p>
 <p>Coordinates convert from tile-local extent space (<code>x</code> right, <code>y</code> down, the MVT convention) through the tile’s web-mercator address to geographic degrees, so the overlays project exactly like every other map coordinate.</p>
@@ -6681,7 +6682,7 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
-<h2 id="map_navigation"><a class="header" href="#map_navigation">map_navigation</a></h2>
+<h2 id="rustic_maps_navigation"><a class="header" href="#rustic_maps_navigation">rustic_maps_navigation</a></h2>
 <p>Turn-by-turn navigation for a planned route.</p>
 <p>The crate is a pure event reducer: [<code>reduce_navigation_event</code>] maps [<code>NavigationEvent</code>]s onto a [<code>NavigationSession</code>] without touching the network, the clock or the GPU. Each location fix is judged for deviation ([<code>deviation</code>]), snapped onto the route geometry ([<code>geometry</code>]), and evaluated against a pluggable [<code>StepAdvanceCondition</code>]. When the driver leaves the route, the caller supplies a replacement route through [<code>NavigationEvent::RerouteProvided</code>] and the reducer swaps it in. [<code>NavigationPhase</code>] moves through <code>Navigating</code>, <code>OffRoute</code> and <code>Arrived</code>; <code>OffRoute</code> is a pause the driver can recover from by returning to the route.</p>
 <p>Supporting modules compose the user-visible output:</p>
@@ -11618,7 +11619,7 @@ offline graph.</li>
 <tbody>
 <tr><td>Browser</td><td>WebGPU: Chromium 113 or newer, Safari 26 or newer, Firefox 141 or newer</td></tr>
 <tr><td>Package</td><td><code>@angoratek/rustic-maps-sdk-web</code></td></tr>
-<tr><td>Module</td><td><code>map_web_bindings.js</code> with its <code>.d.ts</code> and <code>.wasm</code></td></tr>
+<tr><td>Module</td><td><code>rustic_maps_web_bindings.js</code> with its <code>.d.ts</code> and <code>.wasm</code></td></tr>
 <tr><td>Serving</td><td>A static server over HTTPS or <code>localhost</code></td></tr>
 <tr><td>Provider credential</td><td>Passed at runtime; never bundled</td></tr>
 </tbody>
@@ -11682,7 +11683,7 @@ offline graph.</li>
 <tr><td><code>initialize</code></td><td><code>async initialize(): Promise&lt;string&gt;</code></td><td>Asynchronous. Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Acquires the adapter and device, picks the pass-through surface format, and builds the tile pipeline. Resolves to the adapter description (graphics backend and adapter name) for the page’s status line, or fails when no WebGPU adapter supports this canvas — the page then degrades to the 2D tile grid overlay. Never callable twice on the same canvas.</td></tr>
 <tr><td><code>renderFrame</code></td><td><code>async renderFrame(camera: MapCamera, fieldOfViewDegrees: number): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Renders one map frame for the camera pose into the canvas, resolving freshly visible tiles from the same-origin <code>/tiles</code> route first. Resolves to a statistics object the page’s readout consumes: <code>requestedTiles</code> (tiles the camera listed at the fetch zoom), <code>drawnTiles</code> (tiles with pooled imagery over their span this frame), <code>drawnFragments</code> (draw quads after world-copy fragment splitting), <code>missingTiles</code> (requested tiles with no pooled imagery this frame), <code>tileZoomLevel</code> (the fetch zoom, clamped to the recorded fixtures), <code>tileResolution</code> (the resolution the frame’s fixtures were fetched and sampled at) and <code>overlayTriangles</code> (triangles in the cached world-space overlay layer drawn over the tiles this frame; zero without overlays; the GPU clips copies and near-plane fragments). With the raster tile layer hidden through [<code>MapView::set_tile_layer_visible</code>] the frame skips the whole tile pipeline and reports <code>requestedTiles</code>, <code>drawnTiles</code>, <code>drawnFragments</code> and <code>missingTiles</code> as zero while still presenting the overlay and indicator layers. The camera binding is consumed by value (the <code>wasm-bindgen</code> class parameter semantics); the page builds a fresh camera per changed pose, exactly as it already does. Two overlapping calls are a construction-time borrow violation — the page serializes its frames behind a busy flag and never overlaps.</td></tr>
 <tr><td><code>stageParentTile</code></td><td><code>async stageParentTile(fallbackTileX: number, fallbackTileY: number, fallbackZoomLevel: number, parentTileX: number, parentTileY: number, parentZoomLevel: number): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws the verbatim failure message as a string.</td><td>Stages a deliberate parent-fallback for one requested tile, mirroring the native golden-image tests: the fallback tile is evicted from the pool and marked unavailable forever, and its coarser parent’s recorded fixture is pooled instead, so the scheduler resolves the fallback tile as <code>FallsBackTo { parent }</code> every frame and the frame samples the parent texture. The committed golden frames were produced with the last visible scene tile resolved exactly this way, so a browser page that compares against them calls this before rendering a golden scene to reproduce the reference imagery byte-for-byte. Fetches the parent fixture from the same-origin <code>/tiles</code> route. A missing or undecodable parent fixture is an error, not a silent skip: the caller wants the fallback imagery or nothing. The parent coordinates must describe the fallback tile’s direct parent.</td></tr>
-<tr><td><code>setOverlays</code></td><td><code>setOverlays(overlays: any[]): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the overlay list drawn over the tiles in every following [<code>MapView::render_frame</code>], replacing any earlier list in order (later list entries draw over earlier ones); an empty array clears. Each entry is a plain JavaScript object describing one overlay shape, selected by its <code>kind</code> field: * <code>{kind: "routePolyline", coordinates: [{latitude, longitude}...], color?, widthPixels?}</code> — a routed path drawn as a thick line, * <code>{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...], color?}</code> — an ear-clip triangulated ring fill, * <code>{kind: "pointMarkers", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — screen-facing octagon markers, * <code>{kind: "pointPins", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — teardrop pins anchored at their tip with a hollow head center, * <code>{kind: "trafficFlow", segments: [{shapeCoordinates: [{latitude, longitude}...], congestionLevel: CanvasTrafficFlowCongestionLevel}...], widthPixels?}</code> — congestion-colored traffic lines. An absent <code>color</code>/<code>widthPixels</code>/<code>radiusPixels</code> override keeps the documented map-rendering default style; the fields exist exactly where the native overlay structs have them. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; widths and radii are positive finite screen pixel values. Every invalid descriptor (wrong shape, missing or wrong-typed field, out-of-range coordinate or channel, unknown <code>kind</code> or congestion value) rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous list in force; nothing panics.</td></tr>
+<tr><td><code>setOverlays</code></td><td><code>setOverlays(overlays: any[]): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the overlay list drawn over the tiles in every following [<code>MapView::render_frame</code>], replacing any earlier list in order (later list entries draw over earlier ones); an empty array clears. Each entry is a plain JavaScript object describing one overlay shape, selected by its <code>kind</code> field: * <code>{kind: "routePolyline", coordinates: [{latitude, longitude}...], color?, widthPixels?}</code> — a routed path drawn as a thick line, * <code>{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...], color?}</code> — an ear-clip triangulated ring fill, * <code>{kind: "pointMarkers", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — screen-facing octagon markers, * <code>{kind: "pointPins", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — teardrop pins anchored at their tip with a hollow head center, * <code>{kind: "trafficFlow", segments: [{shapeCoordinates: [{latitude, longitude}...], congestionLevel: CanvasTrafficFlowCongestionLevel}...], widthPixels?}</code> — congestion-colored traffic lines. An absent <code>color</code>/<code>widthPixels</code>/<code>radiusPixels</code> override keeps the documented rustic-maps-rendering default style; the fields exist exactly where the native overlay structs have them. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; widths and radii are positive finite screen pixel values. Every invalid descriptor (wrong shape, missing or wrong-typed field, out-of-range coordinate or channel, unknown <code>kind</code> or congestion value) rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous list in force; nothing panics.</td></tr>
 <tr><td><code>addOverlay</code></td><td><code>addOverlay(overlay: any): string</code></td><td>Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Adds one overlay descriptor to the drawn list and answers the generated opaque identifier addressing it (<code>overlay-1</code>, <code>overlay-2</code>, …; monotonic per view, never reused). Validation is exactly <code>set_overlays</code>’ single-descriptor rule: a refused descriptor throws and adds nothing. The new overlay draws last, over the entries already in the list.</td></tr>
 <tr><td><code>updateOverlay</code></td><td><code>updateOverlay(identifier: string, overlay: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Replaces the overlay addressed by <code>identifier</code> in its draw position. An invalid descriptor throws and keeps the previous overlay; an unknown identifier throws an <code>invalidArgument</code> failure naming it.</td></tr>
 <tr><td><code>removeOverlay</code></td><td><code>removeOverlay(identifier: string): boolean</code></td><td>Returns <code>boolean</code>.</td><td>Removes the overlay addressed by <code>identifier</code>; answers whether the identifier was present (an unknown identifier is not an error).</td></tr>
@@ -11690,7 +11691,7 @@ offline graph.</li>
 <tr><td><code>setLabels</code></td><td><code>setLabels(labels: any[]): number</code></td><td>Returns <code>number</code>. Throws the verbatim failure message as a string.</td><td>Replaces the label candidates drawn over the overlays in every following [<code>MapView::render_frame</code>], and answers how many the call accepted. Each descriptor carries its text, geographic anchor, paint, halos, size and collision fields; [<code>MapView::set_glyph_range</code>] must supply the glyphs before anything draws. Every invalid descriptor rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous list in force; nothing panics.</td></tr>
 <tr><td><code>clearLabels</code></td><td><code>clearLabels(): void</code></td><td>—</td><td>Clears the label candidate list; following frames draw no labels until [<code>MapView::set_labels</code>] supplies a new list.</td></tr>
 <tr><td><code>setGlyphRange</code></td><td><code>setGlyphRange(glyphRangeBytes: Uint8Array): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Decodes one Mapbox glyph-protocol range and packs it into the <code>R8Unorm</code> atlas the label layer draws with. Answers the decoded font stack name, glyph count and page dimensions for the page’s status readout. A malformed payload or an un-packable range is a coded <code>responseParsingFailure</code> rejection and keeps the previous font in force.</td></tr>
-<tr><td><code>setLocationIndicator</code></td><td><code>setLocationIndicator(stateValue: any, styleValue: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the location-indicator layer drawn over the overlays in every following [<code>MapView::render_frame</code>] (the native surface’s top layer), replacing any earlier layer. The state descriptor is <code>{coordinate: {latitude, longitude}, courseHeadingDegrees?, horizontalAccuracyMeters?}</code>; the style descriptor is <code>{visualKind: "trackingDot" \| "guidedCourseArrow", radiusPixels?, rgbaColor?, showAccuracyRing?}</code>, where every omitted style field keeps the documented map-rendering default. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; the radius is a positive finite screen-pixel value. The optional scalars pass through verbatim (the native indicator state’s rule) while the style’s own range rules mirror the native record conversion. Every invalid descriptor rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous layer in force; nothing panics.</td></tr>
+<tr><td><code>setLocationIndicator</code></td><td><code>setLocationIndicator(stateValue: any, styleValue: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the location-indicator layer drawn over the overlays in every following [<code>MapView::render_frame</code>] (the native surface’s top layer), replacing any earlier layer. The state descriptor is <code>{coordinate: {latitude, longitude}, courseHeadingDegrees?, horizontalAccuracyMeters?}</code>; the style descriptor is <code>{visualKind: "trackingDot" \| "guidedCourseArrow", radiusPixels?, rgbaColor?, showAccuracyRing?}</code>, where every omitted style field keeps the documented rustic-maps-rendering default. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; the radius is a positive finite screen-pixel value. The optional scalars pass through verbatim (the native indicator state’s rule) while the style’s own range rules mirror the native record conversion. Every invalid descriptor rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous layer in force; nothing panics.</td></tr>
 <tr><td><code>clearLocationIndicator</code></td><td><code>clearLocationIndicator(): void</code></td><td>—</td><td>Clears the location-indicator layer; following frames draw no indicator until [<code>MapView::set_location_indicator</code>] supplies a new one.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Installs a styled vector base map (the UDL <code>MapView.set_vector_tile_source</code> contract member). The descriptor is one plain JavaScript object carrying the UDL <code>UrlTemplateVectorTileSource</code> fields in lower camel case: <code>{urlTemplate, sourceName, attributionText, styleId, minimumZoomLevel, maximumZoomLevel}</code>. The template must be an absolute <code>http</code>/<code>https</code> URL carrying <code>{z}</code>, <code>{x}</code> and <code>{y}</code>; the style id must name one of the committed style artifacts (<code>bright-light</code>, <code>fiord-dark</code>, …). The whole source builds before this view changes, so a refused call (a malformed template, an empty name, an inverted zoom range or an unknown style id) throws a coded failure and leaves the previous base in force. While a source is installed the canvas hides the raster base and paints the style’s own background, exactly like the native surface; the source’s overlays and place names draw beneath every overlay the page supplies. Installing while a frame resolves is refused.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Removes the vector base map (the UDL <code>MapView.clear_vector_tile_source</code> contract member): following frames draw raster tiles and overlays alone. Refused while a frame resolves, like installing.</td></tr>
@@ -11702,7 +11703,7 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="mapcamera-3"><a class="header" href="#mapcamera-3">MapCamera</a></h2>
-<p>Anchored map camera (geographic center, zoom, bearing, pitch) mirroring the native [<code>map_rendering::MapCamera</code>]. The ground point under the center always sits at the viewport center.</p>
+<p>Anchored map camera (geographic center, zoom, bearing, pitch) mirroring the native [<code>rustic_maps_rendering::MapCamera</code>]. The ground point under the center always sits at the viewport center.</p>
 <p><strong>Construction</strong></p>
 <div class="table-wrapper">
 <table>
@@ -11839,7 +11840,7 @@ offline graph.</li>
 <tr><td><code>tilesCovering</code></td><td><code>tilesCovering(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number, zoomLevel: number): any[]</code></td><td>Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Every XYZ tile whose area intersects the spanning box, as an array of <code>{tileX, tileY, zoomLevel}</code> ordered row-major from the north, mirroring the native <code>tiles_covering</code>.</td></tr>
 <tr><td><code>getSdkCompiledVersion</code></td><td><code>getSdkCompiledVersion(): string</code></td><td>Returns <code>string</code>.</td><td>Semver of the compiled SDK, equal to the workspace package version.</td></tr>
 <tr><td><code>initializeSdk</code></td><td><code>initializeSdk(): Promise&lt;any&gt;</code></td><td>Returns <code>Promise&lt;any&gt;</code>.</td><td>Readiness starter: installs the browser runtime, sets the <code>window.__sdkReady</code> flag and resolves to the compiled version. Prefer <code>await MapsSdk.create()</code>; this alias stays for existing call sites.</td></tr>
-<tr><td><code>offlineRouteFromArchiveBytes</code></td><td><code>offlineRouteFromArchiveBytes(archiveBytes: Uint8Array, startLatitude: number, startLongitude: number, endLatitude: number, endLongitude: number): Promise&lt;any&gt;</code></td><td>Returns <code>Promise&lt;any&gt;</code>. Throws the verbatim failure message as a string.</td><td>Routes between two coordinates over an offline routing graph loaded from in-memory archive bytes. The browser has no <code>mmap</code>, so the compiled archive arrives as a <code>Uint8Array</code>, for example a same-origin downloaded archive, and is validated in memory before routing, exactly like the native <code>Memory</code> source seam. The request routes through the in-repo [<code>map_core::offline_routing::ArchiveOfflineRoutingProvider</code>] (its A* engine, snap, restricts and derived maneuver steps) under the automobile / fastest / metric request the offline graph profile serves (<code>RouteOptions</code> defaults). The answer mirrors the frozen contract’s <code>RouteData</code>/<code>RouteLeg</code>/<code>RouteStep</code> dictionaries field for field (lower camel case; <code>maneuverType</code> the stable snake-case label). The browser half of the contract’s <code>offline_route_from_archive_bytes</code> free helper: both delegate to [<code>map_core::offline_routing::calculate_offline_route_from_archive_bytes</code>], so the native and wasm answers cannot drift. Failures throw an error carrying the verbatim detail and a stable code: bytes that fail archive validation, a coordinate within no graph node’s snap tolerance, or a request pair the graph cannot connect — refused, never guessed.</td></tr>
+<tr><td><code>offlineRouteFromArchiveBytes</code></td><td><code>offlineRouteFromArchiveBytes(archiveBytes: Uint8Array, startLatitude: number, startLongitude: number, endLatitude: number, endLongitude: number): Promise&lt;any&gt;</code></td><td>Returns <code>Promise&lt;any&gt;</code>. Throws the verbatim failure message as a string.</td><td>Routes between two coordinates over an offline routing graph loaded from in-memory archive bytes. The browser has no <code>mmap</code>, so the compiled archive arrives as a <code>Uint8Array</code>, for example a same-origin downloaded archive, and is validated in memory before routing, exactly like the native <code>Memory</code> source seam. The request routes through the in-repo [<code>rustic_maps_core::offline_routing::ArchiveOfflineRoutingProvider</code>] (its A* engine, snap, restricts and derived maneuver steps) under the automobile / fastest / metric request the offline graph profile serves (<code>RouteOptions</code> defaults). The answer mirrors the frozen contract’s <code>RouteData</code>/<code>RouteLeg</code>/<code>RouteStep</code> dictionaries field for field (lower camel case; <code>maneuverType</code> the stable snake-case label). The browser half of the contract’s <code>offline_route_from_archive_bytes</code> free helper: both delegate to [<code>rustic_maps_core::offline_routing::calculate_offline_route_from_archive_bytes</code>], so the native and wasm answers cannot drift. Failures throw an error carrying the verbatim detail and a stable code: bytes that fail archive validation, a coordinate within no graph node’s snap tolerance, or a request pair the graph cannot connect — refused, never guessed.</td></tr>
 </tbody>
 </table>
 </div>
@@ -12197,7 +12198,7 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="overlaycolor-3"><a class="header" href="#overlaycolor-3">OverlayColor</a></h3>
-<p>Solid RGBA overlay style, every channel in <code>[0, 1]</code>. Mirrors the contract’s <code>OverlayColor</code> dictionary and the wasm canvas’ <code>color</code> plain object. A descriptor without a color keeps the documented map-rendering default style of its kind; every present channel must lie in the range or the whole call refuses.</p>
+<p>Solid RGBA overlay style, every channel in <code>[0, 1]</code>. Mirrors the contract’s <code>OverlayColor</code> dictionary and the wasm canvas’ <code>color</code> plain object. A descriptor without a color keeps the documented rustic-maps-rendering default style of its kind; every present channel must lie in the range or the whole call refuses.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -12244,7 +12245,7 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="devicepositionfix"><a class="header" href="#devicepositionfix">DevicePositionFix</a></h3>
-<p>One device position fix the wasm <code>PositionController</code> accepted: the Rust <code>map-positioning</code> record in the surface’s lower-camel spelling. Reported back by <code>latestFix</code>; the controller validates and smooths the same fixes the native targets carry through the contract.</p>
+<p>One device position fix the wasm <code>PositionController</code> accepted: the Rust <code>rustic-maps-positioning</code> record in the surface’s lower-camel spelling. Reported back by <code>latestFix</code>; the controller validates and smooths the same fixes the native targets carry through the contract.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -12475,7 +12476,7 @@ and call, and the Android, iOS, React Native and WebAssembly bindings are built
 against that contract. This page explains what the contract contains, how each
 target binds it, and how to read the UDL. For member-by-member signatures and
 return records, use the <a href="#api-reference">API reference</a>; the contract file
-itself is also published as a <a href="../udl/map_native_core.udl">plain-text download</a>.</p>
+itself is also published as a <a href="../udl/rustic_maps.udl">plain-text download</a>.</p>
 <h2 id="what-the-contract-is"><a class="header" href="#what-the-contract-is">What the contract is</a></h2>
 <p>The contract is one file written in UniFFI’s interface definition language. It
 declares the namespace, the records and enums that cross the language boundary,

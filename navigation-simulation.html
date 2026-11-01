@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b8d81c0f.js";
+            window.path_to_searchindex_js = "searchindex-ba9f56f9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -649,7 +649,7 @@ deviation, speech, or stop. <code>removeNavigationListener</code> removes it by 
 walker the native tabs use. Each <code>updateLocation</code> returns the trip snapshot;
 the phase, the instruction payload, the progress numbers, and the deviation
 all come from that one call:</p>
-<pre><code class="language-js">import { Navigator, RouteSimulator } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { Navigator, RouteSimulator } from './web/rustic_maps_web_bindings.js';
 
 const navigationController = new Navigator();
 navigationController.startNavigation(route, 'metric');
@@ -691,7 +691,7 @@ a fix at an elapsed time. The fix carries a <code>coordinate</code>, the
 <code>courseHeadingDegrees</code>, the travelled and remaining meters, and
 <code>isArrived</code>. Draw the route, place the location indicator on the fix, and
 present a course-up camera frame:</p>
-<pre><code class="language-js">import { RouteSimulator } from './web/map_web_bindings.js';
+<pre><code class="language-js">import { RouteSimulator } from './web/rustic_maps_web_bindings.js';
 
 /** @type {any} */
 const plannedRoute = route;
