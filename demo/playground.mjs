@@ -308,6 +308,7 @@
       const zoom_in_control = document.getElementById('zoom-in-control');
       const my_location_control = document.getElementById('my-location-control');
       const device_location_control = document.getElementById('device-location-control');
+      const device_navigation_control = document.getElementById('device-navigation-control');
       const device_location_status = document.getElementById('device-location-status');
       const plane_toggle_control = document.getElementById('plane-toggle-control');
       const scale_bar_element = document.getElementById('scale-bar-overlay');
@@ -1141,6 +1142,7 @@
           clear_selected_demo_plan();
           const polyline = route_polyline_coordinates(route);
           planned_route_record = route;
+          is_device_navigation_plan_first_pinned = false;
           trip_route_overlays = [
             { kind: 'routePolyline', coordinates: polyline },
             {
@@ -1279,6 +1281,7 @@
               polyline,
             };
             planned_route_record = recorded_trace.route;
+            is_device_navigation_plan_first_pinned = false;
             // The recorded route's own first and last vertices are its
             // endpoints: the plan's A/B pins, never invented coordinates.
             trip_route_overlays = [
@@ -1466,6 +1469,7 @@
             // selected demo plan no longer wins the trip.
             clear_selected_demo_plan();
             planned_route_record = route;
+            is_device_navigation_plan_first_pinned = false;
             offline_route_overlays = [];
             trip_route_overlays = [
               { kind: 'routePolyline', coordinates: polyline },
@@ -3133,14 +3137,102 @@
         'The browser timed out while determining a position.';
       const DEVICE_LOCATION_UNAVAILABLE_SUPPORT_TEXT =
         'This browser does not provide the Geolocation API.';
+      // Device-driven navigation: the same source's fixes drive the planned
+      // route's guidance, so the banner, the ETA line and the follow camera
+      // read real fixes instead of the recorded trace.
+      const DEVICE_NAVIGATION_START_TEXT = 'Navigate from my location';
+      const DEVICE_NAVIGATION_STOP_TEXT = 'Stop device navigation';
+      const DEVICE_NAVIGATION_PLAN_FIRST_TEXT =
+        'Plan a route first; device navigation follows the route you planned.';
+      const DEVICE_NAVIGATION_WAITING_TEXT =
+        'Waiting for your position to start guidance.';
+      const DEVICE_NAVIGATION_GUIDANCE_UNAVAILABLE_TEXT =
+        'Guidance could not start on the planned route.';
       let device_location_watch_identifier = null;
       let device_position_controller = null;
+      let is_device_navigation_active = false;
+      // Whether starting device navigation also started the location source,
+      // so stopping it again does not turn off a source the visitor chose.
+      let device_navigation_started_location_watch = false;
+      // The plan-first refusal stays on screen while device fixes arrive
+      // about once a second, rather than being overwritten by the next
+      // "Position …" line before the visitor can read it.
+      let is_device_navigation_plan_first_pinned = false;
 
       function refresh_device_location_control() {
         const is_active = device_location_watch_identifier !== null;
         device_location_control.setAttribute('aria-pressed', String(is_active));
         device_location_control.textContent =
           is_active ? 'Hide my location' : 'Show my location';
+      }
+
+      function refresh_device_navigation_control() {
+        device_navigation_control.setAttribute(
+          'aria-pressed', String(is_device_navigation_active));
+        device_navigation_control.textContent = is_device_navigation_active
+          ? DEVICE_NAVIGATION_STOP_TEXT
+          : DEVICE_NAVIGATION_START_TEXT;
+      }
+
+      /**
+       * Starts guidance on the planned route from this device's fixes. The
+       * location source is started when it is off; the recorded trip ends
+       * first, because one trip runs at a time.
+       */
+      function start_device_navigation() {
+        is_device_navigation_plan_first_pinned = false;
+        if (planned_route_record === null) {
+          is_device_navigation_plan_first_pinned = true;
+          set_device_location_status(DEVICE_NAVIGATION_PLAN_FIRST_TEXT);
+          return;
+        }
+        if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+          end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
+        }
+        device_navigation_started_location_watch =
+          device_location_watch_identifier === null;
+        if (device_navigation_started_location_watch) {
+          start_device_location();
+        }
+        start_live_navigation();
+        if (live_navigator === null) {
+          set_device_location_status(DEVICE_NAVIGATION_GUIDANCE_UNAVAILABLE_TEXT);
+          if (device_navigation_started_location_watch) {
+            stop_device_location();
+          }
+          return;
+        }
+        is_device_navigation_active = true;
+        follow_bearing_chase.reset();
+        camera_state.zoom = follow_zoom_toward_trip_end(1.0);
+        camera_state.pitch = is_three_dimensional_camera
+          ? NAVIGATION_FOLLOW_PITCH_3D_DEGREES : 0;
+        controls.zoom.value = camera_state.zoom;
+        controls.pitch.value = camera_state.pitch;
+        refresh_control_labels();
+        refresh_device_navigation_control();
+        set_device_location_status(DEVICE_NAVIGATION_WAITING_TEXT);
+        schedule_render();
+      }
+
+      /** Ends device-driven guidance; the location source stops only when
+       * this mode started it. */
+      function stop_device_navigation() {
+        if (!is_device_navigation_active) {
+          return;
+        }
+        is_device_navigation_active = false;
+        stop_live_navigation();
+        follow_demo.target_bearing_degrees = null;
+        follow_bearing_chase.reset();
+        refresh_device_navigation_control();
+        if (device_navigation_started_location_watch) {
+          device_navigation_started_location_watch = false;
+          stop_device_location();
+        } else {
+          set_device_location_status(null);
+          schedule_render();
+        }
       }
 
       function set_device_location_status(status_text) {
@@ -3199,20 +3291,73 @@
         );
         camera_state.latitude = coordinate.latitude;
         camera_state.longitude = coordinate.longitude;
-        camera_state.zoom = Math.max(camera_state.zoom, DEVICE_LOCATION_ZOOM_LEVEL);
+        // A device-driven trip keeps the §5.3 follow camera's fixed deep zoom
+        // and, in 3D, follows the smoothed course; outside a trip the fix
+        // only centres the map at the device zoom.
+        camera_state.zoom = is_device_navigation_active
+          ? follow_zoom_toward_trip_end(1.0)
+          : Math.max(camera_state.zoom, DEVICE_LOCATION_ZOOM_LEVEL);
+        if (is_device_navigation_active && is_three_dimensional_camera) {
+          camera_state.pitch = NAVIGATION_FOLLOW_PITCH_3D_DEGREES;
+          if (smoothed_course !== null) {
+            follow_demo.target_bearing_degrees = smoothed_course;
+          }
+        }
         controls.zoom.value = camera_state.zoom;
         refresh_control_labels();
         schedule_render();
         const accuracy_text = Number.isFinite(coordinate.accuracy)
           ? ` · ±${Math.round(coordinate.accuracy)} m`
           : '';
-        set_device_location_status(
-          `Position ${coordinate.latitude.toFixed(5)}, ` +
-          `${coordinate.longitude.toFixed(5)}${accuracy_text}.`,
-        );
+        if (!is_device_navigation_plan_first_pinned) {
+          set_device_location_status(
+            `Position ${coordinate.latitude.toFixed(5)}, ` +
+            `${coordinate.longitude.toFixed(5)}${accuracy_text}.`,
+          );
+        }
+        if (is_device_navigation_active) {
+          deliver_device_navigation_fix(coordinate, smoothed_course);
+        }
+      }
+
+      /**
+       * Delivers one accepted device fix to the route's guidance and redraws
+       * the banner and ETA from the controller's own snapshot. A refusal ends
+       * the mode honestly instead of leaving a stale trip on screen.
+       */
+      function deliver_device_navigation_fix(coordinate, smoothed_course) {
+        if (live_navigator === null) {
+          return;
+        }
+        try {
+          render_navigation_snapshot(
+            deliver_live_navigation_fix(
+              {
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude,
+                courseHeadingDegrees: smoothed_course,
+              },
+              Number.isFinite(coordinate.accuracy)
+                ? coordinate.accuracy
+                : FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
+            ),
+          );
+        } catch (navigation_failure) {
+          stop_device_navigation();
+          set_device_location_status(
+            `Guidance unavailable: ${String(navigation_failure)}`);
+        }
       }
 
       function stop_device_location() {
+        if (is_device_navigation_active) {
+          is_device_navigation_active = false;
+          device_navigation_started_location_watch = false;
+          stop_live_navigation();
+          follow_demo.target_bearing_degrees = null;
+          follow_bearing_chase.reset();
+          refresh_device_navigation_control();
+        }
         if (device_location_watch_identifier !== null) {
           navigator.geolocation.clearWatch(device_location_watch_identifier);
           device_location_watch_identifier = null;
@@ -3259,10 +3404,19 @@
         }
       });
 
+      device_navigation_control.addEventListener('click', () => {
+        if (is_device_navigation_active) {
+          stop_device_navigation();
+        } else {
+          start_device_navigation();
+        }
+      });
+
       // The UX-test host contract: the controller's own state, so a browser
       // suite can assert a fix reached it without reading page prose.
       window.mapDeviceLocationState = () => ({
         isActive: device_location_watch_identifier !== null,
+        isNavigating: is_device_navigation_active,
         fix: device_position_controller?.latestFix() ?? null,
         smoothedCourseDegrees:
           device_position_controller?.smoothedCourseDegrees() ?? null,
@@ -3979,6 +4133,10 @@
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
           return;
         }
+        // One trip runs at a time: starting the recorded trip ends a
+        // device-driven one (and leaves a location source the visitor
+        // started by hand running).
+        stop_device_navigation();
         // A selected demo plan makes the recorded trace the trip the replay
         // drives; otherwise the trip walks the route the visitor planned.
         if (selected_demo_plan_trace !== null) {
