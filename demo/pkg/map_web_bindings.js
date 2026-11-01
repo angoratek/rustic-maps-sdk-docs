@@ -34,7 +34,7 @@ export class MapCamera {
     /**
      * The camera's center, as `{latitude, longitude}` — the contract's
      * `center()` getter. The getters make a fitted camera's chosen framing
-     * readable (round-9 ask, contract members since M17).
+     * readable.
      * @returns {object}
      */
     center() {
@@ -88,11 +88,11 @@ export class MapCamera {
         }
     }
     /**
-     * Ground meters represented by one screen pixel at the camera's center
-     * (the scale bars' helper, round 10). The viewport and field-of-view
-     * arguments mirror the projection methods' shape and the viewport is
-     * validated like everywhere else; the flat-centered approximation (the
-     * contract's doc term) is itself independent of both.
+     * Ground meters represented by one screen pixel at the camera's center,
+     * the value a scale bar needs. The viewport and field-of-view arguments
+     * mirror the projection methods' shape and the viewport is validated
+     * like everywhere else; the flat-centered approximation is itself
+     * independent of both.
      * @param {number} width_pixels
      * @param {number} height_pixels
      * @param {number} field_of_view_degrees
@@ -145,8 +145,8 @@ export class MapCamera {
      * moved over becomes the new camera center, so map content tracks the
      * pointer exactly. Answers the input camera pose unchanged when the
      * delta's ray misses the ground plane, as the contract member
-     * documents. The free `panCameraByScreenPixels` helper stays as an
-     * alias for the M3 demo call sites.
+     * documents. The free `panCameraByScreenPixels` helper is an
+     * addition-only alias for existing call sites.
      * @param {number} delta_x_pixels
      * @param {number} delta_y_pixels
      * @param {number} width_pixels
@@ -408,7 +408,7 @@ export class MapView {
         wasm.mapview_clearOverlays(this.__wbg_ptr);
     }
     /**
-     * Removes the vector base map (M31 — the UDL
+     * Removes the vector base map (the UDL
      * `MapView.clear_vector_tile_source` contract member): following frames
      * draw raster tiles and overlays alone. Refused while a frame resolves,
      * like installing.
@@ -444,7 +444,7 @@ export class MapView {
      * the SDK root it was created with (`new MapView(canvas, maps)`). The
      * tile pixel resolution is optional: omitted, it follows the same
      * device-pixel-ratio rule as `retinaDevicePixelRatioThreshold()`;
-     * supplied, it is honoured verbatim (the golden harness pins it). Fails
+     * supplied, it is honoured verbatim. Fails
      * when the element cannot host a GPU surface (for example after another
      * context already claimed the element). Call [`MapView::initialize`]
      * before the first [`MapView::render_frame`].
@@ -635,8 +635,8 @@ export class MapView {
     }
     /**
      * Sets the location-indicator layer drawn over the overlays in every
-     * following [`MapView::render_frame`] (the native surface's top
-     * layer, round 10), replacing any earlier layer.
+     * following [`MapView::render_frame`] (the native surface's top layer),
+     * replacing any earlier layer.
      *
      * The state descriptor is `{coordinate: {latitude, longitude},
      * courseHeadingDegrees?, horizontalAccuracyMeters?}`; the style
@@ -720,8 +720,8 @@ export class MapView {
      * carry all three placeholders; the maximum zoom level caps the fetch
      * zoom to what the tile service actually serves.
      *
-     * The fallback runs only after the recorded-fixture fetch fails, so the
-     * local harness keeps its deterministic fixture demo, and a registered
+     * The fallback runs only after the recorded-fixture fetch fails, so a
+     * page keeps its deterministic recorded-tile imagery, and a registered
      * live provider (a runtime credential) is consulted before the template.
      * @param {string} url_template
      * @param {number} maximum_zoom_level
@@ -742,9 +742,8 @@ export class MapView {
         }
     }
     /**
-     * Installs a styled vector base map (M31 — the UDL
-     * `MapView.set_vector_tile_source` contract member, now served by the
-     * browser canvas too).
+     * Installs a styled vector base map (the UDL
+     * `MapView.set_vector_tile_source` contract member).
      *
      * The descriptor is one plain JavaScript object carrying the UDL
      * `UrlTemplateVectorTileSource` fields in lower camel case:
@@ -778,15 +777,14 @@ export class MapView {
     }
     /**
      * Stages a deliberate parent-fallback for one requested tile, mirroring
-     * the native golden image harness (`fill_pool_and_prepare` in
-     * `map-rendering`'s golden test): the fallback tile is evicted from the
+     * the native golden-image tests: the fallback tile is evicted from the
      * pool and marked unavailable forever, and its coarser parent's recorded
      * fixture is pooled instead, so the scheduler resolves the fallback tile
      * as `FallsBackTo { parent }` every frame and the frame samples the
      * parent texture. The committed golden frames were produced with the
-     * last visible scene tile resolved exactly this way, so the browser
-     * golden-compare page calls this before rendering a golden scene to
-     * reproduce the reference imagery byte-for-byte.
+     * last visible scene tile resolved exactly this way, so a browser page
+     * that compares against them calls this before rendering a golden scene
+     * to reproduce the reference imagery byte-for-byte.
      *
      * Fetches the parent fixture from the same-origin `/tiles` route. A
      * missing or undecodable parent fixture is an error, not a silent skip:
@@ -827,7 +825,7 @@ export class MapView {
         }
     }
     /**
-     * Reads the vector base source's status (M31 — the UDL
+     * Reads the vector base source's status (the UDL
      * `MapView.vector_tile_source_status` contract member): the configured
      * source's style, name, attribution and zoom ceiling plus the last
      * resolved frame's drawn and failed tile counts. A pure query — it never
@@ -858,8 +856,7 @@ if (Symbol.dispose) MapView.prototype[Symbol.dispose] = MapView.prototype.free;
  * and hands to its [`crate::canvas::MapView`], mirroring the native
  * `MapSdk` construction shape. The wasm runtime is module-global, so this
  * root carries the readiness result and the compiled version rather than a
- * second runtime; provider and engine members will hang off it as the wasm
- * seam grows.
+ * second runtime.
  */
 export class MapsSdk {
     static __wrap(ptr) {
@@ -900,8 +897,8 @@ export class MapsSdk {
     }
     /**
      * Creates the SDK root and resolves once the browser runtime is ready
-     * (the same work the legacy [`start_sdk`] performs). The returned root
-     * is what `new MapView(canvas, maps)` expects.
+     * (the same work [`start_sdk`] performs). The returned root is what
+     * `new MapView(canvas, maps)` expects.
      * @returns {Promise<MapsSdk>}
      */
     static create() {
@@ -930,9 +927,9 @@ if (Symbol.dispose) MapsSdk.prototype[Symbol.dispose] = MapsSdk.prototype.free;
  * `isArrival`/`isReroutingRequired` markers); `deviation` is
  * `{statusChangeKind, distanceFromRouteMeters}` exactly while the phase is
  * off route; `snappedCoordinate` is `{latitude, longitude}` once a fix has
- * been processed. The listener, speech and reroute-recalculation members
- * of the contract's `Navigator` stay native until the wasm seam carries a
- * foreign-listener contract; `hasActiveTrip()` is the wasm-only helper.
+ * been processed. The event bridge replaces the contract's
+ * foreign-listener trait and delivers the same topics; `hasActiveTrip()`
+ * is the wasm-only helper.
  */
 export class Navigator {
     __destroy_into_raw() {
@@ -1218,7 +1215,7 @@ if (Symbol.dispose) PositionController.prototype[Symbol.dispose] = PositionContr
 
 /**
  * An immutable simulated trip along the planned route's own geometry,
- * mirroring the contract's `RouteSimulator` (M27).
+ * mirroring the contract's `RouteSimulator`.
  *
  * Construct it with a `Route`-shaped plain object (the same shape
  * `calculateRoute` answers) and a `SimulatedTripPace`-shaped plain object;
@@ -1419,16 +1416,16 @@ export function calculateDistanceMatrix(origin_coordinates, destination_coordina
 }
 
 /**
- * Plans a two-waypoint route through the active live provider (M13),
- * answering the same plain JavaScript shape
+ * Plans a two-waypoint route through the active live provider, answering
+ * the same plain JavaScript shape
  * [`crate::exports::offline_route_from_archive_bytes`] does: `distanceMeters`,
  * `durationSeconds`, `boundingBox` and `legs` of `steps` carrying the stable
  * snake-case `maneuverType` label and the provider's end-anchored instruction
  * texts.
  *
- * The request is the demo's default: automobile, fastest, metric —
- * `RouteOptions::default()`, which is also the mode the recorded Directions
- * fixture was recorded with (its maneuvers declare `transportMode: "car"`).
+ * The request uses the SDK defaults: automobile, fastest, metric —
+ * `RouteOptions::default()`, the same mode the recorded route sample was
+ * produced with.
  * Failures throw the seam's plain verbatim string: no registration, an
  * invalid coordinate, or the provider's own refusal.
  * @param {number} origin_latitude
@@ -1463,7 +1460,7 @@ export function calculateRouteWithOptions(origin_latitude, origin_longitude, des
 }
 
 /**
- * Addition-only alias for the pre-M15 vendor-named export: clears the active
+ * Addition-only alias for the vendor-named export: clears the active
  * registration.
  */
 export function clearMapquestProviders() {
@@ -1503,7 +1500,7 @@ export function coordinateToNormalizedWorld(latitude, longitude) {
 }
 
 /**
- * Reports the device-pixel ratio from which the playground's JavaScript
+ * Reports the device-pixel ratio from which the page's JavaScript
  * chooses between [`CanvasTileResolution::Retina`] and
  * [`CanvasTileResolution::Standard`]: at or above the threshold the page
  * passes retina. The threshold lives in Rust so the seam stays one source
@@ -1516,13 +1513,12 @@ export function devicePixelRatioThreshold() {
 }
 
 /**
- * Fetches one raster tile through the active live provider (M13), answering
- * the PNG bytes as a `Uint8Array`.
+ * Fetches one raster tile through the active live provider, answering the
+ * PNG bytes as a `Uint8Array`.
  *
  * The request is the standard-resolution PNG form of the provider's
- * documented Tiles API path (the playground's fixture route serves the same
- * address shape). Failures throw the seam's plain verbatim string: no
- * registration, a zoom or tile address outside the Tiles API's documented
+ * documented Tiles API path. Failures throw the seam's plain verbatim string:
+ * no registration, a zoom or tile address outside the Tiles API's documented
  * bounds, or the provider's own refusal.
  * @param {number} zoom_level
  * @param {number} tile_x
@@ -1583,7 +1579,7 @@ export function flushRecentDiagnosticEvents(minimum_severity, maximum_count) {
 
 /**
  * Forward-geocodes through the active live provider, answering the same row
- * shape the native refapps consume. Fails with a message when no provider is
+ * shape the native reference applications consume. Fails with a message when no provider is
  * registered or the provider refuses the query.
  * @param {string} query_text
  * @returns {Promise<Array<any>>}
@@ -1617,9 +1613,9 @@ export function getSdkCompiledVersion() {
 }
 
 /**
- * Legacy readiness starter: installs the browser runtime, sets the
+ * Readiness starter: installs the browser runtime, sets the
  * `window.__sdkReady` flag and resolves to the compiled version. Prefer
- * `await MapsSdk.create()`; this alias stays for existing harness code.
+ * `await MapsSdk.create()`; this alias stays for existing call sites.
  * @returns {Promise<any>}
  */
 export function initializeSdk() {
@@ -1629,11 +1625,10 @@ export function initializeSdk() {
 
 /**
  * Routes between two coordinates over an offline routing graph loaded from
- * in-memory archive bytes: the wasm milestone-M7 seam of `PRD.md` §4.6 —
- * the browser has no `mmap`, so the compiled archive arrives as a
- * `Uint8Array` (e.g. the committed routing-grid fixture served same-origin
- * at `/offline-graph/routing_grid.rmog`) and is validated in memory before
- * routing, exactly like the native `Memory` source seam.
+ * in-memory archive bytes. The browser has no `mmap`, so the compiled archive
+ * arrives as a `Uint8Array`, for example a same-origin downloaded archive,
+ * and is validated in memory before routing, exactly like the native
+ * `Memory` source seam.
  *
  * The request routes through the in-repo
  * [`map_core::offline_routing::ArchiveOfflineRoutingProvider`] (its A*
@@ -1647,7 +1642,7 @@ export function initializeSdk() {
  * free helper: both delegate to
  * [`map_core::offline_routing::calculate_offline_route_from_archive_bytes`],
  * so the native and wasm answers cannot drift. Failures throw the plain
- * verbatim error string (the harness's established shape): bytes that fail
+ * verbatim error string: bytes that fail
  * archive validation, a coordinate within no graph node's snap tolerance,
  * or a request pair the graph cannot connect — refused, never guessed.
  * @param {Uint8Array} archive_bytes
@@ -1919,9 +1914,9 @@ export function tilesCovering(south_west_latitude, south_west_longitude, north_e
  * The geographic bounds of one web-mercator tile, as
  * `{northWest: {latitude, longitude}, southEast: {latitude, longitude}}`.
  *
- * The demo uses this to focus its camera on a fetched tile and the browser
- * suites use it to check decoded overlay coordinates against the tile they
- * came from. The conversion is the same
+ * A page uses this to focus its camera on a fetched tile, and tests use it
+ * to check decoded overlay coordinates against the tile they came from. The
+ * conversion is the same
  * [`tile_local_point_to_coordinate`] the overlay seam applies, so bounds and
  * geometry share one source of truth. An out-of-grid address rejects with a
  * string-valued error.
