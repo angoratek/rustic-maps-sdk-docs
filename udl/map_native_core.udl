@@ -2387,3 +2387,82 @@ interface Diagnostics {
     /// The number of events delivered.
     u32 flush_recent(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity, u32 maximum_count);
 };
+
+// ---------------------------------------------------------------------------
+// Device positioning
+// ---------------------------------------------------------------------------
+
+/// One device position report: a coordinate with the source's optional
+/// accuracy, course and timestamp.
+dictionary PositionFix {
+    /// The reported coordinate on the WGS 84 ellipsoid.
+    GeographicCoordinate coordinate;
+    /// Radius in meters of the 68% horizontal-accuracy envelope, when the
+    /// source reports one.
+    double? horizontal_accuracy_meters;
+    /// Direction of travel in degrees clockwise from true north, when the
+    /// source reports one.
+    double? course_heading_degrees;
+    /// The fix's instant in seconds since the Unix epoch, when the source
+    /// reports one.
+    double? timestamp_seconds;
+};
+
+/// Why a positioning source could not produce fixes.
+enum PositionSourceError {
+    /// The user denied the permission the source needs.
+    "PermissionDenied",
+    /// Location services are disabled on the device or by policy.
+    "ServiceDisabled",
+    /// No location provider can answer right now.
+    "Unavailable",
+    /// The source did not answer inside its timeout.
+    "Timeout",
+};
+
+/// Validates and smooths one host's position stream.
+///
+/// The host owns the operating system's location API and its permission
+/// prompt, and reports the resulting fixes and failures here. The controller
+/// validates each fix, ignores stationary repeats when smoothing course,
+/// tracks staleness and records source failures, so the renderer's location
+/// indicator, a follow camera and the navigation controller read one
+/// consistent stream.
+interface PositionController {
+    /// Builds an empty controller with the default course-smoothing window
+    /// and staleness threshold.
+    constructor();
+
+    /// Accepts one fix from the host's source.
+    ///
+    /// # Parameters
+    /// - `fix` — the coordinate and the source's optional accuracy, course
+    ///   and timestamp.
+    ///
+    /// # Errors
+    /// The coordinate must be inside its canonical ranges and every reported
+    /// scalar must be finite (accuracy and timestamp also non-negative). An
+    /// invalid fix throws with the validator's detail and leaves the previous
+    /// state in force.
+    [Throws=SdkError]
+    void feed_fix(PositionFix fix);
+
+    /// Records a source failure. The latest fix stays readable while the
+    /// source recovers; a later successful fix clears the status.
+    void source_failed(PositionSourceError error);
+
+    /// The latest accepted fix, or null before the first accepted one.
+    PositionFix? latest_fix();
+
+    /// The smoothed course across the most recent fixes that reported one, in
+    /// degrees clockwise from true north, or null when no fix carried a
+    /// course.
+    double? smoothed_course_degrees();
+
+    /// Whether the latest fix is older than the staleness threshold at
+    /// `now_seconds`. A fix without a timestamp is never stale.
+    boolean is_stale(double now_seconds);
+
+    /// The last source failure, or null when the last event was a fix.
+    PositionSourceError? source_status();
+};
