@@ -3,12 +3,12 @@
     request: &amp;<a class="struct" href="../struct.HttpRequest.html" title="struct provider_transport::HttpRequest">HttpRequest</a>,
     retry_policy: <a class="struct" href="struct.RetryPolicy.html" title="struct provider_transport::retry::RetryPolicy">RetryPolicy</a>,
     interpret_response: InterpretResponse,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;ResultValue, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;<div class="where">where
-    InterpretResponse: <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/ops/function/trait.Fn.html" title="trait core::ops::function::Fn">Fn</a>(<a class="struct" href="../struct.HttpResponse.html" title="struct provider_transport::HttpResponse">HttpResponse</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;ResultValue, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;,</div></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Executes one idempotent GET through <code>transport</code>, repeating it while the
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;ResultValue, SDKError&gt;<div class="where">where
+    InterpretResponse: <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/ops/function/trait.Fn.html" title="trait core::ops::function::Fn">Fn</a>(<a class="struct" href="../struct.HttpResponse.html" title="struct provider_transport::HttpResponse">HttpResponse</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;ResultValue, SDKError&gt;,</div></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Executes one idempotent GET through <code>transport</code>, repeating it while the
 interpreted error is transient and the retry budget allows.</p>
 <p><code>interpret_response</code> turns one HTTP response into the provider’s typed
 value or error; classification of that error decides whether the request
 repeats. Transport failures are classified as
-<a href="../../geospatial_types/error/enum.SDKError.html#variant.NetworkRequestFailed" title="variant geospatial_types::error::SDKError::NetworkRequestFailed"><code>SDKError::NetworkRequestFailed</code></a>, so they retry like any other
+[<code>SDKError::NetworkRequestFailed</code>], so they retry like any other
 transient failure.</p>
 </div></details></section></div></main></body></html>

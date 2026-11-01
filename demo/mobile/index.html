@@ -25,19 +25,27 @@
         </p>
       </header>
 
-      <div class="platform-tabs" role="tablist">
-        <button type="button" role="tab" data-platform="android" aria-selected="true">
+      <div class="platform-tabs" role="tablist"
+           aria-label="Choose a reference application">
+        <button type="button" role="tab" data-platform="android"
+                id="platform-tab-android" aria-controls="mobile-demo-stage"
+                aria-selected="true" tabindex="0">
           Android
         </button>
-        <button type="button" role="tab" data-platform="ios" aria-selected="false">
+        <button type="button" role="tab" data-platform="ios"
+                id="platform-tab-ios" aria-controls="mobile-demo-stage"
+                aria-selected="false" tabindex="-1">
           iOS
         </button>
-        <button type="button" role="tab" data-platform="react-native" aria-selected="false">
+        <button type="button" role="tab" data-platform="react-native"
+                id="platform-tab-react-native" aria-controls="mobile-demo-stage"
+                aria-selected="false" tabindex="-1">
           React Native
         </button>
       </div>
 
-      <section class="stage" aria-live="polite">
+      <section class="stage" id="mobile-demo-stage" role="tabpanel"
+               aria-labelledby="platform-tab-android" aria-live="polite">
         <div class="poster" data-role="poster">
           <p class="poster-title" data-role="poster-title">Android reference application</p>
           <p class="poster-detail" data-role="poster-detail">Build not published yet.</p>
@@ -50,7 +58,9 @@
             there, press Start demo on that page, and come back here when you
             are done.
           </p>
-          <a class="start" data-role="session-link" target="_blank" rel="noopener noreferrer">Open the demo</a>
+          <a class="start" data-role="session-link" target="_blank"
+             rel="noopener noreferrer">Open the demo<span class="visually-hidden">
+            (opens in a new tab)</span></a>
           <div class="session-bar">
             <span data-role="session-countdown"></span>
             <button type="button" data-role="stop">Stop</button>

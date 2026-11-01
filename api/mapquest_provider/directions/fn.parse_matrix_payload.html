@@ -2,7 +2,7 @@
     payload: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.154/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
     origin_count: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.usize.html">usize</a>,
     destination_count: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.usize.html">usize</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../../geospatial_types/route/struct.DistanceMatrix.html" title="struct geospatial_types::route::DistanceMatrix">DistanceMatrix</a>, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Parses the route matrix reply: <code>distance</code> and <code>time</code> are flat row-major
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;DistanceMatrix, SDKError&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Parses the route matrix reply: <code>distance</code> and <code>time</code> are flat row-major
 arrays over the concatenated origin+destination location list, distances
 in the requested unit. Unroutable cells arrive as <code>null</code> and are skipped.</p>
 </div></details></section></div></main></body></html>

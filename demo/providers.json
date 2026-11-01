@@ -29,10 +29,34 @@
           "fixture": "fixtures/mapquest/geocode_address_city.json"
         },
         {
+          "purpose": "search",
+          "method": "GET",
+          "path_pattern": "^search/v3/prediction$",
+          "fixture": "fixtures/mapquest/search_prediction_denver.json"
+        },
+        {
           "purpose": "directions",
           "method": "GET",
           "path_pattern": "^directions/v2/route$",
           "fixture": "fixtures/mapquest/directions_route_two_waypoints.json"
+        },
+        {
+          "purpose": "distance_matrix",
+          "method": "POST",
+          "path_pattern": "^directions/v2/routematrix$",
+          "fixture": "fixtures/mapquest/routematrix_three_locations_unit_k.json"
+        },
+        {
+          "purpose": "traffic_incidents",
+          "method": "GET",
+          "path_pattern": "^traffic/v2/incidents$",
+          "fixture": "fixtures/mapquest/traffic_incidents_denver.json"
+        },
+        {
+          "purpose": "traffic_flow",
+          "method": "GET",
+          "path_pattern": "^traffic/v2/flow$",
+          "fixture": "fixtures/mapquest/traffic_flow_new_york.json"
         },
         {
           "purpose": "raster_tiles",
