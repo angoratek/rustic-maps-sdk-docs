@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-60b36cfa.js";
+            window.path_to_searchindex_js = "searchindex-ddfe75e0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-1539ac9a.js"></script>
@@ -1875,6 +1875,23 @@ interface MapView {
     /// frame's draw or the next resize call picks it up.
     [Throws=SdkError]
     void resize(u32 width_pixels, u32 height_pixels);
+
+    /// M30 (addition-only): records the drawing buffer's device pixels per
+    /// point/CSS pixel, so the labels and the overlay screen sizes keep
+    /// their declared point size on a 2× or 3× surface. The committed
+    /// styles declare point sizes while the surface draws device pixels;
+    /// the draw multiplies every placed glyph size, route and traffic line
+    /// width, and marker and pin radius by this ratio exactly once. The
+    /// ratio outlives attach/detach cycles like the overlay list. A
+    /// non-finite or non-positive ratio throws `InvalidRenderInput` and
+    /// leaves the previous ratio in force; the default is 1.0 until a
+    /// platform shell reports the surface's own. The wasm canvas derives its
+    /// ratio from `canvas.width / clientWidth` and has no setter, so this
+    /// member stays native-only (`platform/web/tests/contract_sync.mjs`
+    /// compares only the camera, route-simulator, navigator and free-helper
+    /// surfaces).
+    [Throws=SdkError]
+    void set_device_pixel_ratio(double device_pixel_ratio);
 
     /// Detaches: releases the surface, its renderer and its scheduler.
     /// Overlay state persists; re-attach rebuilds the drawing machinery.

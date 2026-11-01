@@ -868,6 +868,21 @@ export class Navigator {
         wasm.__wbg_navigator_free(ptr, 0);
     }
     /**
+     * Registers one navigation listener and answers its identifier. The
+     * callback receives one plain event per topic: `{topic, snapshot,
+     * speechText?, phaseChange?}` where `topic` is `"instruction"`,
+     * `"phase"`, `"deviation"`, `"speech"` or `"stop"`. This is the wasm
+     * seam's event bridge (the contract's foreign-listener trait cannot
+     * cross the wasm-bindgen boundary); the topics and payloads mirror
+     * the native navigation listener's.
+     * @param {Function} listener
+     * @returns {number}
+     */
+    addNavigationListener(listener) {
+        const ret = wasm.navigator_addNavigationListener(this.__wbg_ptr, addHeapObject(listener));
+        return ret >>> 0;
+    }
+    /**
      * Replaces the active trip's route (a reroute); without an active trip
      * the route is dropped. Throws a message for a route the conversion
      * cannot parse.
@@ -921,6 +936,15 @@ export class Navigator {
         this.__wbg_ptr = ret;
         NavigatorFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * Removes one listener; answers whether it was registered.
+     * @param {number} listener_id
+     * @returns {boolean}
+     */
+    removeNavigationListener(listener_id) {
+        const ret = wasm.navigator_removeNavigationListener(this.__wbg_ptr, listener_id);
+        return ret !== 0;
     }
     /**
      * Begins navigating `route` with the SDK default policies, replacing
@@ -1157,6 +1181,29 @@ export const TrafficFlowCongestionLevel = Object.freeze({
 });
 
 /**
+ * Calculates a travel-time matrix through the active provider's
+ * distance-matrix surface — the contract's `MapSdk::calculate_distance_matrix`
+ * on the wasm seam. Coordinates arrive as flat
+ * `[latitude, longitude, …]` arrays; the mode is the contract enum's name
+ * (or the common lowercase spelling). Answers `{originIndex,
+ * destinationIndex, distanceMeters, durationSeconds}` rows.
+ * @param {Float64Array} origin_coordinates
+ * @param {Float64Array} destination_coordinates
+ * @param {string} transportation_mode
+ * @returns {Promise<Array<any>>}
+ */
+export function calculateDistanceMatrix(origin_coordinates, destination_coordinates, transportation_mode) {
+    const ptr0 = passArrayF64ToWasm0(origin_coordinates, wasm.__wbindgen_export);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArrayF64ToWasm0(destination_coordinates, wasm.__wbindgen_export);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(transportation_mode, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len2 = WASM_VECTOR_LEN;
+    const ret = wasm.calculateDistanceMatrix(ptr0, len0, ptr1, len1, ptr2, len2);
+    return takeObject(ret);
+}
+
+/**
  * Plans a two-waypoint route through the active live provider (M13),
  * answering the same plain JavaScript shape
  * [`crate::exports::offline_route_from_archive_bytes`] does: `distanceMeters`,
@@ -1177,6 +1224,26 @@ export const TrafficFlowCongestionLevel = Object.freeze({
  */
 export function calculateRoute(origin_latitude, origin_longitude, destination_latitude, destination_longitude) {
     const ret = wasm.calculateRoute(origin_latitude, origin_longitude, destination_latitude, destination_longitude);
+    return takeObject(ret);
+}
+
+/**
+ * Plans a two-waypoint route with the contract's full `RouteOptions`
+ * (`MapSdk::calculate_route`'s options argument): transportation mode,
+ * strategy, unit system, avoids and an optional departure instant. The
+ * options arrive as one plain object; omitted fields take the contract
+ * defaults, and an unknown enum name is refused before the provider is
+ * asked. The answer is the same route shape [`calculate_route_live`]
+ * produces.
+ * @param {number} origin_latitude
+ * @param {number} origin_longitude
+ * @param {number} destination_latitude
+ * @param {number} destination_longitude
+ * @param {any} options
+ * @returns {Promise<object>}
+ */
+export function calculateRouteWithOptions(origin_latitude, origin_longitude, destination_latitude, destination_longitude, options) {
+    const ret = wasm.calculateRouteWithOptions(origin_latitude, origin_longitude, destination_latitude, destination_longitude, addHeapObject(options));
     return takeObject(ret);
 }
 
@@ -1249,6 +1316,38 @@ export function devicePixelRatioThreshold() {
  */
 export function fetchRasterTile(zoom_level, tile_x, tile_y) {
     const ret = wasm.fetchRasterTile(zoom_level, tile_x, tile_y);
+    return takeObject(ret);
+}
+
+/**
+ * Fetches per-segment traffic flow inside the bounding box — the contract's
+ * `MapSdk::fetch_traffic_flow` on the wasm seam. The row shape is the
+ * contract's `TrafficFlowData` with lower-camel field names, speed values or
+ * null, and the congestion level's enum name as text.
+ * @param {number} south_west_latitude
+ * @param {number} south_west_longitude
+ * @param {number} north_east_latitude
+ * @param {number} north_east_longitude
+ * @returns {Promise<Array<any>>}
+ */
+export function fetchTrafficFlow(south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude) {
+    const ret = wasm.fetchTrafficFlow(south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude);
+    return takeObject(ret);
+}
+
+/**
+ * Fetches traffic disruptions intersecting the bounding box — the contract's
+ * `MapSdk::fetch_traffic_incidents` on the wasm seam. The row shape is the
+ * contract's `TrafficIncident` with lower-camel field names and enum names
+ * as text (`incidentType`, `severity`).
+ * @param {number} south_west_latitude
+ * @param {number} south_west_longitude
+ * @param {number} north_east_latitude
+ * @param {number} north_east_longitude
+ * @returns {Promise<Array<any>>}
+ */
+export function fetchTrafficIncidents(south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude) {
+    const ret = wasm.fetchTrafficIncidents(south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude);
     return takeObject(ret);
 }
 
@@ -1448,6 +1547,37 @@ export function rotateCameraByDegreesAroundScreenPoint(camera, delta_bearing_deg
 }
 
 /**
+ * Returns full search results for a settled query through the active
+ * provider's search-place surface — the same rows the native reference apps
+ * consume from `MapSdk::search`.
+ * @param {string} query_text
+ * @returns {Promise<Array<any>>}
+ */
+export function searchPlaces(query_text) {
+    const ptr0 = passStringToWasm0(query_text, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.searchPlaces(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
+ * [`search_places`] narrowed to a ranking boundary (the contract's
+ * `MapSdk::search` boundary argument).
+ * @param {string} query_text
+ * @param {number} south_west_latitude
+ * @param {number} south_west_longitude
+ * @param {number} north_east_latitude
+ * @param {number} north_east_longitude
+ * @returns {Promise<Array<any>>}
+ */
+export function searchPlacesInBoundary(query_text, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude) {
+    const ptr0 = passStringToWasm0(query_text, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.searchPlacesInBoundary(ptr0, len0, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude);
+    return takeObject(ret);
+}
+
+/**
  * The contract's single-credential registration spelling (`MapSdk::
  * set_provider_credential`) on the wasm seam: registers the MapQuest
  * provider set through the generic dispatch table.
@@ -1484,6 +1614,38 @@ export function setProviderCredential(api_key, base_url) {
  */
 export function subscribeToDiagnosticEvents(minimum_severity) {
     wasm.subscribeToDiagnosticEvents(minimum_severity);
+}
+
+/**
+ * Returns fast completion candidates while the visitor types, through the
+ * active provider's search-place surface — the same rows the native
+ * reference apps consume from `MapSdk::suggest`. Fails with a verbatim
+ * message when no provider is registered or the provider refuses the query.
+ * @param {string} query_text
+ * @returns {Promise<Array<any>>}
+ */
+export function suggestPlaces(query_text) {
+    const ptr0 = passStringToWasm0(query_text, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.suggestPlaces(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
+ * [`suggest_places`] narrowed to a ranking boundary (the contract's
+ * `MapSdk::suggest` boundary argument).
+ * @param {string} query_text
+ * @param {number} south_west_latitude
+ * @param {number} south_west_longitude
+ * @param {number} north_east_latitude
+ * @param {number} north_east_longitude
+ * @returns {Promise<Array<any>>}
+ */
+export function suggestPlacesInBoundary(query_text, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude) {
+    const ptr0 = passStringToWasm0(query_text, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.suggestPlacesInBoundary(ptr0, len0, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude);
+    return takeObject(ret);
 }
 
 /**
@@ -1766,6 +1928,11 @@ function __wbg_get_imports() {
         },
         __wbg___wbindgen_is_null_e343b7d08827ba72: function(arg0) {
             const ret = getObject(arg0) === null;
+            return ret;
+        },
+        __wbg___wbindgen_is_object_3c45d4f2dde4e749: function(arg0) {
+            const val = getObject(arg0);
+            const ret = typeof(val) === 'object' && val !== null;
             return ret;
         },
         __wbg___wbindgen_is_string_90b56bc79aad6f6c: function(arg0) {
@@ -2655,7 +2822,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_7795(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_7906(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -3672,28 +3839,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2443, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7774);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2496, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_7885);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 280, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1508);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 333, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1619);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 280, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1508_73);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 333, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1619_83);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 280, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1508_74);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 333, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1619_84);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 248, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1305);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 301, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1416);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -3767,18 +3934,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_1305(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_1305(arg0, arg1);
+function __wasm_bindgen_func_elem_1416(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_1416(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_7795(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_7795(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_7906(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_7906(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_7774(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_7885(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_7774(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_7885(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3789,10 +3956,10 @@ function __wasm_bindgen_func_elem_7774(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1508(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1619(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1508(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1619(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3803,10 +3970,10 @@ function __wasm_bindgen_func_elem_1508(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1508_73(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1619_83(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1508_73(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1619_83(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -3817,10 +3984,10 @@ function __wasm_bindgen_func_elem_1508_73(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1508_74(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1619_84(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1508_74(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1619_84(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4078,6 +4245,14 @@ function getFloat32ArrayMemory0() {
     return cachedFloat32ArrayMemory0;
 }
 
+let cachedFloat64ArrayMemory0 = null;
+function getFloat64ArrayMemory0() {
+    if (cachedFloat64ArrayMemory0 === null || cachedFloat64ArrayMemory0.byteLength === 0) {
+        cachedFloat64ArrayMemory0 = new Float64Array(wasm.memory.buffer);
+    }
+    return cachedFloat64ArrayMemory0;
+}
+
 let cachedInt16ArrayMemory0 = null;
 function getInt16ArrayMemory0() {
     if (cachedInt16ArrayMemory0 === null || cachedInt16ArrayMemory0.byteLength === 0) {
@@ -4184,6 +4359,13 @@ function passArray8ToWasm0(arg, malloc) {
     return ptr;
 }
 
+function passArrayF64ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 8, 8) >>> 0;
+    getFloat64ArrayMemory0().set(arg, ptr / 8);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+
 function passArrayJsValueToWasm0(array, malloc) {
     const ptr = malloc(array.length * 4, 4) >>> 0;
     const mem = getDataViewMemory0();
@@ -4273,6 +4455,7 @@ function __wbg_finalize_init(instance, module) {
     wasmModule = module;
     cachedDataViewMemory0 = null;
     cachedFloat32ArrayMemory0 = null;
+    cachedFloat64ArrayMemory0 = null;
     cachedInt16ArrayMemory0 = null;
     cachedInt32ArrayMemory0 = null;
     cachedInt8ArrayMemory0 = null;

@@ -227,3 +227,33 @@ body {
   border-color: var(--accent-fill-color);
   color: var(--accent-fill-color);
 }
+
+/* Keyboard and screen-reader support: a visible focus ring on every
+   interactive element, and copy that only assistive technology reads (the
+   new-tab hint on the session link). */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.platform-tabs button:focus-visible,
+.start:focus-visible,
+.session-bar button:focus-visible,
+.docs-back-link:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* The selected tab already carries the accent border; its keyboard focus
+   ring stays distinct from selection. */
+.platform-tabs button[aria-selected='true']:focus-visible {
+  outline-offset: 3px;
+}
