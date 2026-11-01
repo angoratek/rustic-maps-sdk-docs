@@ -6,7 +6,7 @@ shaping (for example wheel ticks to zoom levels), inertia after a gesture
 ends, and any zoom-range policy beyond the camera’s own clamp stay on the
 platform side.</p>
 <p>Each method takes the current camera in and returns the adjusted camera,
-so the caller keeps single ownership of the live pose. The methods reuse
+so the caller keeps the live pose itself. The methods reuse
 the anchored camera’s clamping and projection math rather than duplicating
 it.</p>
 <p>The focal-point correction is exact, not iterative: a screen pixel’s
@@ -17,5 +17,5 @@ the candidate camera projects the focal pixel and the held ground point
 puts the world point back under the focal pixel at any pitch.</p>
 </div></details><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.CameraInteraction.html" title="trait map_rendering::camera_interaction::CameraInteraction">Camera<wbr>Interaction</a></dt><dd>Gesture-delta camera adjustments. Every method takes the pose in, answers
 the resulting pose out, and never mutates: <a href="../camera/struct.MapCamera.html" title="struct map_rendering::camera::MapCamera"><code>MapCamera</code></a> is small and
-<code>Copy</code>, so callers keep single ownership of the live pose while applying
+<code>Copy</code>, so callers keep the live pose itself while applying
 deltas.</dd></dl></section></div></main></body></html>

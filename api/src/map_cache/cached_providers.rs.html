@@ -3,8 +3,8 @@
 <a href=#3 id=3 data-nosnippet>3</a>//! Each wrapper implements a [`geospatial_traits`] contract by delegating
 <a href=#4 id=4 data-nosnippet>4</a>//! through [`map_core::execute_cache_then_network`] with a fingerprint built
 <a href=#5 id=5 data-nosnippet>5</a>//! from the request arguments. The wrapped provider is only contacted on a
-<a href=#6 id=6 data-nosnippet>6</a>//! cache miss, making network and cache-hit behavior indistinguishable to
-<a href=#7 id=7 data-nosnippet>7</a>//! callers — the trait-agnostic wiring called for by PLAN.md M2.
+<a href=#6 id=6 data-nosnippet>6</a>//! cache miss, so network and cache-hit behavior are indistinguishable to
+<a href=#7 id=7 data-nosnippet>7</a>//! callers.
 <a href=#8 id=8 data-nosnippet>8</a>
 <a href=#9 id=9 data-nosnippet>9</a></span><span class="kw">use </span><span class="kw">crate</span>::ResponseCategory;
 <a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span><span class="kw">crate</span>::request_fingerprint::{RequestDescriptor, coordinate_to_fingerprint_text};

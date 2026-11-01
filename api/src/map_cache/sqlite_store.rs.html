@@ -35,7 +35,7 @@
 <a href=#35 id=35 data-nosnippet>35</a>    );
 <a href=#36 id=36 data-nosnippet>36</a>    CREATE INDEX entries_last_accessed_idx ON entries (recency_sequence);
 <a href=#37 id=37 data-nosnippet>37</a>    "</span>,
-<a href=#38 id=38 data-nosnippet>38</a>    <span class="comment">// Version 2: the tile-pack tables (PRD FR-F) — one record per defined
+<a href=#38 id=38 data-nosnippet>38</a>    <span class="comment">// Version 2: the tile-pack tables — one record per defined
 <a href=#39 id=39 data-nosnippet>39</a>    // pack, and a membership table pinning every planned tile fingerprint.
 <a href=#40 id=40 data-nosnippet>40</a>    // A membership row whose entry is absent is inert (the tile is still to
 <a href=#41 id=41 data-nosnippet>41</a>    // download); the LRU eviction excludes member fingerprints entirely, so
@@ -320,7 +320,7 @@
 <a href=#320 id=320 data-nosnippet>320</a>    /// from `last_accessed_at`) until the total payload fits `budget_bytes`.
 <a href=#321 id=321 data-nosnippet>321</a>    /// A single entry larger than the budget is tolerated as-is.
 <a href=#322 id=322 data-nosnippet>322</a>    ///
-<a href=#323 id=323 data-nosnippet>323</a>    /// Tile-pack members are never LRU candidates (PRD FR-F): while their
+<a href=#323 id=323 data-nosnippet>323</a>    /// Tile-pack members are never LRU candidates: while their
 <a href=#324 id=324 data-nosnippet>324</a>    /// pack record exists, a pack's tiles are pinned against ordinary budget
 <a href=#325 id=325 data-nosnippet>325</a>    /// pressure and leave the store only through that pack's explicit
 <a href=#326 id=326 data-nosnippet>326</a>    /// eviction or the entry's time-to-live. The budget still counts pack

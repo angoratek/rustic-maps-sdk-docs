@@ -257,7 +257,7 @@
 <a href=#257 id=257 data-nosnippet>257</a>    </span>Detached,
 <a href=#258 id=258 data-nosnippet>258</a>}
 <a href=#259 id=259 data-nosnippet>259</a>
-<a href=#260 id=260 data-nosnippet>260</a><span class="doccomment">/// The occupancy of the vector base source's slot (M22): the installed
+<a href=#260 id=260 data-nosnippet>260</a><span class="doccomment">/// The occupancy of the vector base source's slot: the installed
 <a href=#261 id=261 data-nosnippet>261</a>/// scheduler, a draw that took it out and will restore it, or no source.
 <a href=#262 id=262 data-nosnippet>262</a>/// The discipline mirrors [`SurfaceSlot`]'s — an install or clear racing a
 <a href=#263 id=263 data-nosnippet>263</a>/// draw is refused rather than clobbered when the draw restores its
@@ -325,7 +325,7 @@
 <a href=#325 id=325 data-nosnippet>325</a>    /// validated into native overlays at insertion time, so a draw never
 <a href=#326 id=326 data-nosnippet>326</a>    /// validates. Outlives attach/detach cycles.
 <a href=#327 id=327 data-nosnippet>327</a>    </span>overlays: Mutex&lt;OverlayStore&gt;,
-<a href=#328 id=328 data-nosnippet>328</a>    <span class="doccomment">/// The drawing buffer's device pixels per point/CSS pixel (M30): the
+<a href=#328 id=328 data-nosnippet>328</a>    <span class="doccomment">/// The drawing buffer's device pixels per point/CSS pixel: the
 <a href=#329 id=329 data-nosnippet>329</a>    /// labels and the overlay screen sizes are point-sized by style, so the
 <a href=#330 id=330 data-nosnippet>330</a>    /// draw multiplies both by this ratio. Outlives attach/detach cycles like
 <a href=#331 id=331 data-nosnippet>331</a>    /// the overlay list; the platform shell reports it on attach, resize and
@@ -340,8 +340,8 @@
 <a href=#340 id=340 data-nosnippet>340</a>    /// (`is_frame_settled`'s inputs), rewritten after every completed
 <a href=#341 id=341 data-nosnippet>341</a>    /// non-failing draw.
 <a href=#342 id=342 data-nosnippet>342</a>    </span>last_drawn_frame: Mutex&lt;<span class="prelude-ty">Option</span>&lt;LastDrawnFrame&gt;&gt;,
-<a href=#343 id=343 data-nosnippet>343</a>    <span class="doccomment">/// The vector base source's occupancy (M22, see [`VectorBaseSlot`]);
-<a href=#344 id=344 data-nosnippet>344</a>    /// outlives attach/detach cycles like the overlay list.
+<a href=#343 id=343 data-nosnippet>343</a>    <span class="doccomment">/// The vector base source's occupancy (see [`VectorBaseSlot`]); outlives
+<a href=#344 id=344 data-nosnippet>344</a>    /// attach/detach cycles like the overlay list.
 <a href=#345 id=345 data-nosnippet>345</a>    </span>vector_base: Mutex&lt;VectorBaseSlot&gt;,
 <a href=#346 id=346 data-nosnippet>346</a>    <span class="doccomment">/// What the view draws a vector base with, for the status readback while
 <a href=#347 id=347 data-nosnippet>347</a>    /// a draw holds the scheduler.
@@ -502,8 +502,8 @@
 <a href=#502 id=502 data-nosnippet>502</a>    }
 <a href=#503 id=503 data-nosnippet>503</a>
 <a href=#504 id=504 data-nosnippet>504</a>    <span class="doccomment">/// Records the drawing buffer's device pixels per point/CSS pixel
-<a href=#505 id=505 data-nosnippet>505</a>    /// (`set_device_pixel_ratio`'s documented UDL method, M30): the labels
-<a href=#506 id=506 data-nosnippet>506</a>    /// and the overlay screen sizes are declared in points by the committed
+<a href=#505 id=505 data-nosnippet>505</a>    /// (`set_device_pixel_ratio`'s documented UDL method): the labels and
+<a href=#506 id=506 data-nosnippet>506</a>    /// the overlay screen sizes are declared in points by the committed
 <a href=#507 id=507 data-nosnippet>507</a>    /// styles, so the draw multiplies both by this ratio and they keep their
 <a href=#508 id=508 data-nosnippet>508</a>    /// declared point size on a 2× or 3× surface. The ratio outlives
 <a href=#509 id=509 data-nosnippet>509</a>    /// attach/detach cycles like the overlay list; a non-finite or
@@ -654,7 +654,7 @@
 <a href=#654 id=654 data-nosnippet>654</a>    }
 <a href=#655 id=655 data-nosnippet>655</a>
 <a href=#656 id=656 data-nosnippet>656</a>    <span class="doccomment">/// Installs a vector base map (`set_vector_tile_source`'s documented UDL
-<a href=#657 id=657 data-nosnippet>657</a>    /// method, M22): the source's URL template, descriptor and style id build
+<a href=#657 id=657 data-nosnippet>657</a>    /// method): the source's URL template, descriptor and style id build
 <a href=#658 id=658 data-nosnippet>658</a>    /// the shared [`VectorBaseScheduler`] the draw resolves every frame, and
 <a href=#659 id=659 data-nosnippet>659</a>    /// replace any base already installed. The whole source builds before the
 <a href=#660 id=660 data-nosnippet>660</a>    /// slot moves, so a refused call (a malformed template, an inverted zoom
@@ -704,7 +704,7 @@
 <a href=#704 id=704 data-nosnippet>704</a>    }
 <a href=#705 id=705 data-nosnippet>705</a>
 <a href=#706 id=706 data-nosnippet>706</a>    <span class="doccomment">/// Removes the vector base map (`clear_vector_tile_source`'s documented
-<a href=#707 id=707 data-nosnippet>707</a>    /// UDL method, M22): following frames draw raster tiles and overlays
+<a href=#707 id=707 data-nosnippet>707</a>    /// UDL method): following frames draw raster tiles and overlays
 <a href=#708 id=708 data-nosnippet>708</a>    /// alone. Like installing, clearing while a draw is in flight is refused.
 <a href=#709 id=709 data-nosnippet>709</a>    </span><span class="kw">pub fn </span>clear_vector_tile_source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), SdkError&gt; {
 <a href=#710 id=710 data-nosnippet>710</a>        <span class="kw">let </span><span class="kw-2">mut </span>slot_state = <span class="self">self</span>.vector_base_lock();
@@ -722,7 +722,7 @@
 <a href=#722 id=722 data-nosnippet>722</a>    }
 <a href=#723 id=723 data-nosnippet>723</a>
 <a href=#724 id=724 data-nosnippet>724</a>    <span class="doccomment">/// Reads the vector base source's status (`vector_tile_source_status`'s
-<a href=#725 id=725 data-nosnippet>725</a>    /// documented UDL method, M22): the installed source's style, name,
+<a href=#725 id=725 data-nosnippet>725</a>    /// documented UDL method): the installed source's style, name,
 <a href=#726 id=726 data-nosnippet>726</a>    /// attribution and zoom ceiling plus the last resolved frame's drawn and
 <a href=#727 id=727 data-nosnippet>727</a>    /// failed tile counts. A pure query that never throws; with no source
 <a href=#728 id=728 data-nosnippet>728</a>    /// installed it answers an honest not-configured status.
