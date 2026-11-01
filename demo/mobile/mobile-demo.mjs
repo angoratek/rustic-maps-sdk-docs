@@ -63,6 +63,7 @@ const elements = {
   countdown: document.querySelector('[data-role="session-countdown"]'),
   stop: document.querySelector('[data-role="stop"]'),
   resting: document.querySelector('[data-role="resting"]'),
+  restingFallback: document.querySelector('[data-role="resting-fallback"]'),
   budgetLine: document.querySelector('[data-role="budget-line"]'),
   manifestLine: document.querySelector('[data-role="manifest-line"]'),
 };
@@ -183,11 +184,17 @@ function renderPoster() {
   }
 }
 
-/** Shows the resting state with the endpoint's own words. */
+/**
+ * Shows the resting state with the endpoint's own words. The poster stays in
+ * place so Start remains available: a refusal that turns out to be transient
+ * can be retried without reloading the page, which is also what the
+ * session-ended message tells the visitor to do.
+ */
 function showResting(detail, remainingSeconds = null) {
-  elements.poster.hidden = true;
+  elements.poster.hidden = false;
   elements.session.hidden = true;
   elements.resting.hidden = false;
+  elements.restingFallback.hidden = false;
   const minutesLeft = Number.isFinite(remainingSeconds)
     ? ` About ${Math.floor(remainingSeconds / 60)} of this month’s streamed minutes remain.`
     : '';
@@ -204,6 +211,7 @@ function stopSession() {
   elements.session.hidden = true;
   elements.poster.hidden = false;
   elements.resting.hidden = true;
+  elements.restingFallback.hidden = true;
   elements.countdown.textContent = '';
 }
 
@@ -242,6 +250,7 @@ function startSession(build, sessionSeconds) {
   elements.sessionTitle.textContent = `${appNameForPlatform()} is ready`;
   elements.poster.hidden = true;
   elements.resting.hidden = true;
+  elements.restingFallback.hidden = true;
   elements.session.hidden = false;
   // The Start button just left the page; move the keyboard and screen-reader
   // focus to the link that opens the session instead of dropping it to the
@@ -310,6 +319,7 @@ function selectPlatform(platform) {
   elements.stage.setAttribute('aria-labelledby', `platform-tab-${platform}`);
   elements.poster.hidden = false;
   elements.resting.hidden = true;
+  elements.restingFallback.hidden = true;
   renderPoster();
 }
 

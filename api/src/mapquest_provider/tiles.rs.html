@@ -18,8 +18,8 @@
 <a href=#18 id=18 data-nosnippet>18</a>
 <a href=#19 id=19 data-nosnippet>19</a><span class="doccomment">/// The MapQuest terms' imagery-caching ceiling: raster-tile responses may be
 <a href=#20 id=20 data-nosnippet>20</a>/// stored for up to **30 calendar days**. Declared here as the
-<a href=#21 id=21 data-nosnippet>21</a>/// provider-specific caching term (PRD §6.7, owner ruling 2026-10-28) so an
-<a href=#22 id=22 data-nosnippet>22</a>/// integrator caching tiles knows the upper bound for this provider; the
+<a href=#21 id=21 data-nosnippet>21</a>/// provider-specific caching term so an integrator caching tiles knows the
+<a href=#22 id=22 data-nosnippet>22</a>/// upper bound for this provider; the
 <a href=#23 id=23 data-nosnippet>23</a>/// general cache layer's tiles default equals this ceiling, enforced by
 <a href=#24 id=24 data-nosnippet>24</a>/// `tiles.rs`'s lockstep test.
 <a href=#25 id=25 data-nosnippet>25</a></span><span class="kw">pub const </span>MAPQUEST_RASTER_TILE_CACHE_CEILING_SECONDS: u64 = <span class="number">30 </span>* <span class="number">24 </span>* <span class="number">60 </span>* <span class="number">60</span>;
@@ -115,7 +115,7 @@
 <a href=#115 id=115 data-nosnippet>115</a>
 <a href=#116 id=116 data-nosnippet>116</a>    <span class="doccomment">/// The general cache layer's tiles default must equal this provider's
 <a href=#117 id=117 data-nosnippet>117</a>    /// documented terms ceiling, so the default-heavy posture never exceeds
-<a href=#118 id=118 data-nosnippet>118</a>    /// what the MapQuest terms allow (PRD §6.7).
+<a href=#118 id=118 data-nosnippet>118</a>    /// what the MapQuest terms allow.
 <a href=#119 id=119 data-nosnippet>119</a>    </span><span class="attr">#[test]
 <a href=#120 id=120 data-nosnippet>120</a>    </span><span class="kw">fn </span>cache_tiles_default_matches_mapquest_terms_ceiling() {
 <a href=#121 id=121 data-nosnippet>121</a>        <span class="macro">assert_eq!</span>(

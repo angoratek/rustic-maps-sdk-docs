@@ -51,12 +51,12 @@
 <a href=#51 id=51 data-nosnippet>51</a></span><span class="kw">pub const </span>OSMUS_SOURDOUGH_ATTRIBUTION_TEXT: <span class="kw-2">&amp;</span>str = <span class="string">"Tiles by OSM US © OpenStreetMap contributors"</span>;
 <a href=#52 id=52 data-nosnippet>52</a>
 <a href=#53 id=53 data-nosnippet>53</a><span class="doccomment">/// The imagery-caching ceiling this provider installs: **30 calendar days**,
-<a href=#54 id=54 data-nosnippet>54</a>/// the common maximum under imagery-provider terms (PRD §6.7, owner ruling
-<a href=#55 id=55 data-nosnippet>55</a>/// 2026-10-28) and the same ceiling the MapQuest raster path inherits. The
+<a href=#54 id=54 data-nosnippet>54</a>/// the common maximum under imagery-provider terms and the same ceiling the
+<a href=#55 id=55 data-nosnippet>55</a>/// MapQuest raster path inherits. The
 <a href=#56 id=56 data-nosnippet>56</a>/// usage policy separately requires honoring `Cache-Control` response
 <a href=#57 id=57 data-nosnippet>57</a>/// headers; a live probe (2026-10-29) observed
 <a href=#58 id=58 data-nosnippet>58</a>/// `Cache-Control: public, max-age=86400` — an 86400-second per-response
-<a href=#59 id=59 data-nosnippet>59</a>/// tightening is a refinement the decoder slice may take, while this 30-day
+<a href=#59 id=59 data-nosnippet>59</a>/// tightening is a possible refinement, while this 30-day
 <a href=#60 id=60 data-nosnippet>60</a>/// value remains the SDK's terms ceiling, enforced by this crate's lockstep
 <a href=#61 id=61 data-nosnippet>61</a>/// test against `map_cache::ResponseCategory::VectorTiles`.
 <a href=#62 id=62 data-nosnippet>62</a></span><span class="kw">pub const </span>OSMUS_VECTOR_TILE_CACHE_CEILING_SECONDS: u64 = <span class="number">30 </span>* <span class="number">24 </span>* <span class="number">60 </span>* <span class="number">60</span>;
@@ -211,7 +211,7 @@
 <a href=#211 id=211 data-nosnippet>211</a>
 <a href=#212 id=212 data-nosnippet>212</a>    <span class="doccomment">/// The general cache layer's vector-tiles default must equal this
 <a href=#213 id=213 data-nosnippet>213</a>    /// provider's terms ceiling, so the default-heavy posture never exceeds
-<a href=#214 id=214 data-nosnippet>214</a>    /// what the terms allow (PRD §6.7), mirroring the raster path's
+<a href=#214 id=214 data-nosnippet>214</a>    /// what the terms allow, mirroring the raster path's
 <a href=#215 id=215 data-nosnippet>215</a>    /// lockstep test.
 <a href=#216 id=216 data-nosnippet>216</a>    </span><span class="attr">#[test]
 <a href=#217 id=217 data-nosnippet>217</a>    </span><span class="kw">fn </span>cache_vector_tiles_default_matches_provider_terms_ceiling() {

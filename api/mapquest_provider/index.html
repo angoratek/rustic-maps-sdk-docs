@@ -10,7 +10,7 @@ supported by the documented MapQuest platform
 </ul>
 <p>The Elevation API is retired (absent from the current documentation), so
 <a href="../geospatial_traits/trait.ElevationProvider.html" title="trait geospatial_traits::ElevationProvider"><code>geospatial_traits::ElevationProvider</code></a> has no MapQuest implementation
-and its registry slot stays unconfigured; see PLAN.md M1.</p>
+and its registry slot stays unconfigured.</p>
 <p>All calls share one rate-limited HTTP client (<a href="client/index.html" title="mod mapquest_provider::client"><code>client</code></a>) with key
 injection, bounded idempotent-GET retries and the <code>info.statuscode</code> -&gt;
 [<code>SDKError</code>] mapping (<a href="error_mapping/index.html" title="mod mapquest_provider::error_mapping"><code>error_mapping</code></a>).</p>

@@ -2,7 +2,7 @@
 </div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.MapQuestRasterTileProvider.html" title="struct mapquest_provider::tiles::MapQuestRasterTileProvider">MapQuest<wbr>Raster<wbr>Tile<wbr>Provider</a></dt><dd>Raster tiles served from the documented
 <code>/tiles/v1/render/latest/{style}/{z}/{x}/{y}/{size}/{format}</code> template.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.MAPQUEST_RASTER_TILE_CACHE_CEILING_SECONDS.html" title="constant mapquest_provider::tiles::MAPQUEST_RASTER_TILE_CACHE_CEILING_SECONDS">MAPQUEST_<wbr>RASTER_<wbr>TILE_<wbr>CACHE_<wbr>CEILING_<wbr>SECONDS</a></dt><dd>The MapQuest terms’ imagery-caching ceiling: raster-tile responses may be
 stored for up to <strong>30 calendar days</strong>. Declared here as the
-provider-specific caching term (PRD §6.7, owner ruling 2026-10-28) so an
-integrator caching tiles knows the upper bound for this provider; the
+provider-specific caching term so an integrator caching tiles knows the
+upper bound for this provider; the
 general cache layer’s tiles default equals this ceiling, enforced by
 <code>tiles.rs</code>’s lockstep test.</dd></dl></section></div></main></body></html>

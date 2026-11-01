@@ -25,8 +25,8 @@ the state without reinstalling it (see [<code>SurfaceSlot::Busy</code>]).</p>
     &amp;self,
     device_pixel_ratio: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>,
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, <a class="enum" href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError">SdkError</a>&gt;</h4></section></summary><div class="docblock"><p>Records the drawing buffer’s device pixels per point/CSS pixel
-(<code>set_device_pixel_ratio</code>’s documented UDL method, M30): the labels
-and the overlay screen sizes are declared in points by the committed
+(<code>set_device_pixel_ratio</code>’s documented UDL method): the labels and
+the overlay screen sizes are declared in points by the committed
 styles, so the draw multiplies both by this ratio and they keep their
 declared point size on a 2× or 3× surface. The ratio outlives
 attach/detach cycles like the overlay list; a non-finite or
@@ -84,7 +84,7 @@ view is detached.</p>
     &amp;self,
     source: <a class="struct" href="../records/struct.UrlTemplateVectorTileSource.html" title="struct map_native_core::records::UrlTemplateVectorTileSource">UrlTemplateVectorTileSource</a>,
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, <a class="enum" href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError">SdkError</a>&gt;</h4></section></summary><div class="docblock"><p>Installs a vector base map (<code>set_vector_tile_source</code>’s documented UDL
-method, M22): the source’s URL template, descriptor and style id build
+method): the source’s URL template, descriptor and style id build
 the shared <a href="../../map_rendering/vector_base/struct.VectorBaseScheduler.html" title="struct map_rendering::vector_base::VectorBaseScheduler"><code>VectorBaseScheduler</code></a> the draw resolves every frame, and
 replace any base already installed. The whole source builds before the
 slot moves, so a refused call (a malformed template, an inverted zoom
@@ -92,10 +92,10 @@ range or an unknown style id) leaves the previously installed base in
 force. Installing while a draw is in flight is refused, because the
 draw owns the scheduler for its duration.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.clear_vector_tile_source" class="method"><a class="src rightside" href="../../src/map_native_core/surface_view.rs.html#709-722">Source</a><h4 class="code-header">pub fn <a href="#method.clear_vector_tile_source" class="fn">clear_vector_tile_source</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, <a class="enum" href="../error/enum.SdkError.html" title="enum map_native_core::error::SdkError">SdkError</a>&gt;</h4></section></summary><div class="docblock"><p>Removes the vector base map (<code>clear_vector_tile_source</code>’s documented
-UDL method, M22): following frames draw raster tiles and overlays
+UDL method): following frames draw raster tiles and overlays
 alone. Like installing, clearing while a draw is in flight is refused.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.vector_tile_source_status" class="method"><a class="src rightside" href="../../src/map_native_core/surface_view.rs.html#729-747">Source</a><h4 class="code-header">pub fn <a href="#method.vector_tile_source_status" class="fn">vector_tile_source_status</a>(&amp;self) -&gt; <a class="struct" href="../records/struct.VectorTileSourceStatus.html" title="struct map_native_core::records::VectorTileSourceStatus">VectorTileSourceStatus</a></h4></section></summary><div class="docblock"><p>Reads the vector base source’s status (<code>vector_tile_source_status</code>’s
-documented UDL method, M22): the installed source’s style, name,
+documented UDL method): the installed source’s style, name,
 attribution and zoom ceiling plus the last resolved frame’s drawn and
 failed tile counts. A pure query that never throws; with no source
 installed it answers an honest not-configured status.</p>

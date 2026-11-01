@@ -201,6 +201,13 @@ body {
   text-align: center;
 }
 
+.resting-fallback {
+  margin: 0;
+  padding: 0 var(--gutter-inline) 32px;
+  color: var(--text-secondary-color);
+  text-align: center;
+}
+
 .notes {
   margin-top: 24px;
   color: var(--text-secondary-color);

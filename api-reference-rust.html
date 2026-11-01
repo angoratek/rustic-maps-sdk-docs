@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-83cce045.js";
+            window.path_to_searchindex_js = "searchindex-c9020bb1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -568,7 +568,7 @@
 <h3 id="module-camera_interaction"><a class="header" href="#module-camera_interaction">Module <code>camera_interaction</code></a></h3>
 <p>Camera adjustments driven by platform gesture input.</p>
 <p>A platform recognizes gestures (pointer capture, momentum, pinch to zoom, and so on) and forwards plain deltas; [<code>CameraInteraction</code>] owns the camera adjustment those deltas imply. Gesture recognition itself, delta shaping (for example wheel ticks to zoom levels), inertia after a gesture ends, and any zoom-range policy beyond the camera’s own clamp stay on the platform side.</p>
-<p>Each method takes the current camera in and returns the adjusted camera, so the caller keeps single ownership of the live pose. The methods reuse the anchored camera’s clamping and projection math rather than duplicating it.</p>
+<p>Each method takes the current camera in and returns the adjusted camera, so the caller keeps the live pose itself. The methods reuse the anchored camera’s clamping and projection math rather than duplicating it.</p>
 <p>The focal-point correction is exact, not iterative: a screen pixel’s ground ray direction depends only on bearing, pitch, field of view and viewport — never on zoom or camera position — so after a zoom or rotate delta, translating the camera anchor by the ground offset between where the candidate camera projects the focal pixel and the held ground point puts the world point back under the focal pixel at any pitch.</p>
 <div class="table-wrapper">
 <table>
@@ -576,7 +576,7 @@
 <tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>CameraInteraction</code></td><td>trait</td><td><code>pub trait CameraInteraction</code></td><td>Gesture-delta camera adjustments. Every method takes the pose in, answers the resulting pose out, and never mutates: [<code>MapCamera</code>] is small and <code>Copy</code>, so callers keep single ownership of the live pose while applying deltas. Pan, focal zoom and rotation are the supported deltas; the camera’s own clamps (zoom <code>[0, 24]</code>, pitch <code>[0, 75]°</code>, bearing wrapped into <code>[0, 360)</code>) and Mercator latitude bounds always hold on the answer.</td></tr>
+<tr><td><code>CameraInteraction</code></td><td>trait</td><td><code>pub trait CameraInteraction</code></td><td>Gesture-delta camera adjustments. Every method takes the pose in, answers the resulting pose out, and never mutates: [<code>MapCamera</code>] is small and <code>Copy</code>, so callers keep the live pose itself while applying deltas. Pan, focal zoom and rotation are the supported deltas; the camera’s own clamps (zoom <code>[0, 24]</code>, pitch <code>[0, 75]°</code>, bearing wrapped into <code>[0, 360)</code>) and Mercator latitude bounds always hold on the answer.</td></tr>
 </tbody>
 </table>
 </div>
@@ -783,7 +783,7 @@
 </div>
 <h3 id="module-renderer"><a class="header" href="#module-renderer">Module <code>renderer</code></a></h3>
 <p>GPU-free frame assembly: prepared tiles mapped to drawable quads.</p>
-<p>The pure half of the renderer. A [<code>Renderer</code>] consumes the camera pose, the viewport, and the tiles the [<code>crate::tile_scheduler::TileScheduler</code>] prepared for the frame, and produces the list of textured quads to draw in normalized world coordinates, including parent-fallback quads for tiles that are not yet pooled.</p>
+<p>The pure half of the renderer. A [<code>Renderer</code>] consumes the camera pose, the viewport, and the tiles the [<code>crate::tile_scheduler::TileScheduler</code>] prepared for the frame, and produces the list of textured quads to draw in normalized world coordinates, including parent-fallback quads for tiles that the texture pool does not hold.</p>
 <p>Quads are projected into per-fragment clip-space vertex arrays: a world span is wrapped around the camera as one unit (never corner by corner) and split into at most one vertex array per world copy it reaches, so spans crossing the antimeridian render contiguously instead of tearing. See [<code>FrameProjection</code>].</p>
 <p>Everything in this module is free of <code>wgpu</code> types, so the quad assembly, the fallback texture window math, and the clip-space projection of the quad corners are all unit-testable without a GPU.</p>
 <div class="table-wrapper">

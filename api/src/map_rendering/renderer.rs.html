@@ -4,7 +4,7 @@
 <a href=#4 id=4 data-nosnippet>4</a>//! viewport, and the tiles the [`crate::tile_scheduler::TileScheduler`]
 <a href=#5 id=5 data-nosnippet>5</a>//! prepared for the frame, and produces the list of textured quads to draw in
 <a href=#6 id=6 data-nosnippet>6</a>//! normalized world coordinates, including parent-fallback quads for tiles
-<a href=#7 id=7 data-nosnippet>7</a>//! that are not yet pooled.
+<a href=#7 id=7 data-nosnippet>7</a>//! that the texture pool does not hold.
 <a href=#8 id=8 data-nosnippet>8</a>//!
 <a href=#9 id=9 data-nosnippet>9</a>//! Quads are projected into per-fragment clip-space vertex arrays: a world
 <a href=#10 id=10 data-nosnippet>10</a>//! span is wrapped around the camera as one unit (never corner by corner) and
@@ -321,7 +321,7 @@
 <a href=#321 id=321 data-nosnippet>321</a>/// ground strip — the part the GPU's exact frustum clip cuts into view — can
 <a href=#322 id=322 data-nosnippet>322</a>/// sit inside the viewport while every surviving corner's divided bounding
 <a href=#323 id=323 data-nosnippet>323</a>/// box does not. The measured failure band at a 75-degree field of view is a
-<a href=#324 id=324 data-nosnippet>324</a>/// few degrees wide around 32 degrees of pitch; culling such a strip left a
+<a href=#324 id=324 data-nosnippet>324</a>/// few degrees wide near 32 degrees of pitch; culling such a strip left a
 <a href=#325 id=325 data-nosnippet>325</a>/// visible map hole. A conservative `true` costs an extra draw the GPU clips.
 <a href=#326 id=326 data-nosnippet>326</a></span><span class="kw">fn </span>fragment_reaches_viewport(fragment: <span class="kw-2">&amp;</span>[ClipSpaceTileVertex; <span class="number">4</span>]) -&gt; bool {
 <a href=#327 id=327 data-nosnippet>327</a>    <span class="kw">if </span>fragment.iter().any(|vertex| vertex.clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0</span>) {
