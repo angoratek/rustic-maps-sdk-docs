@@ -45,6 +45,7 @@
         SmoothstepTimedEase,
         bearing_off_north_degrees,
         follow_zoom_toward_trip_end,
+        initial_bearing_degrees,
         polyline_fix_at_travelled_meters,
         polyline_length_meters,
         scale_bar_distance_label_text,
@@ -84,6 +85,8 @@
 
       const INITIAL_ZOOM_LEVEL = 14;
       const FIELD_OF_VIEW_DEGREES = 60;
+      /** Full circle in degrees (the bearing's wrap modulus). */
+      const FULL_CIRCLE_DEGREES = 360.0;
       const MINIMUM_ZOOM_LEVEL = 0;
       const MAXIMUM_ZOOM_LEVEL = 20;
       const ZOOM_WHEEL_SCALE = 0.0025;
@@ -94,6 +97,33 @@
       const DOUBLE_TAP_ZOOM_STEP = 1.0;
       const DOUBLE_TAP_INTERVAL_MILLISECONDS = 350;
       const DOUBLE_TAP_MAXIMUM_MOVEMENT_PIXELS = 24;
+      // The keyboard camera model (§4.2, accessibility): a focused map
+      // answers the arrow keys with a pan, +/- with one zoom level,
+      // Shift+arrows with rotation and tilt, and Home with a north-up 2D
+      // reset. The pan step is CSS pixels so the same key travel reads the
+      // same at every device ratio; the angle steps are degrees.
+      const KEYBOARD_PAN_STEP_CSS_PIXELS = 100;
+      const KEYBOARD_ZOOM_STEP_LEVELS = 1;
+      const KEYBOARD_ROTATE_STEP_DEGREES = 5;
+      const KEYBOARD_PITCH_STEP_DEGREES = 5;
+      const MINIMUM_PITCH_DEGREES = 0;
+      const MAXIMUM_PITCH_DEGREES = 60;
+      // Rapid key repeats collapse into one spoken update instead of one per
+      // keydown (a held arrow would otherwise queue a dozen polite messages).
+      const MAP_STATUS_ANNOUNCEMENT_DELAY_MILLISECONDS = 150;
+      // A visitor who asks the platform for less motion gets camera moves
+      // applied immediately rather than eased (the stylesheet drops the
+      // decorative transitions under the same media query).
+      const REDUCED_MOTION_MEDIA_QUERY = '(prefers-reduced-motion: reduce)';
+      function prefers_reduced_motion() {
+        return typeof window.matchMedia === 'function'
+          && window.matchMedia(REDUCED_MOTION_MEDIA_QUERY).matches;
+      }
+      function eased_camera_move_duration_milliseconds() {
+        return prefers_reduced_motion()
+          ? 0
+          : EASED_CAMERA_MOVE_DURATION_MILLISECONDS;
+      }
       const TILE_COUNT_AT_ZOOM_ZERO = 1;
       const DEGREES_AT_ZOOM_ZERO = 360;
       // Canvas 2D ignores CSS var() style strings (docs/browser-loop.md), so
@@ -201,6 +231,11 @@
       // 250 ms — mirroring the Android demo's dispatch interval).
       const FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS =
         1000 * (FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS / FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR);
+      // A recorded demo plan dispatches its own samples at the trace's
+      // recorded interval divided by the demo acceleration and the speed
+      // choice (the native SimulatedTripDriver's dispatchIntervalMillis). The
+      // floor keeps a fast multiplier from spinning the timer.
+      const DEMO_PLAN_MINIMUM_DISPATCH_INTERVAL_MILLISECONDS = 1;
 
       const map_canvas = document.getElementById('map-canvas');
       const overlay_canvas = document.getElementById('map-overlay');
@@ -211,11 +246,25 @@
       // pins): plain `setOverlays` descriptors composed beside the scene
       // toggles over any base layer.
       let trip_route_overlays = [];
+      // The offline-maps card's route line (the committed routing-graph demo
+      // request): drawn beside the planned route and the scene overlays.
+      let offline_route_overlays = [];
       // The route record behind those overlays, kept so the wasm `Navigator`
       // can start on the same geometry the camera follows (the overlays alone
       // carry no steps or maneuvers).
       let planned_route_record = null;
+      // The demo plan the Advanced panel currently has selected: the artifact
+      // definition plus its loaded recorded trace. While it is set (and no
+      // later route plan superseded it) the simulated trip replays the trace's
+      // own samples, exactly as the native `SimulatedTripDriver` does, instead
+      // of walking a route polyline.
+      let selected_demo_plan_trace = null;
       const status_element = document.getElementById('harness-status');
+      // The keyboard model's spoken feedback (polite live region, visually
+      // hidden): pan announces the new center, zoom the level, rotation the
+      // bearing and tilt the pitch, so a screen-reader user can confirm every
+      // keypress without seeing the frame.
+      const map_status_element = document.getElementById('map-status');
       const status_line_element = document.getElementById('status-line');
       const readout_element = document.getElementById('readout');
       const renderer_readout_control = document.getElementById('renderer-readout-control');
@@ -272,6 +321,7 @@
       const follow_demo_speed_controls = document.getElementById('follow-demo-speed-controls');
       const follow_demo_pause_control = document.getElementById('follow-demo-pause-control');
       const follow_demo_seek_control = document.getElementById('follow-demo-seek-control');
+      const follow_demo_seek_row = document.getElementById('follow-demo-seek-row');
       const diagnostics_refresh_control = document.getElementById('diagnostics-refresh-control');
       const diagnostics_facts_element = document.getElementById('diagnostics-facts-lines');
       const diagnostics_event_lines = document.getElementById('diagnostics-event-lines');
@@ -371,6 +421,10 @@
       const trip_plan_route_control = document.getElementById('trip-plan-route-control');
       const trip_plan_route_reason = document.getElementById('trip-plan-route-reason');
       const trip_route_result = document.getElementById('trip-route-result');
+      const offline_route_control = document.getElementById('offline-route-control');
+      const offline_route_result = document.getElementById('offline-route-result');
+      const offline_route_facts = document.getElementById('offline-route-facts');
+      const offline_maps_status = document.getElementById('offline-maps-status');
       const provider_tile_control = document.getElementById('provider-tile-control');
       const provider_tile_result = document.getElementById('provider-tile-result');
       const provider_tile_preview = document.getElementById('provider-tile-canvas');
@@ -1075,6 +1129,10 @@
         /** Draws the planned route: the step-shape polyline plus the A/B
          * pins, framed with margin, and reports the summary honestly. */
         function show_trip_route(route, origin_endpoint, destination_endpoint, is_recorded) {
+          // A freshly planned route supersedes a selected demo plan: the
+          // native reference apps' `activeSimulatedTrace` rule (a planned
+          // route wins over the picker's plan).
+          clear_selected_demo_plan();
           const polyline = route_polyline_coordinates(route);
           planned_route_record = route;
           trip_route_overlays = [
@@ -1120,6 +1178,143 @@
               : 'Live route planned.',
             'success');
         }
+
+        // Demo plans (M31, docs/ReferenceAppUX.md §4.1): the Advanced panel's
+        // picker offers the shared artifact's recorded plans. Selecting one
+        // loads its trace, draws and frames the recorded route, and makes it
+        // the walk the simulated trip replays (the native pickers' contract).
+        // The trip planner's own Plan route supersedes the selection.
+        const DEMO_PLAN_TRACE_URL_PREFIX = 'navigation-traces/';
+        const demo_plan_definitions = REFERENCE_SCENE_ARTIFACT.demo_plans ?? [];
+        const demo_plan_chips_element = document.getElementById('demo-plan-chips');
+        const demo_plan_description_element =
+          document.getElementById('demo-plan-description');
+        const demo_plan_status_element = document.getElementById('demo-plans-status');
+        const demo_plan_clear_control =
+          document.getElementById('demo-plan-clear-control');
+        let selected_demo_plan_chip = null;
+
+        function set_demo_plan_status(text) {
+          demo_plan_status_element.textContent = text;
+          demo_plan_status_element.hidden = text === '';
+        }
+
+        /** Marks one plan chip selected, or clears the mark with null. */
+        function mark_demo_plan_chip(plan_chip) {
+          if (selected_demo_plan_chip !== null) {
+            selected_demo_plan_chip.classList.remove('selected');
+            selected_demo_plan_chip.setAttribute('aria-pressed', 'false');
+          }
+          selected_demo_plan_chip = plan_chip;
+          if (plan_chip !== null) {
+            plan_chip.classList.add('selected');
+            plan_chip.setAttribute('aria-pressed', 'true');
+          }
+        }
+
+        /** Clears the picker selection and the plan's drawn route (a later
+         * planned route takes over both). */
+        function clear_selected_demo_plan() {
+          if (selected_demo_plan_trace === null) return;
+          selected_demo_plan_trace = null;
+          planned_route_record = null;
+          trip_route_overlays = [];
+          apply_overlays();
+          mark_demo_plan_chip(null);
+          demo_plan_description_element.textContent = '';
+          demo_plan_description_element.hidden = true;
+          set_demo_plan_status('');
+        }
+
+        /** Builds one chip per artifact plan, in artifact order. */
+        function render_demo_plan_chips() {
+          demo_plan_chips_element.replaceChildren();
+          for (const plan_definition of demo_plan_definitions) {
+            const plan_chip = document.createElement('button');
+            plan_chip.type = 'button';
+            plan_chip.className = 'trip-suggestion-chip';
+            plan_chip.textContent = plan_definition.label;
+            plan_chip.dataset.demoPlanScenario = plan_definition.scenario;
+            plan_chip.setAttribute('aria-pressed', 'false');
+            plan_chip.addEventListener('click', () => {
+              select_demo_plan(plan_definition, plan_chip);
+            });
+            demo_plan_chips_element.append(plan_chip);
+          }
+        }
+
+        /** Loads one plan's recorded trace, draws and frames its route, and
+         * arms the simulated-trip control to replay it. A refusal is reported
+         * verbatim; nothing is invented. */
+        async function select_demo_plan(plan_definition, plan_chip) {
+          set_demo_plan_status('');
+          try {
+            const trace_url =
+              `${DEMO_PLAN_TRACE_URL_PREFIX}${plan_definition.scenario}.json`;
+            const trace_response = await fetch(trace_url);
+            if (!trace_response.ok) {
+              throw new Error(
+                `the recorded trace "${plan_definition.scenario}" is not served `
+                + `(${trace_response.status})`);
+            }
+            const recorded_trace = await trace_response.json();
+            const polyline = route_polyline_coordinates(recorded_trace.route);
+            if (polyline.length < 2) {
+              throw new Error('the recorded trace route carries no geometry to draw');
+            }
+            // A running trip on the previous plan or route is replaced, not
+            // left driving a route the map no longer shows.
+            if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+              end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
+            }
+            selected_demo_plan_trace = {
+              plan: plan_definition,
+              trace: recorded_trace,
+              polyline,
+            };
+            planned_route_record = recorded_trace.route;
+            // The recorded route's own first and last vertices are its
+            // endpoints: the plan's A/B pins, never invented coordinates.
+            trip_route_overlays = [
+              { kind: 'routePolyline', coordinates: polyline },
+              {
+                kind: 'pointPins',
+                positions: [polyline[0]],
+                color: TRIP_ORIGIN_PIN_COLOR,
+              },
+              {
+                kind: 'pointPins',
+                positions: [polyline[polyline.length - 1]],
+                color: TRIP_DESTINATION_PIN_COLOR,
+              },
+            ];
+            apply_overlays();
+            frame_trip_route(route_bounding_box(recorded_trace.route, polyline));
+            trip_route_result.hidden = true;
+            mark_demo_plan_chip(plan_chip);
+            demo_plan_description_element.textContent = plan_definition.description;
+            demo_plan_description_element.hidden = false;
+            render_navigation_idle(
+              'Start the simulated trip to replay the selected plan\'s recorded trace.');
+            set_demo_plan_status('Recorded demo plan ready.');
+            clear_error_report();
+          } catch (plan_failure) {
+            const failure_text = String(plan_failure?.message ?? plan_failure);
+            set_demo_plan_status(`Refused: ${failure_text}`);
+            show_error_report('Demo plan', failure_text);
+          }
+        }
+
+        demo_plan_clear_control.addEventListener('click', () => {
+          if (selected_demo_plan_trace === null) return;
+          if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+            end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
+          }
+          clear_selected_demo_plan();
+          render_navigation_idle(NAVIGATION_IDLE_REASON_TEXT);
+        });
+
+        render_demo_plan_chips();
 
         trip_plan_route_control.addEventListener('click', async () => {
           if (trip_plan_route_control.disabled) return;
@@ -1192,6 +1387,103 @@
           tile_bitmap.close();
           provider_tile_preview.hidden = false;
         }
+
+        // The offline-maps card (§4.1/§2.5): plans the recorded routing-grid
+        // demo request over the committed archive the dev server (and the
+        // staged site) serves same-origin, through the contract's
+        // `offlineRouteFromArchiveBytes` free function. It draws through the
+        // same overlay composer and route framing the live planner uses, and
+        // the card states plainly that the graph is recorded test data.
+        const OFFLINE_GRAPH_FIXTURE_URL = '/offline-graph/routing_grid.rmog';
+        // The routing-grid fixture's straight oneway street: the same demo
+        // request the native reference apps and the book snippet use.
+        const OFFLINE_ROUTE_START_LATITUDE_DEGREES = 0.001;
+        const OFFLINE_ROUTE_START_LONGITUDE_DEGREES = 0.0;
+        const OFFLINE_ROUTE_END_LATITUDE_DEGREES = 0.001;
+        const OFFLINE_ROUTE_END_LONGITUDE_DEGREES = 0.002;
+        // The grid route runs along one latitude, so its own box has zero
+        // height and the contract's fit refuses a zero-area box. The framing
+        // pads each edge by this many degrees (roughly half a segment); the
+        // drawn polyline stays exactly the route's geometry.
+        const OFFLINE_ROUTE_FIT_PADDING_DEGREES = 0.0005;
+        function offline_route_fit_box(route, polyline) {
+          const route_box = route_bounding_box(route, polyline);
+          const south_latitude = Math.min(
+            route_box.south_west.latitude, route_box.north_east.latitude);
+          const north_latitude = Math.max(
+            route_box.south_west.latitude, route_box.north_east.latitude);
+          const west_longitude = Math.min(
+            route_box.south_west.longitude, route_box.north_east.longitude);
+          const east_longitude = Math.max(
+            route_box.south_west.longitude, route_box.north_east.longitude);
+          return {
+            south_west: {
+              latitude: south_latitude - OFFLINE_ROUTE_FIT_PADDING_DEGREES,
+              longitude: west_longitude - OFFLINE_ROUTE_FIT_PADDING_DEGREES,
+            },
+            north_east: {
+              latitude: north_latitude + OFFLINE_ROUTE_FIT_PADDING_DEGREES,
+              longitude: east_longitude + OFFLINE_ROUTE_FIT_PADDING_DEGREES,
+            },
+          };
+        }
+        let offline_route_in_flight = false;
+        offline_route_control.addEventListener('click', async () => {
+          if (offline_route_in_flight) return;
+          offline_route_in_flight = true;
+          offline_route_control.disabled = true;
+          offline_maps_status.hidden = true;
+          offline_maps_status.textContent = '';
+          offline_route_result.hidden = true;
+          try {
+            const archive_response = await fetch(OFFLINE_GRAPH_FIXTURE_URL);
+            if (!archive_response.ok) {
+              throw new Error(
+                `the offline graph fixture is not served (${archive_response.status})`,
+              );
+            }
+            const archive_bytes = new Uint8Array(
+              await archive_response.arrayBuffer(),
+            );
+            const route = await window.mapTest.offlineRouteFromArchiveBytes(
+              archive_bytes,
+              OFFLINE_ROUTE_START_LATITUDE_DEGREES,
+              OFFLINE_ROUTE_START_LONGITUDE_DEGREES,
+              OFFLINE_ROUTE_END_LATITUDE_DEGREES,
+              OFFLINE_ROUTE_END_LONGITUDE_DEGREES,
+            );
+            const polyline = route_polyline_coordinates(route);
+            offline_route_overlays = [
+              { kind: 'routePolyline', coordinates: polyline },
+            ];
+            apply_overlays();
+            frame_trip_route(offline_route_fit_box(route, polyline));
+            const distance_meters = route.distanceMeters ?? route.distance_meters;
+            const duration_seconds = route.durationSeconds ?? route.duration_seconds;
+            // The grid route is a sub-minute walk; whole minutes would read
+            // "0 min", so a short duration states its seconds (the card's
+            // note already says this is recorded test data).
+            const duration_text = duration_seconds < SECONDS_PER_MINUTE
+              ? `${Math.round(duration_seconds)} s`
+              : format_duration_text(duration_seconds);
+            offline_route_facts.textContent =
+              `${format_distance_text(distance_meters)} · ${duration_text}`;
+            offline_route_result.hidden = false;
+            clear_error_report();
+          } catch (offline_failure) {
+            offline_route_overlays = [];
+            apply_overlays();
+            const detail_text = String(
+              offline_failure?.message ?? offline_failure,
+            );
+            offline_maps_status.textContent = detail_text;
+            offline_maps_status.hidden = false;
+            show_error_report('Offline route', detail_text);
+          } finally {
+            offline_route_in_flight = false;
+            offline_route_control.disabled = false;
+          }
+        });
       });
 
       // Provider-echoing error report (docs/ReferenceAppUX.md §6.3): the
@@ -1334,16 +1626,30 @@
       }
       function camera_state_by_preset(preset) {
         select_camera_preset_button(preset.id);
-        camera_state.latitude = preset.latitude_degrees;
-        camera_state.longitude = preset.longitude_degrees;
-        camera_state.zoom = preset.zoom_level;
-        camera_state.bearing = preset.bearing_degrees;
-        camera_state.pitch = preset.pitch_degrees;
-        controls.zoom.value = camera_state.zoom;
-        controls.bearing.value = camera_state.bearing;
-        controls.pitch.value = camera_state.pitch;
-        refresh_control_labels();
-        schedule_render();
+        // The native `animateCamera` behaviour (§4.2): every pose component
+        // eases over the shared move duration; the bearing takes the
+        // shortest angular path so a preset never spins the long way round.
+        const now_milliseconds = performance.now();
+        const duration_milliseconds = eased_camera_move_duration_milliseconds();
+        const target_bearing_degrees = camera_state.bearing
+          + signed_angular_difference_degrees(
+            preset.bearing_degrees, camera_state.bearing);
+        camera_preset_eases.latitude.begin(
+          now_milliseconds, camera_state.latitude, preset.latitude_degrees,
+          duration_milliseconds);
+        camera_preset_eases.longitude.begin(
+          now_milliseconds, camera_state.longitude, preset.longitude_degrees,
+          duration_milliseconds);
+        camera_preset_eases.zoom.begin(
+          now_milliseconds, camera_state.zoom, preset.zoom_level,
+          duration_milliseconds);
+        camera_preset_eases.bearing.begin(
+          now_milliseconds, camera_state.bearing, target_bearing_degrees,
+          duration_milliseconds);
+        camera_preset_eases.pitch.begin(
+          now_milliseconds, camera_state.pitch, preset.pitch_degrees,
+          duration_milliseconds);
+        request_pump_step();
       }
       for (const preset_button of camera_preset_controls.children) {
         preset_button.addEventListener('click', () => {
@@ -1408,9 +1714,10 @@
               .filter(([, checkbox]) => checkbox.checked)
               .map(([scene_key]) => scene_key),
           ),
-          // The planned route and its A/B pins draw over any base layer and
-          // beside every toggled scene.
+          // The planned route, its A/B pins and the offline card's route
+          // draw over any base layer and beside every toggled scene.
           ...trip_route_overlays,
+          ...offline_route_overlays,
         ];
       }
 
@@ -1850,6 +2157,58 @@
       const navigation_demo_preview_notice =
         document.getElementById('navigation-demo-preview-notice');
       const deviation_alert_element = document.getElementById('deviation-alert-preview');
+      // Voice guidance (§7.3): the platform speech engine speaks the
+      // snapshot's own speech channel — the contract's text-to-speech variant,
+      // never the banner sentence re-used as speech.
+      const navigation_voice_control =
+        document.getElementById('navigation-voice-control');
+      const SPEECH_UTTERANCE_LANGUAGE = 'en-US';
+      let is_voice_guidance_enabled = false;
+      let last_spoken_speech_text = null;
+      function speech_synthesis_available() {
+        return typeof window.speechSynthesis?.speak === 'function'
+          && typeof window.SpeechSynthesisUtterance === 'function';
+      }
+      function speak_navigation_speech(speech_text) {
+        if (!is_voice_guidance_enabled
+            || speech_text === ''
+            || speech_text === last_spoken_speech_text
+            || !speech_synthesis_available()) {
+          return;
+        }
+        const utterance = new window.SpeechSynthesisUtterance(speech_text);
+        utterance.lang = SPEECH_UTTERANCE_LANGUAGE;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+        last_spoken_speech_text = speech_text;
+      }
+      function refresh_voice_guidance_control() {
+        const is_available = speech_synthesis_available();
+        navigation_voice_control.disabled = !is_available;
+        navigation_voice_control.setAttribute(
+          'aria-pressed', String(is_voice_guidance_enabled));
+        navigation_voice_control.title = is_available
+          ? 'Speak turn-by-turn guidance'
+          : 'Voice guidance is unavailable in this browser';
+      }
+      navigation_voice_control.addEventListener('click', () => {
+        if (!speech_synthesis_available()) return;
+        is_voice_guidance_enabled = !is_voice_guidance_enabled;
+        if (!is_voice_guidance_enabled) {
+          window.speechSynthesis.cancel();
+          last_spoken_speech_text = null;
+        } else {
+          // Speak the instruction on screen at once, so enabling never waits
+          // for the next fix.
+          const snapshot = window.mapNavigationSnapshot();
+          last_spoken_speech_text = null;
+          speak_navigation_speech(
+            snapshot?.instruction?.activeManeuver?.speechText ?? '',
+          );
+        }
+        refresh_voice_guidance_control();
+      });
+      refresh_voice_guidance_control();
       const NAVIGATION_IDLE_REASON_TEXT =
         'Plan a route, then start the simulated trip to see live guidance.';
       // The seek catch-up (M29): the navigator is fed a fix every
@@ -1908,6 +2267,9 @@
           format_distance_text(instruction.progress.distanceRemainingMeters);
         document.getElementById('progress-duration-remaining-value').textContent =
           format_duration_text(instruction.progress.durationRemainingSeconds);
+        document.getElementById('navigation-eta-value').textContent =
+          format_eta_clock_text(instruction.progress.durationRemainingSeconds);
+        speak_navigation_speech(instruction.activeManeuver.speechText ?? '');
         if (snapshot.deviation === null) {
           deviation_alert_element.hidden = true;
           deviation_alert_element.textContent = '';
@@ -1936,6 +2298,11 @@
         document.getElementById('progress-distance-to-maneuver-value').textContent = '—';
         document.getElementById('progress-distance-remaining-value').textContent = '—';
         document.getElementById('progress-duration-remaining-value').textContent = '—';
+        document.getElementById('navigation-eta-value').textContent = '—';
+        if (typeof window.speechSynthesis?.cancel === 'function') {
+          window.speechSynthesis.cancel();
+        }
+        last_spoken_speech_text = null;
         deviation_alert_element.hidden = true;
         deviation_alert_element.textContent = '';
       }
@@ -2031,17 +2398,20 @@
 
       /**
        * Delivers one fix to the live navigator and answers its snapshot (or
-       * null without a trip). The trip's own walker supplies the coordinate
-       * and course; the fix carries the demo's declared accuracy, because a
-       * fix without accuracy is never judged.
+       * null without a trip). A route-walking fix carries the demo's declared
+       * accuracy; a recorded demo-plan fix carries the trace sample's own
+       * reported accuracy, because a fix without accuracy is never judged.
        */
-      function deliver_live_navigation_fix(fix) {
+      function deliver_live_navigation_fix(
+        fix,
+        horizontal_accuracy_meters = FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
+      ) {
         if (live_navigator === null) {
           return null;
         }
         return live_navigator.updateLocation({
           coordinate: { latitude: fix.latitude, longitude: fix.longitude },
-          horizontalAccuracyMeters: FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
+          horizontalAccuracyMeters: horizontal_accuracy_meters,
           courseHeadingDegrees: fix.courseHeadingDegrees ?? null,
           timestampSeconds: null,
         });
@@ -2117,6 +2487,18 @@
       function format_duration_text(duration_seconds) {
         const duration_minutes = Math.round(duration_seconds / SECONDS_PER_MINUTE);
         return `${duration_minutes} min`;
+      }
+
+      /**
+       * Formats the arrival clock the ETA prefix names: the local wall-clock
+       * time the trip's remaining duration reaches, as 24-hour `HH:MM`.
+       */
+      function format_eta_clock_text(duration_remaining_seconds) {
+        const arrival_instant = new Date(
+          Date.now() + duration_remaining_seconds * MILLISECONDS_PER_SECOND);
+        const hours_text = String(arrival_instant.getHours()).padStart(2, '0');
+        const minutes_text = String(arrival_instant.getMinutes()).padStart(2, '0');
+        return `${hours_text}:${minutes_text}`;
       }
 
       // Camera state; the camera object itself is rebuilt on every change
@@ -2354,6 +2736,9 @@
         stopped: 'Trip stopped — the pre-trip camera is restored.',
         arrived: 'Arrived — the trip ended at the destination. Stop restores the pre-trip camera.',
         paused: 'Trip paused — Resume continues from the same point on the route.',
+        planReplay: 'Replaying the recorded plan trace — guidance follows its own fixes.',
+        planReplayEnded:
+          'Replay ended — the record’s fixes ran out; the last guidance state stays until Stop.',
       };
       const follow_demo = {
         phase: FOLLOW_DEMO_PHASE_DISENGAGED,
@@ -2363,6 +2748,17 @@
         total_meters: 0,
         fix_interval_id: null,
         target_bearing_degrees: null,
+        // The recorded demo-plan trace replayed by the active trip, or null
+        // while the trip walks a route polyline. Its presence switches the
+        // fix source from the route walker to the trace's own samples.
+        trace_playback: null,
+        sample_index: 0,
+        has_issued_reroute: false,
+        // The last off-route judgment the replay presented, and the alert copy
+        // that was on the card at that fix (the suite's evidence that the card
+        // followed honestly, independent of when it reads the DOM).
+        off_route_observed: false,
+        off_route_alert_text: '',
         // The playback pace (M27): a multiplier over the demo's own speed,
         // and a pause that freezes the walk without ending the trip.
         speed_multiplier: 1,
@@ -2382,6 +2778,21 @@
       // the center applies exactly.
       const pitch_swing_ease = new SmoothstepTimedEase();
       const compass_renorth_ease = new SmoothstepTimedEase();
+      // Camera presets ease every pose component over the shared §2.4 move
+      // duration (the native `animateCamera` behaviour) instead of jumping;
+      // the five eases start and finish together.
+      const camera_preset_eases = Object.freeze({
+        latitude: new SmoothstepTimedEase(),
+        longitude: new SmoothstepTimedEase(),
+        zoom: new SmoothstepTimedEase(),
+        bearing: new SmoothstepTimedEase(),
+        pitch: new SmoothstepTimedEase(),
+      });
+      /** Wraps a bearing into `[0, 360)` after a shortest-path interpolation. */
+      function normalized_bearing_degrees(bearing_degrees) {
+        const wrapped_bearing = bearing_degrees % FULL_CIRCLE_DEGREES;
+        return wrapped_bearing < 0 ? wrapped_bearing + FULL_CIRCLE_DEGREES : wrapped_bearing;
+      }
       const follow_bearing_chase = new ExponentialValueChase(
         FOLLOW_BEARING_CHASE_TIME_CONSTANT_MILLISECONDS);
       const course_median_smoother = new CourseMedianSmoother(COURSE_SMOOTHING_WINDOW_FIXES);
@@ -2406,6 +2817,30 @@
         isPaused: follow_demo.is_paused,
         targetBearingDegrees: follow_demo.target_bearing_degrees,
         cameraZoom: camera_state.zoom,
+      });
+      // The demo-plan picker's state, for the browser suite: which artifact
+      // plan is selected, what it drew and framed, and how far its recorded
+      // replay has advanced. No page internal is reached from a test.
+      window.mapDemoPlanState = () => ({
+        selectedScenario: selected_demo_plan_trace?.plan.scenario ?? null,
+        label: selected_demo_plan_trace?.plan.label ?? null,
+        description: selected_demo_plan_trace?.plan.description ?? null,
+        overlayKinds: trip_route_overlays.map((overlay) => overlay.kind),
+        routeDistanceMeters:
+          selected_demo_plan_trace?.trace.route?.distance_meters ?? null,
+        sampleIndex: follow_demo.sample_index,
+        sampleCount: follow_demo.trace_playback?.samples.length ?? 0,
+        isReplaying: follow_demo.trace_playback !== null
+          && follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED,
+        isPaused: follow_demo.is_paused,
+        rerouteApplied: follow_demo.has_issued_reroute,
+        offRouteObserved: follow_demo.off_route_observed,
+        offRouteAlertText: follow_demo.off_route_alert_text,
+        camera: {
+          latitude: camera_state.latitude,
+          longitude: camera_state.longitude,
+          zoom: camera_state.zoom,
+        },
       });
       window.mapFrameFacts = () => ({
         framesDrawn: frame_draw_count,
@@ -2759,6 +3194,33 @@
           controls.bearing.value = camera_state.bearing;
           if (!renorth_finished) pump_running = true;
         }
+        if (camera_preset_eases.latitude.is_running) {
+          const [eased_latitude, latitude_finished] =
+            camera_preset_eases.latitude.advance(now_milliseconds);
+          const [eased_longitude, longitude_finished] =
+            camera_preset_eases.longitude.advance(now_milliseconds);
+          const [eased_zoom, zoom_finished] =
+            camera_preset_eases.zoom.advance(now_milliseconds);
+          const [eased_bearing, bearing_finished] =
+            camera_preset_eases.bearing.advance(now_milliseconds);
+          const [eased_pitch, preset_pitch_finished] =
+            camera_preset_eases.pitch.advance(now_milliseconds);
+          camera_state.latitude = eased_latitude;
+          camera_state.longitude = eased_longitude;
+          camera_state.zoom = eased_zoom;
+          camera_state.bearing = normalized_bearing_degrees(eased_bearing);
+          camera_state.pitch = eased_pitch;
+          controls.zoom.value = camera_state.zoom;
+          controls.bearing.value = camera_state.bearing;
+          controls.pitch.value = camera_state.pitch;
+          if (!latitude_finished
+              || !longitude_finished
+              || !zoom_finished
+              || !bearing_finished
+              || !preset_pitch_finished) {
+            pump_running = true;
+          }
+        }
         if (follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED &&
             follow_demo.target_bearing_degrees !== null) {
           const chase_delta_degrees = signed_angular_difference_degrees(
@@ -2855,11 +3317,15 @@
         is_three_dimensional_camera = !is_three_dimensional_camera;
         plane_toggle_control.textContent =
           is_three_dimensional_camera ? '3D' : '2D';
+        // The button is a two-state toggle for assistive technology as well
+        // as for the eye: pressed means the 3D plane is active.
+        plane_toggle_control.setAttribute(
+          'aria-pressed', String(is_three_dimensional_camera));
         plane_toggle_control.classList.toggle('primary', is_three_dimensional_camera);
         pitch_swing_ease.begin(
           performance.now(), camera_state.pitch,
           is_three_dimensional_camera ? NAVIGATION_FOLLOW_PITCH_3D_DEGREES : 0,
-          EASED_CAMERA_MOVE_DURATION_MILLISECONDS);
+          eased_camera_move_duration_milliseconds());
         request_pump_step();
       });
 
@@ -2868,7 +3334,7 @@
       compass_control.addEventListener('click', () => {
         compass_renorth_ease.begin(
           performance.now(), camera_state.bearing, 0,
-          EASED_CAMERA_MOVE_DURATION_MILLISECONDS);
+          eased_camera_move_duration_milliseconds());
         request_pump_step();
       });
 
@@ -2891,6 +3357,40 @@
       // the route's own walk speed, and the one control that pauses it.
       const FOLLOW_DEMO_SPEED_MULTIPLIERS = [1, 2, 4, 8];
 
+      /**
+       * The fix cadence of the active playback. A route walk uses the demo's
+       * fixed dispatch interval; a recorded trace replays its own samples at
+       * the trace's recorded interval, divided by the demo acceleration and
+       * the selected speed multiplier (the native driver's rule).
+       */
+      function current_follow_demo_fix_interval_milliseconds() {
+        const playback = follow_demo.trace_playback;
+        if (playback === null) return FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS;
+        const recorded_sample_interval_seconds = playback.sample_interval_seconds
+          ?? FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS;
+        const simulated_seconds_per_tick = FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR
+          * follow_demo.speed_multiplier;
+        return Math.max(
+          DEMO_PLAN_MINIMUM_DISPATCH_INTERVAL_MILLISECONDS,
+          (recorded_sample_interval_seconds * MILLISECONDS_PER_SECOND)
+            / simulated_seconds_per_tick,
+        );
+      }
+
+      /** Re-arms the fix timer at the current playback's cadence. */
+      function restart_follow_demo_fix_interval() {
+        if (follow_demo.fix_interval_id !== null) {
+          clearInterval(follow_demo.fix_interval_id);
+          follow_demo.fix_interval_id = null;
+        }
+        if (follow_demo.phase === FOLLOW_DEMO_PHASE_DISENGAGED
+            || follow_demo.is_paused) {
+          return;
+        }
+        follow_demo.fix_interval_id = setInterval(
+          on_follow_demo_fix, current_follow_demo_fix_interval_milliseconds());
+      }
+
       /** Rebuilds the speed chips and marks the active one. */
       function render_follow_demo_speed_controls() {
         follow_demo_speed_controls.replaceChildren();
@@ -2904,6 +3404,11 @@
           chip.addEventListener('click', () => {
             follow_demo.speed_multiplier = multiplier;
             render_follow_demo_speed_controls();
+            // A recorded trace dispatches at the recorded cadence scaled by
+            // the speed choice, so the timer is re-armed at the new interval.
+            if (follow_demo.trace_playback !== null) {
+              restart_follow_demo_fix_interval();
+            }
           });
           follow_demo_speed_controls.append(chip);
         }
@@ -2930,6 +3435,9 @@
         // The arrival state has nothing left to pause; the seek control stays
         // usable so a backwards seek can leave the arrival.
         follow_demo_pause_control.hidden = follow_demo.has_arrived;
+        // A recorded trace replays its own samples verbatim, so there is no
+        // route distance to seek to (the native driver's `isSeekable` rule).
+        follow_demo_seek_row.hidden = follow_demo.trace_playback !== null;
         if (is_running) {
           render_follow_demo_speed_controls();
           refresh_follow_demo_seek_control();
@@ -2951,9 +3459,11 @@
       function resume_follow_demo_trip() {
         follow_demo.is_paused = false;
         refresh_follow_demo_playback_row(true);
-        follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
+        follow_demo_live_line.textContent = follow_demo.trace_playback !== null
+          ? FOLLOW_DEMO_LIVE_LINE_TEXTS.planReplay
+          : FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
         follow_demo.fix_interval_id = setInterval(
-          on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
+          on_follow_demo_fix, current_follow_demo_fix_interval_milliseconds());
         on_follow_demo_fix();
       }
 
@@ -3025,11 +3535,209 @@
         follow_demo.is_paused = false;
         follow_demo.has_arrived = false;
         follow_demo.is_seeking = false;
-        refresh_follow_demo_playback_row(false);
+        // A recorded replay's bookkeeping resets with the trip, so the next
+        // trip starts from the trace's first sample.
+        follow_demo.trace_playback = null;
+        follow_demo.sample_index = 0;
+        follow_demo.has_issued_reroute = false;
+        follow_demo_pause_control.hidden = false;        refresh_follow_demo_playback_row(false);
         schedule_render();
       }
 
+      /**
+       * Starts the selected demo plan's replay (M31): starts live guidance on
+       * the trace's recorded route, then walks the trace's own samples through
+       * the wasm `Navigator` at the recorded cadence — the native
+       * `SimulatedTripDriver`'s recorded-trace path. No fix is synthesized: the
+       * latitude, longitude and per-sample accuracy are the trace's own, and
+       * the course comes from the previous fix.
+       */
+      function start_demo_plan_replay(selected_plan_trace) {
+        const recorded_trace = selected_plan_trace.trace;
+        follow_demo.pre_trip_camera = { ...camera_state };
+        follow_demo.trace_playback = {
+          samples: Array.isArray(recorded_trace.samples)
+            ? recorded_trace.samples
+            : [],
+          sample_interval_seconds: recorded_trace.metadata?.sample_interval_seconds
+            ?? FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS,
+          reroute_route: recorded_trace.reroute_route ?? null,
+        };
+        follow_demo.sample_index = 0;
+        follow_demo.has_issued_reroute = false;
+        follow_demo.off_route_observed = false;
+        follow_demo.off_route_alert_text = '';
+        // The route's own polyline backs the no-seek invariant; the trace
+        // replay never walks it (the samples are the fixes).
+        follow_demo.route_polyline = selected_plan_trace.polyline;
+        follow_demo.travelled_meters = 0;
+        follow_demo.total_meters = polyline_length_meters(selected_plan_trace.polyline);
+        follow_demo.is_paused = false;
+        follow_demo.has_arrived = false;
+        follow_demo.is_seeking = false;
+        follow_bearing_chase.reset();
+        course_median_smoother.reset();
+        follow_demo.target_bearing_degrees = null;
+        follow_demo.latest_fix = null;
+        follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
+        refresh_my_location_control();
+        camera_state.zoom = follow_zoom_toward_trip_end(1.0);
+        camera_state.pitch = is_three_dimensional_camera
+          ? NAVIGATION_FOLLOW_PITCH_3D_DEGREES : 0;
+        controls.zoom.value = camera_state.zoom;
+        controls.pitch.value = camera_state.pitch;
+        follow_demo_start_control.textContent = FOLLOW_DEMO_STOP_TEXT;
+        refresh_follow_demo_playback_row(true);
+        follow_demo_pause_control.hidden = false;
+        follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.planReplay;
+        // Guidance starts on the trace's recorded route before the first fix,
+        // so the banner already names the first maneuver when the trip starts.
+        start_live_navigation();
+        if (live_navigator === null) {
+          // Guidance could not start; do not fake a camera-only walk.
+          follow_demo.trace_playback = null;
+          end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
+          return;
+        }
+        follow_demo.fix_interval_id = setInterval(
+          on_follow_demo_fix, current_follow_demo_fix_interval_milliseconds());
+        on_follow_demo_fix();
+      }
+
+      /** Ends a recorded replay's timer while keeping the last guidance state
+       * presented (the native driver's arrival/end rule). */
+      function finish_demo_plan_replay(end_live_text) {
+        if (follow_demo.fix_interval_id !== null) {
+          clearInterval(follow_demo.fix_interval_id);
+          follow_demo.fix_interval_id = null;
+        }
+        follow_demo.is_paused = true;
+        follow_demo_pause_control.hidden = true;
+        follow_demo_live_line.textContent = end_live_text;
+      }
+
+      /**
+       * Applies a trace's recorded replacement route the first time the trip
+       * is judged off route (M31; §7.5: a reroute is a state transition, not
+       * an error). The fixture's replacement route is anchored at the
+       * reducer's frozen snap by construction. A refusal is reported verbatim.
+       */
+      function maybe_issue_demo_plan_reroute(playback) {
+        if (playback.reroute_route === null || follow_demo.has_issued_reroute
+            || live_navigator === null) {
+          return;
+        }
+        let trip_snapshot;
+        try {
+          trip_snapshot = live_navigator.currentTripState();
+        } catch {
+          return;
+        }
+        if (trip_snapshot === null || trip_snapshot.phase !== 'offRoute') {
+          return;
+        }
+        follow_demo.has_issued_reroute = true;
+        try {
+          live_navigator.applyReroute(
+            route_record_for_navigator(playback.reroute_route));
+          render_navigation_snapshot(live_navigator.currentTripState());
+        } catch (reroute_failure) {
+          render_navigation_idle(`Reroute unavailable: ${String(reroute_failure)}`);
+        }
+      }
+
+      /**
+       * One recorded sample of the active plan replay: the sample's own
+       * coordinate and accuracy, the course between consecutive samples, the
+       * guidance snapshot, the follow camera and the indicator. Arrival or the
+       * sample list's end stops the timer but keeps the presentation (Stop
+       * still ends the trip).
+       */
+      function on_demo_plan_replay_fix() {
+        const playback = follow_demo.trace_playback;
+        if (playback === null) return;
+        const sample = playback.samples[follow_demo.sample_index];
+        if (sample === undefined) {
+          finish_demo_plan_replay(FOLLOW_DEMO_LIVE_LINE_TEXTS.planReplayEnded);
+          return;
+        }
+        const previous_sample = playback.samples[follow_demo.sample_index - 1];
+        const sample_course_heading_degrees = previous_sample === undefined
+          ? null
+          : initial_bearing_degrees(previous_sample, sample);
+        const fix = {
+          latitude: sample.latitude,
+          longitude: sample.longitude,
+          courseHeadingDegrees: sample_course_heading_degrees,
+        };
+        follow_demo.latest_fix = {
+          latitude: sample.latitude,
+          longitude: sample.longitude,
+        };
+        const horizontal_accuracy_meters = sample.horizontal_accuracy_meters;
+        let trip_snapshot = null;
+        if (live_navigator !== null) {
+          try {
+            trip_snapshot = deliver_live_navigation_fix(fix, horizontal_accuracy_meters);
+          } catch (navigation_failure) {
+            render_navigation_idle(
+              `Guidance unavailable: ${String(navigation_failure)}`);
+          }
+        }
+        if (trip_snapshot !== null) {
+          render_navigation_snapshot(trip_snapshot);
+          if (trip_snapshot.phase === 'offRoute') {
+            // Record the card's own alert copy at the judgment, so the
+            // evidence does not depend on how long the frozen phase lasts.
+            follow_demo.off_route_observed = true;
+            follow_demo.off_route_alert_text = deviation_alert_element.textContent;
+          }
+        }
+        const remaining_fraction = playback.samples.length <= 1
+          ? 0
+          : 1 - follow_demo.sample_index / (playback.samples.length - 1);
+        if (follow_demo.phase !== FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
+          camera_state.latitude = fix.latitude;
+          camera_state.longitude = fix.longitude;
+          camera_state.zoom = follow_zoom_toward_trip_end(remaining_fraction);
+          controls.zoom.value = camera_state.zoom;
+        }
+        if (sample_course_heading_degrees !== null) {
+          course_median_smoother.add(sample_course_heading_degrees);
+          follow_demo.target_bearing_degrees = course_median_smoother.median();
+        }
+        apply_location_indicator(
+          {
+            latitude: fix.latitude,
+            longitude: fix.longitude,
+            courseHeadingDegrees: sample_course_heading_degrees,
+            horizontalAccuracyMeters: horizontal_accuracy_meters,
+          },
+          { visualKind: 'guidedCourseArrow' },
+        );
+        maybe_issue_demo_plan_reroute(playback);
+        follow_demo.sample_index += 1;
+        refresh_control_labels();
+        refresh_compass_control();
+        refresh_my_location_control();
+        schedule_render();
+        const has_arrived = trip_snapshot !== null
+          && (trip_snapshot.phase === 'arrived' || trip_snapshot.isArrived === true);
+        if (has_arrived) {
+          follow_demo.has_arrived = true;
+          finish_demo_plan_replay(FOLLOW_DEMO_LIVE_LINE_TEXTS.arrived);
+          return;
+        }
+        request_pump_step();
+      }
+
       function on_follow_demo_fix(advances = true, feeds_guidance = true) {
+        // A recorded plan replay reads its fixes from the trace, not from the
+        // route walker.
+        if (follow_demo.trace_playback !== null) {
+          on_demo_plan_replay_fix();
+          return;
+        }
         // The walk clamps at the route's total length, so the last fix lands
         // exactly on the destination instead of stopping a tick short of it.
         const travelled_meters = Math.min(
@@ -3135,6 +3843,12 @@
       follow_demo_start_control.addEventListener('click', () => {
         if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
+          return;
+        }
+        // A selected demo plan makes the recorded trace the trip the replay
+        // drives; otherwise the trip walks the route the visitor planned.
+        if (selected_demo_plan_trace !== null) {
+          start_demo_plan_replay(selected_demo_plan_trace);
           return;
         }
         // §5.3: trip start captures the pre-trip camera and applies the
@@ -3396,6 +4110,148 @@
           refresh_control_labels(); schedule_render();
         }
       }, { passive: false });
+
+      // --- The keyboard camera (§4.2 accessibility) ---
+      //
+      // The focused map surface answers the arrow keys with a pan, +/- with
+      // one zoom level, Shift+arrows with bearing and pitch, and Home with a
+      // north-up flat reset. Every camera mutation still crosses the wasm
+      // seam; the page owns only the key-to-step mapping and the spoken
+      // status, exactly as it owns the pointer gesture recognition. A held
+      // key repeats, so the announcement is debounced to one polite update.
+      let map_status_announcement_timer = null;
+      function announce_map_status(message) {
+        if (map_status_announcement_timer !== null) {
+          clearTimeout(map_status_announcement_timer);
+        }
+        map_status_announcement_timer = setTimeout(() => {
+          map_status_announcement_timer = null;
+          map_status_element.textContent = message;
+        }, MAP_STATUS_ANNOUNCEMENT_DELAY_MILLISECONDS);
+      }
+      // Keyboard steps are CSS pixels; the canvas' backing store can differ
+      // from its laid-out size, so they cross the seam scaled like pointer
+      // movement.
+      function keyboard_canvas_ratios() {
+        const canvas_rectangle = overlay_canvas.getBoundingClientRect();
+        return {
+          x: canvas_rectangle.width > 0
+            ? overlay_canvas.width / canvas_rectangle.width
+            : 1,
+          y: canvas_rectangle.height > 0
+            ? overlay_canvas.height / canvas_rectangle.height
+            : 1,
+        };
+      }
+      function keyboard_pan_by_css_pixels(delta_x_css_pixels, delta_y_css_pixels) {
+        follow_demo_note_camera_gesture();
+        const ratios = keyboard_canvas_ratios();
+        move_center_by_ground_delta(
+          delta_x_css_pixels * ratios.x, delta_y_css_pixels * ratios.y);
+        announce_map_status(
+          `Map moved to ${camera_state.latitude.toFixed(4)}, `
+          + `${camera_state.longitude.toFixed(4)}.`);
+      }
+      function keyboard_zoom_by_levels(delta_zoom_levels) {
+        follow_demo_note_camera_gesture();
+        const zoom_target = Math.min(MAXIMUM_ZOOM_LEVEL, Math.max(
+          MINIMUM_ZOOM_LEVEL, camera_state.zoom + delta_zoom_levels));
+        const zoom_pose = resolved_or_null(() =>
+          window.mapTest.zoomCameraByLevelsAroundScreenPoint(
+            build_camera(), zoom_target - camera_state.zoom,
+            overlay_canvas.width / 2, overlay_canvas.height / 2,
+            overlay_canvas.width, overlay_canvas.height, FIELD_OF_VIEW_DEGREES));
+        if (!apply_camera_pose(zoom_pose)) {
+          refresh_control_labels(); schedule_render();
+        }
+        announce_map_status(`Zoom ${camera_state.zoom.toFixed(1)}.`);
+      }
+      function keyboard_rotate_by_degrees(delta_bearing_degrees) {
+        follow_demo_note_camera_gesture();
+        const rotate_pose = resolved_or_null(() =>
+          window.mapTest.rotateCameraByDegreesAroundScreenPoint(
+            build_camera(), delta_bearing_degrees,
+            overlay_canvas.width / 2, overlay_canvas.height / 2,
+            overlay_canvas.width, overlay_canvas.height, FIELD_OF_VIEW_DEGREES));
+        if (!apply_camera_pose(rotate_pose)) {
+          refresh_control_labels(); schedule_render();
+        }
+        announce_map_status(
+          `Bearing ${Math.round(camera_state.bearing)} degrees.`);
+      }
+      function keyboard_tilt_by_degrees(delta_pitch_degrees) {
+        const pitch_target = Math.min(MAXIMUM_PITCH_DEGREES, Math.max(
+          MINIMUM_PITCH_DEGREES, camera_state.pitch + delta_pitch_degrees));
+        if (pitch_target === camera_state.pitch) return;
+        follow_demo_note_camera_gesture();
+        pitch_swing_ease.begin(
+          performance.now(), camera_state.pitch, pitch_target,
+          eased_camera_move_duration_milliseconds());
+        request_pump_step();
+        announce_map_status(`Pitch ${Math.round(pitch_target)} degrees.`);
+      }
+      function keyboard_reset_view() {
+        follow_demo_note_camera_gesture();
+        const duration_milliseconds = eased_camera_move_duration_milliseconds();
+        pitch_swing_ease.begin(
+          performance.now(), camera_state.pitch, MINIMUM_PITCH_DEGREES,
+          duration_milliseconds);
+        compass_renorth_ease.begin(
+          performance.now(), camera_state.bearing, 0, duration_milliseconds);
+        request_pump_step();
+        announce_map_status(
+          `View reset north and flat at zoom ${camera_state.zoom.toFixed(1)}.`);
+      }
+      overlay_canvas.addEventListener('keydown', (event) => {
+        // Leave browser and operating-system chords (Ctrl/Cmd/Alt) alone;
+        // only the documented unmodified and Shift-modified keys are ours.
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        let handled = true;
+        switch (event.key) {
+          case 'ArrowLeft':
+            if (event.shiftKey) {
+              keyboard_rotate_by_degrees(-KEYBOARD_ROTATE_STEP_DEGREES);
+            } else {
+              keyboard_pan_by_css_pixels(-KEYBOARD_PAN_STEP_CSS_PIXELS, 0);
+            }
+            break;
+          case 'ArrowRight':
+            if (event.shiftKey) {
+              keyboard_rotate_by_degrees(KEYBOARD_ROTATE_STEP_DEGREES);
+            } else {
+              keyboard_pan_by_css_pixels(KEYBOARD_PAN_STEP_CSS_PIXELS, 0);
+            }
+            break;
+          case 'ArrowUp':
+            if (event.shiftKey) {
+              keyboard_tilt_by_degrees(KEYBOARD_PITCH_STEP_DEGREES);
+            } else {
+              keyboard_pan_by_css_pixels(0, -KEYBOARD_PAN_STEP_CSS_PIXELS);
+            }
+            break;
+          case 'ArrowDown':
+            if (event.shiftKey) {
+              keyboard_tilt_by_degrees(-KEYBOARD_PITCH_STEP_DEGREES);
+            } else {
+              keyboard_pan_by_css_pixels(0, KEYBOARD_PAN_STEP_CSS_PIXELS);
+            }
+            break;
+          case '+':
+          case '=':
+            keyboard_zoom_by_levels(KEYBOARD_ZOOM_STEP_LEVELS);
+            break;
+          case '-':
+          case '_':
+            keyboard_zoom_by_levels(-KEYBOARD_ZOOM_STEP_LEVELS);
+            break;
+          case 'Home':
+            keyboard_reset_view();
+            break;
+          default:
+            handled = false;
+        }
+        if (handled) event.preventDefault();
+      });
       window.addEventListener('resize', () => { resize_canvases(); schedule_render(); });
 
       /**

@@ -55,6 +55,10 @@ export const uiStrings = {
   'camera.presets_heading': 'Camera presets',
   'theme.heading': 'Theme',
   'offline.heading': 'Offline maps',
+  'offline.plan_route_action': 'Plan offline route',
+  'offline.recorded_graph_route_title': 'Offline demo route',
+  'offline.recorded_graph_note':
+    'Planned offline from a recorded test graph, not live data.',
   'navigation.speed_label': 'Speed',
   'navigation.pause_action': 'Pause',
   'navigation.resume_action': 'Resume',

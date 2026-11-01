@@ -7,12 +7,21 @@
     <link rel="stylesheet" href="./styles/playground.css" />
   </head>
   <body>
+    <!-- The first focus stop: keyboard and screen-reader visitors reach the
+         control sheet without crossing the map surface. It is visually hidden
+         until focused (styles/playground.css). -->
+    <a class="skip-link" href="#controls">Skip to map controls</a>
     <!-- The GPU surface renders on #map-canvas; #map-overlay sits above it
          so a WebGPU-locked canvas never needs a 2D context: all input, the
-         degraded 2D tile grid, and the debug overlay draw here. -->
-    <canvas id="map-canvas"></canvas>
-    <canvas id="map-overlay"></canvas>
-    <aside id="controls" aria-label="Live demo controls">
+         degraded 2D tile grid, and the debug overlay draw here. The overlay
+         is the keyboard focus target: its arrow/zoom/rotate model and the
+         live status line make the map usable without a pointer. -->
+    <canvas id="map-canvas" aria-hidden="true"></canvas>
+    <canvas id="map-overlay" tabindex="0" role="application"
+            aria-roledescription="interactive map" aria-label="Interactive map"
+            aria-describedby="map-keyboard-instructions"
+            aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown Home"></canvas>
+    <aside id="controls" tabindex="-1" aria-label="Live demo controls">
       <header id="controls-header">
         <div class="demo-title">
           <h1>Rustic Maps SDK <span class="demo-title-suffix">live demo</span></h1>
@@ -169,6 +178,18 @@
         </label>
       </section>
 
+<section class="control-group" id="demo-plans-controls" aria-describedby="demo-plans-status">
+        <h2 class="group-label" id="demo-plans-heading"
+            data-ui-label="plans.heading">Demo plans</h2>
+        <p class="reason-strip">Select a recorded plan to draw its route, then
+          start the simulated trip to replay its trace.</p>
+        <div id="demo-plan-chips" class="demo-plan-chips" role="group"
+             aria-labelledby="demo-plans-heading"></div>
+        <p id="demo-plan-description" class="trip-footnote" hidden></p>
+        <button id="demo-plan-clear-control" type="button" class="quiet">Clear plan</button>
+        <p id="demo-plans-status" class="reason-strip" role="status" hidden></p>
+      </section>
+
 <fieldset id="scene-overlay-controls" class="control-group" aria-describedby="scene-overlay-reason">
         <legend data-ui-label="scenes.heading">Demo scenes</legend>
         <div id="overlay-scene-toggles"></div>
@@ -177,16 +198,37 @@
         <p id="scene-overlay-reason" class="reason-strip" hidden></p>
       </fieldset>
 
+<section class="control-group" id="offline-maps-controls" aria-describedby="offline-maps-status">
+        <h2 class="group-label" data-ui-label="offline.heading">Offline maps</h2>
+        <p class="reason-strip">Plan over the committed routing graph the browser
+          loads from bytes; no provider and no network round trip.</p>
+        <button id="offline-route-control" type="button" class="primary"
+                data-ui-label="offline.plan_route_action">Plan offline route</button>
+        <div id="offline-route-result" class="trip-route-result" hidden>
+          <p><strong data-ui-label="offline.recorded_graph_route_title">Offline demo route</strong>
+            <span id="offline-route-facts"></span></p>
+          <p class="trip-footnote"
+             data-ui-label="offline.recorded_graph_note">Planned offline from a recorded test graph, not live data.</p>
+        </div>
+        <p id="offline-maps-status" class="reason-strip" role="status" hidden></p>
+      </section>
+
 <details id="navigation-demo-panel" class="control-group" aria-describedby="navigation-demo-reason">
         <summary>Simulated navigation</summary>
         <p id="navigation-demo-reason" class="reason-strip"></p>
         <div id="navigation-demo-card">
           <p class="navigation-phase">Phase <span id="navigation-phase-value" class="navigation-chip"></span></p>
+          <button id="navigation-voice-control" type="button"
+                  aria-pressed="false"
+                  data-ui-label="navigation.voice_toggle">Voice guidance</button>
           <div class="turn-banner">
             <p id="banner-distance-phrase-text" class="turn-banner-distance"></p>
             <p id="banner-instruction-text" class="turn-banner-text"></p>
           </div>
           <p id="upcoming-instruction-text" class="then-line"></p>
+          <p id="navigation-eta-line" class="then-line"><span
+               data-ui-label="navigation.eta_prefix">ETA</span>
+            <span id="navigation-eta-value">—</span></p>
           <ul class="navigation-progress">
             <li><span class="progress-label">Distance to maneuver</span><span id="progress-distance-to-maneuver-value"></span></li>
             <li><span class="progress-label"
@@ -262,7 +304,8 @@
       <button id="my-location-control" class="map-control-button" type="button"
               aria-label="Center on my location">&#9679;</button>
       <button id="plane-toggle-control" class="map-control-button" type="button"
-              aria-label="Toggle the 2D and 3D camera planes">2D</button>
+              aria-label="Toggle the 2D and 3D camera planes"
+              aria-pressed="false">2D</button>
     </div>
     <!-- The map's bottom-start control column (§1/§4.2): the error strip, the
          status line and the scale bar. One column keeps the floating lines
@@ -293,6 +336,13 @@
       </div>
     </div>
     <div id="readout" hidden></div>
+    <p id="map-keyboard-instructions" class="visually-hidden">
+      Interactive map. Use the arrow keys to pan, plus and minus to zoom,
+      Shift with the left and right arrow keys to rotate, Shift with the up
+      and down arrow keys to tilt, and Home to reset the view north and flat.
+      Press Escape to close an open panel.
+    </p>
+    <p id="map-status" class="visually-hidden" role="status" aria-live="polite"></p>
     <p id="harness-status" class="visually-hidden" aria-hidden="true"
        data-ui-label="readiness.chip_loading">Loading…</p>
     <script type="module" src="./main.mjs"></script>

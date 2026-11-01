@@ -113,7 +113,34 @@
         white-space: nowrap;
         border: 0;
       }
+      /* Keyboard entry point: offscreen until the first Tab, then a visible
+         surface-colored pill above the map. */
+      .skip-link {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
+        padding: 8px 12px;
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+        background: var(--surface-elevated-color);
+        color: var(--text-primary-color);
+        font-size: var(--type-body-size);
+        text-decoration: none;
+        transform: translateY(-200%);
+      }
+      .skip-link:focus-visible {
+        transform: translateY(0);
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+      }
       #map-canvas { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; }
+      /* The keyboard focus ring sits inside the full-viewport surface so it
+         never clips at the window edge. */
+      #map-overlay:focus-visible {
+        outline: 3px solid var(--accent-color);
+        outline-offset: -3px;
+      }
       #map-overlay {
         display: block;
         position: fixed;
@@ -875,6 +902,19 @@
         color: var(--accent-text-color);
         border-color: var(--accent-color);
       }
+      /* The Demo plans picker (M31): the same chip look as the demo-place
+         quick picks, without their trip-planner offset. A selected plan keeps
+         the accent mark the native pickers give it. */
+      .demo-plan-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 8px 0;
+      }
+      .demo-plan-chips .trip-suggestion-chip[aria-pressed='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
       #trip-search-results {
         list-style: none;
         margin: 0;
@@ -1331,7 +1371,28 @@
   flex-basis: 100%;
 }
 
+/* A recorded demo trace replays its own samples verbatim (the native
+   SimulatedTripDriver's rule), so the route-position seek row has no meaning
+   during that playback and the page hides it. */
+.trip-seek[hidden] {
+  display: none;
+}
+
 .trip-seek input[type='range'] {
   flex: 1;
   accent-color: var(--accent-fill-color, #2563eb);
+}
+
+/* Visitors who ask the system for less motion get no decorative transitions;
+   the page's camera eases are additionally shortened in playground.mjs so a
+   keyboard camera move lands immediately. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

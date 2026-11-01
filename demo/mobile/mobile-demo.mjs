@@ -51,6 +51,8 @@ const POSTER_TITLE_BY_PLATFORM = new Map([
 
 const elements = {
   tabs: Array.from(document.querySelectorAll('[data-platform]')),
+  tablist: document.querySelector('[role="tablist"]'),
+  stage: document.getElementById('mobile-demo-stage'),
   poster: document.querySelector('[data-role="poster"]'),
   posterTitle: document.querySelector('[data-role="poster-title"]'),
   posterDetail: document.querySelector('[data-role="poster-detail"]'),
@@ -241,6 +243,10 @@ function startSession(build, sessionSeconds) {
   elements.poster.hidden = true;
   elements.resting.hidden = true;
   elements.session.hidden = false;
+  // The Start button just left the page; move the keyboard and screen-reader
+  // focus to the link that opens the session instead of dropping it to the
+  // document body.
+  elements.sessionLink.focus();
   startCountdown(sessionSeconds);
   // The browser only opens a tab from a real click, and the claim is an
   // awaited request, so the visitor presses the link that just appeared
@@ -295,8 +301,13 @@ function selectPlatform(platform) {
   }
   state.platform = platform;
   for (const tab of elements.tabs) {
-    tab.setAttribute('aria-selected', String(tab.dataset.platform === platform));
+    const is_selected = tab.dataset.platform === platform;
+    tab.setAttribute('aria-selected', String(is_selected));
+    // The tablist's roving tabindex: Tab reaches the selected tab, and the
+    // arrow keys move along the list (the WAI-ARIA tabs pattern).
+    tab.tabIndex = is_selected ? 0 : -1;
   }
+  elements.stage.setAttribute('aria-labelledby', `platform-tab-${platform}`);
   elements.poster.hidden = false;
   elements.resting.hidden = true;
   renderPoster();
@@ -306,10 +317,40 @@ function wire() {
   for (const tab of elements.tabs) {
     tab.addEventListener('click', () => selectPlatform(tab.dataset.platform));
   }
+  // The WAI-ARIA tabs pattern: Left/Right move along the list with wraparound,
+  // Home/End jump to the ends, and the focused tab is selected as it moves
+  // (automatic activation — switching a platform is cheap and reversible).
+  elements.tablist.addEventListener('keydown', (event) => {
+    const active_index = elements.tabs.indexOf(document.activeElement);
+    if (active_index < 0) return;
+    let next_index = null;
+    switch (event.key) {
+      case 'ArrowRight':
+        next_index = (active_index + 1) % elements.tabs.length;
+        break;
+      case 'ArrowLeft':
+        next_index =
+          (active_index - 1 + elements.tabs.length) % elements.tabs.length;
+        break;
+      case 'Home':
+        next_index = 0;
+        break;
+      case 'End':
+        next_index = elements.tabs.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    const next_tab = elements.tabs[next_index];
+    next_tab.focus();
+    selectPlatform(next_tab.dataset.platform);
+  });
   elements.start.addEventListener('click', requestSession);
   elements.stop.addEventListener('click', () => {
     stopSession();
     renderPoster();
+    if (!elements.start.disabled) elements.start.focus();
   });
   // The session runs in its own tab, so the countdown stops when this page
   // goes away; the tab keeps streaming until it is closed or its three

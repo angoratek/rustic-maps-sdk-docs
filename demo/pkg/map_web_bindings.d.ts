@@ -374,6 +374,16 @@ export class Navigator {
     free(): void;
     [Symbol.dispose](): void;
     /**
+     * Registers one navigation listener and answers its identifier. The
+     * callback receives one plain event per topic: `{topic, snapshot,
+     * speechText?, phaseChange?}` where `topic` is `"instruction"`,
+     * `"phase"`, `"deviation"`, `"speech"` or `"stop"`. This is the wasm
+     * seam's event bridge (the contract's foreign-listener trait cannot
+     * cross the wasm-bindgen boundary); the topics and payloads mirror
+     * the native navigation listener's.
+     */
+    addNavigationListener(listener: Function): number;
+    /**
      * Replaces the active trip's route (a reroute); without an active trip
      * the route is dropped. Throws a message for a route the conversion
      * cannot parse.
@@ -391,6 +401,10 @@ export class Navigator {
      * Builds the controller with no active trip.
      */
     constructor();
+    /**
+     * Removes one listener; answers whether it was registered.
+     */
+    removeNavigationListener(listener_id: number): boolean;
     /**
      * Begins navigating `route` with the SDK default policies, replacing
      * any active trip. Throws a message for a route the conversion cannot
@@ -521,6 +535,16 @@ export enum TrafficFlowCongestionLevel {
 }
 
 /**
+ * Calculates a travel-time matrix through the active provider's
+ * distance-matrix surface — the contract's `MapSdk::calculate_distance_matrix`
+ * on the wasm seam. Coordinates arrive as flat
+ * `[latitude, longitude, …]` arrays; the mode is the contract enum's name
+ * (or the common lowercase spelling). Answers `{originIndex,
+ * destinationIndex, distanceMeters, durationSeconds}` rows.
+ */
+export function calculateDistanceMatrix(origin_coordinates: Float64Array, destination_coordinates: Float64Array, transportation_mode: string): Promise<Array<any>>;
+
+/**
  * Plans a two-waypoint route through the active live provider (M13),
  * answering the same plain JavaScript shape
  * [`crate::exports::offline_route_from_archive_bytes`] does: `distanceMeters`,
@@ -535,6 +559,17 @@ export enum TrafficFlowCongestionLevel {
  * invalid coordinate, or the provider's own refusal.
  */
 export function calculateRoute(origin_latitude: number, origin_longitude: number, destination_latitude: number, destination_longitude: number): Promise<object>;
+
+/**
+ * Plans a two-waypoint route with the contract's full `RouteOptions`
+ * (`MapSdk::calculate_route`'s options argument): transportation mode,
+ * strategy, unit system, avoids and an optional departure instant. The
+ * options arrive as one plain object; omitted fields take the contract
+ * defaults, and an unknown enum name is refused before the provider is
+ * asked. The answer is the same route shape [`calculate_route_live`]
+ * produces.
+ */
+export function calculateRouteWithOptions(origin_latitude: number, origin_longitude: number, destination_latitude: number, destination_longitude: number, options: any): Promise<object>;
 
 /**
  * Addition-only alias for the pre-M15 vendor-named export: clears the active
@@ -575,6 +610,22 @@ export function devicePixelRatioThreshold(): number;
  * bounds, or the provider's own refusal.
  */
 export function fetchRasterTile(zoom_level: number, tile_x: number, tile_y: number): Promise<Uint8Array>;
+
+/**
+ * Fetches per-segment traffic flow inside the bounding box — the contract's
+ * `MapSdk::fetch_traffic_flow` on the wasm seam. The row shape is the
+ * contract's `TrafficFlowData` with lower-camel field names, speed values or
+ * null, and the congestion level's enum name as text.
+ */
+export function fetchTrafficFlow(south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number): Promise<Array<any>>;
+
+/**
+ * Fetches traffic disruptions intersecting the bounding box — the contract's
+ * `MapSdk::fetch_traffic_incidents` on the wasm seam. The row shape is the
+ * contract's `TrafficIncident` with lower-camel field names and enum names
+ * as text (`incidentType`, `severity`).
+ */
+export function fetchTrafficIncidents(south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number): Promise<Array<any>>;
 
 /**
  * Reads the most recent events the rings recorded at the requested
@@ -653,6 +704,19 @@ export function registerProvider(provider_key: string, credential: string, base_
 export function rotateCameraByDegreesAroundScreenPoint(camera: MapCamera, delta_bearing_degrees: number, focal_x_pixels: number, focal_y_pixels: number, width_pixels: number, height_pixels: number, field_of_view_degrees: number): object;
 
 /**
+ * Returns full search results for a settled query through the active
+ * provider's search-place surface — the same rows the native reference apps
+ * consume from `MapSdk::search`.
+ */
+export function searchPlaces(query_text: string): Promise<Array<any>>;
+
+/**
+ * [`search_places`] narrowed to a ranking boundary (the contract's
+ * `MapSdk::search` boundary argument).
+ */
+export function searchPlacesInBoundary(query_text: string, south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number): Promise<Array<any>>;
+
+/**
  * The contract's single-credential registration spelling (`MapSdk::
  * set_provider_credential`) on the wasm seam: registers the MapQuest
  * provider set through the generic dispatch table.
@@ -669,6 +733,20 @@ export function setProviderCredential(api_key: string, base_url?: string | null)
  * `enabled` is never consulted).
  */
 export function subscribeToDiagnosticEvents(minimum_severity: SdkLogSeverity): void;
+
+/**
+ * Returns fast completion candidates while the visitor types, through the
+ * active provider's search-place surface — the same rows the native
+ * reference apps consume from `MapSdk::suggest`. Fails with a verbatim
+ * message when no provider is registered or the provider refuses the query.
+ */
+export function suggestPlaces(query_text: string): Promise<Array<any>>;
+
+/**
+ * [`suggest_places`] narrowed to a ranking boundary (the contract's
+ * `MapSdk::suggest` boundary argument).
+ */
+export function suggestPlacesInBoundary(query_text: string, south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number): Promise<Array<any>>;
 
 /**
  * The XYZ address of the tile containing the coordinate at the zoom level,
@@ -762,12 +840,16 @@ export interface InitOutput {
     readonly __wbg_mapview_free: (a: number, b: number) => void;
     readonly __wbg_navigator_free: (a: number, b: number) => void;
     readonly __wbg_routesimulator_free: (a: number, b: number) => void;
+    readonly calculateDistanceMatrix: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
+    readonly calculateRouteWithOptions: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly clearMapquestProviders: () => void;
     readonly clearProvider: () => void;
     readonly coordinateToNormalizedWorld: (a: number, b: number, c: number) => void;
     readonly devicePixelRatioThreshold: () => number;
     readonly fetchRasterTile: (a: number, b: number, c: number) => number;
+    readonly fetchTrafficFlow: (a: number, b: number, c: number, d: number) => number;
+    readonly fetchTrafficIncidents: (a: number, b: number, c: number, d: number) => number;
     readonly flushRecentDiagnosticEvents: (a: number, b: number) => number;
     readonly forwardGeocode: (a: number, b: number) => number;
     readonly getSdkCompiledVersion: (a: number) => void;
@@ -806,10 +888,12 @@ export interface InitOutput {
     readonly mapview_setRasterTileSource: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
     readonly mapview_updateOverlay: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly navigator_addNavigationListener: (a: number, b: number) => number;
     readonly navigator_applyReroute: (a: number, b: number, c: number) => void;
     readonly navigator_currentTripState: (a: number, b: number) => void;
     readonly navigator_hasActiveTrip: (a: number) => number;
     readonly navigator_new: () => number;
+    readonly navigator_removeNavigationListener: (a: number, b: number) => number;
     readonly navigator_startNavigation: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly navigator_stopNavigation: (a: number) => void;
     readonly navigator_updateLocation: (a: number, b: number, c: number) => void;
@@ -822,8 +906,12 @@ export interface InitOutput {
     readonly routesimulator_new: (a: number, b: number, c: number) => void;
     readonly routesimulator_totalDistanceMeters: (a: number) => number;
     readonly routesimulator_totalDurationSeconds: (a: number) => number;
+    readonly searchPlaces: (a: number, b: number) => number;
+    readonly searchPlacesInBoundary: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly setProviderCredential: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly subscribeToDiagnosticEvents: (a: number) => void;
+    readonly suggestPlaces: (a: number, b: number) => number;
+    readonly suggestPlacesInBoundary: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly tileKeyForCoordinate: (a: number, b: number, c: number, d: number) => void;
     readonly tilesCovering: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileGeographicBounds: (a: number, b: number, c: number, d: number) => void;
@@ -832,12 +920,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1508: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1508_73: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1508_74: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7774: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_7795: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1305: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1619: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1619_83: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1619_84: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7885: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_7906: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1416: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
