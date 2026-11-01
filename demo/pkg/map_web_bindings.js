@@ -584,7 +584,8 @@ export class MapView {
      * `R8Unorm` atlas the label layer draws with. Answers the decoded font
      * stack name, glyph count and page dimensions for the page's status
      * readout. A malformed payload or an un-packable range is a
-     * string-valued rejection and keeps the previous font in force.
+     * coded `responseParsingFailure` rejection and keeps the previous font
+     * in force.
      * @param {Uint8Array} glyph_range_bytes
      * @returns {object}
      */
@@ -611,8 +612,8 @@ export class MapView {
      * accepted. Each descriptor carries its text, geographic anchor, paint,
      * halos, size and collision fields; [`MapView::set_glyph_range`] must
      * supply the glyphs before anything draws. Every invalid descriptor
-     * rejects the whole call with a string-valued error and keeps the
-     * previous list in force; nothing panics.
+     * rejects the whole call with a coded `invalidRenderInput` failure and
+     * keeps the previous list in force; nothing panics.
      * @param {any[]} labels
      * @returns {number}
      */
@@ -647,8 +648,8 @@ export class MapView {
      * finite screen-pixel value. The optional scalars pass through verbatim
      * (the native indicator state's rule) while the style's own range rules
      * mirror the native record conversion. Every invalid descriptor rejects
-     * the whole call with a string-valued error and keeps the previous
-     * layer in force; nothing panics.
+     * the whole call with a coded `invalidRenderInput` failure and keeps the
+     * previous layer in force; nothing panics.
      * @param {any} state_value
      * @param {any} style_value
      */
@@ -693,8 +694,9 @@ export class MapView {
      * alpha}` in `0.0..=1.0`; widths and radii are positive finite screen
      * pixel values. Every invalid descriptor (wrong shape, missing or
      * wrong-typed field, out-of-range coordinate or channel, unknown `kind`
-     * or congestion value) rejects the whole call with a string-valued
-     * error and keeps the previous list in force; nothing panics.
+     * or congestion value) rejects the whole call with a coded
+     * `invalidRenderInput` failure and keeps the previous list in force;
+     * nothing panics.
      * @param {any[]} overlays
      */
     setOverlays(overlays) {
@@ -753,8 +755,8 @@ export class MapView {
      * name one of the committed style artifacts (`bright-light`,
      * `fiord-dark`, …). The whole source builds before this view changes, so
      * a refused call (a malformed template, an empty name, an inverted zoom
-     * range or an unknown style id) throws a string-valued error and leaves
-     * the previous base in force.
+     * range or an unknown style id) throws a coded failure and leaves the
+     * previous base in force.
      *
      * While a source is installed the canvas hides the raster base and paints
      * the style's own background, exactly like the native surface; the
@@ -805,7 +807,7 @@ export class MapView {
     /**
      * Replaces the overlay addressed by `identifier` in its draw position.
      * An invalid descriptor throws and keeps the previous overlay; an
-     * unknown identifier throws a string-valued error naming it.
+     * unknown identifier throws an `invalidArgument` failure naming it.
      * @param {string} identifier
      * @param {any} overlay
      */
@@ -1093,7 +1095,8 @@ export class PositionController {
     /**
      * Feeds one fix from the page's geolocation source. Every scalar is
      * optional except the coordinate; the controller validates all of them
-     * and refuses an invalid fix with a string-valued error, keeping the
+     * and refuses an invalid fix with an `invalidCoordinateInput` failure,
+     * keeping the
      * previous state.
      * @param {number} latitude
      * @param {number} longitude
@@ -1172,7 +1175,7 @@ export class PositionController {
     /**
      * Records a source failure by its documented name (`permissionDenied`,
      * `serviceDisabled`, `unavailable`, `timeout`). An unknown name is a
-     * string-valued error.
+     * failure carrying an `invalidArgument` code.
      * @param {string} status_name
      */
     sourceFailed(status_name) {
@@ -1426,8 +1429,8 @@ export function calculateDistanceMatrix(origin_coordinates, destination_coordina
  * The request uses the SDK defaults: automobile, fastest, metric —
  * `RouteOptions::default()`, the same mode the recorded route sample was
  * produced with.
- * Failures throw the seam's plain verbatim string: no registration, an
- * invalid coordinate, or the provider's own refusal.
+ * Failures throw an error carrying the verbatim detail and a stable code:
+ * no registration, an invalid coordinate, or the provider's own refusal.
  * @param {number} origin_latitude
  * @param {number} origin_longitude
  * @param {number} destination_latitude
@@ -1517,9 +1520,9 @@ export function devicePixelRatioThreshold() {
  * PNG bytes as a `Uint8Array`.
  *
  * The request is the standard-resolution PNG form of the provider's
- * documented Tiles API path. Failures throw the seam's plain verbatim string:
- * no registration, a zoom or tile address outside the Tiles API's documented
- * bounds, or the provider's own refusal.
+ * documented Tiles API path. Failures throw an error carrying the verbatim
+ * detail and a stable code: no registration, a zoom or tile address outside
+ * the Tiles API's documented bounds, or the provider's own refusal.
  * @param {number} zoom_level
  * @param {number} tile_x
  * @param {number} tile_y
@@ -1641,10 +1644,10 @@ export function initializeSdk() {
  * The browser half of the contract's `offline_route_from_archive_bytes`
  * free helper: both delegate to
  * [`map_core::offline_routing::calculate_offline_route_from_archive_bytes`],
- * so the native and wasm answers cannot drift. Failures throw the plain
- * verbatim error string: bytes that fail
- * archive validation, a coordinate within no graph node's snap tolerance,
- * or a request pair the graph cannot connect — refused, never guessed.
+ * so the native and wasm answers cannot drift. Failures throw an error
+ * carrying the verbatim detail and a stable code: bytes that fail archive
+ * validation, a coordinate within no graph node's snap tolerance, or a
+ * request pair the graph cannot connect — refused, never guessed.
  * @param {Uint8Array} archive_bytes
  * @param {number} start_latitude
  * @param {number} start_longitude
@@ -1919,7 +1922,7 @@ export function tilesCovering(south_west_latitude, south_west_longitude, north_e
  * conversion is the same
  * [`tile_local_point_to_coordinate`] the overlay seam applies, so bounds and
  * geometry share one source of truth. An out-of-grid address rejects with a
- * string-valued error.
+ * coded error.
  * @param {number} tile_zoom_level
  * @param {number} tile_x
  * @param {number} tile_y
@@ -1954,8 +1957,8 @@ export function vectorTileGeographicBounds(tile_zoom_level, tile_x, tile_y) {
  * at the tile's own integer zoom level — the page lists tiles at the camera's
  * rounded zoom — and the canvas places the labels at the exact frame camera
  * pose. A malformed payload
- * or an out-of-grid address rejects with a string-valued error; nothing
- * throws across the wasm boundary as a panic.
+ * or an out-of-grid address rejects with a coded error; nothing throws
+ * across the wasm boundary as a panic.
  * @param {Uint8Array} tile_bytes
  * @param {number} tile_zoom_level
  * @param {number} tile_x
@@ -2020,8 +2023,8 @@ export function vectorTileLabelDescriptorsForStyle(tile_bytes, tile_zoom_level, 
  * a plain JavaScript array of `set_overlays` descriptors in style-layer
  * order (later style layers paint over earlier ones). A malformed payload,
  * an out-of-grid address, an empty body or an undecompressable gzip envelope
- * rejects with a string-valued error; nothing throws across the wasm boundary
- * as a panic.
+ * rejects with a coded error; nothing throws across the wasm boundary as a
+ * panic.
  * @param {Uint8Array} tile_bytes
  * @param {number} tile_zoom_level
  * @param {number} tile_x
@@ -3007,6 +3010,10 @@ function __wbg_get_imports() {
             const ret = new Error();
             return addHeapObject(ret);
         },
+        __wbg_new_343a093a3c2ffb4e: function(arg0, arg1) {
+            const ret = new Error(getStringFromWasm0(arg0, arg1));
+            return addHeapObject(ret);
+        },
         __wbg_new_617a8cdb8bb1130e: function() {
             const ret = new Object();
             return addHeapObject(ret);
@@ -3050,7 +3057,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_8063(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_8067(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -4080,27 +4087,27 @@ function __wbg_get_imports() {
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
             // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2557, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8042);
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8046);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
             // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 336, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1533);
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1537);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
             // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 336, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1533_93);
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1537_93);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
             // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 336, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1533_94);
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1537_94);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
             // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2422, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6332);
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6336);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -4174,18 +4181,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_6332(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_6332(arg0, arg1);
+function __wasm_bindgen_func_elem_6336(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6336(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_8063(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_8063(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_8067(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_8067(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_8042(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_8046(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_8042(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_8046(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4196,10 +4203,10 @@ function __wasm_bindgen_func_elem_8042(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1533(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1537(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1533(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1537(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4210,10 +4217,10 @@ function __wasm_bindgen_func_elem_1533(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1533_93(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1537_93(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1533_93(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1537_93(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4224,10 +4231,10 @@ function __wasm_bindgen_func_elem_1533_93(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1533_94(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1537_94(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1533_94(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1537_94(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {

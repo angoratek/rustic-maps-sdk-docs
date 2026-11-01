@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3bf3f0d7.js";
+            window.path_to_searchindex_js = "searchindex-8b91abb7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e284b4f1.js"></script>
@@ -226,6 +226,16 @@ cosign verify-blob &lt;artifact-file&gt; \
 <p>The version page prints the exact identity string for its own tag. The
 <code>--ignore-missing</code> flag keeps the <code>sha256sum</code> run to the files you actually
 downloaded.</p>
+<h3 id="rust"><a class="header" href="#rust">Rust</a></h3>
+<p>The Rust archive carries the workspace crates at this version. Unpack it and
+point a path dependency at the crates you use:</p>
+<pre><code class="language-toml">[dependencies]
+map-rendering = { path = "rustic-maps-sdk-rust-v0.1.0/crates/map-rendering" }
+map-navigation = { path = "rustic-maps-sdk-rust-v0.1.0/crates/map-navigation" }
+</code></pre>
+<p>The <a href="rust.html">Rust guide</a> walks the same map, routing and navigation steps the
+other platforms use. A crates.io registry entry is not part of this version;
+the archive is the source of truth.</p>
 <h2 id="installing-from-a-release"><a class="header" href="#installing-from-a-release">Installing from a release</a></h2>
 <p>The <a href="first-map.html">tutorials</a> carry the per-platform install steps against
 these exact artifact names: the AAR for Android, the checksummed zip for the
