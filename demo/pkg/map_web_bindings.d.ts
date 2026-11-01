@@ -224,7 +224,8 @@ export class MapView {
      * `R8Unorm` atlas the label layer draws with. Answers the decoded font
      * stack name, glyph count and page dimensions for the page's status
      * readout. A malformed payload or an un-packable range is a
-     * string-valued rejection and keeps the previous font in force.
+     * coded `responseParsingFailure` rejection and keeps the previous font
+     * in force.
      */
     setGlyphRange(glyph_range_bytes: Uint8Array): object;
     /**
@@ -233,8 +234,8 @@ export class MapView {
      * accepted. Each descriptor carries its text, geographic anchor, paint,
      * halos, size and collision fields; [`MapView::set_glyph_range`] must
      * supply the glyphs before anything draws. Every invalid descriptor
-     * rejects the whole call with a string-valued error and keeps the
-     * previous list in force; nothing panics.
+     * rejects the whole call with a coded `invalidRenderInput` failure and
+     * keeps the previous list in force; nothing panics.
      */
     setLabels(labels: any[]): number;
     /**
@@ -251,8 +252,8 @@ export class MapView {
      * finite screen-pixel value. The optional scalars pass through verbatim
      * (the native indicator state's rule) while the style's own range rules
      * mirror the native record conversion. Every invalid descriptor rejects
-     * the whole call with a string-valued error and keeps the previous
-     * layer in force; nothing panics.
+     * the whole call with a coded `invalidRenderInput` failure and keeps the
+     * previous layer in force; nothing panics.
      */
     setLocationIndicator(state_value: any, style_value: any): void;
     /**
@@ -283,8 +284,9 @@ export class MapView {
      * alpha}` in `0.0..=1.0`; widths and radii are positive finite screen
      * pixel values. Every invalid descriptor (wrong shape, missing or
      * wrong-typed field, out-of-range coordinate or channel, unknown `kind`
-     * or congestion value) rejects the whole call with a string-valued
-     * error and keeps the previous list in force; nothing panics.
+     * or congestion value) rejects the whole call with a coded
+     * `invalidRenderInput` failure and keeps the previous list in force;
+     * nothing panics.
      */
     setOverlays(overlays: any[]): void;
     /**
@@ -312,8 +314,8 @@ export class MapView {
      * name one of the committed style artifacts (`bright-light`,
      * `fiord-dark`, …). The whole source builds before this view changes, so
      * a refused call (a malformed template, an empty name, an inverted zoom
-     * range or an unknown style id) throws a string-valued error and leaves
-     * the previous base in force.
+     * range or an unknown style id) throws a coded failure and leaves the
+     * previous base in force.
      *
      * While a source is installed the canvas hides the raster base and paints
      * the style's own background, exactly like the native surface; the
@@ -341,7 +343,7 @@ export class MapView {
     /**
      * Replaces the overlay addressed by `identifier` in its draw position.
      * An invalid descriptor throws and keeps the previous overlay; an
-     * unknown identifier throws a string-valued error naming it.
+     * unknown identifier throws an `invalidArgument` failure naming it.
      */
     updateOverlay(identifier: string, overlay: any): void;
     /**
@@ -469,7 +471,8 @@ export class PositionController {
     /**
      * Feeds one fix from the page's geolocation source. Every scalar is
      * optional except the coordinate; the controller validates all of them
-     * and refuses an invalid fix with a string-valued error, keeping the
+     * and refuses an invalid fix with an `invalidCoordinateInput` failure,
+     * keeping the
      * previous state.
      */
     feedFix(latitude: number, longitude: number, horizontal_accuracy_meters?: number | null, course_heading_degrees?: number | null, timestamp_seconds?: number | null): void;
@@ -495,7 +498,7 @@ export class PositionController {
     /**
      * Records a source failure by its documented name (`permissionDenied`,
      * `serviceDisabled`, `unavailable`, `timeout`). An unknown name is a
-     * string-valued error.
+     * failure carrying an `invalidArgument` code.
      */
     sourceFailed(status_name: string): void;
     /**
@@ -634,8 +637,8 @@ export function calculateDistanceMatrix(origin_coordinates: Float64Array, destin
  * The request uses the SDK defaults: automobile, fastest, metric —
  * `RouteOptions::default()`, the same mode the recorded route sample was
  * produced with.
- * Failures throw the seam's plain verbatim string: no registration, an
- * invalid coordinate, or the provider's own refusal.
+ * Failures throw an error carrying the verbatim detail and a stable code:
+ * no registration, an invalid coordinate, or the provider's own refusal.
  */
 export function calculateRoute(origin_latitude: number, origin_longitude: number, destination_latitude: number, destination_longitude: number): Promise<object>;
 
@@ -683,9 +686,9 @@ export function devicePixelRatioThreshold(): number;
  * PNG bytes as a `Uint8Array`.
  *
  * The request is the standard-resolution PNG form of the provider's
- * documented Tiles API path. Failures throw the seam's plain verbatim string:
- * no registration, a zoom or tile address outside the Tiles API's documented
- * bounds, or the provider's own refusal.
+ * documented Tiles API path. Failures throw an error carrying the verbatim
+ * detail and a stable code: no registration, a zoom or tile address outside
+ * the Tiles API's documented bounds, or the provider's own refusal.
  */
 export function fetchRasterTile(zoom_level: number, tile_x: number, tile_y: number): Promise<Uint8Array>;
 
@@ -751,10 +754,10 @@ export function initializeSdk(): Promise<any>;
  * The browser half of the contract's `offline_route_from_archive_bytes`
  * free helper: both delegate to
  * [`map_core::offline_routing::calculate_offline_route_from_archive_bytes`],
- * so the native and wasm answers cannot drift. Failures throw the plain
- * verbatim error string: bytes that fail
- * archive validation, a coordinate within no graph node's snap tolerance,
- * or a request pair the graph cannot connect — refused, never guessed.
+ * so the native and wasm answers cannot drift. Failures throw an error
+ * carrying the verbatim detail and a stable code: bytes that fail archive
+ * validation, a coordinate within no graph node's snap tolerance, or a
+ * request pair the graph cannot connect — refused, never guessed.
  */
 export function offlineRouteFromArchiveBytes(archive_bytes: Uint8Array, start_latitude: number, start_longitude: number, end_latitude: number, end_longitude: number): Promise<any>;
 
@@ -848,7 +851,7 @@ export function tilesCovering(south_west_latitude: number, south_west_longitude:
  * conversion is the same
  * [`tile_local_point_to_coordinate`] the overlay seam applies, so bounds and
  * geometry share one source of truth. An out-of-grid address rejects with a
- * string-valued error.
+ * coded error.
  */
 export function vectorTileGeographicBounds(tile_zoom_level: number, tile_x: number, tile_y: number): object;
 
@@ -865,8 +868,8 @@ export function vectorTileGeographicBounds(tile_zoom_level: number, tile_x: numb
  * at the tile's own integer zoom level — the page lists tiles at the camera's
  * rounded zoom — and the canvas places the labels at the exact frame camera
  * pose. A malformed payload
- * or an out-of-grid address rejects with a string-valued error; nothing
- * throws across the wasm boundary as a panic.
+ * or an out-of-grid address rejects with a coded error; nothing throws
+ * across the wasm boundary as a panic.
  */
 export function vectorTileLabelDescriptors(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number): Array<any>;
 
@@ -886,8 +889,8 @@ export function vectorTileLabelDescriptorsForStyle(tile_bytes: Uint8Array, tile_
  * a plain JavaScript array of `set_overlays` descriptors in style-layer
  * order (later style layers paint over earlier ones). A malformed payload,
  * an out-of-grid address, an empty body or an undecompressable gzip envelope
- * rejects with a string-valued error; nothing throws across the wasm boundary
- * as a panic.
+ * rejects with a coded error; nothing throws across the wasm boundary as a
+ * panic.
  */
 export function vectorTileOverlayDescriptors(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number): Array<any>;
 
@@ -1008,12 +1011,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1533: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1533_93: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1533_94: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8042: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8063: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_6332: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1537: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1537_93: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1537_94: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8046: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8067: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_6336: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
