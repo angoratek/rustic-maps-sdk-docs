@@ -806,6 +806,21 @@ dictionary AvoidOptions {
     boolean unpaved_roads;
 };
 
+/// Which transport modes and which route strategy the serving routing
+/// provider can honour, as reported by `MapSdk::route_capabilities`.
+///
+/// The SDK can express three transport modes and two strategies, but a
+/// provider may not serve all of them. A surface reads this answer so it can
+/// disable a choice it cannot serve with a reason, instead of sending the
+/// request and receiving a route from a path the reader did not ask for.
+dictionary RouteCapabilities {
+    /// The transport modes the provider can route for.
+    sequence<TransportationMode> supported_transportation_modes;
+    /// Whether the provider can minimize traveled distance instead of travel
+    /// time for automobile routing.
+    boolean supports_shortest_route_strategy;
+};
+
 /// Options controlling how a route is calculated.
 dictionary RouteOptions {
     /// Mode of transport.
@@ -1156,6 +1171,14 @@ interface MapSdk {
     /// Runs asynchronously; the call does not block the calling thread.
     [Async, Throws=SdkError]
     Route calculate_route(sequence<GeographicCoordinate> waypoints, RouteOptions route_options);
+
+    /// Reports which transport modes and which strategy the serving routing
+    /// provider can honour.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` without a routing provider.
+    [Throws=SdkError]
+    RouteCapabilities route_capabilities();
 
     /// Calculates durations and distances for every origin-destination pair.
     ///
@@ -2617,6 +2640,14 @@ interface RoutingEngine {
     /// Runs asynchronously; the call does not block the calling thread.
     [Async, Throws=SdkError]
     Route calculate_route(sequence<GeographicCoordinate> waypoints, RouteOptions route_options);
+
+    /// Reports which transport modes and which strategy the serving routing
+    /// provider can honour.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` without a routing provider.
+    [Throws=SdkError]
+    RouteCapabilities route_capabilities();
 
     /// Calculates durations and distances for every origin-destination pair.
     ///

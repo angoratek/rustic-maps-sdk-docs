@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f9d50291.js";
+            window.path_to_searchindex_js = "searchindex-b5453b58.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -204,12 +204,15 @@ first. <code>suggest</code> returns fast completion candidates while the user ty
 optional <code>BoundingBox</code> that restricts the search.</p>
 <h3 id="plan-the-route"><a class="header" href="#plan-the-route">Plan the route</a></h3>
 <p><code>calculateRoute</code> takes the ordered waypoints and the routing options. The
-request is the same on every platform: two waypoints, a pedestrian route,
-the fastest strategy, metric units, and no avoids.</p>
+request is the same on every platform: two waypoints and a <code>RouteOptions</code>
+carrying the transport mode and strategy the application offers — Car and
+Fastest by default — with metric units and no avoids. A provider that cannot
+honour a choice reports it through <code>routeCapabilities()</code>; see
+<a href="mix-providers-per-capability.html">Mixing providers per capability</a>.</p>
 <!-- docs-snippet: begin search-and-routing/plan-the-route android -->
 <pre><code class="language-kotlin">val routeOptions = RouteOptions(
-    transportationMode = TransportationMode.PEDESTRIAN,
-    routeStrategy = RouteStrategy.FASTEST,
+    transportationMode = transportationMode,
+    routeStrategy = routeStrategy,
     unitSystem = UnitSystem.METRIC,
     avoidOptions = AvoidOptions(
         tollRoads = false,
@@ -305,20 +308,11 @@ else {
 <code>search</code> returns full results for a settled query. Both take an optional
 <code>BoundingBox</code>.</p>
 <h3 id="plan-the-route-1"><a class="header" href="#plan-the-route-1">Plan the route</a></h3>
+<p>The <code>routeOptions</code> value is the option record the application built from its
+Directions control — automobile and fastest by default — with metric units
+and no avoids:</p>
 <!-- docs-snippet: begin search-and-routing/plan-the-route ios -->
-<pre><code class="language-swift">let routeOptions = RouteOptions(
-    transportationMode: .pedestrian,
-    routeStrategy: .fastest,
-    unitSystem: .metric,
-    avoidOptions: AvoidOptions(
-        tollRoads: false,
-        limitedAccessHighways: false,
-        ferries: false,
-        unpavedRoads: false
-    ),
-    departureTimestampSeconds: nil
-)
-let plannedRoute = try await mapSdk.calculateRoute(
+<pre><code class="language-swift">let plannedRoute = try await mapSdk.calculateRoute(
     waypoints: [originPlace.coordinate, destinationPlace.coordinate],
     routeOptions: routeOptions
 )

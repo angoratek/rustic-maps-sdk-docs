@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["OBSERVABLE_QUERY_PARAMETER_NAMES","RESPONSE_SNIPPET_MAXIMUM_BYTES","TRANSPORT_FAILURE_STATUS_CLASS"],"fn":["install_provider_request_observer","observe_provider_request","redacted_request_path","response_snippet_text"],"struct":["ObservedTransport","ProviderRequestObservation"],"trait":["ProviderRequestObserver"]};
