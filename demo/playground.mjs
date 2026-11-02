@@ -232,6 +232,10 @@
       // choice (the native SimulatedTripDriver's dispatchIntervalMillis). The
       // floor keeps a fast multiplier from spinning the timer.
       const DEMO_PLAN_MINIMUM_DISPATCH_INTERVAL_MILLISECONDS = 1;
+      // The playback paces a visitor may pick (M27), applied to the route's
+      // own walk speed; the remembered speed must be one of these.
+      const FOLLOW_DEMO_SPEED_MULTIPLIERS = [1, 2, 4, 8];
+      const DEFAULT_FOLLOW_DEMO_SPEED_MULTIPLIER = 1;
 
       const map_canvas = document.getElementById('map-canvas');
       const overlay_canvas = document.getElementById('map-overlay');
@@ -255,6 +259,9 @@
       // own samples, exactly as the native `SimulatedTripDriver` does, instead
       // of walking a route polyline.
       let selected_demo_plan_trace = null;
+      // Restores the remembered demo plan and camera preset once the plan
+      // picker exists (installed inside the map-ready setup below).
+      let restore_remembered_demo_content = async () => {};
       const status_element = document.getElementById('harness-status');
       // The keyboard model's spoken feedback (polite live region, visually
       // hidden): pan announces the new center, zoom the level, rotation the
@@ -479,6 +486,154 @@
           // Same as above: persistence is best-effort, never a failure path.
         }
       }
+      // The visitor's explicit demo choices, remembered as one versioned
+      // record in this origin's localStorage. Only explicit selections are
+      // written; a transient value (an open dialog, the current camera pose,
+      // a route result) never enters the record, and provider credentials
+      // stay in the separate opt-in store above.
+      const DEMO_PREFERENCES_STORAGE_KEY = 'rustic-maps-demo-preferences';
+      const DEMO_PREFERENCES_VERSION = 1;
+      const DEMO_PLAN_SCENARIO_IDS = new Set(
+        (REFERENCE_SCENE_ARTIFACT.demo_plans ?? []).map(
+          (demo_plan) => demo_plan.scenario));
+      const CAMERA_PRESET_IDS = new Set(
+        REFERENCE_SCENE_ARTIFACT.camera_presets.map(
+          (camera_preset) => camera_preset.id));
+      const OVERLAY_SCENE_KEYS = new Set(
+        Object.keys(REFERENCE_SCENE_ARTIFACT.overlay_scenes ?? {}));
+
+      /** The record's defaults, also the shape every read is rebuilt into. */
+      function default_demo_preferences() {
+        return {
+          version: DEMO_PREFERENCES_VERSION,
+          themeChoice: 'auto',
+          baseMap: null,
+          demoPlanScenario: null,
+          overlaySceneKeys: [],
+          cameraPresetId: null,
+          speedMultiplier: DEFAULT_FOLLOW_DEMO_SPEED_MULTIPLIER,
+          originText: '',
+          destinationText: '',
+          lastSearchFieldKey: null,
+          lastSearchQueryText: '',
+        };
+      }
+
+      function is_preference_object(value) {
+        return value !== null && typeof value === 'object' && !Array.isArray(value);
+      }
+
+      /** Keeps only a well-formed base-map selection; anything else is dropped. */
+      function sanitized_base_map_preference(value) {
+        if (!is_preference_object(value)) return null;
+        if (value.mode === TILE_LAYER_MODES.raster) {
+          return {
+            mode: TILE_LAYER_MODES.raster,
+            rasterProviderKey: typeof value.rasterProviderKey === 'string'
+              ? value.rasterProviderKey
+              : null,
+          };
+        }
+        if (value.mode === TILE_LAYER_MODES.vector) {
+          return {
+            mode: TILE_LAYER_MODES.vector,
+            vectorProviderKey: typeof value.vectorProviderKey === 'string'
+              ? value.vectorProviderKey
+              : null,
+            vectorStyleId: typeof value.vectorStyleId === 'string'
+              ? value.vectorStyleId
+              : null,
+          };
+        }
+        return null;
+      }
+
+      /**
+       * Reads the remembered choices. Unknown keys are ignored, and a record
+       * written by an incompatible version is dropped in favour of the
+       * defaults rather than partially interpreted. A theme choice saved by
+       * the older single-key store seeds the record once.
+       */
+      function read_demo_preferences() {
+        const preferences = default_demo_preferences();
+        const stored_text = read_local_storage(DEMO_PREFERENCES_STORAGE_KEY);
+        if (stored_text === null) {
+          const legacy_theme_choice = read_local_storage(THEME_CHOICE_STORAGE_KEY);
+          if (THEME_CHOICE_NAMES.includes(legacy_theme_choice)) {
+            preferences.themeChoice = legacy_theme_choice;
+          }
+          return preferences;
+        }
+        let stored_record;
+        try {
+          stored_record = JSON.parse(stored_text);
+        } catch {
+          return preferences;
+        }
+        if (!is_preference_object(stored_record)
+          || stored_record.version !== DEMO_PREFERENCES_VERSION) {
+          return preferences;
+        }
+        if (THEME_CHOICE_NAMES.includes(stored_record.themeChoice)) {
+          preferences.themeChoice = stored_record.themeChoice;
+        }
+        preferences.baseMap = sanitized_base_map_preference(stored_record.baseMap);
+        if (DEMO_PLAN_SCENARIO_IDS.has(stored_record.demoPlanScenario)) {
+          preferences.demoPlanScenario = stored_record.demoPlanScenario;
+        }
+        if (Array.isArray(stored_record.overlaySceneKeys)) {
+          preferences.overlaySceneKeys = stored_record.overlaySceneKeys.filter(
+            (scene_key) => OVERLAY_SCENE_KEYS.has(scene_key));
+        }
+        if (CAMERA_PRESET_IDS.has(stored_record.cameraPresetId)) {
+          preferences.cameraPresetId = stored_record.cameraPresetId;
+        }
+        if (FOLLOW_DEMO_SPEED_MULTIPLIERS.includes(stored_record.speedMultiplier)) {
+          preferences.speedMultiplier = stored_record.speedMultiplier;
+        }
+        if (typeof stored_record.originText === 'string') {
+          preferences.originText = stored_record.originText;
+        }
+        if (typeof stored_record.destinationText === 'string') {
+          preferences.destinationText = stored_record.destinationText;
+        }
+        if (stored_record.lastSearchFieldKey === 'origin'
+          || stored_record.lastSearchFieldKey === 'destination') {
+          preferences.lastSearchFieldKey = stored_record.lastSearchFieldKey;
+        }
+        if (typeof stored_record.lastSearchQueryText === 'string') {
+          preferences.lastSearchQueryText = stored_record.lastSearchQueryText;
+        }
+        return preferences;
+      }
+
+      // The snapshot the page restores from: taken once at start-up, so a
+      // choice made while the renderer is still initializing can never be
+      // overwritten by its own written record.
+      const initial_demo_preferences = read_demo_preferences();
+      let demo_preferences = { ...initial_demo_preferences };
+
+      /** Merges one explicit choice into the record and persists it. */
+      function write_demo_preferences(changed_preferences) {
+        demo_preferences = {
+          ...demo_preferences,
+          ...changed_preferences,
+          version: DEMO_PREFERENCES_VERSION,
+        };
+        write_local_storage(
+          DEMO_PREFERENCES_STORAGE_KEY, JSON.stringify(demo_preferences));
+        // The record now owns the theme choice; the older single-key store
+        // is retired so a reset can never resurrect it.
+        write_local_storage(THEME_CHOICE_STORAGE_KEY, null);
+      }
+
+      /** Forgets every remembered demo choice (the credential store stays). */
+      function clear_demo_preferences() {
+        demo_preferences = default_demo_preferences();
+        write_local_storage(DEMO_PREFERENCES_STORAGE_KEY, null);
+        write_local_storage(THEME_CHOICE_STORAGE_KEY, null);
+      }
+
       let remember_provider_credentials =
         read_local_storage(PROVIDER_CREDENTIAL_PERSISTENCE_STORAGE_KEY)
           === PROVIDER_CREDENTIAL_REMEMBERED_VALUE;
@@ -845,6 +1000,7 @@
           trip_fields[field_key].input.value = trip_place.name;
           trip_search_results_element.hidden = true;
           active_trip_field_key = field_key;
+          persist_trip_field_texts();
           refresh_trip_plan_route_state();
           set_provider_status(
             `Selected ${trip_place.name} as the ${trip_field_label(field_key).toLowerCase()}. ` +
@@ -895,6 +1051,10 @@
             return;
           }
           active_trip_field_key = field_key;
+          write_demo_preferences({
+            lastSearchFieldKey: field_key,
+            lastSearchQueryText: query_text,
+          });
           if (applied_provider_keys.size === 0) {
             const query_lowercase = query_text.toLowerCase();
             const matching_places = demo_places
@@ -935,6 +1095,15 @@
           }
         }
 
+        /** Persists the two endpoint texts (the last search inputs a visitor
+         * typed); restoring them fills the fields without planning a route. */
+        function persist_trip_field_texts() {
+          write_demo_preferences({
+            originText: trip_fields.origin.input.value,
+            destinationText: trip_fields.destination.input.value,
+          });
+        }
+
         for (const field_key of TRIP_FIELD_KEYS) {
           const field = trip_fields[field_key];
           // Typing invalidates the earlier selection: the field's text is
@@ -942,6 +1111,7 @@
           field.input.addEventListener('input', () => {
             field.selected_place = null;
             active_trip_field_key = field_key;
+            persist_trip_field_texts();
             refresh_trip_plan_route_state();
           });
           field.input.addEventListener('focus', () => {
@@ -958,6 +1128,19 @@
           });
         }
         render_trip_suggestions();
+        // Restoring a remembered pair fills the fields only: the route is
+        // never planned on load, so no provider call is spent.
+        trip_fields.origin.input.value = initial_demo_preferences.originText;
+        trip_fields.destination.input.value =
+          initial_demo_preferences.destinationText;
+        if (initial_demo_preferences.lastSearchFieldKey !== null) {
+          const last_search_field =
+            trip_fields[initial_demo_preferences.lastSearchFieldKey];
+          if (last_search_field.input.value.trim() === '') {
+            last_search_field.input.value =
+              initial_demo_preferences.lastSearchQueryText;
+          }
+        }
         refresh_trip_plan_route_state();
 
         /** Resolves one field to a coordinate: its selected place, a demo
@@ -1222,7 +1405,7 @@
 
         /** Clears the picker selection and the plan's drawn route (a later
          * planned route takes over both). */
-        function clear_selected_demo_plan() {
+        function clear_selected_demo_plan({ remember = true } = {}) {
           if (selected_demo_plan_trace === null) return;
           selected_demo_plan_trace = null;
           planned_route_record = null;
@@ -1232,6 +1415,9 @@
           demo_plan_description_element.textContent = '';
           demo_plan_description_element.hidden = true;
           set_demo_plan_status('');
+          if (remember) {
+            write_demo_preferences({ demoPlanScenario: null });
+          }
         }
 
         /** Builds one chip per artifact plan, in artifact order. */
@@ -1254,7 +1440,8 @@
         /** Loads one plan's recorded trace, draws and frames its route, and
          * arms the simulated-trip control to replay it. A refusal is reported
          * verbatim; nothing is invented. */
-        async function select_demo_plan(plan_definition, plan_chip) {
+        async function select_demo_plan(plan_definition, plan_chip,
+          { remember = true } = {}) {
           set_demo_plan_status('');
           try {
             const trace_url =
@@ -1271,8 +1458,10 @@
               throw new Error('the recorded trace route carries no geometry to draw');
             }
             // A running trip on the previous plan or route is replaced, not
-            // left driving a route the map no longer shows.
+            // left driving a route the map no longer shows. A restore never
+            // interrupts a trip the visitor has already started.
             if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+              if (!remember) return;
               end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
             }
             selected_demo_plan_trace = {
@@ -1306,6 +1495,11 @@
             render_navigation_idle(
               'Start the simulated trip to replay the selected plan\'s recorded trace.');
             set_demo_plan_status('Recorded demo plan ready.');
+            if (remember) {
+              write_demo_preferences({
+                demoPlanScenario: plan_definition.scenario,
+              });
+            }
             clear_error_report();
           } catch (plan_failure) {
             const failure_text = String(plan_failure?.message ?? plan_failure);
@@ -1324,6 +1518,31 @@
         });
 
         render_demo_plan_chips();
+
+        // Restoring the remembered plan replays no trip and spends no
+        // provider call: it loads the committed trace, draws its route and
+        // frames it, then an explicit remembered preset wins the final pose.
+        restore_remembered_demo_content = async () => {
+          // A trip the visitor already started wins over the restored plan.
+          if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+            return;
+          }
+          const remembered_scenario = initial_demo_preferences.demoPlanScenario;
+          if (remembered_scenario !== null) {
+            const plan_definition = demo_plan_definitions.find(
+              (candidate) => candidate.scenario === remembered_scenario);
+            const plan_chip = demo_plan_chips_element.querySelector(
+              `[data-demo-plan-scenario="${remembered_scenario}"]`);
+            if (plan_definition !== undefined && plan_chip !== null) {
+              await select_demo_plan(
+                plan_definition, plan_chip, { remember: false });
+            }
+          }
+          // A trip may have started while the recorded trace loaded; the
+          // visitor's live session keeps its own camera.
+          if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) return;
+          apply_remembered_camera_preset();
+        };
 
         trip_plan_route_control.addEventListener('click', async () => {
           if (trip_plan_route_control.disabled) return;
@@ -1533,7 +1752,7 @@
         typeof window.matchMedia === 'function'
           ? window.matchMedia(DARK_COLOR_SCHEME_MEDIA_QUERY)
           : null;
-      let theme_choice = read_local_storage(THEME_CHOICE_STORAGE_KEY);
+      let theme_choice = initial_demo_preferences.themeChoice;
       if (!THEME_CHOICE_NAMES.includes(theme_choice)) {
         theme_choice = 'auto';
       }
@@ -1544,15 +1763,17 @@
       function current_theme_name() {
         return document.documentElement.dataset.theme ?? resolved_theme_name();
       }
-      function apply_theme_choice(next_choice) {
+      function apply_theme_choice(next_choice, { remember = true } = {}) {
         theme_choice = next_choice;
-        write_local_storage(THEME_CHOICE_STORAGE_KEY, next_choice);
+        if (remember) {
+          write_demo_preferences({ themeChoice: next_choice });
+        }
         document.documentElement.dataset.themeChoice = next_choice;
         document.documentElement.dataset.theme = resolved_theme_name();
         theme_toggle_control.textContent =
           `Switch to ${THEME_NAMES_CYCLING[next_choice]} theme`;
       }
-      apply_theme_choice(theme_choice);
+      apply_theme_choice(theme_choice, { remember: false });
       // Auto follows the operating system live; an explicit choice ignores
       // the system from then on.
       dark_color_scheme_query?.addEventListener?.('change', () => {
@@ -1569,14 +1790,17 @@
         document.getElementById('advanced-panel').open = true;
       }
 
-      // The docs back-link: shown only when the harness is served from the
-      // documentation site's `/demo/` path, so the local dev server's root
-      // page never grows a dead "up" link. It closes the demo → docs loop in
-      // one click.
+      // The header's two outbound links. The docs back-link is shown only
+      // when the harness is served from the documentation site's `/demo/`
+      // path, so the local dev server's root page never grows a dead "up"
+      // link. The mobile-demo link is always present: the hosted page sits
+      // beside the demo on the published site (`mobile/`) and under this
+      // harness's own root (`mobile-demo/`). One signal decides both.
+      const is_published_demo = window.location.pathname.includes('/demo/');
       const docs_back_link = document.getElementById('docs-back-link');
-      if (window.location.pathname.includes('/demo/')) {
-        docs_back_link.hidden = false;
-      }
+      docs_back_link.hidden = !is_published_demo;
+      const mobile_demo_link = document.getElementById('mobile-demo-link');
+      mobile_demo_link.href = is_published_demo ? 'mobile/' : 'mobile-demo/';
       theme_toggle_control.addEventListener('click', () => {
         apply_theme_choice(THEME_NAMES_CYCLING[theme_choice]);
         schedule_render();
@@ -1590,6 +1814,18 @@
       // and for deep links into the credential surface.
       const settings_dialog = document.getElementById('settings-dialog');
       const settings_close_control = document.getElementById('settings-close-control');
+      const reset_remembered_choices_control =
+        document.getElementById('reset-remembered-choices-control');
+      const remembered_choices_status =
+        document.getElementById('remembered-choices-status');
+      reset_remembered_choices_control.addEventListener('click', () => {
+        // The credential opt-in store is deliberately untouched: a remembered
+        // provider key belongs to that switch, not to this record.
+        clear_demo_preferences();
+        remembered_choices_status.hidden = false;
+        remembered_choices_status.textContent =
+          'Remembered choices cleared. Provider keys are unchanged.';
+      });
       // The element focus returns to when the sheet closes: the trip card's
       // credential action or the gear, whichever opened it.
       let settings_opener_element = settings_control;
@@ -1676,12 +1912,34 @@
           duration_milliseconds);
         request_pump_step();
       }
+      // The restored preset is the visitor's starting pose, not an eased
+      // transition: apply it directly before the first interactive frame.
+      function apply_camera_preset_pose_immediately(preset) {
+        select_camera_preset_button(preset.id);
+        camera_state.latitude = preset.latitude_degrees;
+        camera_state.longitude = preset.longitude_degrees;
+        camera_state.zoom = preset.zoom_level;
+        camera_state.bearing = preset.bearing_degrees;
+        camera_state.pitch = preset.pitch_degrees;
+        controls.zoom.value = camera_state.zoom;
+        controls.bearing.value = camera_state.bearing;
+        controls.pitch.value = camera_state.pitch;
+        refresh_control_labels();
+        schedule_render();
+      }
+      function apply_remembered_camera_preset() {
+        const remembered_preset = REFERENCE_SCENE_ARTIFACT.camera_presets.find(
+          (candidate) => candidate.id === initial_demo_preferences.cameraPresetId);
+        if (remembered_preset === undefined) return;
+        apply_camera_preset_pose_immediately(remembered_preset);
+      }
       for (const preset_button of camera_preset_controls.children) {
         preset_button.addEventListener('click', () => {
           const preset = REFERENCE_SCENE_ARTIFACT.camera_presets.find(
             (candidate) => candidate.id === preset_button.dataset.cameraPresetId,
           );
           camera_state_by_preset(preset);
+          write_demo_preferences({ cameraPresetId: preset.id });
         });
       }
 
@@ -1724,14 +1982,17 @@
       // a string exception; it surfaces on the error report and the status
       // line, and the previously accepted list stays in force.
       //
+      /** The keys of the demo scenes whose toggles are checked. */
+      function checked_overlay_scene_keys() {
+        return Object.entries(overlay_checkboxes)
+          .filter(([, checkbox]) => checkbox.checked)
+          .map(([scene_key]) => scene_key);
+      }
+
       /** The page's own overlays: the toggled demo scenes, in scene order. */
       function content_overlay_list() {
         return [
-          ...sacramento_scene_overlays(
-            Object.entries(overlay_checkboxes)
-              .filter(([, checkbox]) => checkbox.checked)
-              .map(([scene_key]) => scene_key),
-          ),
+          ...sacramento_scene_overlays(checked_overlay_scene_keys()),
           // The planned route, its A/B pins and the offline card's route
           // draw over any base layer and beside every toggled scene.
           ...trip_route_overlays,
@@ -1755,6 +2016,9 @@
 
       for (const checkbox of Object.values(overlay_checkboxes)) {
         checkbox.addEventListener('change', () => {
+          write_demo_preferences({
+            overlaySceneKeys: checked_overlay_scene_keys(),
+          });
           apply_overlays();
           schedule_render();
         });
@@ -1764,9 +2028,17 @@
         for (const checkbox of Object.values(overlay_checkboxes)) {
           checkbox.checked = false;
         }
+        write_demo_preferences({ overlaySceneKeys: [] });
         apply_overlays();
         schedule_render();
       });
+      // Restoring a scene selection only marks the toggles; the renderer's
+      // first overlay push happens once the GPU surface is up.
+      for (const scene_key of initial_demo_preferences.overlaySceneKeys) {
+        if (overlay_checkboxes[scene_key] !== undefined) {
+          overlay_checkboxes[scene_key].checked = true;
+        }
+      }
 
       // --- The base-map tile layer switch (M9) -----------------------------
       // The page offers one base layer per provider-declared tile source: the
@@ -1872,6 +2144,7 @@
       }
       vector_style_select_element.addEventListener('change', () => {
         current_vector_style_id = vector_style_select_element.value;
+        write_demo_preferences({ baseMap: current_base_map_preference() });
         apply_vector_base_clear_color();
         install_vector_base_source();
         schedule_render();
@@ -2054,7 +2327,8 @@
        * vector base. The provider key picks the vector descriptor; a raster
        * selection ignores it.
        */
-      function switch_tile_mode(next_mode, next_provider_key = null) {
+      function switch_tile_mode(next_mode, next_provider_key = null,
+        { remember = true } = {}) {
         if (next_mode === TILE_LAYER_MODES.vector) {
           if (renderer_mode !== 'gpu' || !gpu_map_canvas) {
             set_base_map_status(
@@ -2106,7 +2380,62 @@
           apply_overlays();
           install_vector_base_source();
         }
+        if (remember) {
+          write_demo_preferences({ baseMap: current_base_map_preference() });
+        }
         schedule_render();
+      }
+
+      /** The selection the base-map record stores: the raster descriptor in
+       * use, or the vector provider and the explicitly picked style id. */
+      function current_base_map_preference() {
+        if (current_tile_mode === TILE_LAYER_MODES.raster) {
+          return {
+            mode: TILE_LAYER_MODES.raster,
+            rasterProviderKey:
+              RASTER_BASE_MAP_DESCRIPTORS[0]?.provider_key ?? null,
+          };
+        }
+        return {
+          mode: TILE_LAYER_MODES.vector,
+          vectorProviderKey: current_vector_provider_key,
+          vectorStyleId: current_vector_style_id,
+        };
+      }
+
+      /** Restores the remembered base map once the renderer can serve it.
+       * An undeclared provider or style is dropped, never guessed. */
+      function restore_remembered_base_map() {
+        const remembered_base_map = initial_demo_preferences.baseMap;
+        if (remembered_base_map === null) return;
+        if (remembered_base_map.mode === TILE_LAYER_MODES.raster) {
+          const raster_provider_is_declared =
+            remembered_base_map.rasterProviderKey === null
+            || RASTER_BASE_MAP_DESCRIPTORS.some((provider_descriptor) =>
+              provider_descriptor.provider_key
+                === remembered_base_map.rasterProviderKey);
+          if (!raster_provider_is_declared) return;
+          switch_tile_mode(
+            TILE_LAYER_MODES.raster, null, { remember: false });
+          return;
+        }
+        if (remembered_base_map.mode !== TILE_LAYER_MODES.vector) return;
+        const vector_descriptor = VECTOR_BASE_MAP_DESCRIPTORS.find(
+          (provider_descriptor) =>
+            provider_descriptor.provider_key
+              === remembered_base_map.vectorProviderKey);
+        if (vector_descriptor === undefined) return;
+        const style_is_declared = remembered_base_map.vectorStyleId === null
+          || (vector_descriptor.vector_styles ?? []).some((style_choice) =>
+            style_choice.style_id === remembered_base_map.vectorStyleId);
+        current_vector_style_id = style_is_declared
+          ? remembered_base_map.vectorStyleId
+          : null;
+        switch_tile_mode(
+          TILE_LAYER_MODES.vector,
+          vector_descriptor.provider_key,
+          { remember: false },
+        );
       }
 
       /** Repaints the vector base in the theme that just became active. */
@@ -2756,7 +3085,7 @@
         off_route_alert_text: '',
         // The playback pace (M27): a multiplier over the demo's own speed,
         // and a pause that freezes the walk without ending the trip.
-        speed_multiplier: 1,
+        speed_multiplier: initial_demo_preferences.speedMultiplier,
         is_paused: false,
         // Whether the trip reached the route's end. Seeks set it from the
         // walker's own position, so seeking back clears it (M27's seek).
@@ -2810,6 +3139,7 @@
         totalMeters: follow_demo.total_meters,
         hasArrived: follow_demo.has_arrived,
         isPaused: follow_demo.is_paused,
+        speedMultiplier: follow_demo.speed_multiplier,
         targetBearingDegrees: follow_demo.target_bearing_degrees,
         cameraZoom: camera_state.zoom,
       });
@@ -3647,7 +3977,6 @@
 
       // The playback controls (M27): the paces a visitor may pick, applied to
       // the route's own walk speed, and the one control that pauses it.
-      const FOLLOW_DEMO_SPEED_MULTIPLIERS = [1, 2, 4, 8];
 
       /**
        * The fix cadence of the active playback. A route walk uses the demo's
@@ -3695,6 +4024,7 @@
             'aria-pressed', String(multiplier === follow_demo.speed_multiplier));
           chip.addEventListener('click', () => {
             follow_demo.speed_multiplier = multiplier;
+            write_demo_preferences({ speedMultiplier: multiplier });
             render_follow_demo_speed_controls();
             // A recorded trace dispatches at the recorded cadence scaled by
             // the speed choice, so the timer is re-armed at the new interval.
@@ -4656,6 +4986,12 @@
         // The vector base rows were rendered before the renderer answered;
         // they become clickable now (or stay disabled on the 2D path).
         refresh_base_map_toggle_enabled_state();
+        // The remembered choices land before the first interactive frame.
+        // The demo plan restore loads a committed trace (never a provider);
+        // the base-map switch waits until the renderer can serve it.
+        await restore_remembered_demo_content();
+        restore_remembered_base_map();
+        apply_overlays();
         // The first-run status is a plain human readiness state; the
         // renderer, adapter and version detail live in diagnostics (the
         // readout when enabled and the Advanced diagnostics block).

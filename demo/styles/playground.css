@@ -237,9 +237,10 @@
         gap: 6px;
         flex: 0 0 auto;
       }
-      /* The docs link is a quiet chip in the accent role, never the browser's
-         default link blue (which vanishes on the dark surface). */
-      #docs-back-link {
+      /* The header links are quiet chips in the accent role, never the
+         browser's default link blue (which vanishes on the dark surface). */
+      #docs-back-link,
+      #mobile-demo-link {
         display: inline-flex;
         align-items: center;
         font-size: var(--type-caption-size);
@@ -251,8 +252,10 @@
         border-radius: var(--radius-inline);
         white-space: nowrap;
       }
-      #docs-back-link:hover { border-color: var(--accent-color); }
+      #docs-back-link:hover,
+      #mobile-demo-link:hover { border-color: var(--accent-color); }
       #docs-back-link:focus-visible,
+      #mobile-demo-link:focus-visible,
       #settings-control:focus-visible {
         outline: 2px solid var(--accent-color);
         outline-offset: 1px;
@@ -593,7 +596,12 @@
          carries the appearance switch and the provider rows. */
       #settings-dialog {
         width: min(440px, calc(100vw - 2 * var(--gutter-inline)));
-        max-height: min(680px, calc(100vh - 2 * var(--gutter-block)));
+        /* The documented panel maximum caps the sheet on every viewport; the
+           viewport term keeps a short window from clipping its edges. */
+        max-height: min(
+          var(--panel-maximum-height),
+          calc(100vh - 2 * var(--gutter-block))
+        );
         padding: 0;
         color: var(--text-primary-color);
         background: var(--surface-elevated-color);
@@ -610,11 +618,14 @@
         display: flex;
         flex-direction: column;
         max-height: inherit;
+        min-height: 0;
+        overflow: hidden;
       }
       .settings-header {
         position: sticky;
         top: 0;
         z-index: 2;
+        flex: 0 0 auto;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -641,12 +652,17 @@
         color: var(--text-secondary-color);
         border-radius: 50%;
       }
+      /* The content column owns the scroll: the title and Close action stay
+         pinned above it, and the last section is always reachable. */
       .settings-body {
+        flex: 1 1 auto;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         gap: 24px;
         padding: var(--gutter-block);
         overflow-y: auto;
+        overscroll-behavior: contain;
         scrollbar-width: thin;
       }
       .settings-section {
@@ -1321,7 +1337,10 @@
         /* The settings sheet docks to the bottom edge like the map panel. */
         #settings-dialog {
           width: calc(100vw - 2 * var(--gutter-inline));
-          max-height: calc(100vh - var(--gutter-block) * 2);
+          max-height: min(
+            var(--panel-maximum-height),
+            calc(100vh - var(--gutter-block) * 2)
+          );
           margin: auto auto var(--gutter-block);
         }
         .settings-body { padding: var(--stack-group); }

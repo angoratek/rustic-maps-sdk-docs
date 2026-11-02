@@ -41,6 +41,12 @@
         </div>
         <div id="controls-header-actions">
           <a id="docs-back-link" href="../" hidden>&larr; Docs</a>
+          <!-- The hosted mobile demo beside this page: the published site
+               serves it under /demo/mobile/ (relative `mobile/`), the local
+               harness under /mobile-demo/ (relative `mobile-demo/`). The page
+               sets the target from the same local/published signal as the
+               docs link, so neither path is guessed in the markup. -->
+          <a id="mobile-demo-link" href="mobile-demo/">Mobile demo</a>
           <!-- Consumer copy (M28): the canonical text sits in the markup as a
                no-script-safe default and `data-ui-label` names the shared row;
                `data-ui-label-attribute` fills an attribute instead of the text.
@@ -314,6 +320,19 @@
           <section class="settings-section" id="appearance-controls">
             <h3 class="settings-section-title" data-ui-label="theme.heading">Theme</h3>
             <button id="theme-toggle-control" type="button" aria-live="polite">Switch to light theme</button>
+            <!-- The remembered-choices row: the demo's own preferences live
+                 in one versioned record, separate from the provider-key store
+                 above, so resetting them never forgets a remembered key. -->
+            <div class="settings-probe">
+              <h4 class="settings-subsection-title">Remembered choices</h4>
+              <p class="settings-note">This demo remembers your theme, base map,
+                demo plan and scene, camera preset, speed and last search fields
+                in this browser.</p>
+              <button id="reset-remembered-choices-control" type="button" class="quiet">
+                Reset remembered choices
+              </button>
+              <p id="remembered-choices-status" class="settings-note" role="status" hidden></p>
+            </div>
           </section>
         </div>
       </div>

@@ -350,7 +350,10 @@ export class MapView {
      * Reads the vector base source's status (the UDL
      * `MapView.vector_tile_source_status` contract member): the configured
      * source's style, name, attribution and zoom ceiling plus the last
-     * resolved frame's drawn and failed tile counts. A pure query — it never
+     * resolved frame's drawn and failed tile counts. While a source is
+     * configured, the object additionally carries the frame diagnostics —
+     * payload-cache hits and misses, in-flight fetches and the
+     * first-drawn-tile latency — as additive fields. A pure query — it never
      * fetches or draws — and it answers an honest not-configured status with
      * no source installed.
      */
@@ -1011,12 +1014,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1537: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1537_93: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1537_94: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8046: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8067: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_6336: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1509: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1509_93: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1509_94: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8390: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8411: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_6308: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
