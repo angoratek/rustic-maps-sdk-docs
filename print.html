@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ab8316f9.js";
+            window.path_to_searchindex_js = "searchindex-8dc0ea5d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e284b4f1.js"></script>
+        <script src="toc-e43faa06.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -3059,6 +3059,8 @@ never stored in the crate, a sample response, or a log.</li>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td><code>UrlTemplateRasterTileProvider</code> with the registry template</td><td>Raster tiles</td></tr>
 <tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td><code>OpenStreetMapUsVectorTileProvider</code></td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
 <tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td><code>UrlTemplateVectorTileProvider</code> with the registry template</td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
+<tr><td>OSRM</td><td><code>osrm</code></td><td>None</td><td><code>osrm-provider</code></td><td>Routing</td></tr>
+<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None</td><td><code>valhalla-provider</code></td><td>Routing</td></tr>
 </tbody>
 </table>
 </div>
@@ -3072,6 +3074,8 @@ never stored in the crate, a sample response, or a log.</li>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
+<tr><td>OSRM</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
+<tr><td>Valhalla</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
 </tbody>
 </table>
 </div>
@@ -3281,6 +3285,8 @@ never place it in a build field, a resource, or source.</li>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
 <tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
 <tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
+<tr><td>OSRM</td><td><code>osrm</code></td><td>None</td><td>Selectable routing provider</td><td>Routing</td></tr>
+<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None</td><td>Selectable routing provider</td><td>Routing</td></tr>
 </tbody>
 </table>
 </div>
@@ -3298,6 +3304,8 @@ base member and need no registration call.</p>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
+<tr><td>OSRM</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
+<tr><td>Valhalla</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
 </tbody>
 </table>
 </div>
@@ -3459,6 +3467,8 @@ never place it in <code>Info.plist</code>, an xcconfig, or source.</li>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
 <tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
 <tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
+<tr><td>OSRM</td><td><code>osrm</code></td><td>None</td><td>Selectable routing provider</td><td>Routing</td></tr>
+<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None</td><td>Selectable routing provider</td><td>Routing</td></tr>
 </tbody>
 </table>
 </div>
@@ -3476,6 +3486,8 @@ base member and need no registration call.</p>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
+<tr><td>OSRM</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
+<tr><td>Valhalla</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
 </tbody>
 </table>
 </div>
@@ -3656,6 +3668,8 @@ vector base member and need no registration call.</p>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
+<tr><td>OSRM</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
+<tr><td>Valhalla</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
 </tbody>
 </table>
 </div>
@@ -3830,6 +3844,8 @@ registration call.</p>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
+<tr><td>OSRM</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
+<tr><td>Valhalla</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>A self-hosted deployment follows its operator’s terms; public demo servers are rate-limited and not for production use.</td></tr>
 </tbody>
 </table>
 </div>
@@ -4024,21 +4040,79 @@ request, retry, and rate-limit path, so a provider behaves the same on every
 target.</p>
 <h3 id="expose-it-to-an-application-target"><a class="header" href="#expose-it-to-an-application-target">Expose it to an application target</a></h3>
 <ol>
-<li><strong>Add the descriptor.</strong> One entry in the shared provider registry.</li>
-<li><strong>Add the dispatch arm.</strong> In each native application’s credential applier
-and in the browser binding’s dispatch table, map the provider key to the
-crate’s registration call. The arm is the only provider-named code.</li>
-<li><strong>Add a registration call when the contract has none.</strong> Compiling the
-crate into a binding does not make it selectable. Geocoding and raster
-tiles already have host-implementable interfaces; the raster and vector
-base maps already have URL-template calls. Routing, search, distance
-matrix, traffic, elevation, and vector-tile providers need an
-addition-only method on the FFI contract, with the Kotlin, Swift, and
-React Native bindings regenerated from it.</li>
+<li><strong>Add the descriptor.</strong> One entry in the shared provider registry, with
+the capabilities the provider serves in <code>served_contracts</code>.</li>
+<li><strong>Add the catalog row.</strong> One entry in the SDK’s provider catalog maps the
+provider key to the crate’s construction call and the capabilities it
+serves. This row is what makes the key selectable; compiling the crate
+into a binding alone does not.</li>
 <li><strong>Add committed sample responses.</strong> Each served API gets a route pattern
 and a committed response under the provider’s key. The test server and
 the demo use them; tests never reach the network.</li>
 </ol>
+<p>An application then selects the provider by key. The call replaces one
+capability and leaves every other capability serving, so one app can search
+with one provider, route with another and draw tiles from a third.</p>
+<pre><code class="language-kotlin">val mapSdk = MapSdk()
+mapSdk.configureProvider(
+    contract = ProviderContract.Routing,
+    providerKey = "my-provider",
+    credential = "",
+)
+val routing = mapSdk.providerRegistrations()
+    .first { it.contract == ProviderContract.Routing }
+check(routing.registered &amp;&amp; routing.providerKey == "my-provider")
+</code></pre>
+<pre><code class="language-swift">let mapSdk = MapSdk()
+try mapSdk.configureProvider(
+    contract: .routing,
+    providerKey: "my-provider",
+    credential: ""
+)
+let routing = mapSdk.providerRegistrations()
+    .first { $0.contract == .routing }
+precondition(routing?.registered == true &amp;&amp; routing?.providerKey == "my-provider")
+</code></pre>
+<p><code>providerRegistrations()</code> answers every capability in the same order every
+time — geocoding, routing, distance matrix, place search, traffic incidents,
+traffic flow, elevation, raster tiles, vector tiles, offline routing — so a
+settings surface can render one row per capability without knowing the list.
+A capability with no provider reports <code>registered</code> false and an empty key.</p>
+<p>A provider that needs no credential accepts an empty string; a provider with
+a credential refuses a blank one and leaves the previously serving provider
+in place. That is the whole integration: the application stores its own
+choice (a key and, when needed, a credential) and calls <code>configureProvider</code>
+at startup.</p>
+<h3 id="sample-a-routing-provider-key-in-an-app"><a class="header" href="#sample-a-routing-provider-key-in-an-app">Sample: a routing provider key in an app</a></h3>
+<p>The steps below are the complete path from a routing crate to a working
+screen. The example uses the OSRM provider that ships with the SDK.</p>
+<ol>
+<li>Add the crate to the binding. The SDK already carries it, so this step is
+the catalog row: <code>osrm</code> maps to <code>OsrmRoutingProvider::new</code>.</li>
+<li>Give the provider its deployment address. OSRM is keyless, so the
+credential field carries the base URL of the deployment instead of a
+secret; an empty string targets a local server.</li>
+<li>Choose it for routing at startup:</li>
+</ol>
+<pre><code class="language-kotlin">mapSdk.configureProvider(
+    contract = ProviderContract.Routing,
+    providerKey = "osrm",
+    credential = "http://10.0.2.2:5000",
+)
+</code></pre>
+<pre><code class="language-swift">try mapSdk.configureProvider(
+    contract: .routing,
+    providerKey: "osrm",
+    credential: "http://localhost:5000"
+)
+</code></pre>
+<ol start="4">
+<li>Plan a route. <code>RoutingFacade.calculateRoute</code> resolves the routing slot, so
+the result comes from the chosen provider and no other capability changes.</li>
+</ol>
+<p>To let the reader switch providers, render one row per capability from
+<code>providerRegistrations()</code>, list the descriptors whose <code>served_contracts</code>
+contain that capability, and call <code>configureProvider</code> with the picked key.</p>
 <h3 id="constraints-5"><a class="header" href="#constraints-5">Constraints</a></h3>
 <ul>
 <li>A provider type is <code>Send + Sync</code>; trait methods are async.</li>
@@ -4245,6 +4319,121 @@ complete app.</li>
 provider-backed app can add.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mix-providers-per-capability"><a class="header" href="#mix-providers-per-capability">Mix providers per capability</a></h1>
+<p>You can serve each capability of the map from a different provider. A typical
+application searches with one vendor, routes with a self-hosted engine and
+draws its base map from a public tileset. This page shows how selection
+works, what the SDK reports back, and what the reference apps put on screen.</p>
+<h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What you get</a></h2>
+<ul>
+<li>One call per capability, so a choice never disturbs the rest of the map.</li>
+<li>A readback that names the serving provider for every capability.</li>
+<li>A refused choice that leaves the previous provider serving, so a bad
+credential never leaves the app without a provider.</li>
+</ul>
+<h2 id="how-selection-works"><a class="header" href="#how-selection-works">How selection works</a></h2>
+<p>The SDK keeps one slot per capability. A call into an empty slot fails with
+<code>ProviderNotConfigured</code> naming the capability, never with another provider’s
+answer. Two calls fill the slots:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Call</th><th>Effect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>setProviderCredential(key)</code></td><td>Fills every capability the vendor serves, in one call</td></tr>
+<tr><td><code>configureProvider(contract, providerKey, credential)</code></td><td>Fills exactly one capability</td></tr>
+</tbody>
+</table>
+</div>
+<p>Both are addition-safe: calling either replaces only the slots it names.</p>
+<h2 id="a-worked-mix"><a class="header" href="#a-worked-mix">A worked mix</a></h2>
+<p>The example is an Android application in Kotlin. It serves geocoding from
+MapQuest, draws OpenStreetMap US vector tiles, and routes through a
+self-hosted OSRM deployment. The same three calls exist on every target.</p>
+<ol>
+<li>
+<p><strong>Set the vendor credential.</strong> This fills geocoding, routing, distance
+matrix, place search, traffic incidents, traffic flow and raster tiles.</p>
+<pre><code class="language-kotlin">mapSdk.setProviderCredential(mapQuestApiKey)
+</code></pre>
+</li>
+<li>
+<p><strong>Replace routing with the self-hosted engine.</strong> The routing slot now
+serves OSRM; every other capability keeps its provider.</p>
+<pre><code class="language-kotlin">mapSdk.configureProvider(
+    contract = ProviderContract.Routing,
+    providerKey = "osrm",
+    credential = "http://10.0.2.2:5000",
+)
+</code></pre>
+</li>
+<li>
+<p><strong>Install the vector base.</strong> The base map is a surface registration, not a
+registry slot, so it does not disturb any capability.</p>
+<pre><code class="language-kotlin">mapView.setVectorTileSource(openStreetMapUnitedStatesSource)
+</code></pre>
+</li>
+<li>
+<p><strong>Read the result.</strong> <code>providerRegistrations()</code> reports one entry per
+capability in a stable order.</p>
+</li>
+</ol>
+<pre><code class="language-kotlin">mapSdk.providerRegistrations().forEach { registration -&gt;
+    println("${registration.contract}: ${registration.displayName.ifEmpty { "not configured" }}")
+}
+// Geocoding: MapQuest
+// Routing: OSRM
+// DistanceMatrix: MapQuest
+// PlaceSearch: MapQuest
+// TrafficIncidents: MapQuest
+// TrafficFlow: MapQuest
+// Elevation: not configured
+// RasterTiles: MapQuest
+// VectorTiles: OpenStreetMap US
+// OfflineRouting: not configured
+</code></pre>
+<h2 id="keyless-providers"><a class="header" href="#keyless-providers">Keyless providers</a></h2>
+<p>A self-hosted routing engine has no credential. Pass an empty string, or pass
+the deployment’s base URL, which the provider reads as its address:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Credential field</th></tr>
+</thead>
+<tbody>
+<tr><td>OSRM</td><td>Base URL of the deployment; empty for a local server on port 5000</td></tr>
+<tr><td>Valhalla</td><td>Base URL of the deployment; empty for a local server on port 8002</td></tr>
+</tbody>
+</table>
+</div>
+<p>A provider that declares a credential refuses a blank one and keeps the
+previous provider serving.</p>
+<h2 id="what-the-reference-apps-show"><a class="header" href="#what-the-reference-apps-show">What the reference apps show</a></h2>
+<p>Every reference app renders one settings row per capability, in the order the
+readback returns. Each row shows the serving provider’s display name and a
+picker limited to the providers that declare that capability. The choice is
+remembered across launches with the app’s other remembered choices; a
+capability with no provider reads “Not configured”.</p>
+<h2 id="rules-to-keep"><a class="header" href="#rules-to-keep">Rules to keep</a></h2>
+<ul>
+<li>A provider’s name belongs in its crate, its sample-data directory, the
+shared registry descriptor and the catalog row. Nothing else names it.</li>
+<li>Sample responses are committed fixtures served under
+<code>/providers/{provider_key}/…</code>; tests never reach the network.</li>
+<li>Changing a capability never silently changes another. If a call would
+replace more than the capability it names, it is not this API.</li>
+</ul>
+<h2 id="next"><a class="header" href="#next">Next</a></h2>
+<ul>
+<li><a href="#add-a-provider">Add a provider</a> walks the crate, descriptor and
+catalog row.</li>
+<li><a href="#search-and-routing">Search and routing</a> covers the calls the
+capabilities serve.</li>
+<li><a href="#provider-capabilities-in-rust">Provider capabilities in Rust</a> lists the
+traits each capability maps to.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="downloads"><a class="header" href="#downloads">Downloads</a></h1>
 <p>Every package is published under this site’s own versioned path,
 <code>/downloads/vX.Y.Z/</code>, and mirrored to an immutable release record: the version
@@ -4262,11 +4451,12 @@ Every file carries a <code>.sha256</code> sidecar, and
 <tr><th>Platform</th><th>Artifact</th></tr>
 </thead>
 <tbody>
-<tr><td>Android (<code>MapView</code> wrapper)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar"><code>rustic-maps-sdk-android-ui-v0.1.0.aar</code></a> — the <code>MapView</code> and its Compose wrapper; add it beside the bindings AAR · 101 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
-<tr><td>Android (bindings)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar"><code>rustic-maps-sdk-android-v0.1.0.aar</code></a> — Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64 · 14.4 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
-<tr><td>iOS</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip"><code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code></a> — the XCFramework (arm64 device and simulator slices) for a Swift Package Manager binary target · 93.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip.sha256"><code>sha256</code></a></td></tr>
+<tr><td>Android (<code>MapView</code> wrapper)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar"><code>rustic-maps-sdk-android-ui-v0.1.0.aar</code></a> — the <code>MapView</code> and its Compose wrapper; add it beside the bindings AAR · 106 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-ui-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
+<tr><td>Android (bindings)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar"><code>rustic-maps-sdk-android-v0.1.0.aar</code></a> — Kotlin bindings plus the Rust library for arm64-v8a, armeabi-v7a and x86_64 · 14.7 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
+<tr><td>iOS</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip"><code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code></a> — the XCFramework (arm64 device and simulator slices) for a Swift Package Manager binary target · 95.6 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip.sha256"><code>sha256</code></a></td></tr>
 <tr><td>All platforms</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>rustic-maps-sdk-notices-v0.1.0.md</code></a> — the third-party dependency notices that accompany your distribution · 55 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>sha256</code></a></td></tr>
-<tr><td>React Native</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz"><code>rustic-maps-sdk-rn-v0.1.0.tgz</code></a> — the TurboModule source package (<code>@angoratek/rustic-maps-sdk</code>) · 229 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz.sha256"><code>sha256</code></a></td></tr>
+<tr><td>React Native</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz"><code>rustic-maps-sdk-rn-v0.1.0.tgz</code></a> — the TurboModule source package (<code>@angoratek/rustic-maps-sdk</code>) · 240 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz.sha256"><code>sha256</code></a></td></tr>
+<tr><td>Rust</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-rust-v0.1.0.tar.gz"><code>rustic-maps-sdk-rust-v0.1.0.tar.gz</code></a> — the workspace crates’ source archive at this version; unpack it and use the crates by path dependency · 19.8 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-rust-v0.1.0.tar.gz.sha256"><code>sha256</code></a></td></tr>
 <tr><td>WebAssembly (module)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tar.gz"><code>rustic-maps-sdk-web-v0.1.0.tar.gz</code></a> — the wasm module, its JavaScript shim and both type files · 1.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tar.gz.sha256"><code>sha256</code></a></td></tr>
 <tr><td>WebAssembly (npm package)</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz"><code>rustic-maps-sdk-web-v0.1.0.tgz</code></a> — the module with the manifest, licenses and notices · 1.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz.sha256"><code>sha256</code></a></td></tr>
 </tbody>
@@ -6200,6 +6390,7 @@ offline graph.</li>
 <tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
 </thead>
 <tbody>
+<tr><td><code>ProviderContract</code></td><td>enum</td><td><code>pub enum ProviderContract</code></td><td>The contract a registry slot serves. Each variant names one capability an application can configure independently, which is what lets a map draw its imagery from one provider while another plans its routes. [<code>ProviderContract::contract_name</code>] is the name the [<code>SDKError::ProviderNotConfigured</code>] detail carries.</td></tr>
 <tr><td><code>ProviderRegistry</code></td><td>struct</td><td><code>pub struct ProviderRegistry</code></td><td>Registry of provider implementations keyed by contract, not by vendor. Each contract has one optional slot. Slots start unconfigured. Callers resolve them with the <code>require_*</code> methods, which report [<code>SDKError::ProviderNotConfigured</code>] when the application did not register that provider. The registry is cheap to share after configuration: every provider is stored behind an [<code>Arc</code>].</td></tr>
 </tbody>
 </table>
@@ -6370,6 +6561,7 @@ offline graph.</li>
 <tr><td><code>DEFAULT_LABEL_RANK</code></td><td>const</td><td><code>pub const DEFAULT_LABEL_RANK: u32</code></td><td>The rank an unranked label carries: the highest value, so it sorts after every ranked label of the same style layer.</td></tr>
 <tr><td><code>LINE_LABEL_UPRIGHT_ROTATION_LIMIT_RADIANS</code></td><td>const</td><td><code>pub const LINE_LABEL_UPRIGHT_ROTATION_LIMIT_RADIANS: f64</code></td><td>The bearing limit within which a line-placed label reads upright. A segment whose direction would rotate the text past this angle is flipped to run the other way, so a street name never paints upside down: the label’s rotation always lies in <code>[-π/2, π/2]</code>.</td></tr>
 <tr><td><code>LINE_LABEL_STRAIGHT_RUN_ANGLE_TOLERANCE_RADIANS</code></td><td>const</td><td><code>pub const LINE_LABEL_STRAIGHT_RUN_ANGLE_TOLERANCE_RADIANS: f64</code></td><td>How far a segment’s bearing may turn from its run’s first segment and still belong to the same straight run, in radians (20 degrees, a ninth of a half turn). Map data splits a street into short blocks between intersections, so a label must run along the straight sequence of segments, not one block alone; the tolerance keeps a name off a road that bends away mid-run.</td></tr>
+<tr><td><code>LINE_LABEL_REPEAT_SPACING_PIXELS</code></td><td>const</td><td><code>pub const LINE_LABEL_REPEAT_SPACING_PIXELS: f64</code></td><td>The gap kept between two repeated names along one long road, in pixels. A street long enough to cross the frame is named more than once, as the reference engines do: a reader then finds the name wherever they look along the road instead of only at its midpoint. MapLibre’s <code>symbol-spacing</code> default is 250 pixels, but one frame here covers a single tile, where that gap would leave nearly every road named once and the repetition invisible; 90 pixels puts a name roughly every 120 pixels along a run, which is about what Google Maps and HERE carry at street zooms.</td></tr>
 <tr><td><code>MapLabelCandidate</code></td><td>struct</td><td><code>pub struct MapLabelCandidate</code></td><td>One label candidate read from a decoded tile’s symbol layers, before the frame projects and places it.</td></tr>
 <tr><td><code>PlacedLabel</code></td><td>struct</td><td><code>pub struct PlacedLabel</code></td><td>One label that survived collision rejection, in draw order.</td></tr>
 <tr><td><code>LabelTextMetrics</code></td><td>struct</td><td><code>pub struct LabelTextMetrics</code></td><td>The measured extent of one label’s text at one size.</td></tr>
@@ -7149,6 +7341,8 @@ offline graph.</li>
 <tr><td><code>setProviderCredential</code></td><td><code>fun setProviderCredential(credential: String): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
 <tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>fun setProviderCredentialWithTileCache(mapquestApiKey: String, tileCacheDatabasePath: String, tileCacheAbsoluteMaximumBytes: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
 <tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>fun registerUrlTemplateRasterTileSource(source: UrlTemplateRasterTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers a provider-neutral raster base map: any web-mercator XYZ tileset that publishes a <code>{z}/{x}/{y}</code> URL template. The registration replaces the raster-tile contract only; every other provider keeps serving. It also drops any installed tile cache, because the cache’s terms belong to the provider that installed it; a later <code>raster_tile_cache_terms</code> then throws the not-configured error rather than reporting another provider’s ceiling. Re-registering replaces the source. # Parameters - <code>source</code> — the tile source and its terms. # Errors A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving.</td></tr>
+<tr><td><code>configureProvider</code></td><td><code>fun configureProvider(contract: ProviderContract, providerKey: String, credential: String): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Chooses the provider that serves one capability, leaving every other capability untouched. The SDK builds provider implementations into the binary under stable keys; this call is how an application selects one. A key may serve several capabilities, so an application that wants one vendor everywhere configures each capability in turn, or calls <code>set_provider_credential</code> for the all-in-one convenience. # Parameters - <code>contract</code> — the capability whose provider is being chosen. - <code>provider_key</code> — the stable key of a provider built into this SDK build. - <code>credential</code> — the provider’s credential; an empty string is accepted only for a provider that needs none. # Errors Throws <code>ProviderNotConfigured</code> when the key is unknown to this build or serves no implementation of <code>contract</code>, <code>ProviderRequestRejected</code> when the provider declares a credential and the supplied one is blank, and the provider’s own failure when its construction fails. A refused call leaves the previously serving provider in place.</td></tr>
+<tr><td><code>providerRegistrations</code></td><td><code>fun providerRegistrations(): List&lt;ProviderRegistration&gt;</code></td><td>Returns <code>List&lt;ProviderRegistration&gt;</code>.</td><td>Reports which provider serves each capability, in a stable order, for a settings surface or a startup check. Every capability the SDK defines appears in the answer, including the ones with no provider installed; those carry an empty key and name and <code>registered</code> false. The readback never mutates the registry.</td></tr>
 <tr><td><code>setRasterTileCacheTimeToLive</code></td><td><code>fun setRasterTileCacheTimeToLive(timeToLiveSeconds: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds. A zero value is refused, because it would expire every entry on capture and store nothing. A value above the installed provider’s declared terms ceiling is accepted, and the ceiling clamps what the cache stores; <code>raster_tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store, and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
 <tr><td><code>rasterTileCacheTerms</code></td><td><code>fun rasterTileCacheTerms(): TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkException</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache, for display on a settings page. Reports the time-to-live currently in force (the category default, or the last accepted override clamped to the provider’s ceiling), the provider’s declared ceiling, and the category default. Read-only: the readback never mutates the cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store.</td></tr>
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>fun subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): Unit</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
@@ -7535,6 +7729,21 @@ offline graph.</li>
 <tr><td><code>top</code></td><td><code>Double</code></td><td>Pixels kept clear from the top viewport edge.</td></tr>
 <tr><td><code>right</code></td><td><code>Double</code></td><td>Pixels kept clear from the right viewport edge.</td></tr>
 <tr><td><code>bottom</code></td><td><code>Double</code></td><td>Pixels kept clear from the bottom viewport edge.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="providerregistration"><a class="header" href="#providerregistration">ProviderRegistration</a></h3>
+<p>Which provider serves one capability, as reported by <code>MapSdk::provider_registrations</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>contract</code></td><td><code>ProviderContract</code></td><td>The capability this entry describes.</td></tr>
+<tr><td><code>providerKey</code></td><td><code>String</code></td><td>The provider’s stable registry key, or an empty string when no provider is installed for the capability.</td></tr>
+<tr><td><code>displayName</code></td><td><code>String</code></td><td>The provider’s display name from the shared registry, or an empty string when no provider is installed.</td></tr>
+<tr><td><code>registered</code></td><td><code>Boolean</code></td><td>Whether a provider is installed for the capability.</td></tr>
 </tbody>
 </table>
 </div>
@@ -8163,6 +8372,28 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<h3 id="providercontract"><a class="header" href="#providercontract">ProviderContract</a></h3>
+<p>One capability whose provider can be chosen independently of every other.</p>
+<p>Every capability owns one registry slot, so an application may serve geocoding from one provider, routing from another and tiles from a third. A capability with no installed provider answers calls with <code>ProviderNotConfigured</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GEOCODING</code></td><td>Forward and reverse address lookup.</td></tr>
+<tr><td><code>ROUTING</code></td><td>Route calculation through ordered waypoints.</td></tr>
+<tr><td><code>DISTANCE_MATRIX</code></td><td>Travel-time and distance matrix calculation.</td></tr>
+<tr><td><code>PLACE_SEARCH</code></td><td>Place prediction and lookup by free text.</td></tr>
+<tr><td><code>TRAFFIC_INCIDENTS</code></td><td>Traffic incident reports.</td></tr>
+<tr><td><code>TRAFFIC_FLOW</code></td><td>Traffic flow (speed and congestion) along road segments.</td></tr>
+<tr><td><code>ELEVATION</code></td><td>Terrain elevation lookup.</td></tr>
+<tr><td><code>RASTER_TILES</code></td><td>Raster map imagery.</td></tr>
+<tr><td><code>VECTOR_TILES</code></td><td>Vector map tiles.</td></tr>
+<tr><td><code>OFFLINE_ROUTING</code></td><td>Route calculation on a compiled offline graph.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="geocodequality"><a class="header" href="#geocodequality">GeocodeQuality</a></h3>
 <p>Structural precision a geocoder reached for one resolved location.</p>
 <div class="table-wrapper">
@@ -8684,6 +8915,8 @@ offline graph.</li>
 <tr><td><code>setProviderCredential</code></td><td><code>func setProviderCredential(credential: String) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
 <tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>func setProviderCredentialWithTileCache(mapquestApiKey: String, tileCacheDatabasePath: String, tileCacheAbsoluteMaximumBytes: UInt64) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
 <tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>func registerUrlTemplateRasterTileSource(source: UrlTemplateRasterTileSource) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Registers a provider-neutral raster base map: any web-mercator XYZ tileset that publishes a <code>{z}/{x}/{y}</code> URL template. The registration replaces the raster-tile contract only; every other provider keeps serving. It also drops any installed tile cache, because the cache’s terms belong to the provider that installed it; a later <code>raster_tile_cache_terms</code> then throws the not-configured error rather than reporting another provider’s ceiling. Re-registering replaces the source. # Parameters - <code>source</code> — the tile source and its terms. # Errors A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving.</td></tr>
+<tr><td><code>configureProvider</code></td><td><code>func configureProvider(contract: ProviderContract, providerKey: String, credential: String) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Chooses the provider that serves one capability, leaving every other capability untouched. The SDK builds provider implementations into the binary under stable keys; this call is how an application selects one. A key may serve several capabilities, so an application that wants one vendor everywhere configures each capability in turn, or calls <code>set_provider_credential</code> for the all-in-one convenience. # Parameters - <code>contract</code> — the capability whose provider is being chosen. - <code>provider_key</code> — the stable key of a provider built into this SDK build. - <code>credential</code> — the provider’s credential; an empty string is accepted only for a provider that needs none. # Errors Throws <code>ProviderNotConfigured</code> when the key is unknown to this build or serves no implementation of <code>contract</code>, <code>ProviderRequestRejected</code> when the provider declares a credential and the supplied one is blank, and the provider’s own failure when its construction fails. A refused call leaves the previously serving provider in place.</td></tr>
+<tr><td><code>providerRegistrations</code></td><td><code>func providerRegistrations() -&gt; [ProviderRegistration]</code></td><td>Returns <code>[ProviderRegistration]</code>.</td><td>Reports which provider serves each capability, in a stable order, for a settings surface or a startup check. Every capability the SDK defines appears in the answer, including the ones with no provider installed; those carry an empty key and name and <code>registered</code> false. The readback never mutates the registry.</td></tr>
 <tr><td><code>setRasterTileCacheTimeToLive</code></td><td><code>func setRasterTileCacheTimeToLive(timeToLiveSeconds: UInt64) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds. A zero value is refused, because it would expire every entry on capture and store nothing. A value above the installed provider’s declared terms ceiling is accepted, and the ceiling clamps what the cache stores; <code>raster_tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store, and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
 <tr><td><code>rasterTileCacheTerms</code></td><td><code>func rasterTileCacheTerms() throws -&gt; TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkError</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache, for display on a settings page. Reports the time-to-live currently in force (the category default, or the last accepted override clamped to the provider’s ceiling), the provider’s declared ceiling, and the category default. Read-only: the readback never mutates the cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store.</td></tr>
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>func subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity)</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
@@ -9070,6 +9303,21 @@ offline graph.</li>
 <tr><td><code>top</code></td><td><code>Double</code></td><td>Pixels kept clear from the top viewport edge.</td></tr>
 <tr><td><code>right</code></td><td><code>Double</code></td><td>Pixels kept clear from the right viewport edge.</td></tr>
 <tr><td><code>bottom</code></td><td><code>Double</code></td><td>Pixels kept clear from the bottom viewport edge.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="providerregistration-1"><a class="header" href="#providerregistration-1">ProviderRegistration</a></h3>
+<p>Which provider serves one capability, as reported by <code>MapSdk::provider_registrations</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>contract</code></td><td><code>ProviderContract</code></td><td>The capability this entry describes.</td></tr>
+<tr><td><code>providerKey</code></td><td><code>String</code></td><td>The provider’s stable registry key, or an empty string when no provider is installed for the capability.</td></tr>
+<tr><td><code>displayName</code></td><td><code>String</code></td><td>The provider’s display name from the shared registry, or an empty string when no provider is installed.</td></tr>
+<tr><td><code>registered</code></td><td><code>Bool</code></td><td>Whether a provider is installed for the capability.</td></tr>
 </tbody>
 </table>
 </div>
@@ -9698,6 +9946,28 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="enums-1"><a class="header" href="#enums-1">Enums</a></h2>
+<h3 id="providercontract-1"><a class="header" href="#providercontract-1">ProviderContract</a></h3>
+<p>One capability whose provider can be chosen independently of every other.</p>
+<p>Every capability owns one registry slot, so an application may serve geocoding from one provider, routing from another and tiles from a third. A capability with no installed provider answers calls with <code>ProviderNotConfigured</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>geocoding</code></td><td>Forward and reverse address lookup.</td></tr>
+<tr><td><code>routing</code></td><td>Route calculation through ordered waypoints.</td></tr>
+<tr><td><code>distanceMatrix</code></td><td>Travel-time and distance matrix calculation.</td></tr>
+<tr><td><code>placeSearch</code></td><td>Place prediction and lookup by free text.</td></tr>
+<tr><td><code>trafficIncidents</code></td><td>Traffic incident reports.</td></tr>
+<tr><td><code>trafficFlow</code></td><td>Traffic flow (speed and congestion) along road segments.</td></tr>
+<tr><td><code>elevation</code></td><td>Terrain elevation lookup.</td></tr>
+<tr><td><code>rasterTiles</code></td><td>Raster map imagery.</td></tr>
+<tr><td><code>vectorTiles</code></td><td>Vector map tiles.</td></tr>
+<tr><td><code>offlineRouting</code></td><td>Route calculation on a compiled offline graph.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="geocodequality-1"><a class="header" href="#geocodequality-1">GeocodeQuality</a></h3>
 <p>Structural precision a geocoder reached for one resolved location.</p>
 <div class="table-wrapper">
@@ -10219,6 +10489,8 @@ offline graph.</li>
 <tr><td><code>setProviderCredential</code></td><td><code>setProviderCredential(credential: string): void</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
 <tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>setProviderCredentialWithTileCache(mapquestApiKey: string, tileCacheDatabasePath: string, tileCacheAbsoluteMaximumBytes: bigint): void</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
 <tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>registerUrlTemplateRasterTileSource(source: UrlTemplateRasterTileSource): void</code></td><td>Throws <code>SdkError</code>.</td><td>Registers a provider-neutral raster base map: any web-mercator XYZ tileset that publishes a <code>{z}/{x}/{y}</code> URL template. The registration replaces the raster-tile contract only; every other provider keeps serving. It also drops any installed tile cache, because the cache’s terms belong to the provider that installed it; a later <code>raster_tile_cache_terms</code> then throws the not-configured error rather than reporting another provider’s ceiling. Re-registering replaces the source. # Parameters - <code>source</code> — the tile source and its terms. # Errors A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving.</td></tr>
+<tr><td><code>configureProvider</code></td><td><code>configureProvider(contract: ProviderContract, providerKey: string, credential: string): void</code></td><td>Throws <code>SdkError</code>.</td><td>Chooses the provider that serves one capability, leaving every other capability untouched. The SDK builds provider implementations into the binary under stable keys; this call is how an application selects one. A key may serve several capabilities, so an application that wants one vendor everywhere configures each capability in turn, or calls <code>set_provider_credential</code> for the all-in-one convenience. # Parameters - <code>contract</code> — the capability whose provider is being chosen. - <code>provider_key</code> — the stable key of a provider built into this SDK build. - <code>credential</code> — the provider’s credential; an empty string is accepted only for a provider that needs none. # Errors Throws <code>ProviderNotConfigured</code> when the key is unknown to this build or serves no implementation of <code>contract</code>, <code>ProviderRequestRejected</code> when the provider declares a credential and the supplied one is blank, and the provider’s own failure when its construction fails. A refused call leaves the previously serving provider in place.</td></tr>
+<tr><td><code>providerRegistrations</code></td><td><code>providerRegistrations(): ProviderRegistration[]</code></td><td>Returns <code>ProviderRegistration[]</code>.</td><td>Reports which provider serves each capability, in a stable order, for a settings surface or a startup check. Every capability the SDK defines appears in the answer, including the ones with no provider installed; those carry an empty key and name and <code>registered</code> false. The readback never mutates the registry.</td></tr>
 <tr><td><code>setRasterTileCacheTimeToLive</code></td><td><code>setRasterTileCacheTimeToLive(timeToLiveSeconds: bigint): void</code></td><td>Throws <code>SdkError</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds. A zero value is refused, because it would expire every entry on capture and store nothing. A value above the installed provider’s declared terms ceiling is accepted, and the ceiling clamps what the cache stores; <code>raster_tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store, and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
 <tr><td><code>rasterTileCacheTerms</code></td><td><code>rasterTileCacheTerms(): TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkError</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache, for display on a settings page. Reports the time-to-live currently in force (the category default, or the last accepted override clamped to the provider’s ceiling), the provider’s declared ceiling, and the category default. Read-only: the readback never mutates the cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store.</td></tr>
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): void</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
@@ -10605,6 +10877,21 @@ offline graph.</li>
 <tr><td><code>top</code></td><td><code>number</code></td><td>Pixels kept clear from the top viewport edge.</td></tr>
 <tr><td><code>right</code></td><td><code>number</code></td><td>Pixels kept clear from the right viewport edge.</td></tr>
 <tr><td><code>bottom</code></td><td><code>number</code></td><td>Pixels kept clear from the bottom viewport edge.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="providerregistration-2"><a class="header" href="#providerregistration-2">ProviderRegistration</a></h3>
+<p>Which provider serves one capability, as reported by <code>MapSdk::provider_registrations</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>contract</code></td><td><code>ProviderContract</code></td><td>The capability this entry describes.</td></tr>
+<tr><td><code>providerKey</code></td><td><code>string</code></td><td>The provider’s stable registry key, or an empty string when no provider is installed for the capability.</td></tr>
+<tr><td><code>displayName</code></td><td><code>string</code></td><td>The provider’s display name from the shared registry, or an empty string when no provider is installed.</td></tr>
+<tr><td><code>registered</code></td><td><code>boolean</code></td><td>Whether a provider is installed for the capability.</td></tr>
 </tbody>
 </table>
 </div>
@@ -11233,6 +11520,28 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="enums-2"><a class="header" href="#enums-2">Enums</a></h2>
+<h3 id="providercontract-2"><a class="header" href="#providercontract-2">ProviderContract</a></h3>
+<p>One capability whose provider can be chosen independently of every other.</p>
+<p>Every capability owns one registry slot, so an application may serve geocoding from one provider, routing from another and tiles from a third. A capability with no installed provider answers calls with <code>ProviderNotConfigured</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Geocoding</code></td><td>Forward and reverse address lookup.</td></tr>
+<tr><td><code>Routing</code></td><td>Route calculation through ordered waypoints.</td></tr>
+<tr><td><code>DistanceMatrix</code></td><td>Travel-time and distance matrix calculation.</td></tr>
+<tr><td><code>PlaceSearch</code></td><td>Place prediction and lookup by free text.</td></tr>
+<tr><td><code>TrafficIncidents</code></td><td>Traffic incident reports.</td></tr>
+<tr><td><code>TrafficFlow</code></td><td>Traffic flow (speed and congestion) along road segments.</td></tr>
+<tr><td><code>Elevation</code></td><td>Terrain elevation lookup.</td></tr>
+<tr><td><code>RasterTiles</code></td><td>Raster map imagery.</td></tr>
+<tr><td><code>VectorTiles</code></td><td>Vector map tiles.</td></tr>
+<tr><td><code>OfflineRouting</code></td><td>Route calculation on a compiled offline graph.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="geocodequality-2"><a class="header" href="#geocodequality-2">GeocodeQuality</a></h3>
 <p>Structural precision a geocoder reached for one resolved location.</p>
 <div class="table-wrapper">

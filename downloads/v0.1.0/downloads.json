@@ -3,38 +3,43 @@
   "files": [
     {
       "name": "rustic-maps-sdk-android-ui-v0.1.0.aar",
-      "bytes": 103351,
-      "sha256": "100f700ef10ad11df459f6bf953a15d4c9067b776e10b95496ff8eeb1446f3fc"
+      "bytes": 109018,
+      "sha256": "afe04a7bc6f9ecf6e3aadfcd2e77a5e506a70be9c909cbfedcbe1e24824992cd"
     },
     {
       "name": "rustic-maps-sdk-android-v0.1.0.aar",
-      "bytes": 15144146,
-      "sha256": "3eba368e76e0b1d8b37e077332f390e9e67bb0cd3800f28f2b25eb5a537ee33e"
+      "bytes": 15463213,
+      "sha256": "8a8d6642064b4cdc2f1d9e32a1ef98206c9d0fdd24ec21ae8ff0ed7d17dde7c9"
     },
     {
       "name": "rustic-maps-sdk-ios-v0.1.0.xcframework.zip",
-      "bytes": 98061711,
-      "sha256": "534672c6ba3a7c0aec07b2fde7aad107aea66667c51b5828f4d5ca09f8e73736"
+      "bytes": 100213158,
+      "sha256": "44b887a115920ce2eba93793928b8f8090c7f903feb491f68dfb3972efa9ed74"
     },
     {
       "name": "rustic-maps-sdk-notices-v0.1.0.md",
-      "bytes": 56194,
-      "sha256": "30787ee1bf1cf7d8e4592868dcae0f27c584d196e79453d942304ff2adf8f057"
+      "bytes": 56312,
+      "sha256": "13252ab901aa1bd1f3bd3436870f3186621f1350d2278e17714b9b22119e1a38"
     },
     {
       "name": "rustic-maps-sdk-rn-v0.1.0.tgz",
-      "bytes": 234370,
-      "sha256": "5f71d8df8c2a7154b1de4e448ff224a3fdf213803f1ab8b62f0fe2e2c53f7dc7"
+      "bytes": 246059,
+      "sha256": "288739609a6fc67ddc76b00696befe34334d46a3fc9ab915e8e6ff5b0d513e95"
+    },
+    {
+      "name": "rustic-maps-sdk-rust-v0.1.0.tar.gz",
+      "bytes": 20723854,
+      "sha256": "0bdc0484a8b3ba8061d3eeebb3f6e4ff09374e02beb5ec8922a74b77bbbd309d"
     },
     {
       "name": "rustic-maps-sdk-web-v0.1.0.tar.gz",
-      "bytes": 1528453,
-      "sha256": "712c90a875d0405d803db9b4d5cc4c9f681d6d1fdb19112bbfb189ea1f48abd4"
+      "bytes": 1552180,
+      "sha256": "3172612dbee56345927deb8df6223cd2de551e154ee546778db26432128469d3"
     },
     {
       "name": "rustic-maps-sdk-web-v0.1.0.tgz",
-      "bytes": 1541137,
-      "sha256": "e9404ebf32316ea90b023462fc89811fc396212108f531d0ded5dfb54001a379"
+      "bytes": 1563554,
+      "sha256": "e389c149506313c41a57f7a17f8ace7cc29007a309b38484a85c4527f7e3eeb0"
     }
   ]
 }
