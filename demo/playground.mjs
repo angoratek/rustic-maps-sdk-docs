@@ -12,7 +12,37 @@
         sacramento_scene_overlays,
         SACRAMENTO_OVERLAY_SCENE_LABELS,
         REFERENCE_SCENE_ARTIFACT,
+        traffic_flow_overlay_descriptor,
       } from './overlay_scenes.mjs';
+      // The on-map layer control's shared identifiers, wording and pure
+      // decisions; the Playwright suite imports the same values.
+      import {
+        DEVICE_LOCATION_STATUS_IDENTIFIER,
+        DEVICE_LOCATION_STATUS_NAMES,
+        DEVICE_LOCATION_STOP_IDENTIFIER,
+        MAP_LAYER_BASE_ROW_IDENTIFIER_PREFIX,
+        MAP_LAYER_SCENE_ROW_IDENTIFIER_PREFIX,
+        MAP_LAYER_STYLE_ROW_IDENTIFIER_PREFIX,
+        MAP_LAYER_TRAFFIC_IDENTIFIER,
+        MAP_LAYERS_ACTIVE_DOT_CLASS_NAME,
+        MAP_LAYERS_CONTROL_IDENTIFIER,
+        MAP_LAYERS_CONTROL_LABEL,
+        MAP_LAYERS_PANEL_IDENTIFIER,
+        MAP_LAYERS_SERVING_TEXT,
+        MAP_LAYERS_STATUS_IDENTIFIER,
+        MY_LOCATION_CHIP_FILLED_MARK,
+        ORIGIN_MY_LOCATION_CHIP_IDENTIFIER,
+        DESTINATION_MY_LOCATION_CHIP_IDENTIFIER,
+        TRAFFIC_FLOW_OVERLAY_WIDTH_PIXELS,
+        TRAFFIC_REFRESH_DEBOUNCE_MILLISECONDS,
+        base_row_credential_refusal,
+        device_fix_display_text,
+        device_location_status_text,
+        is_non_default_layer_active,
+        my_location_chip_label,
+        traffic_capability_descriptor,
+        traffic_layer_availability,
+      } from './map_layers.mjs';
       import {
         TILE_LAYER_MODES,
         applyTileLayerMode,
@@ -159,6 +189,9 @@
       // Distance/duration formatting of the demo progress card.
       const METERS_PER_KILOMETER = 1000;
       const SECONDS_PER_MINUTE = 60;
+      // The flat-earth scale the traffic bounds fall back to at a steep pitch:
+      // one degree of latitude, in meters.
+      const METERS_PER_DEGREE_LATITUDE = 111_320;
       // The theme model (§3, owner ruling 2026-10-30): three explicit choices
       // — Light, Dark and Auto — with Auto as the default. Auto follows the
       // operating system's `prefers-color-scheme` live; an explicit Light or
@@ -249,6 +282,23 @@
       // The offline-maps card's route line (the committed routing-graph demo
       // request): drawn beside the planned route and the scene overlays.
       let offline_route_overlays = [];
+      // The traffic layer's single overlay (at most one), installed from the
+      // capability's flow rows and cleared when the switch goes off. The
+      // layer's own state lives beside it: one debounced refresh per camera
+      // settle, at most one request in flight, and the counters the browser
+      // suite reads.
+      let traffic_flow_overlays = [];
+      let traffic_layer_enabled = false;
+      let traffic_refresh_debounce_timer = null;
+      let traffic_refresh_in_flight = false;
+      let traffic_refresh_pending = false;
+      let traffic_last_camera_pose_key = null;
+      let traffic_fetch_count = 0;
+      let traffic_overlay_install_count = 0;
+      let traffic_last_failure_text = null;
+      // The panel's DOM is built later in this module; a credential restored
+      // before then may ask for a refresh, which is a no-op until it is.
+      let map_layers_panel_ready = false;
       // The route record behind those overlays, kept so the wasm `Navigator`
       // can start on the same geometry the camera follows (the overlays alone
       // carry no steps or maneuvers).
@@ -314,9 +364,13 @@
       const zoom_out_control = document.getElementById('zoom-out-control');
       const zoom_in_control = document.getElementById('zoom-in-control');
       const my_location_control = document.getElementById('my-location-control');
-      const device_location_control = document.getElementById('device-location-control');
       const device_navigation_control = document.getElementById('device-navigation-control');
-      const device_location_status = document.getElementById('device-location-status');
+      // The device-location state row lives in the layers panel; the settings
+      // sheet's detail line keeps the navigation and fix prose.
+      const device_location_status = document.getElementById(DEVICE_LOCATION_STATUS_IDENTIFIER);
+      const device_location_stop_control =
+        document.getElementById(DEVICE_LOCATION_STOP_IDENTIFIER);
+      const device_location_detail = document.getElementById('device-location-detail');
       const plane_toggle_control = document.getElementById('plane-toggle-control');
       const scale_bar_element = document.getElementById('scale-bar-overlay');
       const scale_bar_label_element = document.getElementById('scale-bar-label-text');
@@ -508,6 +562,7 @@
           version: DEMO_PREFERENCES_VERSION,
           themeChoice: 'auto',
           baseMap: null,
+          trafficLayerEnabled: false,
           demoPlanScenario: null,
           overlaySceneKeys: [],
           cameraPresetId: null,
@@ -578,6 +633,7 @@
           preferences.themeChoice = stored_record.themeChoice;
         }
         preferences.baseMap = sanitized_base_map_preference(stored_record.baseMap);
+        preferences.trafficLayerEnabled = stored_record.trafficLayerEnabled === true;
         if (DEMO_PLAN_SCENARIO_IDS.has(stored_record.demoPlanScenario)) {
           preferences.demoPlanScenario = stored_record.demoPlanScenario;
         }
@@ -863,6 +919,8 @@
               visibility_element.setAttribute('aria-label', 'Show key');
               visibility_element.setAttribute('aria-pressed', 'false');
               refresh_credential_state();
+              refresh_map_layers_panel();
+              maybe_restore_remembered_traffic_layer();
               set_provider_status(
                 provider_applied_status_text(provider_descriptor), 'success');
               set_settings_credentials_status(
@@ -888,6 +946,8 @@
               null,
             );
             refresh_credential_state();
+            // A cleared key takes the traffic layer with it, honestly.
+            refresh_map_layers_panel();
             set_provider_status(provider_keyless_status_text);
             set_settings_credentials_status('Cleared — back to the demo places.');
           });
@@ -898,6 +958,8 @@
             apply_provider_credential(provider_control, remembered_value)
               .then(() => {
                 refresh_credential_state();
+                refresh_map_layers_panel();
+                maybe_restore_remembered_traffic_layer();
                 set_provider_status(
                   provider_applied_status_text(provider_descriptor), 'success');
               })
@@ -1127,6 +1189,20 @@
             }
           });
         }
+        // Each "My location" chip fills its own field alone: a device fix is
+        // not a search result, so the earlier selection is cleared and the
+        // field's text becomes the truth for Plan route.
+        for (const field_key of TRIP_FIELD_KEYS) {
+          my_location_field_fillers.set(field_key, (display_text) => {
+            const field = trip_fields[field_key];
+            field.selected_place = null;
+            field.input.value = display_text;
+            active_trip_field_key = field_key;
+            persist_trip_field_texts();
+            refresh_trip_plan_route_state();
+          });
+        }
+        refresh_device_location_status_row();
         render_trip_suggestions();
         // Restoring a remembered pair fills the fields only: the route is
         // never planned on load, so no provider call is spent.
@@ -1993,6 +2069,9 @@
       function content_overlay_list() {
         return [
           ...sacramento_scene_overlays(checked_overlay_scene_keys()),
+          // The traffic layer draws over the base and under the route
+          // geometry, as at most one overlay.
+          ...traffic_flow_overlays,
           // The planned route, its A/B pins and the offline card's route
           // draw over any base layer and beside every toggled scene.
           ...trip_route_overlays,
@@ -2021,6 +2100,7 @@
           });
           apply_overlays();
           schedule_render();
+          refresh_map_layers_panel();
         });
       }
       clear_overlays_control.addEventListener('click', () => {
@@ -2031,6 +2111,7 @@
         write_demo_preferences({ overlaySceneKeys: [] });
         apply_overlays();
         schedule_render();
+        refresh_map_layers_panel();
       });
       // Restoring a scene selection only marks the toggles; the renderer's
       // first overlay push happens once the GPU surface is up.
@@ -2148,6 +2229,8 @@
         apply_vector_base_clear_color();
         install_vector_base_source();
         schedule_render();
+        refresh_map_layers_panel();
+        refresh_attribution_notice();
       });
 
       /** The registry descriptor declaring a fixture route for one purpose. */
@@ -2384,6 +2467,8 @@
           write_demo_preferences({ baseMap: current_base_map_preference() });
         }
         schedule_render();
+        refresh_map_layers_panel();
+        refresh_attribution_notice();
       }
 
       /** The selection the base-map record stores: the raster descriptor in
@@ -2457,6 +2542,490 @@
         base_map_status_element.hidden ? null : base_map_status_element.textContent;
       render_base_map_toggle();
       render_vector_style_picker();
+
+      // --- The on-map layer control (docs/MapControlsAndTrafficLayer.md) ----
+      // One round control docked above the attribution notice. Its panel
+      // carries the registry's base sources and every committed vector style,
+      // the traffic switch, the demo scene switches and the device-location
+      // status. Nothing here names a provider: rows are built from the shared
+      // descriptors, and the traffic capability is the first descriptor that
+      // declares it.
+      const map_layers_control = document.getElementById(MAP_LAYERS_CONTROL_IDENTIFIER);
+      const map_layers_panel = document.getElementById(MAP_LAYERS_PANEL_IDENTIFIER);
+      map_layers_control.setAttribute('aria-label', MAP_LAYERS_CONTROL_LABEL);
+      const map_layers_base_rows_element = document.getElementById('map-layer-base-rows');
+      const map_layers_traffic_row_element = document.getElementById('map-layer-traffic-row');
+      const map_layers_scene_rows_element = document.getElementById('map-layer-scene-rows');
+      const map_layers_status_element = document.getElementById(MAP_LAYERS_STATUS_IDENTIFIER);
+      const map_layers_active_dot = map_layers_control.querySelector(
+        `.${MAP_LAYERS_ACTIVE_DOT_CLASS_NAME}`);
+      // Each base row's descriptor and selection, keyed by its identifier, so
+      // the refresh pass can mark the serving row without rebuilding.
+      const map_layers_base_row_bindings = new Map();
+      // The traffic switch's parts.
+      const traffic_switch_element = document.createElement('button');
+      traffic_switch_element.type = 'button';
+      traffic_switch_element.id = MAP_LAYER_TRAFFIC_IDENTIFIER;
+      traffic_switch_element.className = 'map-layer-switch';
+      traffic_switch_element.setAttribute('role', 'switch');
+      traffic_switch_element.setAttribute('aria-checked', 'false');
+      const traffic_switch_label_element = document.createElement('span');
+      traffic_switch_label_element.textContent = 'Traffic';
+      const traffic_switch_mark_element = document.createElement('span');
+      traffic_switch_mark_element.className = 'map-layer-row-reason';
+      traffic_switch_element.append(
+        traffic_switch_label_element, traffic_switch_mark_element);
+      map_layers_traffic_row_element.appendChild(traffic_switch_element);
+      // The scene switch rows mirror the settings toggles and write the same
+      // remembered choice through the existing checkbox listeners.
+      const scene_switch_elements = new Map();
+
+      /** Shows (or clears) the panel's status line. */
+      function set_map_layers_status(status_text) {
+        map_layers_status_element.hidden = status_text === null;
+        map_layers_status_element.textContent = status_text ?? '';
+      }
+
+      /** Builds the base rows: one per raster source, one per vector style. */
+      function build_map_layers_base_rows() {
+        map_layers_base_rows_element.textContent = '';
+        map_layers_base_row_bindings.clear();
+        const base_rows = [
+          ...RASTER_BASE_MAP_DESCRIPTORS.map((provider_descriptor) => ({
+            row_identifier:
+              `${MAP_LAYER_BASE_ROW_IDENTIFIER_PREFIX}${provider_descriptor.provider_key}`,
+            label: `${provider_descriptor.display_name} · Raster`,
+            mode: TILE_LAYER_MODES.raster,
+            provider_descriptor,
+            style_id: null,
+            served_from_fixtures: true,
+          })),
+          ...VECTOR_BASE_MAP_DESCRIPTORS.flatMap((provider_descriptor) =>
+            (provider_descriptor.vector_styles ?? []).map((style_choice) => ({
+              row_identifier:
+                `${MAP_LAYER_STYLE_ROW_IDENTIFIER_PREFIX}${style_choice.style_id}`,
+              label: style_choice.display_name,
+              mode: TILE_LAYER_MODES.vector,
+              provider_descriptor,
+              style_id: style_choice.style_id,
+              served_from_fixtures: false,
+            }))),
+        ];
+        for (const base_row of base_rows) {
+          const row_element = document.createElement('button');
+          row_element.type = 'button';
+          row_element.id = base_row.row_identifier;
+          row_element.className = 'map-layers-base-row';
+          const row_label_element = document.createElement('span');
+          row_label_element.textContent = base_row.label;
+          const row_mark_element = document.createElement('span');
+          row_mark_element.className = 'map-layer-row-reason';
+          row_element.append(row_label_element, row_mark_element);
+          row_element.addEventListener('click', () => {
+            if (row_element.disabled) return;
+            if (base_row.mode === TILE_LAYER_MODES.raster) {
+              switch_tile_mode(TILE_LAYER_MODES.raster);
+              return;
+            }
+            select_map_layers_vector_style(
+              base_row.provider_descriptor, base_row.style_id);
+          });
+          map_layers_base_row_bindings.set(base_row.row_identifier, {
+            row_element,
+            row_mark_element,
+            base_row,
+          });
+          map_layers_base_rows_element.appendChild(row_element);
+        }
+      }
+
+      /** Selects one committed vector style: the same switch the settings
+       * style picker performs, with the style applied to the base. */
+      function select_map_layers_vector_style(provider_descriptor, style_id) {
+        current_vector_style_id = style_id;
+        if (current_tile_mode !== TILE_LAYER_MODES.vector
+          || current_vector_provider_key !== provider_descriptor.provider_key) {
+          switch_tile_mode(
+            TILE_LAYER_MODES.vector, provider_descriptor.provider_key);
+          return;
+        }
+        write_demo_preferences({ baseMap: current_base_map_preference() });
+        apply_vector_base_clear_color();
+        install_vector_base_source();
+        schedule_render();
+        refresh_map_layers_panel();
+        refresh_attribution_notice();
+      }
+
+      /** The identifier of the row whose layer is serving now, or null. */
+      function active_base_row_identifier() {
+        if (current_tile_mode === TILE_LAYER_MODES.raster) {
+          const raster_descriptor = RASTER_BASE_MAP_DESCRIPTORS[0];
+          return raster_descriptor === undefined
+            ? null
+            : `${MAP_LAYER_BASE_ROW_IDENTIFIER_PREFIX}${raster_descriptor.provider_key}`;
+        }
+        const style_id = active_vector_style_id();
+        return style_id === null
+          ? null
+          : `${MAP_LAYER_STYLE_ROW_IDENTIFIER_PREFIX}${style_id}`;
+      }
+
+      /** Builds the demo-scene switches from the shared scene artifact. */
+      function build_map_layers_scene_rows() {
+        map_layers_scene_rows_element.textContent = '';
+        scene_switch_elements.clear();
+        for (const [scene_key] of Object.entries(REFERENCE_SCENE_ARTIFACT.overlay_scenes)) {
+          const switch_element = document.createElement('button');
+          switch_element.type = 'button';
+          switch_element.id = `${MAP_LAYER_SCENE_ROW_IDENTIFIER_PREFIX}${scene_key}`;
+          switch_element.className = 'map-layer-switch';
+          switch_element.setAttribute('role', 'switch');
+          switch_element.setAttribute('aria-checked', 'false');
+          const switch_label_element = document.createElement('span');
+          switch_label_element.textContent = SACRAMENTO_OVERLAY_SCENE_LABELS[scene_key];
+          const switch_mark_element = document.createElement('span');
+          switch_mark_element.className = 'map-layer-row-reason';
+          switch_element.append(switch_label_element, switch_mark_element);
+          // Activating the switch flips the existing checkbox and fires its
+          // change event, so both surfaces share one persistence and overlay
+          // path. A switch with no matching scene toggle stays inert.
+          switch_element.addEventListener('click', () => {
+            const checkbox = overlay_checkboxes[scene_key];
+            if (checkbox === undefined) return;
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+          });
+          scene_switch_elements.set(scene_key, switch_element);
+          map_layers_scene_rows_element.appendChild(switch_element);
+        }
+      }
+
+      /** Marks the serving base row, the traffic switch and the scene switches. */
+      function refresh_map_layers_panel() {
+        if (!map_layers_panel_ready) return;
+        const active_row_identifier = active_base_row_identifier();
+        for (const [row_identifier, binding] of map_layers_base_row_bindings) {
+          const refusal_text = base_row_credential_refusal(
+            binding.base_row.provider_descriptor,
+            applied_provider_keys,
+            { servedFromFixtures: binding.base_row.served_from_fixtures },
+          );
+          const is_active = row_identifier === active_row_identifier;
+          binding.row_element.setAttribute('aria-pressed', String(is_active));
+          binding.row_element.disabled = refusal_text !== null;
+          binding.row_mark_element.textContent = refusal_text
+            ?? (is_active ? MAP_LAYERS_SERVING_TEXT : '');
+          binding.row_mark_element.className = refusal_text !== null
+            ? 'map-layer-row-reason'
+            : 'map-layers-serving-mark';
+        }
+        const availability = traffic_layer_availability(
+          providers_registry.providers, applied_provider_keys);
+        if (availability.state !== 'available' && traffic_layer_enabled) {
+          set_traffic_layer_enabled(false);
+        }
+        traffic_switch_element.disabled = availability.state !== 'available';
+        traffic_switch_element.setAttribute(
+          'aria-checked', String(traffic_layer_enabled));
+        traffic_switch_mark_element.textContent = availability.state === 'available'
+          ? (traffic_layer_enabled ? 'On' : 'Off')
+          : availability.reasonText;
+        traffic_switch_element.title = availability.reasonText ?? '';
+        for (const [scene_key, switch_element] of scene_switch_elements) {
+          const is_checked = overlay_checkboxes[scene_key]?.checked === true;
+          switch_element.setAttribute('aria-checked', String(is_checked));
+        }
+        const enabled_scene_count = checked_overlay_scene_keys().length;
+        map_layers_active_dot.hidden = !is_non_default_layer_active({
+          baseMode: current_tile_mode,
+          rasterMode: TILE_LAYER_MODES.raster,
+          trafficEnabled: traffic_layer_enabled,
+          enabledSceneCount: enabled_scene_count,
+        });
+      }
+
+      /** Opens or closes the layers panel; Escape returns focus to the button. */
+      function set_map_layers_panel_open(is_open) {
+        map_layers_panel.hidden = !is_open;
+        map_layers_control.setAttribute('aria-expanded', String(is_open));
+        if (is_open) {
+          // The panel precedes the button in the tab order; moving focus to
+          // its first usable control keeps the panel keyboard reachable.
+          const first_control = map_layers_panel.querySelector(
+            'button:not([disabled]), [role="switch"]:not([disabled])');
+          first_control?.focus();
+        }
+      }
+
+      map_layers_control.addEventListener('click', () => {
+        set_map_layers_panel_open(map_layers_panel.hidden);
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !map_layers_panel.hidden) {
+          set_map_layers_panel_open(false);
+          map_layers_control.focus();
+        }
+      });
+      document.addEventListener('pointerdown', (event) => {
+        if (map_layers_panel.hidden) return;
+        if (!map_layers_control.contains(event.target)
+          && !map_layers_panel.contains(event.target)) {
+          set_map_layers_panel_open(false);
+        }
+      }, true);
+
+      // The settings sheet's device-location row is a pointer to this
+      // control's Device location row, never a second copy of it.
+      const device_location_pointer_control =
+        document.getElementById('device-location-control');
+      device_location_pointer_control.addEventListener('click', () => {
+        if (settings_dialog.open) settings_dialog.close();
+        set_map_layers_panel_open(true);
+        const device_location_status_element =
+          document.getElementById(DEVICE_LOCATION_STATUS_IDENTIFIER);
+        device_location_status_element?.scrollIntoView({ block: 'nearest' });
+        map_layers_control.focus();
+      });
+
+      // --- Traffic layer -------------------------------------------------
+      // One overlay installed from the capability's flow rows for the settled
+      // camera bounds. Refreshes are debounced per settle and capped to one
+      // request in flight; a failed refresh keeps the previous overlay.
+      function current_camera_pose_key() {
+        return [
+          camera_state.latitude.toFixed(6),
+          camera_state.longitude.toFixed(6),
+          camera_state.zoom.toFixed(3),
+          camera_state.bearing.toFixed(2),
+          camera_state.pitch.toFixed(2),
+        ].join('|');
+      }
+
+      /** The settled camera's geographic bounds, or null when unanswerable. */
+      function current_camera_geographic_bounds() {
+        const camera = build_camera();
+        const width_pixels = overlay_canvas.width;
+        const height_pixels = overlay_canvas.height;
+        const corner_pixels = [
+          [0, 0], [width_pixels, 0], [width_pixels, height_pixels], [0, height_pixels],
+        ];
+        const corner_coordinates = corner_pixels
+          .map(([screen_x, screen_y]) => resolved_or_null(() =>
+            camera.screenToGroundCoordinate(
+              screen_x, screen_y, width_pixels, height_pixels, FIELD_OF_VIEW_DEGREES)))
+          .filter(Boolean);
+        if (corner_coordinates.length >= 3) {
+          const latitudes = corner_coordinates.map((coordinate) => coordinate.latitude);
+          const longitudes = corner_coordinates.map((coordinate) => coordinate.longitude);
+          return {
+            southWestLatitude: Math.min(...latitudes),
+            southWestLongitude: Math.min(...longitudes),
+            northEastLatitude: Math.max(...latitudes),
+            northEastLongitude: Math.max(...longitudes),
+          };
+        }
+        // A steep pitch can put the far edge below the horizon; the camera's
+        // own ground scale then bounds a box around the center.
+        const meters_per_pixel = resolved_or_null(() =>
+          camera.groundMetersPerScreenPixel(
+            width_pixels, height_pixels, FIELD_OF_VIEW_DEGREES));
+        if (meters_per_pixel === null) return null;
+        const half_height_meters = (meters_per_pixel * height_pixels) / 2;
+        const half_width_meters = (meters_per_pixel * width_pixels) / 2;
+        const latitude_delta_degrees = half_height_meters / METERS_PER_DEGREE_LATITUDE;
+        const longitude_scale = METERS_PER_DEGREE_LATITUDE
+          * Math.cos((camera_state.latitude * Math.PI) / 180);
+        const longitude_delta_degrees = longitude_scale === 0
+          ? latitude_delta_degrees
+          : half_width_meters / longitude_scale;
+        return {
+          southWestLatitude: camera_state.latitude - latitude_delta_degrees,
+          southWestLongitude: camera_state.longitude - longitude_delta_degrees,
+          northEastLatitude: camera_state.latitude + latitude_delta_degrees,
+          northEastLongitude: camera_state.longitude + longitude_delta_degrees,
+        };
+      }
+
+      /** Schedules one traffic refresh after the camera settles. */
+      function schedule_traffic_refresh() {
+        if (!traffic_layer_enabled) return;
+        if (traffic_refresh_debounce_timer !== null) {
+          clearTimeout(traffic_refresh_debounce_timer);
+        }
+        traffic_refresh_debounce_timer = setTimeout(() => {
+          traffic_refresh_debounce_timer = null;
+          void refresh_traffic_flow_layer();
+        }, TRAFFIC_REFRESH_DEBOUNCE_MILLISECONDS);
+      }
+
+      /** Restarts the debounce when the camera pose changed since the last
+       * request's settle. Called from the page's render scheduler, so every
+       * camera path (drag, wheel, keyboard, preset, device fix) participates. */
+      function note_camera_pose_for_traffic() {
+        if (!traffic_layer_enabled) return;
+        const pose_key = current_camera_pose_key();
+        if (pose_key === traffic_last_camera_pose_key) return;
+        traffic_last_camera_pose_key = pose_key;
+        schedule_traffic_refresh();
+      }
+
+      /** Asks the capability for the settled bounds and installs one overlay. */
+      async function refresh_traffic_flow_layer() {
+        if (!traffic_layer_enabled) return;
+        if (traffic_refresh_in_flight) {
+          traffic_refresh_pending = true;
+          return;
+        }
+        const bounds = current_camera_geographic_bounds();
+        if (bounds === null) {
+          traffic_last_failure_text = 'The camera bounds are unavailable.';
+          set_map_layers_status(traffic_last_failure_text);
+          return;
+        }
+        traffic_refresh_in_flight = true;
+        traffic_fetch_count += 1;
+        try {
+          const flow_rows = await window.mapTest.fetchTrafficFlow(
+            bounds.southWestLatitude,
+            bounds.southWestLongitude,
+            bounds.northEastLatitude,
+            bounds.northEastLongitude,
+          );
+          // A toggle-off while the request was in flight drops its answer.
+          if (!traffic_layer_enabled) return;
+          traffic_flow_overlays = [
+            traffic_flow_overlay_descriptor(
+              flow_rows, TRAFFIC_FLOW_OVERLAY_WIDTH_PIXELS),
+          ];
+          traffic_overlay_install_count += 1;
+          traffic_last_failure_text = null;
+          set_map_layers_status(null);
+          apply_overlays();
+          schedule_render();
+        } catch (traffic_failure) {
+          const failure_text = String(traffic_failure?.message ?? traffic_failure);
+          traffic_last_failure_text = failure_text;
+          set_map_layers_status(`Traffic refresh failed: ${failure_text}`);
+          if (traffic_failure?.code === 'providerNotConfigured') {
+            set_traffic_layer_enabled(false);
+          }
+        } finally {
+          traffic_refresh_in_flight = false;
+          if (traffic_refresh_pending) {
+            traffic_refresh_pending = false;
+            schedule_traffic_refresh();
+          }
+        }
+      }
+
+      /** Turns the layer on or off, keeping the remembered choice in step. */
+      function set_traffic_layer_enabled(next_enabled, { remember = true } = {}) {
+        if (next_enabled) {
+          const availability = traffic_layer_availability(
+            providers_registry.providers, applied_provider_keys);
+          if (availability.state !== 'available') {
+            set_map_layers_status(availability.reasonText);
+            return;
+          }
+        }
+        traffic_layer_enabled = next_enabled;
+        if (remember) {
+          write_demo_preferences({ trafficLayerEnabled: next_enabled });
+        }
+        if (!next_enabled) {
+          if (traffic_refresh_debounce_timer !== null) {
+            clearTimeout(traffic_refresh_debounce_timer);
+            traffic_refresh_debounce_timer = null;
+          }
+          traffic_refresh_pending = false;
+          traffic_flow_overlays = [];
+          traffic_last_camera_pose_key = null;
+          apply_overlays();
+          schedule_render();
+        } else {
+          traffic_last_camera_pose_key = current_camera_pose_key();
+          schedule_traffic_refresh();
+        }
+        refresh_map_layers_panel();
+        refresh_attribution_notice();
+      }
+
+      traffic_switch_element.addEventListener('click', () => {
+        set_traffic_layer_enabled(!traffic_layer_enabled);
+      });
+
+      // A remembered traffic choice is restored only once a provider that
+      // serves the capability is registered (the credential path calls back).
+      let traffic_restore_requested = initial_demo_preferences.trafficLayerEnabled;
+      function maybe_restore_remembered_traffic_layer() {
+        if (!traffic_restore_requested || traffic_layer_enabled) return;
+        const availability = traffic_layer_availability(
+          providers_registry.providers, applied_provider_keys);
+        if (availability.state !== 'available') return;
+        traffic_restore_requested = false;
+        set_traffic_layer_enabled(true, { remember: false });
+      }
+
+      /** The attribution lines the currently serving layers require. */
+      function current_layer_attribution_texts() {
+        const attribution_texts = [];
+        if (current_tile_mode === TILE_LAYER_MODES.raster) {
+          const raster_descriptor = RASTER_BASE_MAP_DESCRIPTORS[0];
+          if (typeof raster_descriptor?.attribution_text === 'string') {
+            attribution_texts.push(raster_descriptor.attribution_text);
+          }
+        } else {
+          const vector_descriptor = selected_vector_descriptor();
+          if (vector_descriptor !== null) {
+            attribution_texts.push(active_vector_style_attribution(vector_descriptor));
+          }
+        }
+        if (traffic_layer_enabled) {
+          const traffic_descriptor =
+            traffic_capability_descriptor(providers_registry.providers);
+          if (typeof traffic_descriptor?.attribution_text === 'string') {
+            attribution_texts.push(traffic_descriptor.attribution_text);
+          }
+        }
+        return attribution_texts;
+      }
+
+      /** Recomputes the attribution notice; its live region announces changes. */
+      function refresh_attribution_notice() {
+        const attribution_texts = Array.from(new Set([
+          ...descriptor_attribution_texts,
+          ...current_layer_attribution_texts(),
+        ])).filter((attribution_text) =>
+          typeof attribution_text === 'string' && attribution_text.trim() !== '');
+        if (attribution_texts.length > 0) {
+          attribution_notice.textContent = attribution_texts.join(' · ');
+        }
+      }
+
+      // The UX-test host contract: the panel's state and the traffic layer's
+      // counters, so the browser suite can assert one install per settle
+      // without reading the panel's prose.
+      window.mapLayersState = () => ({
+        panelOpen: !map_layers_panel.hidden,
+        activeBaseIdentifier: active_base_row_identifier(),
+        trafficEnabled: traffic_layer_enabled,
+        sceneKeys: checked_overlay_scene_keys(),
+      });
+      window.mapTrafficLayerState = () => ({
+        enabled: traffic_layer_enabled,
+        fetchCount: traffic_fetch_count,
+        overlayInstallCount: traffic_overlay_install_count,
+        segmentCount: traffic_flow_overlays[0]?.segments?.length ?? 0,
+        failureText: traffic_last_failure_text,
+      });
+
+      build_map_layers_base_rows();
+      build_map_layers_scene_rows();
+      map_layers_panel_ready = true;
+      refresh_map_layers_panel();
+      refresh_attribution_notice();
+      maybe_restore_remembered_traffic_layer();
 
       // Simulated navigation panel (docs/ReferenceAppUX.md §7.3): live
       // guidance from the wasm `Navigator`, the same reducer the native
@@ -3323,6 +3892,9 @@
       // is up (awaited through the serialized frame queue), repaint the 2D
       // overlay, refresh the scale bar, the compass and the readout.
       function schedule_render() {
+        // Every camera path funnels through here; the traffic layer restarts
+        // its settle debounce when the pose it last asked about changed.
+        note_camera_pose_for_traffic();
         if (render_busy) {
           render_queued = true;
           return;
@@ -3492,12 +4064,115 @@
       // about once a second, rather than being overwritten by the next
       // "Position …" line before the visitor can read it.
       let is_device_navigation_plan_first_pinned = false;
+      // The panel row's state name (one of the shared names), the one-shot
+      // "center on the next fix" request the round control makes, and the
+      // field a "My location" chip is waiting to fill.
+      let device_location_status_name = DEVICE_LOCATION_STATUS_NAMES.off;
+      let device_location_center_on_next_fix = false;
+      let pending_my_location_field_key = null;
+      // The per-field fillers the trip planner registers; the device source
+      // calls the pending one when a fix arrives, never both.
+      const my_location_field_fillers = new Map();
+      const my_location_chip_controls = {
+        origin: document.getElementById(ORIGIN_MY_LOCATION_CHIP_IDENTIFIER),
+        destination: document.getElementById(DESTINATION_MY_LOCATION_CHIP_IDENTIFIER),
+      };
+
+      /** The latest accepted fix, or null before the first one. */
+      function latest_device_fix() {
+        try {
+          return device_position_controller?.latestFix() ?? null;
+        } catch {
+          return null;
+        }
+      }
+
+      /** The reason the source cannot start, or null when it can. */
+      function device_location_refusal_reason() {
+        if (typeof navigator.geolocation?.watchPosition !== 'function') {
+          return DEVICE_LOCATION_UNAVAILABLE_SUPPORT_TEXT;
+        }
+        if (typeof window.mapTest?.PositionController !== 'function') {
+          return DEVICE_LOCATION_UNAVAILABLE_TEXT;
+        }
+        if (device_location_status_name === DEVICE_LOCATION_STATUS_NAMES.permissionDenied) {
+          return DEVICE_LOCATION_PERMISSION_DENIED_TEXT;
+        }
+        if (device_location_status_name === DEVICE_LOCATION_STATUS_NAMES.unavailable) {
+          return DEVICE_LOCATION_UNAVAILABLE_TEXT;
+        }
+        return null;
+      }
+
+      /** Reflects the source state in the panel row, the Stop action and the
+       * two route-field chips. */
+      function refresh_device_location_status_row() {
+        device_location_status.textContent =
+          device_location_status_text(device_location_status_name);
+        const source_is_on = device_location_watch_identifier !== null;
+        device_location_stop_control.hidden = !source_is_on;
+        my_location_control.setAttribute('aria-pressed', String(source_is_on));
+        refresh_my_location_control();
+        refresh_my_location_chip_states();
+      }
+
+      /** Disables each chip with the panel's reason when the source cannot
+       * start, and marks the field that already holds a fix. */
+      function refresh_my_location_chip_states() {
+        const refusal_reason = device_location_refusal_reason();
+        for (const [field_key, chip] of Object.entries(my_location_chip_controls)) {
+          if (chip === null) continue;
+          const is_filled = chip.dataset.filled === 'true';
+          chip.disabled = refusal_reason !== null;
+          chip.title = refusal_reason ?? '';
+          chip.textContent = is_filled
+            ? `My location ${MY_LOCATION_CHIP_FILLED_MARK}`
+            : 'My location';
+          const accessible_label = my_location_chip_label(field_key);
+          chip.setAttribute(
+            'aria-label',
+            refusal_reason === null
+              ? accessible_label
+              : `${accessible_label} — ${refusal_reason}`,
+          );
+        }
+      }
+
+      /** Fills the field a chip is waiting on, from one accepted fix. */
+      function apply_pending_my_location_fill(coordinate) {
+        if (pending_my_location_field_key === null) return;
+        const field_key = pending_my_location_field_key;
+        pending_my_location_field_key = null;
+        const fill_field = my_location_field_fillers.get(field_key);
+        if (fill_field === undefined) return;
+        fill_field(device_fix_display_text(coordinate.latitude, coordinate.longitude));
+        const chip = my_location_chip_controls[field_key];
+        if (chip !== null) chip.dataset.filled = 'true';
+        refresh_my_location_chip_states();
+      }
+
+      /** Starts the source if it is off and fills the chip's own field from
+       * the latest fix as soon as one arrives. */
+      function start_my_location_chip_fill(field_key) {
+        const chip = my_location_chip_controls[field_key];
+        if (chip === null || chip.disabled) return;
+        pending_my_location_field_key = field_key;
+        const latest_fix = latest_device_fix();
+        if (latest_fix !== null) {
+          apply_pending_my_location_fill(latest_fix);
+          return;
+        }
+        if (device_location_watch_identifier === null) {
+          start_device_location();
+        }
+      }
+
+      for (const [field_key, chip] of Object.entries(my_location_chip_controls)) {
+        chip?.addEventListener('click', () => start_my_location_chip_fill(field_key));
+      }
 
       function refresh_device_location_control() {
-        const is_active = device_location_watch_identifier !== null;
-        device_location_control.setAttribute('aria-pressed', String(is_active));
-        device_location_control.textContent =
-          is_active ? 'Hide my location' : 'Show my location';
+        refresh_device_location_status_row();
       }
 
       function refresh_device_navigation_control() {
@@ -3569,9 +4244,16 @@
         }
       }
 
+      /** Sets the settings sheet's detail line (the fix and guidance prose). */
       function set_device_location_status(status_text) {
-        device_location_status.hidden = status_text === null;
-        device_location_status.textContent = status_text ?? '';
+        device_location_detail.hidden = status_text === null;
+        device_location_detail.textContent = status_text ?? '';
+      }
+
+      /** Sets the panel row's state name and refreshes the chip availability. */
+      function set_device_location_state(status_name) {
+        device_location_status_name = status_name;
+        refresh_device_location_status_row();
       }
 
       function map_geolocation_error_name(error) {
@@ -3617,28 +4299,36 @@
           {
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
-            courseHeadingDegrees: smoothed_course,
+            courseHeadingDegrees: smoothed_course ?? null,
             horizontalAccuracyMeters:
               Number.isFinite(coordinate.accuracy) ? coordinate.accuracy : null,
           },
           { visualKind: 'trackingDot', showAccuracyRing: true },
         );
-        camera_state.latitude = coordinate.latitude;
-        camera_state.longitude = coordinate.longitude;
-        // A device-driven trip keeps the §5.3 follow camera's fixed deep zoom
-        // and, in 3D, follows the smoothed course; outside a trip the fix
-        // only centres the map at the device zoom.
-        camera_state.zoom = is_device_navigation_active
-          ? follow_zoom_toward_trip_end(1.0)
-          : Math.max(camera_state.zoom, DEVICE_LOCATION_ZOOM_LEVEL);
-        if (is_device_navigation_active && is_three_dimensional_camera) {
-          camera_state.pitch = NAVIGATION_FOLLOW_PITCH_3D_DEGREES;
-          if (smoothed_course !== null) {
-            follow_demo.target_bearing_degrees = smoothed_course;
+        // A device-driven trip follows every fix. Outside a trip only an
+        // explicit request (the round control's first fix, or its re-center
+        // tap) moves the camera, so a chip or a background source never
+        // hijacks the visitor's view.
+        const should_center = is_device_navigation_active
+          || device_location_center_on_next_fix;
+        device_location_center_on_next_fix = false;
+        if (should_center) {
+          camera_state.latitude = coordinate.latitude;
+          camera_state.longitude = coordinate.longitude;
+          camera_state.zoom = is_device_navigation_active
+            ? follow_zoom_toward_trip_end(1.0)
+            : Math.max(camera_state.zoom, DEVICE_LOCATION_ZOOM_LEVEL);
+          if (is_device_navigation_active && is_three_dimensional_camera) {
+            camera_state.pitch = NAVIGATION_FOLLOW_PITCH_3D_DEGREES;
+            if (smoothed_course !== null) {
+              follow_demo.target_bearing_degrees = smoothed_course;
+            }
           }
+          controls.zoom.value = camera_state.zoom;
+          refresh_control_labels();
         }
-        controls.zoom.value = camera_state.zoom;
-        refresh_control_labels();
+        set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.active);
+        apply_pending_my_location_fill(coordinate);
         schedule_render();
         const accuracy_text = Number.isFinite(coordinate.accuracy)
           ? ` · ±${Math.round(coordinate.accuracy)} m`
@@ -3697,21 +4387,31 @@
           device_location_watch_identifier = null;
         }
         device_position_controller = null;
+        device_location_center_on_next_fix = false;
+        pending_my_location_field_key = null;
         apply_location_indicator(null);
-        set_device_location_status('Location off.');
-        refresh_device_location_control();
+        set_device_location_status(null);
+        set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.off);
         schedule_render();
       }
 
-      function start_device_location() {
+      /**
+       * Starts the browser's location source. The round control asks for the
+       * first fix to center the map; the chips start the same source without
+       * moving the camera.
+       */
+      function start_device_location({ centerOnFirstFix = false } = {}) {
         if (typeof navigator.geolocation?.watchPosition !== 'function') {
           set_device_location_status(DEVICE_LOCATION_UNAVAILABLE_SUPPORT_TEXT);
+          set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.unavailable);
           return;
         }
         if (typeof window.mapTest?.PositionController !== 'function') {
           set_device_location_status(DEVICE_LOCATION_UNAVAILABLE_TEXT);
+          set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.unavailable);
           return;
         }
+        device_location_center_on_next_fix = centerOnFirstFix;
         device_position_controller = new window.mapTest.PositionController();
         device_location_watch_identifier = navigator.geolocation.watchPosition(
           (position) => apply_device_position(position),
@@ -3723,19 +4423,29 @@
               // An unknown status name leaves the controller unchanged.
             }
             set_device_location_status(map_geolocation_error_text(error));
+            // A refused or unusable source is not left pretending it watches:
+            // the watch stops, the controller keeps the reported state, and
+            // the next tap may request permission again.
+            if (device_location_watch_identifier !== null) {
+              navigator.geolocation.clearWatch(device_location_watch_identifier);
+              device_location_watch_identifier = null;
+            }
+            set_device_location_state(
+              status_name === 'permissionDenied'
+                ? DEVICE_LOCATION_STATUS_NAMES.permissionDenied
+                : DEVICE_LOCATION_STATUS_NAMES.unavailable,
+            );
           },
           { enableHighAccuracy: true, maximumAge: 1_000, timeout: 10_000 },
         );
-        refresh_device_location_control();
+        set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.waiting);
         set_device_location_status('Waiting for a position…');
       }
 
-      device_location_control.addEventListener('click', () => {
-        if (device_location_watch_identifier !== null) {
-          stop_device_location();
-        } else {
-          start_device_location();
-        }
+      // The panel's Stop action is the only way to stop the source; the
+      // settings sheet's row is a pointer to the panel, wired below.
+      device_location_stop_control.addEventListener('click', () => {
+        stop_device_location();
       });
 
       device_navigation_control.addEventListener('click', () => {
@@ -3899,35 +4609,62 @@
       attach_zoom_control(zoom_out_control, -1);
       attach_zoom_control(zoom_in_control, 1);
 
-      // My-location (§4.2): outside a trip the playground's standing fix is
-      // the camera center itself, carrying the recorded trace's accuracy (the
-      // plain tracking dot — no course on this fix); during a trip the
-      // control re-centers on the latest guided fix and re-engages a follow
-      // broken by a gesture (§5.3: a gesture keeps follow broken until the
-      // control re-engages it, never the next fix).
+      // My-location (§4.2/§5.3, docs/MapControlsAndTrafficLayer.md): during a
+      // simulated trip the control re-centers on the latest guided fix and
+      // re-engages a follow broken by a gesture. Outside a trip it drives the
+      // device location source: with the source off it requests permission,
+      // starts the source and centers on the first fix; with the source on it
+      // re-centers on the latest fix.
       my_location_control.addEventListener('click', () => {
-        const latest_trip_fix = follow_demo.latest_fix;
-        if (latest_trip_fix !== null &&
-            follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
-          camera_state.latitude = latest_trip_fix.latitude;
-          camera_state.longitude = latest_trip_fix.longitude;
+        const is_trip_active =
+          follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED;
+        if (is_trip_active) {
+          const latest_trip_fix = follow_demo.latest_fix;
+          if (latest_trip_fix !== null) {
+            camera_state.latitude = latest_trip_fix.latitude;
+            camera_state.longitude = latest_trip_fix.longitude;
+          }
+          apply_location_indicator(
+            {
+              latitude: camera_state.latitude,
+              longitude: camera_state.longitude,
+              courseHeadingDegrees: null,
+              horizontalAccuracyMeters: FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
+            },
+            { visualKind: 'trackingDot' },
+          );
+          if (follow_demo.phase === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
+            follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
+            follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
+            follow_bearing_chase.reset();
+            refresh_my_location_control();
+            request_pump_step();
+          }
+          schedule_render();
+          return;
         }
-        apply_location_indicator(
-          {
-            latitude: camera_state.latitude,
-            longitude: camera_state.longitude,
-            courseHeadingDegrees: null,
-            horizontalAccuracyMeters: FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
-          },
-          { visualKind: 'trackingDot' },
-        );
-        if (follow_demo.phase === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
-          follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
-          follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
-          follow_bearing_chase.reset();
-          refresh_my_location_control();
-          request_pump_step();
+        const refusal_reason = device_location_refusal_reason();
+        if (device_location_watch_identifier === null) {
+          if (refusal_reason !== null) {
+            // The control never pretends it started; the panel states why.
+            set_map_layers_status(refusal_reason);
+            set_map_layers_panel_open(true);
+            return;
+          }
+          start_device_location({ centerOnFirstFix: true });
+          return;
         }
+        const latest_fix = latest_device_fix();
+        if (latest_fix === null) {
+          // Waiting for the first fix: center when it arrives.
+          device_location_center_on_next_fix = true;
+          return;
+        }
+        camera_state.latitude = latest_fix.latitude;
+        camera_state.longitude = latest_fix.longitude;
+        camera_state.zoom = Math.max(camera_state.zoom, DEVICE_LOCATION_ZOOM_LEVEL);
+        controls.zoom.value = camera_state.zoom;
+        refresh_control_labels();
         schedule_render();
       });
 

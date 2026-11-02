@@ -113,3 +113,24 @@ export const SACRAMENTO_OVERLAY_SCENE_LABELS = Object.fromEntries(
 export function sacramento_scene_overlays(scene_keys) {
   return scene_keys.map((scene_key) => SACRAMENTO_OVERLAY_SCENES[scene_key]);
 }
+
+// Builds the one `trafficFlow` overlay descriptor from the capability's own
+// flow rows (`fetchTrafficFlow`'s lower-camel shape): the segment polylines
+// and congestion levels, unchanged. The rows' congestion level arrives as
+// the enum variant name, which is the same spelling the scene artifact uses.
+export function traffic_flow_overlay_descriptor(flow_rows, width_pixels) {
+  const descriptor = {
+    kind: 'trafficFlow',
+    segments: flow_rows.map((flow_row) => ({
+      shapeCoordinates: flow_row.shapeCoordinates.map((coordinate) => ({
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      })),
+      congestionLevel: congestion_level_by_artifact_name(flow_row.congestionLevel),
+    })),
+  };
+  if (Number.isFinite(width_pixels)) {
+    descriptor.widthPixels = width_pixels;
+  }
+  return descriptor;
+}

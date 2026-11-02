@@ -459,6 +459,179 @@ interface RasterTileProvider {
     );
 };
 
+/// Routing contract implemented by foreign code and registered on `MapSdk`
+/// through `register_routing_provider_from_foreign`.
+[Trait, WithForeign]
+interface RoutingProvider {
+    /// Calculates a route through the ordered waypoints with the given
+    /// options.
+    ///
+    /// # Parameters
+    /// - `waypoints` — the ordered stops, starting at the origin.
+    /// - `route_options` — transport mode, strategy, units and features to
+    ///   avoid.
+    ///
+    /// # Returns
+    /// A route with one leg per consecutive waypoint pair.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    Route calculate_route(
+        sequence<GeographicCoordinate> waypoints,
+        RouteOptions route_options
+    );
+};
+
+/// Distance-matrix contract implemented by foreign code and registered on
+/// `MapSdk` through `register_distance_matrix_provider_from_foreign`.
+[Trait, WithForeign]
+interface DistanceMatrixProvider {
+    /// Calculates durations and distances for every origin-destination pair.
+    ///
+    /// # Parameters
+    /// - `origins` — the origin coordinates.
+    /// - `destinations` — the destination coordinates.
+    /// - `transportation_mode` — the mode to route for.
+    ///
+    /// # Returns
+    /// One entry per pair, in row-major origin-major order.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    DistanceMatrix calculate_distance_matrix(
+        sequence<GeographicCoordinate> origins,
+        sequence<GeographicCoordinate> destinations,
+        TransportationMode transportation_mode
+    );
+};
+
+/// Place-search contract implemented by foreign code and registered on
+/// `MapSdk` through `register_search_place_provider_from_foreign`.
+[Trait, WithForeign]
+interface SearchPlaceProvider {
+    /// Returns fast completion candidates while the user types.
+    ///
+    /// # Parameters
+    /// - `query_text` — the partial query entered so far.
+    /// - `search_boundary` — an optional area to prefer or restrict results
+    ///   to.
+    ///
+    /// # Returns
+    /// Completion candidates in the implementation's relevance order.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    sequence<Place> search_autocomplete(
+        string query_text,
+        BoundingBox? search_boundary
+    );
+
+    /// Returns full search results for a settled query.
+    ///
+    /// # Parameters
+    /// - `query_text` — the complete query.
+    /// - `search_boundary` — an optional area to prefer or restrict results
+    ///   to.
+    ///
+    /// # Returns
+    /// Matching places in the implementation's relevance order.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    sequence<Place> search_places(
+        string query_text,
+        BoundingBox? search_boundary
+    );
+};
+
+/// Traffic-incident contract implemented by foreign code and registered on
+/// `MapSdk` through `register_traffic_incident_provider_from_foreign`.
+[Trait, WithForeign]
+interface TrafficIncidentProvider {
+    /// Fetches incidents intersecting a bounding box.
+    ///
+    /// # Parameters
+    /// - `bounding_box` — the area to report incidents for.
+    ///
+    /// # Returns
+    /// Every incident inside the area.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    sequence<TrafficIncident> fetch_traffic_incidents(BoundingBox bounding_box);
+};
+
+/// Traffic-flow contract implemented by foreign code and registered on
+/// `MapSdk` through `register_traffic_flow_provider_from_foreign`.
+[Trait, WithForeign]
+interface TrafficFlowProvider {
+    /// Fetches per-segment flow observations inside a bounding box.
+    ///
+    /// # Parameters
+    /// - `bounding_box` — the area to report flow for.
+    ///
+    /// # Returns
+    /// One observation per segment inside the area.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    sequence<TrafficFlowData> fetch_traffic_flow(BoundingBox bounding_box);
+};
+
+/// Elevation contract implemented by foreign code and registered on `MapSdk`
+/// through `register_elevation_provider_from_foreign`.
+[Trait, WithForeign]
+interface ElevationProvider {
+    /// Fetches elevation samples for ordered points.
+    ///
+    /// # Parameters
+    /// - `points` — the coordinates to sample, in order.
+    ///
+    /// # Returns
+    /// One sample per requested point, in the same order.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    sequence<ElevationPoint> fetch_elevation_points(
+        sequence<GeographicCoordinate> points
+    );
+};
+
 // ---------------------------------------------------------------------------
 // Provider records and enums: values passed to and returned by provider calls.
 // ---------------------------------------------------------------------------
@@ -763,6 +936,14 @@ dictionary TrafficFlowData {
     TrafficFlowCongestionLevel congestion_level;
 };
 
+/// One terrain elevation sample at a coordinate.
+dictionary ElevationPoint {
+    /// Position the sample belongs to.
+    GeographicCoordinate coordinate;
+    /// Elevation above mean sea level in meters.
+    double elevation_meters;
+};
+
 /// One fetched web-mercator XYZ raster tile.
 dictionary RasterTileData {
     /// Tile column coordinate at the given zoom level.
@@ -895,6 +1076,40 @@ interface MapSdk {
     /// `fetch_raster_tile` once this call returns.
     void register_raster_tile_provider_from_foreign(RasterTileProvider raster_tile_provider);
 
+    /// Registers a routing implementation. The provider starts serving
+    /// `calculate_route` once this call returns.
+    void register_routing_provider_from_foreign(RoutingProvider routing_provider);
+
+    /// Registers a distance-matrix implementation. The provider starts
+    /// serving `calculate_distance_matrix` once this call returns.
+    void register_distance_matrix_provider_from_foreign(
+        DistanceMatrixProvider distance_matrix_provider
+    );
+
+    /// Registers a place-search implementation. The provider starts serving
+    /// `search` and `suggest` once this call returns.
+    void register_search_place_provider_from_foreign(
+        SearchPlaceProvider search_place_provider
+    );
+
+    /// Registers a traffic-incident implementation. The provider starts
+    /// serving `fetch_traffic_incidents` once this call returns.
+    void register_traffic_incident_provider_from_foreign(
+        TrafficIncidentProvider traffic_incident_provider
+    );
+
+    /// Registers a traffic-flow implementation. The provider starts serving
+    /// `fetch_traffic_flow` once this call returns.
+    void register_traffic_flow_provider_from_foreign(
+        TrafficFlowProvider traffic_flow_provider
+    );
+
+    /// Registers an elevation implementation. The provider starts serving
+    /// `fetch_elevation_points` once this call returns.
+    void register_elevation_provider_from_foreign(
+        ElevationProvider elevation_provider
+    );
+
     /// Resolves a free-form address text into candidate places, best match
     /// first.
     ///
@@ -1020,6 +1235,26 @@ interface MapSdk {
     /// Runs asynchronously; the call does not block the calling thread.
     [Async, Throws=SdkError]
     sequence<TrafficFlowData> fetch_traffic_flow(BoundingBox bounding_box);
+
+    /// Fetches elevation samples for ordered points.
+    ///
+    /// # Parameters
+    /// - `points` — the coordinates to sample, in order.
+    ///
+    /// # Returns
+    /// One sample per requested point, in the same order.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` without an elevation provider,
+    /// `InvalidCoordinateInput` for an invalid point, or the provider's own
+    /// typed failure.
+    ///
+    /// # Async
+    /// Runs asynchronously; the call does not block the calling thread.
+    [Async, Throws=SdkError]
+    sequence<ElevationPoint> fetch_elevation_points(
+        sequence<GeographicCoordinate> points
+    );
 
     /// Fetches one web-mercator XYZ raster tile at the requested resolution.
     ///
