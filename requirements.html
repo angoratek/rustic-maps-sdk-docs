@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5453b58.js";
+            window.path_to_searchindex_js = "searchindex-3f07135d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -225,17 +225,35 @@ Manager binary target. Each slice measures 217 MiB, and 207 MiB after
 link discards unused code, so these archive sizes are not the size your
 application adds.</p>
 <h2 id="react-native"><a class="header" href="#react-native">React Native</a></h2>
-<p>The artifact is <code>rustic-maps-sdk-rn-v0.1.0.tgz</code>, the TurboModule source
-package (<code>@angoratek/rustic-maps-sdk</code>). It carries the generated TypeScript
-surface, the JSI C++ glue, and the podspec and CMake wiring.</p>
+<p>The artifact is <code>rustic-maps-sdk-rn-v0.1.0.tgz</code>, the TurboModule package
+(<code>@angoratek/rustic-maps-sdk</code>). It carries the generated TypeScript surface,
+the JSI C++ glue, the podspec and CMake wiring, and the compiled Rust
+libraries:</p>
 <ul>
-<li><strong>React Native and React versions.</strong> The generated glue targets React
-Native 0.88 or later and React 19 or later. For another version, regenerate
-the glue with a matching generator version.</li>
-<li><strong>Source package.</strong> The compiled native payload is optional. With it, the
-package installs ready to run. Without it, your project builds the Rust code
-on the first build.</li>
+<li><code>android/src/main/jniLibs/&lt;abi&gt;/librustic_maps.a</code> for arm64-v8a,
+armeabi-v7a, and x86_64, which the module’s CMake build links;</li>
+<li><code>AngoratekRusticMapsSdkFramework.xcframework</code> for arm64 device and arm64
+simulator, which the pod vendors.</li>
 </ul>
+<p>The tarball downloads 249 MiB and unpacks to 786 MiB. The static archives
+account for almost all of it; your final link discards the code your app does
+not use.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Requirement</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>React Native</td><td>0.88 or later</td></tr>
+<tr><td>React</td><td>19 or later</td></tr>
+<tr><td>Android build</td><td>Android Studio with the Android SDK and NDK; set <code>reactNativeArchitectures</code> to arm64-v8a, armeabi-v7a and x86_64, then Gradle compiles the TurboModule C++ and links the packaged archives</td></tr>
+<tr><td>iOS build</td><td>Xcode and CocoaPods; run <code>pod install</code> after installing the package</td></tr>
+<tr><td>Rust toolchain</td><td>not needed; the package carries the compiled libraries</td></tr>
+</tbody>
+</table>
+</div>
+<p>For a different React Native or React version, regenerate the glue with a
+matching generator version.</p>
 <h2 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h2>
 <p>The wasm artifacts are:</p>
 <ul>

@@ -2361,29 +2361,37 @@ interface MapView {
     /// Configuring a base needs no attached surface: like the overlay list, the
     /// source outlives attach and detach cycles.
     ///
+    /// A call that lands while a frame draws is not refused: it is applied when
+    /// that frame finishes, and the following frames draw the new base. A
+    /// request made during that same frame replaces an earlier one, so the last
+    /// request wins.
+    ///
     /// # Parameters
     /// - `source` — the tileset, attribution and style.
     ///
     /// # Errors
-    /// Throws when the source is invalid or a frame draw is in flight; install
-    /// after the frame draws.
+    /// Throws when the source is invalid; the previously installed base stays
+    /// in force.
     [Throws=SdkError]
     void set_vector_tile_source(UrlTemplateVectorTileSource source);
 
     /// Removes the vector base map; following frames draw raster tiles and
     /// overlays alone until `set_vector_tile_source` installs a new base. Like
-    /// installing, this throws while a frame draw is in flight.
+    /// installing, a call that lands while a frame draws is applied when that
+    /// frame finishes, and a later request replaces an earlier one.
     ///
     /// # Errors
-    /// Throws when a frame draw is in flight.
+    /// Never throws; clearing a view with no vector base succeeds.
     [Throws=SdkError]
     void clear_vector_tile_source();
 
     /// Reads the vector base source's status: the configured source and style
     /// plus the last resolved frame's drawn and failed tile counts. A pure
     /// query that never fetches or draws; it answers while a frame is in flight
-    /// with the previous frame's counts. It never throws: with no source
-    /// installed it answers a not-configured status.
+    /// with the previous frame's counts. While a base-map switch waits for the
+    /// drawing frame to finish, it keeps reporting the source that frame is
+    /// drawing, never a source that has only been scheduled. It never throws:
+    /// with no source installed it answers a not-configured status.
     VectorTileSourceStatus vector_tile_source_status();
 };
 
