@@ -410,8 +410,9 @@ export class MapView {
     /**
      * Removes the vector base map (the UDL
      * `MapView.clear_vector_tile_source` contract member): following frames
-     * draw raster tiles and overlays alone. Refused while a frame resolves,
-     * like installing.
+     * draw raster tiles and overlays alone. A clear that lands while a frame
+     * resolves is deferred to that frame's end, like installing, and it
+     * cancels an install that was waiting.
      */
     clearVectorTileSource() {
         try {
@@ -715,35 +716,6 @@ export class MapView {
         }
     }
     /**
-     * Sets (or clears, with a blank template) the live raster fallback: a
-     * `{z}/{x}/{y}` URL template from a provider registry descriptor that
-     * the frame fetches when no recorded fixture exists at an address, so a
-     * camera over unrecorded ground still draws imagery. The template must
-     * carry all three placeholders; the maximum zoom level caps the fetch
-     * zoom to what the tile service actually serves.
-     *
-     * The fallback runs only after the recorded-fixture fetch fails, so a
-     * page keeps its deterministic recorded-tile imagery, and a registered
-     * live provider (a runtime credential) is consulted before the template.
-     * @param {string} url_template
-     * @param {number} maximum_zoom_level
-     */
-    setRasterTileSource(url_template, maximum_zoom_level) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            const ptr0 = passStringToWasm0(url_template, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-            const len0 = WASM_VECTOR_LEN;
-            wasm.mapview_setRasterTileSource(retptr, this.__wbg_ptr, ptr0, len0, maximum_zoom_level);
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            if (r1) {
-                throw takeObject(r0);
-            }
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
-    }
-    /**
      * Installs a styled vector base map (the UDL
      * `MapView.set_vector_tile_source` contract member).
      *
@@ -761,7 +733,9 @@ export class MapView {
      * While a source is installed the canvas hides the raster base and paints
      * the style's own background, exactly like the native surface; the
      * source's overlays and place names draw beneath every overlay the page
-     * supplies. Installing while a frame resolves is refused.
+     * supplies. An install that lands while a frame resolves is deferred to
+     * that frame's end and the last request wins, so a style switch never has
+     * to be retried.
      * @param {any} source
      */
     setVectorTileSource(source) {
@@ -1399,12 +1373,12 @@ export const TrafficFlowCongestionLevel = Object.freeze({
 });
 
 /**
- * Calculates a travel-time matrix through the active provider's
- * distance-matrix surface — the contract's `MapSdk::calculate_distance_matrix`
- * on the wasm seam. Coordinates arrive as flat
- * `[latitude, longitude, …]` arrays; the mode is the contract enum's name
- * (or the common lowercase spelling). Answers `{originIndex,
- * destinationIndex, distanceMeters, durationSeconds}` rows.
+ * Calculates a travel-time matrix through the installed distance-matrix
+ * provider — the contract's `MapSdk::calculateDistanceMatrix` on the wasm
+ * seam. Coordinates arrive as flat `[latitude, longitude, …]` arrays; the
+ * mode is the contract enum's name (or the common lowercase spelling).
+ * Answers `{originIndex, destinationIndex, distanceMeters,
+ * durationSeconds}` rows.
  * @param {Float64Array} origin_coordinates
  * @param {Float64Array} destination_coordinates
  * @param {string} transportation_mode
@@ -1422,8 +1396,8 @@ export function calculateDistanceMatrix(origin_coordinates, destination_coordina
 }
 
 /**
- * Plans a two-waypoint route through the active live provider, answering
- * the same plain JavaScript shape
+ * Plans a two-waypoint route through the installed routing provider,
+ * answering the same plain JavaScript shape
  * [`crate::exports::offline_route_from_archive_bytes`] does: `distanceMeters`,
  * `durationSeconds`, `boundingBox` and `legs` of `steps` carrying the stable
  * snake-case `maneuverType` label and the provider's end-anchored instruction
@@ -1466,19 +1440,52 @@ export function calculateRouteWithOptions(origin_latitude, origin_longitude, des
 }
 
 /**
- * Addition-only alias for the vendor-named export: clears the active
- * registration.
+ * Empties every provider slot and forgets the selections — the browser
+ * counterpart of the settings surface's Clear act. The contract carries no
+ * clearing member, and a page that clears keeps nothing afterwards.
  */
-export function clearMapquestProviders() {
-    wasm.clearMapquestProviders();
+export function clearProviderRegistrations() {
+    wasm.clearProviderRegistrations();
 }
 
 /**
- * Clears the active registration (the settings surface's Clear act; the
- * running page keeps nothing afterwards).
+ * Chooses the provider that serves one capability, leaving every other
+ * capability untouched — the contract's `MapSdk::configureProvider`.
+ *
+ * `contract` is the capability's name (`Geocoding`, `Routing`,
+ * `DistanceMatrix`, `PlaceSearch`, `TrafficIncidents`, `TrafficFlow`,
+ * `Elevation`, `RasterTiles`, `VectorTiles` or `OfflineRouting`; the
+ * registry's `…Provider` spelling is accepted too). `providerKey` is a
+ * provider this build carries, and `credential` its key — an empty string is
+ * accepted only for a provider that needs none.
+ *
+ * Fails with `ProviderNotConfigured` when the key is unknown to this build,
+ * `ProviderRequestRejected` when the provider needs a credential and none
+ * was supplied, and `UnsupportedCapability` when the key serves no such
+ * capability. A refused call leaves the previously serving provider in
+ * place.
+ * @param {string} contract
+ * @param {string} provider_key
+ * @param {string} credential
  */
-export function clearProvider() {
-    wasm.clearProvider();
+export function configureProvider(contract, provider_key, credential) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(contract, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(provider_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(credential, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len2 = WASM_VECTOR_LEN;
+        wasm.configureProvider(retptr, ptr0, len0, ptr1, len1, ptr2, len2);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        if (r1) {
+            throw takeObject(r0);
+        }
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
 }
 
 /**
@@ -1519,13 +1526,32 @@ export function devicePixelRatioThreshold() {
 }
 
 /**
- * Fetches one raster tile through the active live provider, answering the
- * PNG bytes as a `Uint8Array`.
+ * Fetches elevation samples through the installed elevation provider — the
+ * contract's `MapSdk::fetchElevationPoints` on the wasm seam. Coordinates
+ * arrive as a flat `[latitude, longitude, …]` array; the answer rows carry
+ * `latitude`, `longitude` and `elevationMeters`.
+ *
+ * The provider set this build carries serves no elevation, so the call
+ * answers `ProviderNotConfigured` until a page configures one; the refusal
+ * names the contract, exactly as the native bindings' does.
+ * @param {Float64Array} point_coordinates
+ * @returns {Promise<Array<any>>}
+ */
+export function fetchElevationPoints(point_coordinates) {
+    const ptr0 = passArrayF64ToWasm0(point_coordinates, wasm.__wbindgen_export);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.fetchElevationPoints(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
+ * Fetches one raster tile through the installed raster-tile provider,
+ * answering the PNG bytes as a `Uint8Array`.
  *
  * The request is the standard-resolution PNG form of the provider's
- * documented Tiles API path. Failures throw an error carrying the verbatim
+ * documented tile path. Failures throw an error carrying the verbatim
  * detail and a stable code: no registration, a zoom or tile address outside
- * the Tiles API's documented bounds, or the provider's own refusal.
+ * the provider's documented bounds, or the provider's own refusal.
  * @param {number} zoom_level
  * @param {number} tile_x
  * @param {number} tile_y
@@ -1538,7 +1564,7 @@ export function fetchRasterTile(zoom_level, tile_x, tile_y) {
 
 /**
  * Fetches per-segment traffic flow inside the bounding box — the contract's
- * `MapSdk::fetch_traffic_flow` on the wasm seam. The row shape is the
+ * `MapSdk::fetchTrafficFlow` on the wasm seam. The row shape is the
  * contract's `TrafficFlowData` with lower-camel field names, speed values or
  * null, and the congestion level's enum name as text.
  * @param {number} south_west_latitude
@@ -1554,7 +1580,7 @@ export function fetchTrafficFlow(south_west_latitude, south_west_longitude, nort
 
 /**
  * Fetches traffic disruptions intersecting the bounding box — the contract's
- * `MapSdk::fetch_traffic_incidents` on the wasm seam. The row shape is the
+ * `MapSdk::fetchTrafficIncidents` on the wasm seam. The row shape is the
  * contract's `TrafficIncident` with lower-camel field names and enum names
  * as text (`incidentType`, `severity`).
  * @param {number} south_west_latitude
@@ -1584,9 +1610,9 @@ export function flushRecentDiagnosticEvents(minimum_severity, maximum_count) {
 }
 
 /**
- * Forward-geocodes through the active live provider, answering the same row
- * shape the native reference applications consume. Fails with a message when no provider is
- * registered or the provider refuses the query.
+ * Forward-geocodes through the installed geocoding provider, answering the
+ * same row shape the native reference applications consume. Fails with a
+ * message when no provider is registered or the provider refuses the query.
  * @param {string} query_text
  * @returns {Promise<Array<any>>}
  */
@@ -1705,23 +1731,49 @@ export function panCameraByScreenPixels(camera, delta_x_pixels, delta_y_pixels, 
 }
 
 /**
- * Registers a provider for live browser calls. The caller names the shared
- * registry's provider key; a blank credential is refused. The credential
- * lives in module memory only and is never logged.
- * @param {string} provider_key
- * @param {string} credential
- * @param {string | null} [base_url]
+ * Reports which provider serves each capability, in the contract's stable
+ * order, as `{contract, providerKey, displayName, registered}` rows. Every
+ * capability appears, including the ones with no provider installed; those
+ * carry empty texts and `registered` false.
+ * @returns {Array<any>}
  */
-export function registerProvider(provider_key, credential, base_url) {
+export function providerRegistrations() {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(provider_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(credential, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len1 = WASM_VECTOR_LEN;
-        var ptr2 = isLikeNone(base_url) ? 0 : passStringToWasm0(base_url, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        var len2 = WASM_VECTOR_LEN;
-        wasm.registerProvider(retptr, ptr0, len0, ptr1, len1, ptr2, len2);
+        wasm.providerRegistrations(retptr);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Registers a `{z}/{x}/{y}` raster tileset as the serving raster-tile
+ * provider — the contract's `MapSdk::registerUrlTemplateRasterTileSource`.
+ *
+ * The declaration arrives as one plain object with the contract's
+ * `UrlTemplateRasterTileSource` fields, lower-camel-cased: `urlTemplate`,
+ * `sourceName`, `minimumZoomLevel`, `maximumZoomLevel`, `imageFormat`
+ * (`Png` or `Jpeg`), `tileResolution` (`Standard` or `Retina`) and
+ * `userAgent`. Zoom levels and texts fall back to the documented defaults;
+ * the format defaults to `Png` and the resolution to `Standard`.
+ *
+ * A malformed template, a blank source name or an inverted zoom range throws
+ * `InvalidCoordinateInput` with a precise detail, and the previous source
+ * keeps serving. The canvas' live raster fallback fetches through the
+ * registered source at the zoom ceiling it declares.
+ * @param {any} source
+ */
+export function registerUrlTemplateRasterTileSource(source) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.registerUrlTemplateRasterTileSource(retptr, addHeapObject(source));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -1730,6 +1782,20 @@ export function registerProvider(provider_key, credential, base_url) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
+}
+
+/**
+ * Resolves a coordinate into candidate places describing that position
+ * through the installed geocoding provider — the contract's
+ * `MapSdk::reverseGeocode` in the same row shape [`crate::live_providers::forward_geocode_live`]
+ * answers.
+ * @param {number} latitude_degrees
+ * @param {number} longitude_degrees
+ * @returns {Promise<Array<any>>}
+ */
+export function reverseGeocode(latitude_degrees, longitude_degrees) {
+    const ret = wasm.reverseGeocode(latitude_degrees, longitude_degrees);
+    return takeObject(ret);
 }
 
 /**
@@ -1763,9 +1829,35 @@ export function rotateCameraByDegreesAroundScreenPoint(camera, delta_bearing_deg
 }
 
 /**
- * Returns full search results for a settled query through the active
- * provider's search-place surface — the same rows the native reference apps
- * consume from `MapSdk::search`.
+ * Reports which transport modes and which route strategy the serving routing
+ * provider can honour — the contract's `MapSdk::routeCapabilities`.
+ *
+ * A surface reads this answer so it can disable a choice the provider cannot
+ * serve with a reason, instead of sending the request and receiving a route
+ * from a path the reader did not ask for. Fails with
+ * `ProviderNotConfigured` while no routing provider is installed.
+ * @returns {object}
+ */
+export function routeCapabilities() {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.routeCapabilities(retptr);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Returns full search results for a settled query through the installed
+ * search-place provider — the same rows the native reference apps consume
+ * from `MapSdk::search`.
  * @param {string} query_text
  * @returns {Promise<Array<any>>}
  */
@@ -1794,20 +1886,47 @@ export function searchPlacesInBoundary(query_text, south_west_latitude, south_we
 }
 
 /**
- * The contract's single-credential registration spelling (`MapSdk::
- * set_provider_credential`) on the wasm seam: registers the MapQuest
- * provider set through the generic dispatch table.
- * @param {string} api_key
- * @param {string | null} [base_url]
+ * Points a provider key's requests at a base URL instead of its public
+ * endpoint — a browser-only seam for a page that serves the provider's
+ * routes itself, such as the test harness. Register the provider after
+ * calling this; the override applies to every later registration of the key.
+ * @param {string} provider_key
+ * @param {string} base_url
  */
-export function setProviderCredential(api_key, base_url) {
+export function setProviderBaseUrl(provider_key, base_url) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(api_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const ptr0 = passStringToWasm0(provider_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
         const len0 = WASM_VECTOR_LEN;
-        var ptr1 = isLikeNone(base_url) ? 0 : passStringToWasm0(base_url, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        var len1 = WASM_VECTOR_LEN;
-        wasm.setProviderCredential(retptr, ptr0, len0, ptr1, len1);
+        const ptr1 = passStringToWasm0(base_url, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.setProviderBaseUrl(retptr, ptr0, len0, ptr1, len1);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        if (r1) {
+            throw takeObject(r0);
+        }
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Registers a provider for every capability it serves — the all-in-one
+ * convenience, the contract's `MapSdk::setProviderCredential` with the
+ * provider key fixed to this build's full-service provider.
+ *
+ * A blank credential is refused; the credential lives in module memory only
+ * and is never logged. Configure one capability at a time with
+ * [`configure_provider`] to mix providers across capabilities.
+ * @param {string} credential
+ */
+export function setProviderCredential(credential) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(credential, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.setProviderCredential(retptr, ptr0, len0);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -1834,9 +1953,9 @@ export function subscribeToDiagnosticEvents(minimum_severity) {
 
 /**
  * Returns fast completion candidates while the visitor types, through the
- * active provider's search-place surface — the same rows the native
- * reference apps consume from `MapSdk::suggest`. Fails with a verbatim
- * message when no provider is registered or the provider refuses the query.
+ * installed search-place provider — the same rows the native reference apps
+ * consume from `MapSdk::suggest`. Fails with a verbatim message when no
+ * provider is registered or the provider refuses the query.
  * @param {string} query_text
  * @returns {Promise<Array<any>>}
  */
@@ -1904,6 +2023,30 @@ export function tilesCovering(south_west_latitude, south_west_longitude, north_e
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         wasm.tilesCovering(retptr, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude, zoom_level);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Reads the serving traffic-flow cache's counters: `{hitCount, missCount,
+ * entryCount, evictionCount, segmentCount, gridZoomLevel,
+ * maximumEntryCount, timeToLiveSeconds}`, or null while no traffic provider
+ * is registered. A page's developer console shows these; nothing mutates
+ * through this call.
+ * @returns {object | undefined}
+ */
+export function trafficFlowCacheStatistics() {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.trafficFlowCacheStatistics(retptr);
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -3060,7 +3203,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_8411(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_8510(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -4089,28 +4232,28 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2623, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8390);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2664, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8489);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 332, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1509);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 369, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1585);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 332, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1509_93);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 369, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1585_98);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 332, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1509_94);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 369, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1585_99);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2418, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6308);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2446, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6293);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0) {
@@ -4184,18 +4327,18 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_6308(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_6308(arg0, arg1);
+function __wasm_bindgen_func_elem_6293(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6293(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_8411(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_8411(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_8510(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_8510(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_8390(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_8489(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_8390(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_8489(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4206,10 +4349,10 @@ function __wasm_bindgen_func_elem_8390(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1509(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1585(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1509(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1585(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4220,10 +4363,10 @@ function __wasm_bindgen_func_elem_1509(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1509_93(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1585_98(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1509_93(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1585_98(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4234,10 +4377,10 @@ function __wasm_bindgen_func_elem_1509_93(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1509_94(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1585_99(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1509_94(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1585_99(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {

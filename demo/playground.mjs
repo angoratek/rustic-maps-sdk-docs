@@ -152,7 +152,7 @@
       }
       const TILE_COUNT_AT_ZOOM_ZERO = 1;
       const DEGREES_AT_ZOOM_ZERO = 360;
-      // Canvas 2D ignores CSS var() style strings (docs/browser-loop.md), so
+      // Canvas 2D ignores CSS var() style strings (docs/reference/BrowserLoop.md), so
       // the interactive 2D paints are literal constants mirroring the UX
       // doc's color tokens by name (docs/ReferenceAppUX.md §2.2): one entry
       // per theme, re-painted by the render loop after a theme switch.
@@ -942,18 +942,17 @@
       /** Applies one credential through the wasm registration seam. */
       async function apply_provider_credential(provider_control, credential_value,
         { persist = false } = {}) {
-        const base_url = use_provider_fixtures
-          ? `${window.location.origin}${providers_registry.fixture_base_path}`
-            + `/${provider_control.provider_descriptor.provider_key}`
-          : undefined;
-        // `wasm_registration` is the registry's wasm dispatch key; the
-        // provider key stays the fixture-route address.
-        await window.mapTest.registerProvider(
-          provider_control.provider_descriptor.wasm_registration
-            ?? provider_control.provider_descriptor.provider_key,
-          credential_value,
-          base_url,
-        );
+        if (use_provider_fixtures) {
+          // The harness serves the provider's recorded routes same-origin; the
+          // base URL override is keyed by the registry's wasm dispatch key.
+          window.mapTest.setProviderBaseUrl(
+            provider_control.provider_descriptor.wasm_registration
+              ?? provider_control.provider_descriptor.provider_key,
+            `${window.location.origin}${providers_registry.fixture_base_path}`
+              + `/${provider_control.provider_descriptor.provider_key}`,
+          );
+        }
+        window.mapTest.setProviderCredential(credential_value);
         applied_provider_keys.add(provider_control.provider_descriptor.provider_key);
         if (persist) {
           write_local_storage(
@@ -1016,7 +1015,7 @@
             }
           });
           clear_element.addEventListener('click', () => {
-            window.mapTest.clearProvider();
+            window.mapTest.clearProviderRegistrations();
             applied_provider_keys.clear();
             input_element.value = '';
             input_element.type = 'password';
@@ -2647,7 +2646,7 @@
       render_base_map_toggle();
       render_vector_style_picker();
 
-      // --- The on-map layer control (docs/MapControlsAndTrafficLayer.md) ----
+      // --- The on-map layer control (docs/design/MapControlsAndTrafficLayer.md) ----
       // One round control docked above the attribution notice. Its panel
       // carries the registry's base sources and every committed vector style,
       // the traffic switch, the demo scene switches and the device-location
@@ -4713,7 +4712,7 @@
       attach_zoom_control(zoom_out_control, -1);
       attach_zoom_control(zoom_in_control, 1);
 
-      // My-location (§4.2/§5.3, docs/MapControlsAndTrafficLayer.md): during a
+      // My-location (§4.2/§5.3, docs/design/MapControlsAndTrafficLayer.md): during a
       // simulated trip the control re-centers on the latest guided fix and
       // re-engages a follow broken by a gesture. Outside a trip it drives the
       // device location source: with the source off it requests permission,
@@ -5788,11 +5787,16 @@
               && provider_descriptor.raster_url_template.trim() !== '');
           if (live_raster_descriptor !== undefined && live_tiles_enabled) {
             try {
-              gpu_map_canvas.setRasterTileSource(
-                live_raster_descriptor.raster_url_template,
-                live_raster_descriptor.maximum_zoom_level
+              window.mapTest.registerUrlTemplateRasterTileSource({
+                urlTemplate: live_raster_descriptor.raster_url_template,
+                sourceName: live_raster_descriptor.display_name,
+                minimumZoomLevel: 0,
+                maximumZoomLevel: live_raster_descriptor.maximum_zoom_level
                   ?? LIVE_RASTER_FALLBACK_ZOOM_LEVEL,
-              );
+                imageFormat: 'png',
+                tileResolution: 'standard',
+                userAgent: navigator.userAgent,
+              });
             } catch (live_source_failure) {
               // A malformed registry template is a page bug, not a reason to
               // lose the map: report it in the diagnostics readout.

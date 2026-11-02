@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5453b58.js";
+            window.path_to_searchindex_js = "searchindex-3f07135d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -433,17 +433,28 @@ zoom:</p>
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="before-you-start-2"><a class="header" href="#before-you-start-2">Before you start</a></h3>
 <ul>
-<li>An initialized React Native (bare workflow) application on Android
-arm64-v8a or iOS.</li>
-<li>The <a href="downloads.html">release tarball</a>.</li>
+<li>Node.js and npm.</li>
+<li>An initialized React Native (bare workflow) application, using React
+Native 0.88 or later and React 19 or later.</li>
+<li>Android: Android Studio with the Android SDK and NDK. Gradle compiles the
+module’s C++ and links the packaged Rust archives.</li>
+<li>iOS: Xcode and CocoaPods, to install the package’s pod.</li>
+<li>The <a href="downloads.html">release tarball</a>. It carries the TurboModule glue and
+the compiled Rust libraries for Android (arm64-v8a, armeabi-v7a, x86_64)
+and iOS (arm64 device and simulator). No Rust toolchain is needed.</li>
 <li>A provider API key for the provider you register.</li>
 </ul>
 <h3 id="install-the-artifact-1"><a class="header" href="#install-the-artifact-1">Install the artifact</a></h3>
 <p>Install the release tarball you downloaded; no registry is involved:</p>
 <pre><code class="language-bash">npm install ./rustic-maps-sdk-rn-v0.1.0.tgz
 </code></pre>
-<p>The package carries the TurboModule glue. Link it with your React Native
-version’s normal autolinking, and run <code>pod install</code> on iOS.</p>
+<p>The package carries the TurboModule glue and the compiled Rust libraries, so
+your build does not compile Rust. Link it with your React Native version’s
+normal autolinking. On iOS, run <code>pod install</code>. On Android, set
+<code>reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86_64</code> in
+<code>android/gradle.properties</code> (the React Native template default adds <code>x86</code>,
+which the package does not ship); the next Gradle build compiles the module’s
+C++ and links the packaged archives.</p>
 <h3 id="build-the-sdk-and-register-the-provider-2"><a class="header" href="#build-the-sdk-and-register-the-provider-2">Build the SDK and register the provider</a></h3>
 <p>The package owns one native SDK per process. Create it with
 <code>MapsSdk.create()</code> and register the provider’s credential:</p>
@@ -596,11 +607,11 @@ from a same-origin path you host. The page keeps pointer handling; the
 view owns the surface and the frame.</p>
 <pre><code class="language-html">&lt;canvas id="map-canvas"&gt;&lt;/canvas&gt;
 </code></pre>
-<pre><code class="language-js">import init, { MapsSdk, MapView, registerProvider } from './web/rustic_maps_web_bindings.js';
+<pre><code class="language-js">import init, { MapsSdk, MapView, setProviderCredential } from './web/rustic_maps_web_bindings.js';
 
 await init();
 const mapSdk = await MapsSdk.create();
-registerProvider('mapquest', providerCredential);
+setProviderCredential(providerCredential);
 
 const canvas = /** @type {HTMLCanvasElement} */ (
   document.querySelector('#map-canvas')
@@ -609,8 +620,11 @@ const mapView = new MapView(canvas, mapSdk);
 const adapterDescription = await mapView.initialize();
 console.log(`Maps SDK ready (version ${mapSdk.compiledVersion}) on ${adapterDescription}`);
 </code></pre>
-<p>The demo skips the <code>registerProvider</code> call until a visitor supplies a key;
-recorded tiles and recorded places fill the map meanwhile.</p>
+<p>The demo skips the registration call until a visitor supplies a key;
+recorded tiles and recorded places fill the map meanwhile. To serve one
+capability from one provider and another from a second, register them one at
+a time with <code>configureProvider</code>; <a href="provider-capabilities-wasm.html">Provider capabilities on
+WebAssembly</a> shows the readback.</p>
 <p>The status probe returns the same version string the native surfaces do. The
 view’s tile resolution follows the device pixel ratio; the optional third
 constructor argument pins it (<code>new MapView(canvas, mapSdk, TileResolution.Retina)</code>). The canvas fetches raster tiles from the
