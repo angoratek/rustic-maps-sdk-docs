@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ProviderRegistry"]};
+window.SIDEBAR_ITEMS = {"enum":["ProviderContract"],"struct":["ProviderRegistry"]};
