@@ -57,6 +57,8 @@
         --radius-surface: 12px;
         --radius-control: 8px;
         --radius-inline: 6px;
+        /* A pill end: any radius past half the control's height. */
+        --radius-pill: 999px;
         --elevation-surface: 0 1px 4px rgba(0, 0, 0, 0.25);
         --elevation-panel: 0 18px 48px rgba(0, 0, 0, 0.42),
           0 2px 10px rgba(0, 0, 0, 0.28);
@@ -589,6 +591,130 @@
         color: var(--text-secondary-color);
       }
       #attribution-panel .attribution-terms-note:last-child { margin-bottom: 0; }
+
+      /* --- The on-map layer control (docs/MapControlsAndTrafficLayer.md) ---
+         The round layers button docks above the attribution notice on the
+         map's end edge; its panel opens upward, clamped to 70% of the
+         viewport height on a phone and scrolling inside. */
+      #map-layers-control-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--stack-tight);
+      }
+      #map-layers-control {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 0;
+        font-size: 18px;
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: 50%;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        cursor: pointer;
+      }
+      #map-layers-control[aria-expanded='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
+      /* The non-default-layer dot: a style other than the default, traffic on
+         or a demo scene enabled. */
+      .map-layers-active-dot {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        pointer-events: none;
+      }
+      .map-layers-active-dot[hidden] { display: none; }
+      #map-layers-panel {
+        width: min(320px, calc(100vw - 2 * var(--gutter-inline)));
+        max-height: min(70vh, calc(100vh - 2 * var(--gutter-block)));
+        overflow-y: auto;
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) var(--stack-group);
+        box-shadow: var(--elevation-surface);
+        color: var(--text-primary-color);
+        font-size: var(--type-caption-size);
+      }
+      #map-layers-panel[hidden] { display: none; }
+      #map-layers-panel .map-layers-panel-title {
+        margin: 0 0 var(--stack-tight);
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      #map-layers-panel .map-layers-section + .map-layers-section {
+        margin-top: var(--stack-tight);
+      }
+      #map-layers-panel .map-layers-section h3 {
+        margin: 0 0 4px;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-secondary-color);
+      }
+      #map-layers-panel .map-layers-base-row,
+      #map-layers-panel .map-layer-switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+        width: 100%;
+        min-height: 32px;
+        margin: 0 0 4px;
+        padding: 4px 8px;
+        text-align: start;
+      }
+      #map-layers-panel .map-layers-base-row[aria-pressed='true'],
+      #map-layers-panel .map-layer-switch[aria-checked='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
+      #map-layers-panel .map-layers-serving-mark {
+        color: var(--accent-text-color);
+        font-weight: var(--type-body-strong-weight);
+      }
+      #map-layers-panel .map-layer-row-reason {
+        color: var(--text-secondary-color);
+      }
+      #map-layers-panel .map-layers-device-location-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+      }
+      #map-layers-panel #device-location-status { margin: 0; }
+      #map-layers-panel #device-location-stop { min-height: 28px; }
+
+      /* The route fields' "My location" chips: a small pill under each
+         field's leading edge. */
+      .trip-my-location-chip {
+        display: block;
+        height: 22px;
+        min-height: 22px;
+        margin: 0 0 2px 36px;
+        padding: 0 10px;
+        font-size: var(--type-caption-size);
+        line-height: 1;
+        color: var(--text-secondary-color);
+        border-radius: var(--radius-pill);
+      }
+      .trip-my-location-chip[data-filled='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
 
       /* Settings (M13/M15): the runtime credential surface moved off the map
          panel behind one gear control. A native modal dialog gives the focus
@@ -1312,7 +1438,7 @@
         /* Two search fields instead of one: the field height and the card's
            spacing tighten so Plan route and Start simulated navigation stay inside
            the sheet at 390x844 without scrolling. */
-        .trip-search input { height: 40px; }
+        .trip-search input { height: 38px; }
         .trip-suggestions { margin-top: 0; }
         /* A representative error fits inside the space the sheet leaves. */
         #error-report { max-height: 20vh; }

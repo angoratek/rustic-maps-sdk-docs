@@ -89,6 +89,11 @@
           <button id="trip-origin-search-control" type="button"
                   aria-label="Search origin">Search</button>
         </div>
+        <!-- The field's "My location" chip: starts the device source when it
+             is off and fills this field alone from the latest fix. -->
+        <button id="origin-my-location" type="button"
+                class="trip-my-location-chip"
+                aria-label="Use my location as the origin">My location</button>
         <div class="trip-search">
           <svg class="trip-search-icon" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -105,6 +110,9 @@
           <button id="trip-destination-search-control" type="button"
                   aria-label="Search destination">Search</button>
         </div>
+        <button id="destination-my-location" type="button"
+                class="trip-my-location-chip"
+                aria-label="Use my location as the destination">My location</button>
         <div id="trip-suggestions" class="trip-suggestions" role="group"
              aria-label="Demo places"></div>
         <ul id="trip-search-results" hidden></ul>
@@ -306,16 +314,19 @@
           <section class="settings-section" id="location-controls"
                    aria-describedby="device-location-status">
             <h3 class="settings-section-title">Location</h3>
-            <p class="settings-note">Show this device's position on the map.
-              The browser asks for permission the first time.</p>
-            <button id="device-location-control" type="button" class="quiet"
-                    aria-pressed="false">Show my location</button>
+            <p class="settings-note">Device location and the map's layers live
+              on the map itself, in the layers control above the attribution
+              notice.</p>
+            <!-- One choice, one control: the device-location status and Stop
+                 action live in the map layers panel, so this row is a pointer
+                 there rather than a second copy of the same control. -->
+            <button id="device-location-control" type="button" class="quiet">Open map layers for device location</button>
             <!-- Device-driven navigation (M33): the same location source then
                  drives the planned route's guidance instead of the recorded
                  trace, so the banner, ETA and camera follow real fixes. -->
             <button id="device-navigation-control" type="button" class="quiet"
                     aria-pressed="false">Navigate from my location</button>
-            <p id="device-location-status" class="reason-strip" role="status" hidden></p>
+            <p id="device-location-detail" class="reason-strip" role="status" hidden></p>
           </section>
           <section class="settings-section" id="appearance-controls">
             <h3 class="settings-section-title" data-ui-label="theme.heading">Theme</h3>
@@ -366,12 +377,47 @@
          the map's end edge, clear of the scale bar and the search dock; its
          panel opens upward, right-aligned, at a compact width. -->
     <div id="bottom-end-dock">
+      <!-- The on-map layer control: a round button docked directly above the
+           attribution notice on the map's end edge. Its panel carries the
+           base map, the traffic layer, the demo overlay scenes and the device
+           location status (docs/MapControlsAndTrafficLayer.md). -->
+      <div id="map-layers-control-container">
+        <section id="map-layers-panel" hidden aria-label="Map layers">
+          <h2 class="map-layers-panel-title">Map layers</h2>
+          <section class="map-layers-section" aria-labelledby="map-layers-base-heading">
+            <h3 id="map-layers-base-heading">Base map</h3>
+            <div id="map-layer-base-rows" role="group" aria-label="Base map"></div>
+          </section>
+          <section class="map-layers-section" aria-labelledby="map-layers-traffic-heading">
+            <h3 id="map-layers-traffic-heading">Traffic</h3>
+            <div id="map-layer-traffic-row"></div>
+          </section>
+          <section class="map-layers-section" aria-labelledby="map-layers-overlays-heading">
+            <h3 id="map-layers-overlays-heading">Overlays</h3>
+            <div id="map-layer-scene-rows"></div>
+          </section>
+          <section class="map-layers-section" aria-labelledby="map-layers-location-heading">
+            <h3 id="map-layers-location-heading">Device location</h3>
+            <div class="map-layers-device-location-row">
+              <p id="device-location-status" role="status">Off</p>
+              <button id="device-location-stop" type="button" class="quiet" hidden>Stop</button>
+            </div>
+          </section>
+          <p id="map-layers-status" class="reason-strip" role="status" hidden></p>
+        </section>
+        <button id="map-layers-control" type="button"
+                aria-expanded="false" aria-controls="map-layers-panel"
+                aria-label="Map layers" aria-haspopup="dialog">
+          <span aria-hidden="true">&#9638;</span>
+          <span class="map-layers-active-dot" hidden></span>
+        </button>
+      </div>
       <div id="attribution-control">
         <section id="attribution-panel" hidden aria-label="Map attribution and terms">
           <h2 class="attribution-panel-title">Map attribution and terms</h2>
           <!-- The id stays on the element carrying the compliance text: the
                Playwright suites read it (docs/ReferenceAppUX.md §10.1). -->
-          <p id="attribution-notice"></p>
+          <p id="attribution-notice" aria-live="polite" aria-atomic="true"></p>
         </section>
         <button id="attribution-info-control" type="button"
                 aria-label="Map attribution and terms" aria-expanded="false"

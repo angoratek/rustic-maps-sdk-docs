@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8dc0ea5d.js";
+            window.path_to_searchindex_js = "searchindex-f9d50291.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -344,9 +344,11 @@ the shared descriptor, and the dispatch arms; the provider-name guard
 enforces that boundary.</li>
 </ul>
 <h2 id="route-2-a-host-implementation"><a class="header" href="#route-2-a-host-implementation">Route 2: a host implementation</a></h2>
-<p>Android and iOS can implement two contracts directly in application code:
-<code>GeocodingProvider</code> and <code>RasterTileProvider</code>. Register the implementation on
-the <code>MapSdk</code> object that the map view and every provider call use.</p>
+<p>Every provider contract can be implemented directly in application code:
+geocoding, routing, distance matrix, place search, traffic incidents, traffic
+flow, elevation, and raster tiles. Register the implementation on the
+<code>MapSdk</code> object that the map view and every provider call use; it replaces
+that one capability and leaves the others serving.</p>
 <h3 id="geocoding-in-kotlin"><a class="header" href="#geocoding-in-kotlin">Geocoding in Kotlin</a></h3>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeocodingProvider
 import uniffi.rustic_maps.GeographicCoordinate
@@ -385,6 +387,40 @@ let mapSdk = MapSdk()
 try mapSdk.registerGeocodingProviderFromForeign(
     geocodingProvider: AppGeocodingProvider()
 )
+</code></pre>
+<h3 id="routing-in-kotlin"><a class="header" href="#routing-in-kotlin">Routing in Kotlin</a></h3>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
+import uniffi.rustic_maps.MapSdk
+import uniffi.rustic_maps.Route
+import uniffi.rustic_maps.RouteOptions
+import uniffi.rustic_maps.RoutingProvider
+
+class AppRoutingProvider : RoutingProvider {
+    override suspend fun calculateRoute(
+        waypoints: List&lt;GeographicCoordinate&gt;,
+        routeOptions: RouteOptions,
+    ): Route {
+        TODO("call your routing service and build the route")
+    }
+}
+
+val mapSdk = MapSdk()
+mapSdk.registerRoutingProviderFromForeign(AppRoutingProvider())
+</code></pre>
+<h3 id="routing-in-swift"><a class="header" href="#routing-in-swift">Routing in Swift</a></h3>
+<pre><code class="language-swift">import RusticMapsSDK
+
+final class AppRoutingProvider: RoutingProvider {
+    func calculateRoute(
+        waypoints: [GeographicCoordinate],
+        routeOptions: RouteOptions
+    ) async throws -&gt; Route {
+        fatalError("call your routing service and build the route")
+    }
+}
+
+let mapSdk = MapSdk()
+try mapSdk.registerRoutingProviderFromForeign(routingProvider: AppRoutingProvider())
 </code></pre>
 <h3 id="raster-tiles-in-kotlin"><a class="header" href="#raster-tiles-in-kotlin">Raster tiles in Kotlin</a></h3>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
@@ -430,8 +466,17 @@ try mapSdk.registerRasterTileProviderFromForeign(
 </code></pre>
 <h3 id="constraints-1"><a class="header" href="#constraints-1">Constraints</a></h3>
 <ul>
-<li>Only geocoding and raster tiles have host-implementable interfaces. Every
-other contract needs a Rust provider crate.</li>
+<li>Every contract has a host-implementable interface, so an app may supply any
+provider kind. The registration call names the contract:
+<code>registerGeocodingProviderFromForeign</code>,
+<code>registerRoutingProviderFromForeign</code>,
+<code>registerDistanceMatrixProviderFromForeign</code>,
+<code>registerSearchPlaceProviderFromForeign</code>,
+<code>registerTrafficIncidentProviderFromForeign</code>,
+<code>registerTrafficFlowProviderFromForeign</code>,
+<code>registerElevationProviderFromForeign</code> and
+<code>registerRasterTileProviderFromForeign</code> (Swift spells each with its trailing
+argument label).</li>
 <li>The implementation runs on the foreign runtime and calls back into the
 SDK. Do not block; hand long work to your own queue or coroutine scope.</li>
 <li>A failure must be one of the contract’s <code>SdkError</code> variants. An

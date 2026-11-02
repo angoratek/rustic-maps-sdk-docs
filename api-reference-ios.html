@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8dc0ea5d.js";
+            window.path_to_searchindex_js = "searchindex-f9d50291.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -279,6 +279,91 @@
 </tbody>
 </table>
 </div>
+<h3 id="routingprovider"><a class="header" href="#routingprovider">RoutingProvider</a></h3>
+<p>Routing contract implemented by foreign code and registered on <code>MapSdk</code> through <code>register_routing_provider_from_foreign</code>.</p>
+<p>Implement this interface in Swift; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>calculateRoute</code></td><td><code>func calculateRoute(waypoints: [GeographicCoordinate], routeOptions: RouteOptions) async throws -&gt; Route</code></td><td>Asynchronous. Returns <code>Route</code>. Throws <code>SdkError</code>.</td><td>Calculates a route through the ordered waypoints with the given options. # Parameters - <code>waypoints</code> — the ordered stops, starting at the origin. - <code>route_options</code> — transport mode, strategy, units and features to avoid. # Returns A route with one leg per consecutive waypoint pair. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="distancematrixprovider"><a class="header" href="#distancematrixprovider">DistanceMatrixProvider</a></h3>
+<p>Distance-matrix contract implemented by foreign code and registered on <code>MapSdk</code> through <code>register_distance_matrix_provider_from_foreign</code>.</p>
+<p>Implement this interface in Swift; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>calculateDistanceMatrix</code></td><td><code>func calculateDistanceMatrix(origins: [GeographicCoordinate], destinations: [GeographicCoordinate], transportationMode: TransportationMode) async throws -&gt; DistanceMatrix</code></td><td>Asynchronous. Returns <code>DistanceMatrix</code>. Throws <code>SdkError</code>.</td><td>Calculates durations and distances for every origin-destination pair. # Parameters - <code>origins</code> — the origin coordinates. - <code>destinations</code> — the destination coordinates. - <code>transportation_mode</code> — the mode to route for. # Returns One entry per pair, in row-major origin-major order. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="searchplaceprovider"><a class="header" href="#searchplaceprovider">SearchPlaceProvider</a></h3>
+<p>Place-search contract implemented by foreign code and registered on <code>MapSdk</code> through <code>register_search_place_provider_from_foreign</code>.</p>
+<p>Implement this interface in Swift; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>searchAutocomplete</code></td><td><code>func searchAutocomplete(queryText: String, searchBoundary: BoundingBox?) async throws -&gt; [Place]</code></td><td>Asynchronous. Returns <code>[Place]</code>. Throws <code>SdkError</code>.</td><td>Returns fast completion candidates while the user types. # Parameters - <code>query_text</code> — the partial query entered so far. - <code>search_boundary</code> — an optional area to prefer or restrict results to. # Returns Completion candidates in the implementation’s relevance order. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+<tr><td><code>searchPlaces</code></td><td><code>func searchPlaces(queryText: String, searchBoundary: BoundingBox?) async throws -&gt; [Place]</code></td><td>Asynchronous. Returns <code>[Place]</code>. Throws <code>SdkError</code>.</td><td>Returns full search results for a settled query. # Parameters - <code>query_text</code> — the complete query. - <code>search_boundary</code> — an optional area to prefer or restrict results to. # Returns Matching places in the implementation’s relevance order. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficincidentprovider"><a class="header" href="#trafficincidentprovider">TrafficIncidentProvider</a></h3>
+<p>Traffic-incident contract implemented by foreign code and registered on <code>MapSdk</code> through <code>register_traffic_incident_provider_from_foreign</code>.</p>
+<p>Implement this interface in Swift; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fetchTrafficIncidents</code></td><td><code>func fetchTrafficIncidents(boundingBox: BoundingBox) async throws -&gt; [TrafficIncident]</code></td><td>Asynchronous. Returns <code>[TrafficIncident]</code>. Throws <code>SdkError</code>.</td><td>Fetches incidents intersecting a bounding box. # Parameters - <code>bounding_box</code> — the area to report incidents for. # Returns Every incident inside the area. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowprovider"><a class="header" href="#trafficflowprovider">TrafficFlowProvider</a></h3>
+<p>Traffic-flow contract implemented by foreign code and registered on <code>MapSdk</code> through <code>register_traffic_flow_provider_from_foreign</code>.</p>
+<p>Implement this interface in Swift; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fetchTrafficFlow</code></td><td><code>func fetchTrafficFlow(boundingBox: BoundingBox) async throws -&gt; [TrafficFlowData]</code></td><td>Asynchronous. Returns <code>[TrafficFlowData]</code>. Throws <code>SdkError</code>.</td><td>Fetches per-segment flow observations inside a bounding box. # Parameters - <code>bounding_box</code> — the area to report flow for. # Returns One observation per segment inside the area. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="elevationprovider"><a class="header" href="#elevationprovider">ElevationProvider</a></h3>
+<p>Elevation contract implemented by foreign code and registered on <code>MapSdk</code> through <code>register_elevation_provider_from_foreign</code>.</p>
+<p>Implement this interface in Swift; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fetchElevationPoints</code></td><td><code>func fetchElevationPoints(points: [GeographicCoordinate]) async throws -&gt; [ElevationPoint]</code></td><td>Asynchronous. Returns <code>[ElevationPoint]</code>. Throws <code>SdkError</code>.</td><td>Fetches elevation samples for ordered points. # Parameters - <code>points</code> — the coordinates to sample, in order. # Returns One sample per requested point, in the same order. # Errors Throw <code>SdkError</code> to report a transport, parsing, rejection or rate limit failure. # Async Runs asynchronously on behalf of the calling SDK call.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="mapsdk"><a class="header" href="#mapsdk">MapSdk</a></h3>
 <p>Provider entry point of the SDK: resolves every call through the providers registered on the object. Construct the object with no providers, then register them: native integrations through the SDK’s own registration calls and foreign integrations through the <code>register_*_from_foreign</code> methods (see the provider contract interfaces above). A call into a contract with no registered provider throws <code>ProviderNotConfigured</code> naming the contract.</p>
 <p>The calls cover geocoding (forward and reverse), routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles. Elevation and offline routing have no provider contract here: offline routing is the standalone <code>offline_route_from_archive_bytes</code> function.</p>
@@ -302,6 +387,12 @@
 <tbody>
 <tr><td><code>registerGeocodingProviderFromForeign</code></td><td><code>func registerGeocodingProviderFromForeign(geocodingProvider: GeocodingProvider)</code></td><td>—</td><td>Registers a geocoding implementation. The provider starts serving <code>forward_geocode</code> and <code>reverse_geocode</code> once this call returns.</td></tr>
 <tr><td><code>registerRasterTileProviderFromForeign</code></td><td><code>func registerRasterTileProviderFromForeign(rasterTileProvider: RasterTileProvider)</code></td><td>—</td><td>Registers a raster-tile implementation. The provider starts serving <code>fetch_raster_tile</code> once this call returns.</td></tr>
+<tr><td><code>registerRoutingProviderFromForeign</code></td><td><code>func registerRoutingProviderFromForeign(routingProvider: RoutingProvider)</code></td><td>—</td><td>Registers a routing implementation. The provider starts serving <code>calculate_route</code> once this call returns.</td></tr>
+<tr><td><code>registerDistanceMatrixProviderFromForeign</code></td><td><code>func registerDistanceMatrixProviderFromForeign(distanceMatrixProvider: DistanceMatrixProvider)</code></td><td>—</td><td>Registers a distance-matrix implementation. The provider starts serving <code>calculate_distance_matrix</code> once this call returns.</td></tr>
+<tr><td><code>registerSearchPlaceProviderFromForeign</code></td><td><code>func registerSearchPlaceProviderFromForeign(searchPlaceProvider: SearchPlaceProvider)</code></td><td>—</td><td>Registers a place-search implementation. The provider starts serving <code>search</code> and <code>suggest</code> once this call returns.</td></tr>
+<tr><td><code>registerTrafficIncidentProviderFromForeign</code></td><td><code>func registerTrafficIncidentProviderFromForeign(trafficIncidentProvider: TrafficIncidentProvider)</code></td><td>—</td><td>Registers a traffic-incident implementation. The provider starts serving <code>fetch_traffic_incidents</code> once this call returns.</td></tr>
+<tr><td><code>registerTrafficFlowProviderFromForeign</code></td><td><code>func registerTrafficFlowProviderFromForeign(trafficFlowProvider: TrafficFlowProvider)</code></td><td>—</td><td>Registers a traffic-flow implementation. The provider starts serving <code>fetch_traffic_flow</code> once this call returns.</td></tr>
+<tr><td><code>registerElevationProviderFromForeign</code></td><td><code>func registerElevationProviderFromForeign(elevationProvider: ElevationProvider)</code></td><td>—</td><td>Registers an elevation implementation. The provider starts serving <code>fetch_elevation_points</code> once this call returns.</td></tr>
 <tr><td><code>forwardGeocode</code></td><td><code>func forwardGeocode(addressText: String) async throws -&gt; [Place]</code></td><td>Asynchronous. Returns <code>[Place]</code>. Throws <code>SdkError</code>.</td><td>Resolves a free-form address text into candidate places, best match first. # Parameters - <code>address_text</code> — the address to resolve. # Errors Throws <code>ProviderNotConfigured</code> without a geocoding provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>reverseGeocode</code></td><td><code>func reverseGeocode(coordinate: GeographicCoordinate) async throws -&gt; [Place]</code></td><td>Asynchronous. Returns <code>[Place]</code>. Throws <code>SdkError</code>.</td><td>Resolves a coordinate into candidate places describing that position. # Parameters - <code>coordinate</code> — the position to describe. # Errors Throws <code>ProviderNotConfigured</code> without a geocoding provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>calculateRoute</code></td><td><code>func calculateRoute(waypoints: [GeographicCoordinate], routeOptions: RouteOptions) async throws -&gt; Route</code></td><td>Asynchronous. Returns <code>Route</code>. Throws <code>SdkError</code>.</td><td>Calculates a route through the ordered waypoints with the given options. # Parameters - <code>waypoints</code> — ordered route points; every one must be a valid coordinate. - <code>route_options</code> — transport mode, strategy, units and avoid options. # Errors Throws <code>ProviderNotConfigured</code> without a routing provider, <code>InvalidCoordinateInput</code> for an invalid waypoint, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
@@ -310,6 +401,7 @@
 <tr><td><code>search</code></td><td><code>func search(queryText: String, searchBoundary: BoundingBox?) async throws -&gt; [Place]</code></td><td>Asynchronous. Returns <code>[Place]</code>. Throws <code>SdkError</code>.</td><td>Returns full search results for a settled query. # Parameters - <code>query_text</code> — the settled query. - <code>search_boundary</code> — optional area that restricts the search. # Errors Throws <code>ProviderNotConfigured</code> without a place-search provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>fetchTrafficIncidents</code></td><td><code>func fetchTrafficIncidents(boundingBox: BoundingBox) async throws -&gt; [TrafficIncident]</code></td><td>Asynchronous. Returns <code>[TrafficIncident]</code>. Throws <code>SdkError</code>.</td><td>Returns incidents that intersect the bounding box. # Parameters - <code>bounding_box</code> — area to query. # Errors Throws <code>ProviderNotConfigured</code> without a traffic-incidents provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>fetchTrafficFlow</code></td><td><code>func fetchTrafficFlow(boundingBox: BoundingBox) async throws -&gt; [TrafficFlowData]</code></td><td>Asynchronous. Returns <code>[TrafficFlowData]</code>. Throws <code>SdkError</code>.</td><td>Returns per-segment flow observations inside the bounding box. # Parameters - <code>bounding_box</code> — area to query. # Errors Throws <code>ProviderNotConfigured</code> without a traffic-flow provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
+<tr><td><code>fetchElevationPoints</code></td><td><code>func fetchElevationPoints(points: [GeographicCoordinate]) async throws -&gt; [ElevationPoint]</code></td><td>Asynchronous. Returns <code>[ElevationPoint]</code>. Throws <code>SdkError</code>.</td><td>Fetches elevation samples for ordered points. # Parameters - <code>points</code> — the coordinates to sample, in order. # Returns One sample per requested point, in the same order. # Errors Throws <code>ProviderNotConfigured</code> without an elevation provider, <code>InvalidCoordinateInput</code> for an invalid point, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>fetchRasterTile</code></td><td><code>func fetchRasterTile(tileX: UInt32, tileY: UInt32, zoomLevel: UInt8, imageFormat: RasterImageFormat, tileResolution: RasterTileResolution) async throws -&gt; RasterTileData</code></td><td>Asynchronous. Returns <code>RasterTileData</code>. Throws <code>SdkError</code>.</td><td>Fetches one web-mercator XYZ raster tile at the requested resolution. # Parameters - <code>tile_x</code> — tile column. - <code>tile_y</code> — tile row, counted from the north. - <code>zoom_level</code> — zoom level of the tile. - <code>image_format</code> — requested image encoding. - <code>tile_resolution</code> — requested pixel resolution. # Errors Throws <code>ProviderNotConfigured</code> without a raster-tile provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>setProviderCredential</code></td><td><code>func setProviderCredential(credential: String) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
 <tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>func setProviderCredentialWithTileCache(mapquestApiKey: String, tileCacheDatabasePath: String, tileCacheAbsoluteMaximumBytes: UInt64) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
@@ -897,6 +989,19 @@
 <tr><td><code>currentSpeedKilometersPerHour</code></td><td><code>Double?</code></td><td>Currently observed speed in kilometers per hour, when reported.</td></tr>
 <tr><td><code>freeFlowSpeedKilometersPerHour</code></td><td><code>Double?</code></td><td>Unconstrained (free-flow) speed in kilometers per hour, when reported.</td></tr>
 <tr><td><code>congestionLevel</code></td><td><code>TrafficFlowCongestionLevel</code></td><td>Congestion classification from the speed ratio or provider buckets.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="elevationpoint"><a class="header" href="#elevationpoint">ElevationPoint</a></h3>
+<p>One terrain elevation sample at a coordinate.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>Position the sample belongs to.</td></tr>
+<tr><td><code>elevationMeters</code></td><td><code>Double</code></td><td>Elevation above mean sea level in meters.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1734,7 +1839,7 @@
 </table>
 </div>
 <h2 id="async-and-threading"><a class="header" href="#async-and-threading">Async and threading</a></h2>
-<p>These calls are asynchronous on Swift: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>.</p>
+<p>These calls are asynchronous on Swift: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>.</p>
 <p>Asynchronous calls are <code>async throws</code> functions and do not block the calling thread. The shipped map view members expect the main thread.</p>
 <ul>
 <li><code>MapView.draw</code> is frame-driven: call it from the platform display callback. A concurrent draw or resize reports <code>RenderingSurfaceUnavailable</code>; retry the next frame.</li>
