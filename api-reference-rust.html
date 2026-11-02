@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f9d50291.js";
+            window.path_to_searchindex_js = "searchindex-b5453b58.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -320,6 +320,7 @@
 <tr><td><code>UnitSystem</code></td><td>enum</td><td><code>pub enum UnitSystem</code></td><td>Length and speed conventions used when displaying a route.</td></tr>
 <tr><td><code>AvoidOptions</code></td><td>struct</td><td><code>pub struct AvoidOptions</code></td><td>Road features a routing request can ask the provider to avoid.</td></tr>
 <tr><td><code>RouteStrategy</code></td><td>enum</td><td><code>pub enum RouteStrategy</code></td><td>What a routing request optimizes for. Providers rank candidate roads by a cost function. The strategy selects between travel time and physical length. Non-automobile modes have no time-based cost model, so the strategy applies only to automobile routing, and a rerouting request must reuse the original request’s strategy.</td></tr>
+<tr><td><code>RouteCapabilities</code></td><td>struct</td><td><code>pub struct RouteCapabilities</code></td><td>What a routing provider can honour of the mode and strategy choices a request may carry. The SDK can express three transport modes and two strategies, but a provider may not serve all of them: OSRM’s route service has no shortest-path switch, so it documents <code>supports_shortest_route_strategy</code> as false rather than silently ignoring the choice. A user interface reads this answer so it can disable a choice with a reason instead of letting a route come back from a path the reader did not ask for.</td></tr>
 <tr><td><code>RouteOptions</code></td><td>struct</td><td><code>pub struct RouteOptions</code></td><td>Options controlling how a route is calculated.</td></tr>
 <tr><td><code>TurnDirection</code></td><td>enum</td><td><code>pub enum TurnDirection</code></td><td>Turn direction reported by a maneuver or a lane.</td></tr>
 <tr><td><code>ManeuverType</code></td><td>enum</td><td><code>pub enum ManeuverType</code></td><td>High-level maneuver classification carried by a route step. The classification serializes as its [<code>Self::stable_label</code>], the SDK’s single maneuver spelling. A route serialized by this SDK and deserialized again therefore round-trips without spelling drift.</td></tr>

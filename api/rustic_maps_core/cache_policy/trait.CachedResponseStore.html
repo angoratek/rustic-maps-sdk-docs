@@ -3,13 +3,13 @@
     fn <a href="#tymethod.lookup_response" class="fn">lookup_response</a>(
         &amp;self,
         request_fingerprint: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;&gt;, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;;
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;&gt;, SDKError&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.store_response" class="fn">store_response</a>(
         &amp;self,
         request_fingerprint: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
         response_value: <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;,
         time_to_live_seconds: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u64.html">u64</a>,
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;;
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, SDKError&gt;;
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Storage and retrieval of deserialized provider responses, keyed by request
 fingerprint.</p>
 <p><code>D</code> is the typed record the provider returns, for example
@@ -17,7 +17,7 @@ fingerprint.</p>
 </div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.lookup_response" class="method"><a class="src rightside" href="../../src/rustic_maps_core/cache_policy.rs.html#42">Source</a><h4 class="code-header">fn <a href="#tymethod.lookup_response" class="fn">lookup_response</a>(
     &amp;self,
     request_fingerprint: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;&gt;, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</h4></section></summary><div class="docblock"><p>Looks up a cached value for a request fingerprint.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;&gt;, SDKError&gt;</h4></section></summary><div class="docblock"><p>Looks up a cached value for a request fingerprint.</p>
 <h5 id="parameters"><a class="doc-anchor" href="#parameters">§</a>Parameters</h5>
 <ul>
 <li><code>request_fingerprint</code> — the stable key identifying the request.</li>
@@ -26,14 +26,14 @@ fingerprint.</p>
 <p>The stored value, or <code>None</code> when no entry exists or the entry has
 expired.</p>
 <h5 id="errors"><a class="doc-anchor" href="#errors">§</a>Errors</h5>
-<p>Returns <a href="../../geospatial_types/error/enum.SDKError.html#variant.CacheOperationFailure" title="variant geospatial_types::error::SDKError::CacheOperationFailure"><code>SDKError::CacheOperationFailure</code></a> when the store cannot be
+<p>Returns [<code>SDKError::CacheOperationFailure</code>] when the store cannot be
 read.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.store_response" class="method"><a class="src rightside" href="../../src/rustic_maps_core/cache_policy.rs.html#54-59">Source</a><h4 class="code-header">fn <a href="#tymethod.store_response" class="fn">store_response</a>(
     &amp;self,
     request_fingerprint: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
     response_value: <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;,
     time_to_live_seconds: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u64.html">u64</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</h4></section></summary><div class="docblock"><p>Stores a value under a request fingerprint.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.unit.html">()</a>, SDKError&gt;</h4></section></summary><div class="docblock"><p>Stores a value under a request fingerprint.</p>
 <h5 id="parameters-1"><a class="doc-anchor" href="#parameters-1">§</a>Parameters</h5>
 <ul>
 <li><code>request_fingerprint</code> — the stable key identifying the request.</li>
@@ -41,6 +41,6 @@ read.</p>
 <li><code>time_to_live_seconds</code> — how long the entry stays valid.</li>
 </ul>
 <h5 id="errors-1"><a class="doc-anchor" href="#errors-1">§</a>Errors</h5>
-<p>Returns <a href="../../geospatial_types/error/enum.SDKError.html#variant.CacheOperationFailure" title="variant geospatial_types::error::SDKError::CacheOperationFailure"><code>SDKError::CacheOperationFailure</code></a> when the store cannot be
+<p>Returns [<code>SDKError::CacheOperationFailure</code>] when the store cannot be
 written.</p>
 </div></details></div><h2 id="dyn-compatibility" class="section-header">Dyn Compatibility<a href="#dyn-compatibility" class="anchor">§</a></h2><div class="dyn-compatibility-info"><p>This trait <b>is</b> <a href="https://doc.rust-lang.org/1.99.0/reference/items/traits.html#dyn-compatibility">dyn compatible</a>.</p><p><i>In older versions of Rust, dyn compatibility was called "object safety".</i></p></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../../trait.impl/rustic_maps_core/cache_policy/trait.CachedResponseStore.js" async></script></section></div></main></body></html>

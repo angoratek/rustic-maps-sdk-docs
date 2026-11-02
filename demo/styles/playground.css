@@ -1153,6 +1153,39 @@
         border-radius: var(--radius-inline);
       }
       .trip-route-result[hidden] { display: none; }
+      /* Directions (docs/DirectionsModesAndStrategy.md): mode and strategy
+         sit beside the plan action as the page's pressed-choice groups. The
+         strategy row is hidden while the plan walks, so the two rows stay one
+         eight-point rhythm apart. */
+      .trip-directions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--stack-tight);
+      }
+      .trip-direction-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+      }
+      .trip-direction-row[hidden] { display: none; }
+      .trip-directions-label {
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      .trip-direction-choices {
+        display: flex;
+        gap: var(--stack-tight);
+      }
+      .trip-direction-choices button {
+        min-height: var(--control-height);
+        padding: 4px 12px;
+      }
+      .trip-direction-choices button[aria-pressed='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+        background: var(--accent-soft-color);
+      }
       .trip-actions {
         display: grid;
         grid-template-columns: 1fr;
