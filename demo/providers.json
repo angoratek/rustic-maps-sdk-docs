@@ -17,7 +17,7 @@
         "react_native": true,
         "wasm": true
       },
-      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — tile imagery © MapQuest",
+      "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u2014 tile imagery \u00a9 MapQuest",
       "terms_note": "MapQuest terms apply: rate limits and a 30-day raster-tile caching ceiling.",
       "settings_hint": "Create a key in the MapQuest developer console.",
       "wasm_registration": "mapquest",
@@ -80,7 +80,7 @@
         "react_native": false,
         "wasm": false
       },
-      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US",
+      "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u2014 vector tiles \u00a9 OpenStreetMap US",
       "terms_note": "OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.",
       "settings_hint": "",
       "wasm_registration": null,
@@ -94,6 +94,12 @@
           "method": "GET",
           "path_pattern": "^vector/sourdough/6/18/27\\.mvt$",
           "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt"
+        },
+        {
+          "purpose": "vector_tiles",
+          "method": "GET",
+          "path_pattern": "^vector/sourdough/9/83/196\\.mvt$",
+          "fixture": "fixtures/openstreetmap-us/osmus_tile_z9_x83_y196.mvt"
         }
       ],
       "vector_styles": [
@@ -101,13 +107,13 @@
           "style_id": "carto-light",
           "display_name": "Carto Light",
           "theme": "light",
-          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US"
+          "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u2014 vector tiles \u00a9 OpenStreetMap US"
         },
         {
           "style_id": "carto-dark",
           "display_name": "Carto Dark",
           "theme": "dark",
-          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US"
+          "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u2014 vector tiles \u00a9 OpenStreetMap US"
         }
       ]
     },
@@ -121,7 +127,7 @@
         "react_native": false,
         "wasm": false
       },
-      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles",
+      "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u2014 vector tiles \u00a9 OpenFreeMap and OpenMapTiles",
       "terms_note": "OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.",
       "settings_hint": "",
       "wasm_registration": null,
@@ -134,19 +140,19 @@
           "style_id": "bright-light",
           "display_name": "Bright",
           "theme": "light",
-          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) · style Bright from OpenFreeMap styles, design CC BY 4.0"
+          "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u00b7 style Bright from OpenFreeMap styles, design CC BY 4.0"
         },
         {
           "style_id": "fiord-dark",
           "display_name": "Fiord",
           "theme": "dark",
-          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) · style Fiord from OpenFreeMap styles, design CC BY 4.0"
+          "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u00b7 style Fiord from OpenFreeMap styles, design CC BY 4.0"
         },
         {
           "style_id": "positron-light",
           "display_name": "Positron",
           "theme": "light",
-          "attribution_text": "Map data © OpenStreetMap contributors (ODbL) · style Positron (CartoDB lineage) from OpenFreeMap styles, design CC BY 4.0 / CC BY 3.0"
+          "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u00b7 style Positron (CartoDB lineage) from OpenFreeMap styles, design CC BY 4.0 / CC BY 3.0"
         }
       ],
       "fixture_routes": [
@@ -168,7 +174,7 @@
         "react_native": true,
         "wasm": false
       },
-      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors",
+      "attribution_text": "Map data \u00a9 OpenStreetMap contributors (ODbL) \u2014 raster tiles \u00a9 OpenStreetMap contributors",
       "terms_note": "OpenStreetMap tile usage policy applies: low-volume use only, with attribution.",
       "settings_hint": "",
       "wasm_registration": null,
