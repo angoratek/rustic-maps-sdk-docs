@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["map_osrm_maneuver","parse_route_payload"],"struct":["OsrmRoutingProvider"]};

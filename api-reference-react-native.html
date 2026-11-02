@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ab8316f9.js";
+            window.path_to_searchindex_js = "searchindex-8dc0ea5d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e284b4f1.js"></script>
+        <script src="toc-e43faa06.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -314,6 +314,8 @@
 <tr><td><code>setProviderCredential</code></td><td><code>setProviderCredential(credential: string): void</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
 <tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>setProviderCredentialWithTileCache(mapquestApiKey: string, tileCacheDatabasePath: string, tileCacheAbsoluteMaximumBytes: bigint): void</code></td><td>Throws <code>SdkError</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
 <tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>registerUrlTemplateRasterTileSource(source: UrlTemplateRasterTileSource): void</code></td><td>Throws <code>SdkError</code>.</td><td>Registers a provider-neutral raster base map: any web-mercator XYZ tileset that publishes a <code>{z}/{x}/{y}</code> URL template. The registration replaces the raster-tile contract only; every other provider keeps serving. It also drops any installed tile cache, because the cache’s terms belong to the provider that installed it; a later <code>raster_tile_cache_terms</code> then throws the not-configured error rather than reporting another provider’s ceiling. Re-registering replaces the source. # Parameters - <code>source</code> — the tile source and its terms. # Errors A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving.</td></tr>
+<tr><td><code>configureProvider</code></td><td><code>configureProvider(contract: ProviderContract, providerKey: string, credential: string): void</code></td><td>Throws <code>SdkError</code>.</td><td>Chooses the provider that serves one capability, leaving every other capability untouched. The SDK builds provider implementations into the binary under stable keys; this call is how an application selects one. A key may serve several capabilities, so an application that wants one vendor everywhere configures each capability in turn, or calls <code>set_provider_credential</code> for the all-in-one convenience. # Parameters - <code>contract</code> — the capability whose provider is being chosen. - <code>provider_key</code> — the stable key of a provider built into this SDK build. - <code>credential</code> — the provider’s credential; an empty string is accepted only for a provider that needs none. # Errors Throws <code>ProviderNotConfigured</code> when the key is unknown to this build or serves no implementation of <code>contract</code>, <code>ProviderRequestRejected</code> when the provider declares a credential and the supplied one is blank, and the provider’s own failure when its construction fails. A refused call leaves the previously serving provider in place.</td></tr>
+<tr><td><code>providerRegistrations</code></td><td><code>providerRegistrations(): ProviderRegistration[]</code></td><td>Returns <code>ProviderRegistration[]</code>.</td><td>Reports which provider serves each capability, in a stable order, for a settings surface or a startup check. Every capability the SDK defines appears in the answer, including the ones with no provider installed; those carry an empty key and name and <code>registered</code> false. The readback never mutates the registry.</td></tr>
 <tr><td><code>setRasterTileCacheTimeToLive</code></td><td><code>setRasterTileCacheTimeToLive(timeToLiveSeconds: bigint): void</code></td><td>Throws <code>SdkError</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds. A zero value is refused, because it would expire every entry on capture and store nothing. A value above the installed provider’s declared terms ceiling is accepted, and the ceiling clamps what the cache stores; <code>raster_tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store, and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
 <tr><td><code>rasterTileCacheTerms</code></td><td><code>rasterTileCacheTerms(): TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkError</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache, for display on a settings page. Reports the time-to-live currently in force (the category default, or the last accepted override clamped to the provider’s ceiling), the provider’s declared ceiling, and the category default. Read-only: the readback never mutates the cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed, naming <code>TileCache</code> as the unconfigured backing store.</td></tr>
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): void</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
@@ -700,6 +702,21 @@
 <tr><td><code>top</code></td><td><code>number</code></td><td>Pixels kept clear from the top viewport edge.</td></tr>
 <tr><td><code>right</code></td><td><code>number</code></td><td>Pixels kept clear from the right viewport edge.</td></tr>
 <tr><td><code>bottom</code></td><td><code>number</code></td><td>Pixels kept clear from the bottom viewport edge.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="providerregistration"><a class="header" href="#providerregistration">ProviderRegistration</a></h3>
+<p>Which provider serves one capability, as reported by <code>MapSdk::provider_registrations</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>contract</code></td><td><code>ProviderContract</code></td><td>The capability this entry describes.</td></tr>
+<tr><td><code>providerKey</code></td><td><code>string</code></td><td>The provider’s stable registry key, or an empty string when no provider is installed for the capability.</td></tr>
+<tr><td><code>displayName</code></td><td><code>string</code></td><td>The provider’s display name from the shared registry, or an empty string when no provider is installed.</td></tr>
+<tr><td><code>registered</code></td><td><code>boolean</code></td><td>Whether a provider is installed for the capability.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1328,6 +1345,28 @@
 </table>
 </div>
 <h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<h3 id="providercontract"><a class="header" href="#providercontract">ProviderContract</a></h3>
+<p>One capability whose provider can be chosen independently of every other.</p>
+<p>Every capability owns one registry slot, so an application may serve geocoding from one provider, routing from another and tiles from a third. A capability with no installed provider answers calls with <code>ProviderNotConfigured</code>.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Geocoding</code></td><td>Forward and reverse address lookup.</td></tr>
+<tr><td><code>Routing</code></td><td>Route calculation through ordered waypoints.</td></tr>
+<tr><td><code>DistanceMatrix</code></td><td>Travel-time and distance matrix calculation.</td></tr>
+<tr><td><code>PlaceSearch</code></td><td>Place prediction and lookup by free text.</td></tr>
+<tr><td><code>TrafficIncidents</code></td><td>Traffic incident reports.</td></tr>
+<tr><td><code>TrafficFlow</code></td><td>Traffic flow (speed and congestion) along road segments.</td></tr>
+<tr><td><code>Elevation</code></td><td>Terrain elevation lookup.</td></tr>
+<tr><td><code>RasterTiles</code></td><td>Raster map imagery.</td></tr>
+<tr><td><code>VectorTiles</code></td><td>Vector map tiles.</td></tr>
+<tr><td><code>OfflineRouting</code></td><td>Route calculation on a compiled offline graph.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="geocodequality"><a class="header" href="#geocodequality">GeocodeQuality</a></h3>
 <p>Structural precision a geocoder reached for one resolved location.</p>
 <div class="table-wrapper">

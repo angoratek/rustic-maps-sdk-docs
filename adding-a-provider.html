@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ab8316f9.js";
+            window.path_to_searchindex_js = "searchindex-8dc0ea5d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e284b4f1.js"></script>
+        <script src="toc-e43faa06.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -255,21 +255,79 @@ request, retry, and rate-limit path, so a provider behaves the same on every
 target.</p>
 <h3 id="expose-it-to-an-application-target"><a class="header" href="#expose-it-to-an-application-target">Expose it to an application target</a></h3>
 <ol>
-<li><strong>Add the descriptor.</strong> One entry in the shared provider registry.</li>
-<li><strong>Add the dispatch arm.</strong> In each native application’s credential applier
-and in the browser binding’s dispatch table, map the provider key to the
-crate’s registration call. The arm is the only provider-named code.</li>
-<li><strong>Add a registration call when the contract has none.</strong> Compiling the
-crate into a binding does not make it selectable. Geocoding and raster
-tiles already have host-implementable interfaces; the raster and vector
-base maps already have URL-template calls. Routing, search, distance
-matrix, traffic, elevation, and vector-tile providers need an
-addition-only method on the FFI contract, with the Kotlin, Swift, and
-React Native bindings regenerated from it.</li>
+<li><strong>Add the descriptor.</strong> One entry in the shared provider registry, with
+the capabilities the provider serves in <code>served_contracts</code>.</li>
+<li><strong>Add the catalog row.</strong> One entry in the SDK’s provider catalog maps the
+provider key to the crate’s construction call and the capabilities it
+serves. This row is what makes the key selectable; compiling the crate
+into a binding alone does not.</li>
 <li><strong>Add committed sample responses.</strong> Each served API gets a route pattern
 and a committed response under the provider’s key. The test server and
 the demo use them; tests never reach the network.</li>
 </ol>
+<p>An application then selects the provider by key. The call replaces one
+capability and leaves every other capability serving, so one app can search
+with one provider, route with another and draw tiles from a third.</p>
+<pre><code class="language-kotlin">val mapSdk = MapSdk()
+mapSdk.configureProvider(
+    contract = ProviderContract.Routing,
+    providerKey = "my-provider",
+    credential = "",
+)
+val routing = mapSdk.providerRegistrations()
+    .first { it.contract == ProviderContract.Routing }
+check(routing.registered &amp;&amp; routing.providerKey == "my-provider")
+</code></pre>
+<pre><code class="language-swift">let mapSdk = MapSdk()
+try mapSdk.configureProvider(
+    contract: .routing,
+    providerKey: "my-provider",
+    credential: ""
+)
+let routing = mapSdk.providerRegistrations()
+    .first { $0.contract == .routing }
+precondition(routing?.registered == true &amp;&amp; routing?.providerKey == "my-provider")
+</code></pre>
+<p><code>providerRegistrations()</code> answers every capability in the same order every
+time — geocoding, routing, distance matrix, place search, traffic incidents,
+traffic flow, elevation, raster tiles, vector tiles, offline routing — so a
+settings surface can render one row per capability without knowing the list.
+A capability with no provider reports <code>registered</code> false and an empty key.</p>
+<p>A provider that needs no credential accepts an empty string; a provider with
+a credential refuses a blank one and leaves the previously serving provider
+in place. That is the whole integration: the application stores its own
+choice (a key and, when needed, a credential) and calls <code>configureProvider</code>
+at startup.</p>
+<h3 id="sample-a-routing-provider-key-in-an-app"><a class="header" href="#sample-a-routing-provider-key-in-an-app">Sample: a routing provider key in an app</a></h3>
+<p>The steps below are the complete path from a routing crate to a working
+screen. The example uses the OSRM provider that ships with the SDK.</p>
+<ol>
+<li>Add the crate to the binding. The SDK already carries it, so this step is
+the catalog row: <code>osrm</code> maps to <code>OsrmRoutingProvider::new</code>.</li>
+<li>Give the provider its deployment address. OSRM is keyless, so the
+credential field carries the base URL of the deployment instead of a
+secret; an empty string targets a local server.</li>
+<li>Choose it for routing at startup:</li>
+</ol>
+<pre><code class="language-kotlin">mapSdk.configureProvider(
+    contract = ProviderContract.Routing,
+    providerKey = "osrm",
+    credential = "http://10.0.2.2:5000",
+)
+</code></pre>
+<pre><code class="language-swift">try mapSdk.configureProvider(
+    contract: .routing,
+    providerKey: "osrm",
+    credential: "http://localhost:5000"
+)
+</code></pre>
+<ol start="4">
+<li>Plan a route. <code>RoutingFacade.calculateRoute</code> resolves the routing slot, so
+the result comes from the chosen provider and no other capability changes.</li>
+</ol>
+<p>To let the reader switch providers, render one row per capability from
+<code>providerRegistrations()</code>, list the descriptors whose <code>served_contracts</code>
+contain that capability, and call <code>configureProvider</code> with the picked key.</p>
 <h3 id="constraints"><a class="header" href="#constraints">Constraints</a></h3>
 <ul>
 <li>A provider type is <code>Send + Sync</code>; trait methods are async.</li>
@@ -484,7 +542,7 @@ provider-backed app can add.</li>
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="downloads.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="mix-providers-per-capability.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -498,7 +556,7 @@ provider-backed app can add.</li>
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="downloads.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="mix-providers-per-capability.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ab8316f9.js";
+            window.path_to_searchindex_js = "searchindex-8dc0ea5d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e284b4f1.js"></script>
+        <script src="toc-e43faa06.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -488,6 +488,7 @@
 <tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
 </thead>
 <tbody>
+<tr><td><code>ProviderContract</code></td><td>enum</td><td><code>pub enum ProviderContract</code></td><td>The contract a registry slot serves. Each variant names one capability an application can configure independently, which is what lets a map draw its imagery from one provider while another plans its routes. [<code>ProviderContract::contract_name</code>] is the name the [<code>SDKError::ProviderNotConfigured</code>] detail carries.</td></tr>
 <tr><td><code>ProviderRegistry</code></td><td>struct</td><td><code>pub struct ProviderRegistry</code></td><td>Registry of provider implementations keyed by contract, not by vendor. Each contract has one optional slot. Slots start unconfigured. Callers resolve them with the <code>require_*</code> methods, which report [<code>SDKError::ProviderNotConfigured</code>] when the application did not register that provider. The registry is cheap to share after configuration: every provider is stored behind an [<code>Arc</code>].</td></tr>
 </tbody>
 </table>
@@ -658,6 +659,7 @@
 <tr><td><code>DEFAULT_LABEL_RANK</code></td><td>const</td><td><code>pub const DEFAULT_LABEL_RANK: u32</code></td><td>The rank an unranked label carries: the highest value, so it sorts after every ranked label of the same style layer.</td></tr>
 <tr><td><code>LINE_LABEL_UPRIGHT_ROTATION_LIMIT_RADIANS</code></td><td>const</td><td><code>pub const LINE_LABEL_UPRIGHT_ROTATION_LIMIT_RADIANS: f64</code></td><td>The bearing limit within which a line-placed label reads upright. A segment whose direction would rotate the text past this angle is flipped to run the other way, so a street name never paints upside down: the label’s rotation always lies in <code>[-π/2, π/2]</code>.</td></tr>
 <tr><td><code>LINE_LABEL_STRAIGHT_RUN_ANGLE_TOLERANCE_RADIANS</code></td><td>const</td><td><code>pub const LINE_LABEL_STRAIGHT_RUN_ANGLE_TOLERANCE_RADIANS: f64</code></td><td>How far a segment’s bearing may turn from its run’s first segment and still belong to the same straight run, in radians (20 degrees, a ninth of a half turn). Map data splits a street into short blocks between intersections, so a label must run along the straight sequence of segments, not one block alone; the tolerance keeps a name off a road that bends away mid-run.</td></tr>
+<tr><td><code>LINE_LABEL_REPEAT_SPACING_PIXELS</code></td><td>const</td><td><code>pub const LINE_LABEL_REPEAT_SPACING_PIXELS: f64</code></td><td>The gap kept between two repeated names along one long road, in pixels. A street long enough to cross the frame is named more than once, as the reference engines do: a reader then finds the name wherever they look along the road instead of only at its midpoint. MapLibre’s <code>symbol-spacing</code> default is 250 pixels, but one frame here covers a single tile, where that gap would leave nearly every road named once and the repetition invisible; 90 pixels puts a name roughly every 120 pixels along a run, which is about what Google Maps and HERE carry at street zooms.</td></tr>
 <tr><td><code>MapLabelCandidate</code></td><td>struct</td><td><code>pub struct MapLabelCandidate</code></td><td>One label candidate read from a decoded tile’s symbol layers, before the frame projects and places it.</td></tr>
 <tr><td><code>PlacedLabel</code></td><td>struct</td><td><code>pub struct PlacedLabel</code></td><td>One label that survived collision rejection, in draw order.</td></tr>
 <tr><td><code>LabelTextMetrics</code></td><td>struct</td><td><code>pub struct LabelTextMetrics</code></td><td>The measured extent of one label’s text at one size.</td></tr>

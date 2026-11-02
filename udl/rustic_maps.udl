@@ -463,6 +463,50 @@ interface RasterTileProvider {
 // Provider records and enums: values passed to and returned by provider calls.
 // ---------------------------------------------------------------------------
 
+/// One capability whose provider can be chosen independently of every other.
+///
+/// Every capability owns one registry slot, so an application may serve
+/// geocoding from one provider, routing from another and tiles from a third.
+/// A capability with no installed provider answers calls with
+/// `ProviderNotConfigured`.
+enum ProviderContract {
+    /// Forward and reverse address lookup.
+    "Geocoding",
+    /// Route calculation through ordered waypoints.
+    "Routing",
+    /// Travel-time and distance matrix calculation.
+    "DistanceMatrix",
+    /// Place prediction and lookup by free text.
+    "PlaceSearch",
+    /// Traffic incident reports.
+    "TrafficIncidents",
+    /// Traffic flow (speed and congestion) along road segments.
+    "TrafficFlow",
+    /// Terrain elevation lookup.
+    "Elevation",
+    /// Raster map imagery.
+    "RasterTiles",
+    /// Vector map tiles.
+    "VectorTiles",
+    /// Route calculation on a compiled offline graph.
+    "OfflineRouting",
+};
+
+/// Which provider serves one capability, as reported by
+/// `MapSdk::provider_registrations`.
+dictionary ProviderRegistration {
+    /// The capability this entry describes.
+    ProviderContract contract;
+    /// The provider's stable registry key, or an empty string when no
+    /// provider is installed for the capability.
+    string provider_key;
+    /// The provider's display name from the shared registry, or an empty
+    /// string when no provider is installed.
+    string display_name;
+    /// Whether a provider is installed for the capability.
+    boolean registered;
+};
+
 /// Structural precision a geocoder reached for one resolved location.
 enum GeocodeQuality {
     /// Rooftop or feature point.
@@ -1065,6 +1109,43 @@ interface MapSdk {
     /// source keeps serving.
     [Throws=SdkError]
     void register_url_template_raster_tile_source(UrlTemplateRasterTileSource source);
+
+    /// Chooses the provider that serves one capability, leaving every other
+    /// capability untouched.
+    ///
+    /// The SDK builds provider implementations into the binary under stable
+    /// keys; this call is how an application selects one. A key may serve
+    /// several capabilities, so an application that wants one vendor
+    /// everywhere configures each capability in turn, or calls
+    /// `set_provider_credential` for the all-in-one convenience.
+    ///
+    /// # Parameters
+    /// - `contract` — the capability whose provider is being chosen.
+    /// - `provider_key` — the stable key of a provider built into this SDK
+    ///   build.
+    /// - `credential` — the provider's credential; an empty string is
+    ///   accepted only for a provider that needs none.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` when the key is unknown to this build
+    /// or serves no implementation of `contract`, `ProviderRequestRejected`
+    /// when the provider declares a credential and the supplied one is blank,
+    /// and the provider's own failure when its construction fails. A refused
+    /// call leaves the previously serving provider in place.
+    [Throws=SdkError]
+    void configure_provider(
+        ProviderContract contract,
+        string provider_key,
+        string credential
+    );
+
+    /// Reports which provider serves each capability, in a stable order, for
+    /// a settings surface or a startup check.
+    ///
+    /// Every capability the SDK defines appears in the answer, including the
+    /// ones with no provider installed; those carry an empty key and name and
+    /// `registered` false. The readback never mutates the registry.
+    sequence<ProviderRegistration> provider_registrations();
 
     // -----------------------------------------------------------------------
     // Tile-cache settings. The cache's byte budget is fixed when the cache is
