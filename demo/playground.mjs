@@ -481,6 +481,13 @@
       const trip_plan_route_control = document.getElementById('trip-plan-route-control');
       const trip_plan_route_reason = document.getElementById('trip-plan-route-reason');
       const trip_route_result = document.getElementById('trip-route-result');
+      const directions_mode_car_control = document.getElementById('directions-mode-car');
+      const directions_mode_walk_control = document.getElementById('directions-mode-walk');
+      const directions_strategy_row = document.getElementById('directions-strategy-row');
+      const directions_strategy_fastest_control =
+        document.getElementById('directions-strategy-fastest');
+      const directions_strategy_shortest_control =
+        document.getElementById('directions-strategy-shortest');
       const offline_route_control = document.getElementById('offline-route-control');
       const offline_route_result = document.getElementById('offline-route-result');
       const offline_route_facts = document.getElementById('offline-route-facts');
@@ -493,14 +500,27 @@
       const PROVIDER_TILE_DEMO_ZOOM_LEVEL = 14;
       const PROVIDER_TILE_DEMO_TILE_X = 2661;
       const PROVIDER_TILE_DEMO_TILE_Y = 6286;
-      // The trip planner's route options (the contract's `RouteOptions`):
-      // pedestrian, fastest, metric — the pair every native reference app
-      // plans with, so the live and recorded answers describe one route.
-      const TRIP_PLANNER_ROUTE_OPTIONS = Object.freeze({
-        transportationMode: 'pedestrian',
-        routeStrategy: 'fastest',
-        unitSystem: 'metric',
-      });
+      // The trip planner's route options (the contract's `RouteOptions`).
+      // The mode and strategy are the visitor's Directions choice; the unit
+      // system stays metric, the display unit the demo card reports in. An
+      // unregistered provider still plans the committed recorded route, which
+      // carries its own pedestrian/fastest profile.
+      const DIRECTIONS_TRANSPORTATION_MODE_AUTOMOBILE = 'automobile';
+      const DIRECTIONS_TRANSPORTATION_MODE_PEDESTRIAN = 'pedestrian';
+      const DIRECTIONS_ROUTE_STRATEGY_FASTEST = 'fastest';
+      const DIRECTIONS_ROUTE_STRATEGY_SHORTEST = 'shortest';
+      const DIRECTIONS_TRANSPORTATION_MODES = Object.freeze([
+        DIRECTIONS_TRANSPORTATION_MODE_AUTOMOBILE,
+        DIRECTIONS_TRANSPORTATION_MODE_PEDESTRIAN,
+      ]);
+      const DIRECTIONS_ROUTE_STRATEGIES = Object.freeze([
+        DIRECTIONS_ROUTE_STRATEGY_FASTEST,
+        DIRECTIONS_ROUTE_STRATEGY_SHORTEST,
+      ]);
+      const DEFAULT_DIRECTIONS_TRANSPORTATION_MODE =
+        DIRECTIONS_TRANSPORTATION_MODE_AUTOMOBILE;
+      const DEFAULT_DIRECTIONS_ROUTE_STRATEGY = DIRECTIONS_ROUTE_STRATEGY_FASTEST;
+      const TRIP_PLANNER_UNIT_SYSTEM = 'metric';
       // The credential rows by provider key; declared here so the persistence
       // toggle's listener (below) can clear remembered keys.
       const provider_credential_controls_by_key = new Map();
@@ -563,6 +583,8 @@
           themeChoice: 'auto',
           baseMap: null,
           trafficLayerEnabled: false,
+          directionsTransportationMode: DEFAULT_DIRECTIONS_TRANSPORTATION_MODE,
+          directionsRouteStrategy: DEFAULT_DIRECTIONS_ROUTE_STRATEGY,
           demoPlanScenario: null,
           overlaySceneKeys: [],
           cameraPresetId: null,
@@ -634,6 +656,15 @@
         }
         preferences.baseMap = sanitized_base_map_preference(stored_record.baseMap);
         preferences.trafficLayerEnabled = stored_record.trafficLayerEnabled === true;
+        if (DIRECTIONS_TRANSPORTATION_MODES.includes(
+          stored_record.directionsTransportationMode)) {
+          preferences.directionsTransportationMode =
+            stored_record.directionsTransportationMode;
+        }
+        if (DIRECTIONS_ROUTE_STRATEGIES.includes(
+          stored_record.directionsRouteStrategy)) {
+          preferences.directionsRouteStrategy = stored_record.directionsRouteStrategy;
+        }
         if (DEMO_PLAN_SCENARIO_IDS.has(stored_record.demoPlanScenario)) {
           preferences.demoPlanScenario = stored_record.demoPlanScenario;
         }
@@ -668,6 +699,58 @@
       // overwritten by its own written record.
       const initial_demo_preferences = read_demo_preferences();
       let demo_preferences = { ...initial_demo_preferences };
+      // The Directions choices every route plan carries. The wasm façade
+      // exposes no route-capabilities report today, and every routing
+      // provider this build can register honours Car, Walk and both
+      // strategies, so all four choices are offered. When the façade gains
+      // the capability report, gate the strategy row on it here instead of
+      // offering a choice the serving provider cannot honour.
+      let directions_transportation_mode =
+        initial_demo_preferences.directionsTransportationMode;
+      let directions_route_strategy =
+        initial_demo_preferences.directionsRouteStrategy;
+
+      /** The `RouteOptions` object the live plan call sends. */
+      function current_directions_route_options() {
+        return {
+          transportationMode: directions_transportation_mode,
+          routeStrategy: directions_route_strategy,
+          unitSystem: TRIP_PLANNER_UNIT_SYSTEM,
+        };
+      }
+
+      /** Reflects both choices on the pressed-choice groups. The strategy
+       * applies to automobile plans, so its row is hidden while the plan
+       * walks (the walk keeps a remembered strategy for the next car plan). */
+      function refresh_directions_controls() {
+        const is_automobile =
+          directions_transportation_mode === DIRECTIONS_TRANSPORTATION_MODE_AUTOMOBILE;
+        directions_mode_car_control.setAttribute('aria-pressed', String(is_automobile));
+        directions_mode_walk_control.setAttribute('aria-pressed', String(!is_automobile));
+        directions_strategy_fastest_control.setAttribute(
+          'aria-pressed',
+          String(directions_route_strategy === DIRECTIONS_ROUTE_STRATEGY_FASTEST));
+        directions_strategy_shortest_control.setAttribute(
+          'aria-pressed',
+          String(directions_route_strategy === DIRECTIONS_ROUTE_STRATEGY_SHORTEST));
+        directions_strategy_row.hidden = !is_automobile;
+      }
+
+      /** Applies one mode choice, remembers it and refreshes the groups. */
+      function set_directions_transportation_mode(transportation_mode) {
+        directions_transportation_mode = transportation_mode;
+        write_demo_preferences({ directionsTransportationMode: transportation_mode });
+        refresh_directions_controls();
+      }
+
+      /** Applies one strategy choice, remembers it and refreshes the groups. */
+      function set_directions_route_strategy(route_strategy) {
+        directions_route_strategy = route_strategy;
+        write_demo_preferences({ directionsRouteStrategy: route_strategy });
+        refresh_directions_controls();
+      }
+
+      refresh_directions_controls();
 
       /** Merges one explicit choice into the record and persists it. */
       function write_demo_preferences(changed_preferences) {
@@ -1620,6 +1703,21 @@
           apply_remembered_camera_preset();
         };
 
+        directions_mode_car_control.addEventListener('click', () => {
+          set_directions_transportation_mode(
+            DIRECTIONS_TRANSPORTATION_MODE_AUTOMOBILE);
+        });
+        directions_mode_walk_control.addEventListener('click', () => {
+          set_directions_transportation_mode(
+            DIRECTIONS_TRANSPORTATION_MODE_PEDESTRIAN);
+        });
+        directions_strategy_fastest_control.addEventListener('click', () => {
+          set_directions_route_strategy(DIRECTIONS_ROUTE_STRATEGY_FASTEST);
+        });
+        directions_strategy_shortest_control.addEventListener('click', () => {
+          set_directions_route_strategy(DIRECTIONS_ROUTE_STRATEGY_SHORTEST);
+        });
+
         trip_plan_route_control.addEventListener('click', async () => {
           if (trip_plan_route_control.disabled) return;
           trip_route_result.hidden = true;
@@ -1628,6 +1726,12 @@
             const origin_endpoint = await resolve_trip_endpoint('origin');
             const destination_endpoint = await resolve_trip_endpoint('destination');
             if (applied_provider_keys.size === 0) {
+              // No routing provider is registered, so the committed recorded
+              // route is the honest answer; it carries its own
+              // pedestrian/fastest profile and no Directions choice can be
+              // sent. The keyed branch below plans with the selected mode and
+              // strategy, and every navigation started from that plan follows
+              // the route it produced.
               const recorded_route =
                 recorded_demo_route(origin_endpoint.name, destination_endpoint.name);
               if (recorded_route === null) {
@@ -1644,7 +1748,7 @@
               origin_endpoint.longitude,
               destination_endpoint.latitude,
               destination_endpoint.longitude,
-              TRIP_PLANNER_ROUTE_OPTIONS,
+              current_directions_route_options(),
             );
             show_trip_route(live_route, origin_endpoint, destination_endpoint, false);
           } catch (error) {

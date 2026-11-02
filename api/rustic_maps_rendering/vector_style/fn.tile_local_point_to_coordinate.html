@@ -2,7 +2,7 @@
     tile_address: <a class="struct" href="struct.VectorTileAddress.html" title="struct rustic_maps_rendering::vector_style::VectorTileAddress">VectorTileAddress</a>,
     layer_extent: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u64.html">u64</a>,
     point: &amp;<a class="struct" href="../../rustic_maps_vector_tiles/geometry/struct.VectorTileGeometryPoint.html" title="struct rustic_maps_vector_tiles::geometry::VectorTileGeometryPoint">VectorTileGeometryPoint</a>,
-) -&gt; <a class="struct" href="../../geospatial_types/coordinate/struct.GeographicCoordinate.html" title="struct geospatial_types::coordinate::GeographicCoordinate">GeographicCoordinate</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Converts one tile-local extent point into a geographic coordinate through
+) -&gt; GeographicCoordinate</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Converts one tile-local extent point into a geographic coordinate through
 the tile’s web-mercator address. Vertices at the extent boundary are legal
 (they land on the next tile’s edge); the latitude clamp keeps the projection
 finite at the world’s polar edges.</p>

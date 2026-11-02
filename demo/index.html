@@ -137,11 +137,42 @@
         <!-- The trip card's ETA-distance line while a trip runs: the same
              prefix and labelled remaining values the native drawers show. -->
         <p id="trip-navigation-eta-line" class="then-line" hidden></p>
+        <!-- Directions (docs/DirectionsModesAndStrategy.md): the mode and
+             strategy every route plan carries. Both are two-value button
+             groups with the page's pressed-choice pattern; Car and Fastest
+             are the defaults. Strategy applies to automobile plans, so its
+             row is hidden while Walk is chosen. The control sits directly
+             under the plan action so the card's primary action stays above
+             the fold on a phone. -->
         <div class="trip-actions">
           <button id="trip-plan-route-control" type="button" disabled
                   data-ui-label="plan.plan_route_action">Plan route</button>
           <button id="follow-demo-start-control" type="button" class="primary"
                   data-ui-label="route.start_action">Start simulated navigation</button>
+        </div>
+        <div id="trip-directions" class="trip-directions" role="group"
+             aria-label="Directions">
+          <div class="trip-direction-row">
+            <span class="trip-directions-label" id="directions-mode-label">Mode</span>
+            <div id="directions-mode-controls" class="trip-direction-choices"
+                 role="group" aria-labelledby="directions-mode-label">
+              <button id="directions-mode-car" type="button"
+                      aria-pressed="true">Car</button>
+              <button id="directions-mode-walk" type="button"
+                      aria-pressed="false">Walk</button>
+            </div>
+          </div>
+          <div id="directions-strategy-row" class="trip-direction-row">
+            <span class="trip-directions-label"
+                  id="directions-strategy-label">Strategy</span>
+            <div id="directions-strategy-controls" class="trip-direction-choices"
+                 role="group" aria-labelledby="directions-strategy-label">
+              <button id="directions-strategy-fastest" type="button"
+                      aria-pressed="true">Fastest</button>
+              <button id="directions-strategy-shortest" type="button"
+                      aria-pressed="false">Shortest</button>
+            </div>
+          </div>
         </div>
         <div id="follow-demo-playback" class="trip-playback" role="group" hidden>
           <span class="trip-playback-label" data-ui-label="navigation.speed_label">Speed</span>

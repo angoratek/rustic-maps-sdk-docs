@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f9d50291.js";
+            window.path_to_searchindex_js = "searchindex-b5453b58.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -268,6 +268,7 @@ the demo use them; tests never reach the network.</li>
 <p>An application then selects the provider by key. The call replaces one
 capability and leaves every other capability serving, so one app can search
 with one provider, route with another and draw tiles from a third.</p>
+<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">val mapSdk = MapSdk()
 mapSdk.configureProvider(
     contract = ProviderContract.Routing,
@@ -278,6 +279,7 @@ val routing = mapSdk.providerRegistrations()
     .first { it.contract == ProviderContract.Routing }
 check(routing.registered &amp;&amp; routing.providerKey == "my-provider")
 </code></pre>
+<p><strong>Swift</strong></p>
 <pre><code class="language-swift">let mapSdk = MapSdk()
 try mapSdk.configureProvider(
     contract: .routing,
@@ -309,12 +311,14 @@ credential field carries the base URL of the deployment instead of a
 secret; an empty string targets a local server.</li>
 <li>Choose it for routing at startup:</li>
 </ol>
+<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">mapSdk.configureProvider(
     contract = ProviderContract.Routing,
     providerKey = "osrm",
     credential = "http://10.0.2.2:5000",
 )
 </code></pre>
+<p><strong>Swift</strong></p>
 <pre><code class="language-swift">try mapSdk.configureProvider(
     contract: .routing,
     providerKey: "osrm",
@@ -350,6 +354,7 @@ flow, elevation, and raster tiles. Register the implementation on the
 <code>MapSdk</code> object that the map view and every provider call use; it replaces
 that one capability and leaves the others serving.</p>
 <h3 id="geocoding-in-kotlin"><a class="header" href="#geocoding-in-kotlin">Geocoding in Kotlin</a></h3>
+<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeocodingProvider
 import uniffi.rustic_maps.GeographicCoordinate
 import uniffi.rustic_maps.MapSdk
@@ -371,6 +376,7 @@ val mapSdk = MapSdk()
 mapSdk.registerGeocodingProviderFromForeign(AppGeocodingProvider())
 </code></pre>
 <h3 id="geocoding-in-swift"><a class="header" href="#geocoding-in-swift">Geocoding in Swift</a></h3>
+<p><strong>Swift</strong></p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class AppGeocodingProvider: GeocodingProvider {
@@ -389,6 +395,7 @@ try mapSdk.registerGeocodingProviderFromForeign(
 )
 </code></pre>
 <h3 id="routing-in-kotlin"><a class="header" href="#routing-in-kotlin">Routing in Kotlin</a></h3>
+<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
 import uniffi.rustic_maps.MapSdk
 import uniffi.rustic_maps.Route
@@ -408,6 +415,7 @@ val mapSdk = MapSdk()
 mapSdk.registerRoutingProviderFromForeign(AppRoutingProvider())
 </code></pre>
 <h3 id="routing-in-swift"><a class="header" href="#routing-in-swift">Routing in Swift</a></h3>
+<p><strong>Swift</strong></p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class AppRoutingProvider: RoutingProvider {
@@ -423,6 +431,7 @@ let mapSdk = MapSdk()
 try mapSdk.registerRoutingProviderFromForeign(routingProvider: AppRoutingProvider())
 </code></pre>
 <h3 id="raster-tiles-in-kotlin"><a class="header" href="#raster-tiles-in-kotlin">Raster tiles in Kotlin</a></h3>
+<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
 import uniffi.rustic_maps.RasterImageFormat
 import uniffi.rustic_maps.RasterTileData
@@ -445,6 +454,7 @@ val mapSdk = MapSdk()
 mapSdk.registerRasterTileProviderFromForeign(AppRasterTileProvider())
 </code></pre>
 <h3 id="raster-tiles-in-swift"><a class="header" href="#raster-tiles-in-swift">Raster tiles in Swift</a></h3>
+<p><strong>Swift</strong></p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class AppRasterTileProvider: RasterTileProvider {

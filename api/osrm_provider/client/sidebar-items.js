@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_MAXIMUM_RETRY_ATTEMPTS","DEFAULT_OSRM_BASE_URL","DEFAULT_OSRM_USER_AGENT"],"struct":["OsrmHttpClient","OsrmProviderConfiguration"]};
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_MAXIMUM_RETRY_ATTEMPTS","DEFAULT_OSRM_BASE_URL","DEFAULT_OSRM_USER_AGENT","OSRM_PROVIDER_KEY","ROUTING_CONTRACT_NAME"],"struct":["OsrmHttpClient","OsrmProviderConfiguration"]};
