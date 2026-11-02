@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["StyleError","UnsupportedScope"],"struct":["ColorParseError","EvaluationError","ExpressionError","FilterError","UnsupportedProperty"]};

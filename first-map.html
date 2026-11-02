@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3f07135d.js";
+            window.path_to_searchindex_js = "searchindex-87eb3fe5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -206,8 +206,6 @@ the two runtime dependencies the Kotlin bindings need:</p>
 
 dependencies {
     implementation(files("libs/rustic-maps-sdk-android-v0.1.0.aar"))
-    // The MapView wrapper is a second AAR and depends on the bindings above.
-    implementation(files("libs/rustic-maps-sdk-android-ui-v0.1.0.aar"))
     implementation("net.java.dev.jna:jna:5.18.1@aar")   // the UniFFI runtime
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
@@ -589,11 +587,15 @@ Safari from 26, and Firefox from 141 on desktop.</li>
 <p>A page needs a provider key only for live search, routing, and imagery.
 Keyless, it renders recorded tiles and recorded places.</p>
 <h3 id="install-the-artifact-2"><a class="header" href="#install-the-artifact-2">Install the artifact</a></h3>
-<p>Unpack the release and serve its directory from any static file server
-over HTTPS or localhost:</p>
+<p>Install the WebAssembly package with npm, or extract the same tarball and
+serve its <code>package/</code> directory from any static file server over HTTPS or
+localhost:</p>
 <pre><code class="language-bash">npm install ./rustic-maps-sdk-web-v0.1.0.tgz
 cp -r node_modules/@angoratek/rustic-maps-sdk-web ./web
 python3 -m http.server 8000   # any static server; localhost is fine
+</code></pre>
+<pre><code class="language-bash">tar -xzf rustic-maps-sdk-web-v0.1.0.tgz
+cp -r package ./web
 </code></pre>
 <h3 id="start-the-sdk-and-show-the-map-on-a-canvas"><a class="header" href="#start-the-sdk-and-show-the-map-on-a-canvas">Start the SDK and show the map on a canvas</a></h3>
 <p>One page creates one SDK root. Provider registration is a separate free

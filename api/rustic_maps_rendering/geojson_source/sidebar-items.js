@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_GEOJSON_BUFFER_PIXELS","DEFAULT_GEOJSON_SIMPLIFICATION_TOLERANCE","DEFAULT_GEOJSON_TILING_EXTENT","GEOJSON_MAXIMUM_MERCATOR_LATITUDE_DEGREES","GEOJSON_TILE_LAYER_NAME"],"fn":["tile_geojson_for_tile","tile_geojson_for_tiles"],"struct":["GeoJsonTilingError","GeoJsonTilingOptions"]};

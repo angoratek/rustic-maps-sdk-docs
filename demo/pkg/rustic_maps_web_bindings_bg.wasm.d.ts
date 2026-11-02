@@ -11,6 +11,7 @@ export const calculateDistanceMatrix: (a: number, b: number, c: number, d: numbe
 export const calculateRoute: (a: number, b: number, c: number, d: number) => number;
 export const calculateRouteWithOptions: (a: number, b: number, c: number, d: number, e: number) => number;
 export const clearProviderRegistrations: () => void;
+export const clearUrlTemplateRasterTileSource: () => void;
 export const configureProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
 export const coordinateToNormalizedWorld: (a: number, b: number, c: number) => void;
 export const devicePixelRatioThreshold: () => number;
@@ -102,12 +103,12 @@ export const vectorTileLabelDescriptorsForStyle: (a: number, b: number, c: numbe
 export const vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
 export const vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
 export const zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-export const __wasm_bindgen_func_elem_1585: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_1585_98: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_1585_99: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_8489: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_8510: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_6293: (a: number, b: number) => void;
+export const __wasm_bindgen_func_elem_1607: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_1607_100: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_1607_99: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_8409: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_8430: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_6316: (a: number, b: number) => void;
 export const __wbindgen_export: (a: number, b: number) => number;
 export const __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
 export const __wbindgen_export3: (a: number) => void;
