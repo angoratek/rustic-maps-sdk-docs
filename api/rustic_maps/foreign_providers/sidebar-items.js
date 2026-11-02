@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["GeocodingProvider","RasterTileProvider"]};
+window.SIDEBAR_ITEMS = {"trait":["DistanceMatrixProvider","ElevationProvider","GeocodingProvider","RasterTileProvider","RoutingProvider","SearchPlaceProvider","TrafficFlowProvider","TrafficIncidentProvider"]};

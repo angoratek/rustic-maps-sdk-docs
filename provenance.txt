@@ -1,6 +1,6 @@
-source_commit: 8a49d971bf5cce6a82b152ab98e1b8b6592168ae
+source_commit: c991ee7c4687c9fbd8d8b64958718b8bc8e8f952
 dirty_tree: no
 generator: scripts/build-docs-site.sh (rustic-maps-sdk)
 content_license: MIT OR Apache-2.0
 map_attribution: map imagery © MapQuest; map data © OpenStreetMap contributors (ODbL)
-gates-green-asserted-by-publisher: 8a49d971bf5cce6a82b152ab98e1b8b6592168ae (recorded 2026-11-02T03:50:21Z)
+gates-green-asserted-by-publisher: c991ee7c4687c9fbd8d8b64958718b8bc8e8f952 (recorded 2026-11-02T04:39:16Z)
