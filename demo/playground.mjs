@@ -5795,7 +5795,6 @@
                   ?? LIVE_RASTER_FALLBACK_ZOOM_LEVEL,
                 imageFormat: 'png',
                 tileResolution: 'standard',
-                userAgent: navigator.userAgent,
               });
             } catch (live_source_failure) {
               // A malformed registry template is a page bug, not a reason to

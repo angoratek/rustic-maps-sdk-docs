@@ -654,6 +654,13 @@ export function calculateRouteWithOptions(origin_latitude: number, origin_longit
 export function clearProviderRegistrations(): void;
 
 /**
+ * Removes the page-registered URL-template raster source. A configured
+ * raster provider is untouched; with none, the canvas falls back to its
+ * recorded fixtures.
+ */
+export function clearUrlTemplateRasterTileSource(): void;
+
+/**
  * Chooses the provider that serves one capability, leaving every other
  * capability untouched — the contract's `MapSdk::configureProvider`.
  *
@@ -1003,6 +1010,7 @@ export interface InitOutput {
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
     readonly calculateRouteWithOptions: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly clearProviderRegistrations: () => void;
+    readonly clearUrlTemplateRasterTileSource: () => void;
     readonly configureProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly coordinateToNormalizedWorld: (a: number, b: number, c: number) => void;
     readonly devicePixelRatioThreshold: () => number;
@@ -1094,12 +1102,12 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1585: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1585_98: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1585_99: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8489: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8510: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_6293: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1607: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1607_100: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1607_99: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8409: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8430: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_6316: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
