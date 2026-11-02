@@ -592,7 +592,7 @@
       }
       #attribution-panel .attribution-terms-note:last-child { margin-bottom: 0; }
 
-      /* --- The on-map layer control (docs/MapControlsAndTrafficLayer.md) ---
+      /* --- The on-map layer control (docs/design/MapControlsAndTrafficLayer.md) ---
          The round layers button docks above the attribution notice on the
          map's end edge; its panel opens upward, clamped to 70% of the
          viewport height on a phone and scrolling inside. */
@@ -1153,7 +1153,7 @@
         border-radius: var(--radius-inline);
       }
       .trip-route-result[hidden] { display: none; }
-      /* Directions (docs/DirectionsModesAndStrategy.md): mode and strategy
+      /* Directions (docs/design/DirectionsModesAndStrategy.md): mode and strategy
          sit beside the plan action as the page's pressed-choice groups. The
          strategy row is hidden while the plan walks, so the two rows stay one
          eight-point rhythm apart. */

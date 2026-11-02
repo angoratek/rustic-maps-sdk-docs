@@ -2,8 +2,8 @@
     tile_x: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u32.html">u32</a>,
     tile_y: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u32.html">u32</a>,
     zoom_level: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u8.html">u8</a>,
-    image_format: RasterImageFormat,
-    tile_resolution: RasterTileResolution,
+    image_format: <a class="enum" href="../../geospatial_types/raster/enum.RasterImageFormat.html" title="enum geospatial_types::raster::RasterImageFormat">RasterImageFormat</a>,
+    tile_resolution: <a class="enum" href="../../geospatial_types/raster/enum.RasterTileResolution.html" title="enum geospatial_types::raster::RasterTileResolution">RasterTileResolution</a>,
 ) -&gt; <a class="struct" href="../request_fingerprint/struct.RequestDescriptor.html" title="struct rustic_maps_cache::request_fingerprint::RequestDescriptor">RequestDescriptor</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Builds the cacheable descriptor of one raster tile request, covering
 every argument the tile contract takes: address, encoding and resolution.
 Public so the tile-pack manager (<code>tile_packs</code>) fingerprints its planned

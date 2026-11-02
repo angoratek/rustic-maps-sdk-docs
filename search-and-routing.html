@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5453b58.js";
+            window.path_to_searchindex_js = "searchindex-3f07135d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -437,14 +437,15 @@ process. Keep the single handle from the <a href="first-map.html">first map</a> 
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="register-the-provider-at-runtime"><a class="header" href="#register-the-provider-at-runtime">Register the provider at runtime</a></h3>
-<p>A browser page has no settings sheet. Provider registration is a free call;
-its first argument is the provider key from the shared registry. Take the
-credential from your own runtime source: a form, a server-issued token, or a
-test environment. Keyless, the demo searches recorded places and plans
-recorded routes.</p>
-<pre><code class="language-js">import { registerProvider } from './web/rustic_maps_web_bindings.js';
+<p>A browser page has no settings sheet. Provider registration is one call per
+capability, naming the contract, the provider key from the shared registry and
+your credential. Take the credential from your own runtime source: a form, a
+server-issued token, or a test environment. Keyless, the demo searches
+recorded places and plans recorded routes.</p>
+<pre><code class="language-js">import { configureProvider } from './web/rustic_maps_web_bindings.js';
 
-registerProvider('mapquest', providerCredential);
+configureProvider('Geocoding', 'mapquest', providerCredential);
+configureProvider('Routing', 'mapquest', providerCredential);
 </code></pre>
 <p>The calls below reject with the provider’s own error text when no provider is
 registered or the provider refuses.</p>

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5453b58.js";
+            window.path_to_searchindex_js = "searchindex-3f07135d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -434,6 +434,7 @@
 <tr><td><code>offline_routing_benchmark</code></td><td>module</td><td><code>pub mod offline_routing_benchmark</code></td><td>—</td></tr>
 <tr><td><code>registry</code></td><td>module</td><td><code>pub mod registry</code></td><td>—</td></tr>
 <tr><td><code>routing_fallback</code></td><td>module</td><td><code>pub mod routing_fallback</code></td><td>—</td></tr>
+<tr><td><code>traffic_flow_cache</code></td><td>module</td><td><code>pub mod traffic_flow_cache</code></td><td>—</td></tr>
 </tbody>
 </table>
 </div>
@@ -506,6 +507,31 @@
 <tbody>
 <tr><td><code>ROUTING_FALLBACK_TRACING_TARGET</code></td><td>const</td><td><code>pub const ROUTING_FALLBACK_TRACING_TARGET: &amp;str</code></td><td>Diagnostic target of the fallback’s tracing events.</td></tr>
 <tr><td><code>OfflineFallbackRoutingProvider</code></td><td>struct</td><td><code>pub struct OfflineFallbackRoutingProvider</code></td><td>Wraps a primary routing provider with an offline retry. When the primary provider fails for a request with at least two waypoints, each consecutive waypoint pair is routed over the loaded offline graph and the answers are joined into one route: one leg per pair, summed distance and duration, and the union bounding box. Behavior: - A successful primary response is returned unchanged, and the offline provider is not consulted. - A request with fewer than two waypoints has no point-to-point offline equivalent, so it is rejected with [<code>SDKError::ProviderRequestRejected</code>] without a fallback attempt. - If the offline retry also fails, that failure is logged and returned. It describes the last failure, matching how a primary failure reaches the caller.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-traffic_flow_cache"><a class="header" href="#module-traffic_flow_cache">Module <code>traffic_flow_cache</code></a></h3>
+<p>Grid-keyed, memory-bounded caching of traffic-flow observations.</p>
+<p>A traffic layer asks its provider for the segments inside a camera’s bounding box every time the camera settles. The provider answers for a <em>region</em>, and the region a camera shows changes by a few pixels on every small pan, so a cache keyed by the exact requested box would miss almost every time. This module keys cached answers by the web-mercator tile grid instead: a request is answered from the cells it covers when those cells are fresh, the missing cells are fetched from the provider once as their union, and the provider’s answer is stored per cell. A pan of a few pixels is therefore a hit, a revisit of an earlier area is a hit, and memory stays bounded by a fixed entry budget with least-recently-used eviction.</p>
+<p>An answer is the segments the covering cells hold — what the provider reported for that ground — not a re-filtered subset of it. A cell is coarser than a camera, so a hit can hold a few segments just outside the requested box; the renderer clips those at draw time, and narrowing them here would drop observations a provider chose to report.</p>
+<p>The clock is injected ([<code>TrafficFlowCurrentTimeSeconds</code>]) rather than read from the platform: the crate compiles for the browser, where the standard library’s clock panics, so the host supplies its own (the browser target uses <code>Date.now()</code>, the native targets <code>SystemTime</code>). Tests supply a controllable clock.</p>
+<p>The cache never holds a lock across an await: a request inspects the cells under the lock, drops it, awaits the provider, then re-takes the lock to store the answer.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DEFAULT_TRAFFIC_FLOW_GRID_ZOOM_LEVEL</code></td><td>const</td><td><code>pub const DEFAULT_TRAFFIC_FLOW_GRID_ZOOM_LEVEL: u8</code></td><td>Zoom level the cache keys its cells at: a ~10 km cell at the equator. A city camera covers one or two cells, so the provider is asked for roughly what the camera shows — no larger — and a pan of a few hundred metres stays inside the cell it already holds.</td></tr>
+<tr><td><code>DEFAULT_TRAFFIC_FLOW_MAXIMUM_ENTRY_COUNT</code></td><td>const</td><td><code>pub const DEFAULT_TRAFFIC_FLOW_MAXIMUM_ENTRY_COUNT: usize</code></td><td>How many grid cells the cache keeps before evicting the least recently used. Sixty-four cells at the default zoom cover roughly a two-hour drive in every direction without unbounded growth.</td></tr>
+<tr><td><code>DEFAULT_TRAFFIC_FLOW_TIME_TO_LIVE_SECONDS</code></td><td>const</td><td><code>pub const DEFAULT_TRAFFIC_FLOW_TIME_TO_LIVE_SECONDS: u64</code></td><td>How long one cached cell stays fresh: the traffic category’s own policy, five minutes, which is the interval at which flow observations are worth re-reading.</td></tr>
+<tr><td><code>TrafficFlowCurrentTimeSeconds</code></td><td>type</td><td><code>pub type TrafficFlowCurrentTimeSeconds = Arc&lt;dyn Fn() -&gt; u64 + Send + Sync&gt;</code></td><td>Supplies “now” in whole seconds to the cache. The host decides what the clock is: the browser target reads <code>Date.now()</code>, the native targets read the system clock, and tests use a controllable counter. A cached cell’s freshness is <code>now - stored_at</code> less than the time-to-live, so a clock that steps backwards simply keeps an entry fresh longer rather than expiring everything.</td></tr>
+<tr><td><code>TrafficFlowCacheConfiguration</code></td><td>struct</td><td><code>pub struct TrafficFlowCacheConfiguration</code></td><td>How a cache answers traffic-flow requests.</td></tr>
+<tr><td><code>TrafficFlowGridCell</code></td><td>struct</td><td><code>pub struct TrafficFlowGridCell</code></td><td>One grid cell at the cache’s zoom level.</td></tr>
+<tr><td><code>TrafficFlowCacheStatistics</code></td><td>struct</td><td><code>pub struct TrafficFlowCacheStatistics</code></td><td>What the cache has answered: read by the frame diagnostics and the developer console, never mutated by a caller.</td></tr>
+<tr><td><code>TrafficFlowGridCache</code></td><td>struct</td><td><code>pub struct TrafficFlowGridCache</code></td><td>The grid-keyed traffic-flow cache. One instance serves one provider’s answers; [<code>GridCachedTrafficFlowProvider</code>] wraps a provider with it. The cache is shared through an <code>Arc</code> so the provider wrapper can report statistics while a frame reads them.</td></tr>
+<tr><td><code>GridCachedTrafficFlowProvider</code></td><td>struct</td><td><code>pub struct GridCachedTrafficFlowProvider</code></td><td>A traffic-flow provider whose answers are cached by grid cell. The wrapper answers a request from fresh cells when it can, asks the underlying provider for exactly the cells it does not have — as their union bounding box, in one call — and stores the answer per cell. It never holds the cache lock across the provider await.</td></tr>
+<tr><td><code>system_clock_time_seconds</code></td><td>function</td><td><code>pub fn system_clock_time_seconds() -&gt; u64</code></td><td>A portable clock for tests and hosts that only need monotonic seconds: whole seconds since the Unix epoch, clamped to zero before it. The browser build must not call this (the standard library’s clock panics there); the browser registration supplies <code>Date.now()</code> instead.</td></tr>
 </tbody>
 </table>
 </div>

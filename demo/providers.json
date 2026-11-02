@@ -29,6 +29,12 @@
           "fixture": "fixtures/mapquest/geocode_address_city.json"
         },
         {
+          "purpose": "reverse_geocoding",
+          "method": "GET",
+          "path_pattern": "^geocoding/v1/reverse$",
+          "fixture": "fixtures/mapquest/geocode_reverse_capitol.json"
+        },
+        {
           "purpose": "search",
           "method": "GET",
           "path_pattern": "^search/v3/prediction$",

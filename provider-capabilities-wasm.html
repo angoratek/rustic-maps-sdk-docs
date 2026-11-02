@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5453b58.js";
+            window.path_to_searchindex_js = "searchindex-3f07135d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -196,17 +196,18 @@ never place it in the bundle.</li>
 <tr><th>Provider</th><th>Key</th><th>Credential</th><th>Form on WebAssembly</th><th>Serves</th></tr>
 </thead>
 <tbody>
-<tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward only), search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster fallback</td><td>Raster tiles</td></tr>
+<tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, search and suggestions, routing with its capability readback, distance matrix, traffic incidents and flow, raster tiles</td></tr>
+<tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster tiles</td><td>Raster tiles</td></tr>
 <tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
 <tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
 </tbody>
 </table>
 </div>
-<p>MapQuest registers through <code>registerProvider</code>. OpenStreetMap Standard’s
-template feeds the canvas’s live raster fallback. OpenStreetMap US and
-OpenFreeMap are served by <code>MapView.setVectorTileSource</code> and need no
-registration call.</p>
+<p>MapQuest registers through <code>configureProvider</code>, one capability at a time, or
+<code>setProviderCredential</code> for its whole capability set. OpenStreetMap Standard
+registers through <code>registerUrlTemplateRasterTileSource</code>, and its tiles then
+feed the canvas’s live raster fallback. OpenStreetMap US and OpenFreeMap are
+served by <code>MapView.setVectorTileSource</code> and need no registration call.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -233,23 +234,24 @@ the active style’s line, so display it verbatim.</p>
 <tr><th>Capability</th><th>Public JavaScript call</th></tr>
 </thead>
 <tbody>
-<tr><td>Forward geocoding</td><td><code>forwardGeocode(queryText)</code></td></tr>
+<tr><td>Geocoding</td><td><code>forwardGeocode(queryText)</code>, <code>reverseGeocode(latitude, longitude)</code></td></tr>
 <tr><td>Suggestions and search</td><td><code>suggestPlaces(queryText)</code>, <code>suggestPlacesInBoundary(...)</code>, <code>searchPlaces(queryText)</code>, <code>searchPlacesInBoundary(...)</code></td></tr>
 <tr><td>Routing with options</td><td><code>calculateRoute(originLatitude, originLongitude, destinationLatitude, destinationLongitude)</code>, <code>calculateRouteWithOptions(..., options)</code></td></tr>
+<tr><td>Route capabilities</td><td><code>routeCapabilities()</code> returns the modes and the strategy the serving provider honours</td></tr>
 <tr><td>Distance matrix</td><td><code>calculateDistanceMatrix(originCoordinates, destinationCoordinates, transportationMode)</code></td></tr>
 <tr><td>Traffic incidents and flow</td><td><code>fetchTrafficIncidents(...)</code>, <code>fetchTrafficFlow(...)</code></td></tr>
-<tr><td>Raster tiles</td><td><code>fetchRasterTile(zoomLevel, tileX, tileY)</code> through the live provider; <code>MapView.setRasterTileSource(template, maximumZoomLevel)</code> for the live fallback</td></tr>
+<tr><td>Elevation</td><td><code>fetchElevationPoints(pointCoordinates)</code>; refuses while no elevation provider is configured</td></tr>
+<tr><td>Raster tiles</td><td><code>fetchRasterTile(zoomLevel, tileX, tileY)</code> through the serving provider; <code>registerUrlTemplateRasterTileSource(source)</code> installs a <code>{z}/{x}/{y}</code> tileset</td></tr>
 <tr><td>Vector tiles and styles</td><td><code>MapView.setVectorTileSource(source)</code>, <code>MapView.clearVectorTileSource()</code>, <code>MapView.vectorTileSourceStatus()</code></td></tr>
 <tr><td>Offline routing</td><td><code>offlineRouteFromArchiveBytes(archiveBytes, startLatitude, startLongitude, endLatitude, endLongitude)</code></td></tr>
 <tr><td>Navigation</td><td><code>Navigator.startNavigation(...)</code>, <code>Navigator.updateLocation(...)</code>, <code>Navigator.applyReroute(...)</code>, <code>Navigator.stopNavigation()</code>, <code>Navigator.currentTripState()</code>, <code>Navigator.hasActiveTrip()</code>; <code>RouteSimulator</code></td></tr>
-<tr><td>Provider registration</td><td><code>registerProvider(providerKey, credential, baseUrl?)</code>, <code>clearProvider()</code>, <code>setProviderCredential(apiKey, baseUrl?)</code></td></tr>
+<tr><td>Provider registration</td><td><code>configureProvider(contract, providerKey, credential)</code> per capability, <code>setProviderCredential(credential)</code> for a provider’s whole set, <code>providerRegistrations()</code> to read back which provider serves each capability, <code>clearProviderRegistrations()</code> to empty every slot</td></tr>
 </tbody>
 </table>
 </div>
-<p>There is no reverse-geocoding export, no disk tile cache, and no
-host-implemented provider registration on this surface. Calls reject with
-the provider’s verbatim message when no provider is registered or the
-provider refuses.</p>
+<p>There is no disk tile cache and no host-implemented provider registration on
+this surface. Calls reject with the provider’s verbatim message when no
+provider is registered or the provider refuses.</p>
 <h2 id="switch-the-base-map"><a class="header" href="#switch-the-base-map">Switch the base map</a></h2>
 <h3 id="a-styled-vector-base"><a class="header" href="#a-styled-vector-base">A styled vector base</a></h3>
 <p>The registry’s keyless vector base for OpenFreeMap is Bright. Install it on
@@ -279,47 +281,67 @@ with <code>clearVectorTileSource()</code>.</p>
 <pre><code class="language-js">mapView.clearVectorTileSource();
 </code></pre>
 <h3 id="the-raster-fallback"><a class="header" href="#the-raster-fallback">The raster fallback</a></h3>
-<p>The canvas draws its same-origin recorded tiles first. A registry raster
-template supplies a live fallback for addresses those tiles do not cover; a
-registered live provider is consulted before the template.</p>
-<pre><code class="language-js">mapView.setRasterTileSource(
-  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  19,
-);
+<p>The canvas draws its same-origin recorded tiles first. The serving raster-tile
+provider answers for addresses those tiles do not cover, so panning anywhere
+still draws imagery. Register a <code>{z}/{x}/{y}</code> tileset by declaration:</p>
+<pre><code class="language-js">import { registerUrlTemplateRasterTileSource } from './web/rustic_maps_web_bindings.js';
+
+registerUrlTemplateRasterTileSource({
+  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  sourceName: 'OpenStreetMap Standard',
+  minimumZoomLevel: 0,
+  maximumZoomLevel: 19,
+  imageFormat: 'png',
+  tileResolution: 'standard',
+  userAgent: navigator.userAgent,
+});
 </code></pre>
-<p>The template must carry <code>{z}</code>, <code>{x}</code>, and <code>{y}</code>; the maximum zoom level must
-be between 1 and 24. A blank template clears the fallback.</p>
+<p>A declaration whose template lacks <code>{z}</code>, <code>{x}</code>, or <code>{y}</code>, whose name is
+blank, or whose zoom range is inverted throws with a precise detail, and the
+previous source keeps serving. The canvas fetches at the ceiling the source
+declares. Registering a provider that carries a credential replaces it.</p>
 <h2 id="register-a-provider"><a class="header" href="#register-a-provider">Register a provider</a></h2>
-<p>Provider registration is a free call whose first argument is the provider
-key from the shared registry. The credential lives in module memory only;
-it is never persisted or logged.</p>
-<pre><code class="language-js">import init, { MapsSdk, registerProvider } from './web/rustic_maps_web_bindings.js';
+<p>Registration is one call per capability: name the capability from the
+contract, the provider key from the shared registry, and the credential. The
+credential lives in module memory only; it is never persisted or logged.</p>
+<pre><code class="language-js">import init, {
+  MapsSdk,
+  configureProvider,
+  providerRegistrations,
+} from './web/rustic_maps_web_bindings.js';
 
 await init();
 const mapSdk = await MapsSdk.create();
-registerProvider('mapquest', providerCredential);
+
+configureProvider('Geocoding', 'mapquest', providerCredential);
+configureProvider('Routing', 'mapquest', providerCredential);
+
+const registrations = providerRegistrations();
 </code></pre>
-<p><code>registerProvider</code> dispatches the key to a provider implementation compiled
-into the WebAssembly module. A key with no compiled provider is refused with
-a message naming the key. <code>clearProvider()</code> removes the registration; the
-page then answers from recorded data and the raster fallback.</p>
-<p>A refused credential or a key with no dispatch arm throws with the verbatim
-detail. Apply the credential through a settings form or a test’s runtime
-environment; never compile it into the bundle.</p>
+<p><code>providerRegistrations()</code> answers one row per capability, in the contract’s
+order, with the provider key, its display name and whether a provider is
+installed. Each slot is independent, so a page may serve geocoding from one
+provider and raster tiles from another. <code>setProviderCredential(credential)</code>
+registers the full-service provider for every capability it serves, and
+<code>clearProviderRegistrations()</code> empties every slot.</p>
+<p>A key with no compiled provider is refused with a message naming the key, and
+a blank credential for a provider that requires one is refused before any
+slot changes. Apply the credential through a settings form or a test’s
+runtime environment; never compile it into the bundle.</p>
 <h2 id="what-you-should-see"><a class="header" href="#what-you-should-see">What you should see</a></h2>
 <p>After the vector install, <code>vectorTileSourceStatus()</code> reports a configured
 source with the <code>bright-light</code> style id and the OpenFreeMap source name.
-After <code>registerProvider</code>, the live calls resolve; before it, they reject with
-the registration refusal. The canvas keeps drawing the keyless base and its
+After <code>configureProvider</code>, the capability’s calls resolve and
+<code>providerRegistrations()</code> names the provider; before it, they reject with the
+registration refusal. The canvas keeps drawing the keyless base and its
 recorded tiles in either case.</p>
 <h2 id="constraints"><a class="header" href="#constraints">Constraints</a></h2>
 <ul>
 <li>The module must be initialized and <code>MapsSdk.create()</code> resolved before a
 <code>MapView</code> is constructed.</li>
-<li>The browser surface has no reverse geocoding, no tile cache, and no
-host-implemented provider registration. A provider that needs those
-contracts is a compiled provider crate, covered in
-<a href="adding-a-provider.html">Add a provider</a>.</li>
+<li>The browser surface has no disk tile cache and no host-implemented provider
+registration. A provider that needs those contracts is a compiled provider
+crate, covered in <a href="adding-a-provider.html">Add a provider</a>.</li>
 <li><code>MapView.setVectorTileSource</code> refuses while a frame is resolving; retry
 after the frame settles.</li>
 <li>Tests never reach the network. Recorded tiles and provider responses are

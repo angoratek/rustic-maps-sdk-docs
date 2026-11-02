@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5453b58.js";
+            window.path_to_searchindex_js = "searchindex-3f07135d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -237,8 +237,10 @@ the active style’s line, so display it verbatim.</p>
 <tr><td>Forward and reverse geocoding</td><td><code>MapsSdk.forwardGeocode(addressText)</code>, <code>MapsSdk.reverseGeocode(coordinate)</code></td></tr>
 <tr><td>Suggestions and search</td><td><code>MapsSdk.suggest(queryText, searchBoundary)</code>, <code>MapsSdk.search(queryText, searchBoundary)</code></td></tr>
 <tr><td>Routing with options</td><td><code>MapsSdk.calculateRoute(waypoints, routeOptions)</code></td></tr>
+<tr><td>Route capabilities</td><td><code>MapsSdk.routeCapabilities()</code></td></tr>
 <tr><td>Distance matrix</td><td><code>MapsSdk.calculateDistanceMatrix(origins, destinations, transportationMode)</code></td></tr>
 <tr><td>Traffic incidents and flow</td><td><code>MapsSdk.fetchTrafficIncidents(boundingBox)</code>, <code>MapsSdk.fetchTrafficFlow(boundingBox)</code></td></tr>
+<tr><td>Elevation</td><td><code>MapsSdk.fetchElevationPoints(coordinates)</code>; no shipped provider serves it</td></tr>
 <tr><td>Raster base map</td><td><code>MapsSdk.registerUrlTemplateRasterTileSource(source)</code>; the <code>MapView</code> component draws the tiles</td></tr>
 <tr><td>Disk tile cache</td><td><code>MapsSdk.setProviderCredentialWithTileCache(providerKey, credential)</code>, <code>MapsSdk.tileCacheTerms()</code>, <code>MapsSdk.setTileCacheTimeToLive(seconds)</code></td></tr>
 <tr><td>Vector tiles and styles</td><td><code>MapViewHandle.setVectorTileSource(source)</code>, <code>MapViewHandle.clearVectorTileSource()</code>, <code>MapViewHandle.getVectorTileSourceStatus()</code></td></tr>

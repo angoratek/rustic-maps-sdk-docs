@@ -140,8 +140,9 @@ export class MapView {
     /**
      * Removes the vector base map (the UDL
      * `MapView.clear_vector_tile_source` contract member): following frames
-     * draw raster tiles and overlays alone. Refused while a frame resolves,
-     * like installing.
+     * draw raster tiles and overlays alone. A clear that lands while a frame
+     * resolves is deferred to that frame's end, like installing, and it
+     * cancels an install that was waiting.
      */
     clearVectorTileSource(): void;
     /**
@@ -290,19 +291,6 @@ export class MapView {
      */
     setOverlays(overlays: any[]): void;
     /**
-     * Sets (or clears, with a blank template) the live raster fallback: a
-     * `{z}/{x}/{y}` URL template from a provider registry descriptor that
-     * the frame fetches when no recorded fixture exists at an address, so a
-     * camera over unrecorded ground still draws imagery. The template must
-     * carry all three placeholders; the maximum zoom level caps the fetch
-     * zoom to what the tile service actually serves.
-     *
-     * The fallback runs only after the recorded-fixture fetch fails, so a
-     * page keeps its deterministic recorded-tile imagery, and a registered
-     * live provider (a runtime credential) is consulted before the template.
-     */
-    setRasterTileSource(url_template: string, maximum_zoom_level: number): void;
-    /**
      * Installs a styled vector base map (the UDL
      * `MapView.set_vector_tile_source` contract member).
      *
@@ -320,7 +308,9 @@ export class MapView {
      * While a source is installed the canvas hides the raster base and paints
      * the style's own background, exactly like the native surface; the
      * source's overlays and place names draw beneath every overlay the page
-     * supplies. Installing while a frame resolves is refused.
+     * supplies. An install that lands while a frame resolves is deferred to
+     * that frame's end and the last request wins, so a style switch never has
+     * to be retried.
      */
     setVectorTileSource(source: any): void;
     /**
@@ -620,18 +610,18 @@ export enum TrafficFlowCongestionLevel {
 }
 
 /**
- * Calculates a travel-time matrix through the active provider's
- * distance-matrix surface — the contract's `MapSdk::calculate_distance_matrix`
- * on the wasm seam. Coordinates arrive as flat
- * `[latitude, longitude, …]` arrays; the mode is the contract enum's name
- * (or the common lowercase spelling). Answers `{originIndex,
- * destinationIndex, distanceMeters, durationSeconds}` rows.
+ * Calculates a travel-time matrix through the installed distance-matrix
+ * provider — the contract's `MapSdk::calculateDistanceMatrix` on the wasm
+ * seam. Coordinates arrive as flat `[latitude, longitude, …]` arrays; the
+ * mode is the contract enum's name (or the common lowercase spelling).
+ * Answers `{originIndex, destinationIndex, distanceMeters,
+ * durationSeconds}` rows.
  */
 export function calculateDistanceMatrix(origin_coordinates: Float64Array, destination_coordinates: Float64Array, transportation_mode: string): Promise<Array<any>>;
 
 /**
- * Plans a two-waypoint route through the active live provider, answering
- * the same plain JavaScript shape
+ * Plans a two-waypoint route through the installed routing provider,
+ * answering the same plain JavaScript shape
  * [`crate::exports::offline_route_from_archive_bytes`] does: `distanceMeters`,
  * `durationSeconds`, `boundingBox` and `legs` of `steps` carrying the stable
  * snake-case `maneuverType` label and the provider's end-anchored instruction
@@ -657,16 +647,30 @@ export function calculateRoute(origin_latitude: number, origin_longitude: number
 export function calculateRouteWithOptions(origin_latitude: number, origin_longitude: number, destination_latitude: number, destination_longitude: number, options: any): Promise<object>;
 
 /**
- * Addition-only alias for the vendor-named export: clears the active
- * registration.
+ * Empties every provider slot and forgets the selections — the browser
+ * counterpart of the settings surface's Clear act. The contract carries no
+ * clearing member, and a page that clears keeps nothing afterwards.
  */
-export function clearMapquestProviders(): void;
+export function clearProviderRegistrations(): void;
 
 /**
- * Clears the active registration (the settings surface's Clear act; the
- * running page keeps nothing afterwards).
+ * Chooses the provider that serves one capability, leaving every other
+ * capability untouched — the contract's `MapSdk::configureProvider`.
+ *
+ * `contract` is the capability's name (`Geocoding`, `Routing`,
+ * `DistanceMatrix`, `PlaceSearch`, `TrafficIncidents`, `TrafficFlow`,
+ * `Elevation`, `RasterTiles`, `VectorTiles` or `OfflineRouting`; the
+ * registry's `…Provider` spelling is accepted too). `providerKey` is a
+ * provider this build carries, and `credential` its key — an empty string is
+ * accepted only for a provider that needs none.
+ *
+ * Fails with `ProviderNotConfigured` when the key is unknown to this build,
+ * `ProviderRequestRejected` when the provider needs a credential and none
+ * was supplied, and `UnsupportedCapability` when the key serves no such
+ * capability. A refused call leaves the previously serving provider in
+ * place.
  */
-export function clearProvider(): void;
+export function configureProvider(contract: string, provider_key: string, credential: string): void;
 
 /**
  * Maps a coordinate to normalized world coordinates in `[0, 1]²`, as
@@ -685,19 +689,31 @@ export function coordinateToNormalizedWorld(latitude: number, longitude: number)
 export function devicePixelRatioThreshold(): number;
 
 /**
- * Fetches one raster tile through the active live provider, answering the
- * PNG bytes as a `Uint8Array`.
+ * Fetches elevation samples through the installed elevation provider — the
+ * contract's `MapSdk::fetchElevationPoints` on the wasm seam. Coordinates
+ * arrive as a flat `[latitude, longitude, …]` array; the answer rows carry
+ * `latitude`, `longitude` and `elevationMeters`.
+ *
+ * The provider set this build carries serves no elevation, so the call
+ * answers `ProviderNotConfigured` until a page configures one; the refusal
+ * names the contract, exactly as the native bindings' does.
+ */
+export function fetchElevationPoints(point_coordinates: Float64Array): Promise<Array<any>>;
+
+/**
+ * Fetches one raster tile through the installed raster-tile provider,
+ * answering the PNG bytes as a `Uint8Array`.
  *
  * The request is the standard-resolution PNG form of the provider's
- * documented Tiles API path. Failures throw an error carrying the verbatim
+ * documented tile path. Failures throw an error carrying the verbatim
  * detail and a stable code: no registration, a zoom or tile address outside
- * the Tiles API's documented bounds, or the provider's own refusal.
+ * the provider's documented bounds, or the provider's own refusal.
  */
 export function fetchRasterTile(zoom_level: number, tile_x: number, tile_y: number): Promise<Uint8Array>;
 
 /**
  * Fetches per-segment traffic flow inside the bounding box — the contract's
- * `MapSdk::fetch_traffic_flow` on the wasm seam. The row shape is the
+ * `MapSdk::fetchTrafficFlow` on the wasm seam. The row shape is the
  * contract's `TrafficFlowData` with lower-camel field names, speed values or
  * null, and the congestion level's enum name as text.
  */
@@ -705,7 +721,7 @@ export function fetchTrafficFlow(south_west_latitude: number, south_west_longitu
 
 /**
  * Fetches traffic disruptions intersecting the bounding box — the contract's
- * `MapSdk::fetch_traffic_incidents` on the wasm seam. The row shape is the
+ * `MapSdk::fetchTrafficIncidents` on the wasm seam. The row shape is the
  * contract's `TrafficIncident` with lower-camel field names and enum names
  * as text (`incidentType`, `severity`).
  */
@@ -721,9 +737,9 @@ export function fetchTrafficIncidents(south_west_latitude: number, south_west_lo
 export function flushRecentDiagnosticEvents(minimum_severity: SdkLogSeverity, maximum_count: number): Array<any>;
 
 /**
- * Forward-geocodes through the active live provider, answering the same row
- * shape the native reference applications consume. Fails with a message when no provider is
- * registered or the provider refuses the query.
+ * Forward-geocodes through the installed geocoding provider, answering the
+ * same row shape the native reference applications consume. Fails with a
+ * message when no provider is registered or the provider refuses the query.
  */
 export function forwardGeocode(query_text: string): Promise<Array<any>>;
 
@@ -773,11 +789,38 @@ export function offlineRouteFromArchiveBytes(archive_bytes: Uint8Array, start_la
 export function panCameraByScreenPixels(camera: MapCamera, delta_x_pixels: number, delta_y_pixels: number, width_pixels: number, height_pixels: number, field_of_view_degrees: number): object;
 
 /**
- * Registers a provider for live browser calls. The caller names the shared
- * registry's provider key; a blank credential is refused. The credential
- * lives in module memory only and is never logged.
+ * Reports which provider serves each capability, in the contract's stable
+ * order, as `{contract, providerKey, displayName, registered}` rows. Every
+ * capability appears, including the ones with no provider installed; those
+ * carry empty texts and `registered` false.
  */
-export function registerProvider(provider_key: string, credential: string, base_url?: string | null): void;
+export function providerRegistrations(): Array<any>;
+
+/**
+ * Registers a `{z}/{x}/{y}` raster tileset as the serving raster-tile
+ * provider — the contract's `MapSdk::registerUrlTemplateRasterTileSource`.
+ *
+ * The declaration arrives as one plain object with the contract's
+ * `UrlTemplateRasterTileSource` fields, lower-camel-cased: `urlTemplate`,
+ * `sourceName`, `minimumZoomLevel`, `maximumZoomLevel`, `imageFormat`
+ * (`Png` or `Jpeg`), `tileResolution` (`Standard` or `Retina`) and
+ * `userAgent`. Zoom levels and texts fall back to the documented defaults;
+ * the format defaults to `Png` and the resolution to `Standard`.
+ *
+ * A malformed template, a blank source name or an inverted zoom range throws
+ * `InvalidCoordinateInput` with a precise detail, and the previous source
+ * keeps serving. The canvas' live raster fallback fetches through the
+ * registered source at the zoom ceiling it declares.
+ */
+export function registerUrlTemplateRasterTileSource(source: any): void;
+
+/**
+ * Resolves a coordinate into candidate places describing that position
+ * through the installed geocoding provider — the contract's
+ * `MapSdk::reverseGeocode` in the same row shape [`crate::live_providers::forward_geocode_live`]
+ * answers.
+ */
+export function reverseGeocode(latitude_degrees: number, longitude_degrees: number): Promise<Array<any>>;
 
 /**
  * Rotates the camera bearing by `delta_bearing_degrees` around the focal
@@ -787,9 +830,20 @@ export function registerProvider(provider_key: string, credential: string, base_
 export function rotateCameraByDegreesAroundScreenPoint(camera: MapCamera, delta_bearing_degrees: number, focal_x_pixels: number, focal_y_pixels: number, width_pixels: number, height_pixels: number, field_of_view_degrees: number): object;
 
 /**
- * Returns full search results for a settled query through the active
- * provider's search-place surface — the same rows the native reference apps
- * consume from `MapSdk::search`.
+ * Reports which transport modes and which route strategy the serving routing
+ * provider can honour — the contract's `MapSdk::routeCapabilities`.
+ *
+ * A surface reads this answer so it can disable a choice the provider cannot
+ * serve with a reason, instead of sending the request and receiving a route
+ * from a path the reader did not ask for. Fails with
+ * `ProviderNotConfigured` while no routing provider is installed.
+ */
+export function routeCapabilities(): object;
+
+/**
+ * Returns full search results for a settled query through the installed
+ * search-place provider — the same rows the native reference apps consume
+ * from `MapSdk::search`.
  */
 export function searchPlaces(query_text: string): Promise<Array<any>>;
 
@@ -800,11 +854,23 @@ export function searchPlaces(query_text: string): Promise<Array<any>>;
 export function searchPlacesInBoundary(query_text: string, south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number): Promise<Array<any>>;
 
 /**
- * The contract's single-credential registration spelling (`MapSdk::
- * set_provider_credential`) on the wasm seam: registers the MapQuest
- * provider set through the generic dispatch table.
+ * Points a provider key's requests at a base URL instead of its public
+ * endpoint — a browser-only seam for a page that serves the provider's
+ * routes itself, such as the test harness. Register the provider after
+ * calling this; the override applies to every later registration of the key.
  */
-export function setProviderCredential(api_key: string, base_url?: string | null): void;
+export function setProviderBaseUrl(provider_key: string, base_url: string): void;
+
+/**
+ * Registers a provider for every capability it serves — the all-in-one
+ * convenience, the contract's `MapSdk::setProviderCredential` with the
+ * provider key fixed to this build's full-service provider.
+ *
+ * A blank credential is refused; the credential lives in module memory only
+ * and is never logged. Configure one capability at a time with
+ * [`configure_provider`] to mix providers across capabilities.
+ */
+export function setProviderCredential(credential: string): void;
 
 /**
  * Lowers the recording gate to the requested severity: from that moment on,
@@ -819,9 +885,9 @@ export function subscribeToDiagnosticEvents(minimum_severity: SdkLogSeverity): v
 
 /**
  * Returns fast completion candidates while the visitor types, through the
- * active provider's search-place surface — the same rows the native
- * reference apps consume from `MapSdk::suggest`. Fails with a verbatim
- * message when no provider is registered or the provider refuses the query.
+ * installed search-place provider — the same rows the native reference apps
+ * consume from `MapSdk::suggest`. Fails with a verbatim message when no
+ * provider is registered or the provider refuses the query.
  */
 export function suggestPlaces(query_text: string): Promise<Array<any>>;
 
@@ -844,6 +910,15 @@ export function tileKeyForCoordinate(latitude: number, longitude: number, zoom_l
  * the native `tiles_covering`.
  */
 export function tilesCovering(south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number, zoom_level: number): Array<any>;
+
+/**
+ * Reads the serving traffic-flow cache's counters: `{hitCount, missCount,
+ * entryCount, evictionCount, segmentCount, gridZoomLevel,
+ * maximumEntryCount, timeToLiveSeconds}`, or null while no traffic provider
+ * is registered. A page's developer console shows these; nothing mutates
+ * through this call.
+ */
+export function trafficFlowCacheStatistics(): object | undefined;
 
 /**
  * The geographic bounds of one web-mercator tile, as
@@ -927,10 +1002,11 @@ export interface InitOutput {
     readonly calculateDistanceMatrix: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
     readonly calculateRouteWithOptions: (a: number, b: number, c: number, d: number, e: number) => number;
-    readonly clearMapquestProviders: () => void;
-    readonly clearProvider: () => void;
+    readonly clearProviderRegistrations: () => void;
+    readonly configureProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly coordinateToNormalizedWorld: (a: number, b: number, c: number) => void;
     readonly devicePixelRatioThreshold: () => number;
+    readonly fetchElevationPoints: (a: number, b: number) => number;
     readonly fetchRasterTile: (a: number, b: number, c: number) => number;
     readonly fetchTrafficFlow: (a: number, b: number, c: number, d: number) => number;
     readonly fetchTrafficIncidents: (a: number, b: number, c: number, d: number) => number;
@@ -970,7 +1046,6 @@ export interface InitOutput {
     readonly mapview_setLabels: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
-    readonly mapview_setRasterTileSource: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly mapview_setVectorTileSource: (a: number, b: number, c: number) => void;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
     readonly mapview_updateOverlay: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -993,8 +1068,11 @@ export interface InitOutput {
     readonly positioncontroller_smoothedCourseDegrees: (a: number, b: number) => void;
     readonly positioncontroller_sourceFailed: (a: number, b: number, c: number, d: number) => void;
     readonly positioncontroller_sourceStatus: (a: number, b: number) => void;
-    readonly registerProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly providerRegistrations: (a: number) => void;
+    readonly registerUrlTemplateRasterTileSource: (a: number, b: number) => void;
+    readonly reverseGeocode: (a: number, b: number) => number;
     readonly rotateCameraByDegreesAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
+    readonly routeCapabilities: (a: number) => void;
     readonly routesimulator_fixAtElapsedSeconds: (a: number, b: number, c: number) => void;
     readonly routesimulator_fixAtTravelledMeters: (a: number, b: number, c: number) => void;
     readonly routesimulator_new: (a: number, b: number, c: number) => void;
@@ -1002,24 +1080,26 @@ export interface InitOutput {
     readonly routesimulator_totalDurationSeconds: (a: number) => number;
     readonly searchPlaces: (a: number, b: number) => number;
     readonly searchPlacesInBoundary: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
-    readonly setProviderCredential: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly setProviderBaseUrl: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly setProviderCredential: (a: number, b: number, c: number) => void;
     readonly subscribeToDiagnosticEvents: (a: number) => void;
     readonly suggestPlaces: (a: number, b: number) => number;
     readonly suggestPlacesInBoundary: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly tileKeyForCoordinate: (a: number, b: number, c: number, d: number) => void;
     readonly tilesCovering: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly trafficFlowCacheStatistics: (a: number) => void;
     readonly vectorTileGeographicBounds: (a: number, b: number, c: number, d: number) => void;
     readonly vectorTileLabelDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileLabelDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1509: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1509_93: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1509_94: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8390: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8411: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_6308: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1585: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1585_98: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1585_99: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8489: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8510: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_6293: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
