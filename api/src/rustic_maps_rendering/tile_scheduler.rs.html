@@ -422,800 +422,809 @@
 <a href=#422 id=422 data-nosnippet>422</a>                }
 <a href=#423 id=423 data-nosnippet>423</a>                <span class="prelude-val">Err</span>(error) =&gt; {
 <a href=#424 id=424 data-nosnippet>424</a>                    <span class="comment">// Provider failures are surfaced per-tile; the frame keeps
-<a href=#425 id=425 data-nosnippet>425</a>                    // resolving so fallbacks can cover the gap.
-<a href=#426 id=426 data-nosnippet>426</a>                    </span><span class="kw">let _ </span>= error;
-<a href=#427 id=427 data-nosnippet>427</a>                }
-<a href=#428 id=428 data-nosnippet>428</a>            }
-<a href=#429 id=429 data-nosnippet>429</a>        }
-<a href=#430 id=430 data-nosnippet>430</a>
-<a href=#431 id=431 data-nosnippet>431</a>        requested_tiles
-<a href=#432 id=432 data-nosnippet>432</a>            .iter()
-<a href=#433 id=433 data-nosnippet>433</a>            .copied()
-<a href=#434 id=434 data-nosnippet>434</a>            .map(|tile_key| PreparedTile {
-<a href=#435 id=435 data-nosnippet>435</a>                requested_tile_key: tile_key,
-<a href=#436 id=436 data-nosnippet>436</a>                readiness: <span class="self">self</span>.resolve_readiness(<span class="kw-2">&amp;</span>tile_key, <span class="kw-2">&amp;</span>fetch_candidates[fetch_budget..]),
-<a href=#437 id=437 data-nosnippet>437</a>            })
-<a href=#438 id=438 data-nosnippet>438</a>            .collect()
-<a href=#439 id=439 data-nosnippet>439</a>    }
-<a href=#440 id=440 data-nosnippet>440</a>
-<a href=#441 id=441 data-nosnippet>441</a>    <span class="kw">fn </span>resolve_readiness(
-<a href=#442 id=442 data-nosnippet>442</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#443 id=443 data-nosnippet>443</a>        requested_tile_key: <span class="kw-2">&amp;</span>TileKey,
-<a href=#444 id=444 data-nosnippet>444</a>        deferred_tiles: <span class="kw-2">&amp;</span>[TileKey],
-<a href=#445 id=445 data-nosnippet>445</a>    ) -&gt; TileReadiness {
-<a href=#446 id=446 data-nosnippet>446</a>        <span class="kw">if </span><span class="self">self</span>.texture_pool.contains(requested_tile_key) {
-<a href=#447 id=447 data-nosnippet>447</a>            <span class="kw">return </span>TileReadiness::Present;
-<a href=#448 id=448 data-nosnippet>448</a>        }
-<a href=#449 id=449 data-nosnippet>449</a>        <span class="kw">if </span><span class="self">self</span>.warm_fetch_registry.is_warming(requested_tile_key) {
-<a href=#450 id=450 data-nosnippet>450</a>            <span class="kw">return </span>TileReadiness::Deferred;
-<a href=#451 id=451 data-nosnippet>451</a>        }
-<a href=#452 id=452 data-nosnippet>452</a>        <span class="kw">if </span>deferred_tiles.contains(requested_tile_key) {
-<a href=#453 id=453 data-nosnippet>453</a>            <span class="kw">return </span>TileReadiness::Deferred;
-<a href=#454 id=454 data-nosnippet>454</a>        }
-<a href=#455 id=455 data-nosnippet>455</a>        <span class="comment">// Nearest pooled ancestor stands in while this tile loads or failed.
-<a href=#456 id=456 data-nosnippet>456</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>ancestor_tile_key = requested_tile_key.parent_tile_key();
-<a href=#457 id=457 data-nosnippet>457</a>        <span class="kw">let </span><span class="kw-2">mut </span>zoom_level_difference: u16 = <span class="number">1</span>;
-<a href=#458 id=458 data-nosnippet>458</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(candidate) = ancestor_tile_key {
-<a href=#459 id=459 data-nosnippet>459</a>            <span class="kw">if </span><span class="self">self</span>.texture_pool.contains(<span class="kw-2">&amp;</span>candidate) {
-<a href=#460 id=460 data-nosnippet>460</a>                <span class="kw">return </span>TileReadiness::FallsBackTo {
-<a href=#461 id=461 data-nosnippet>461</a>                    fallback_tile_key: candidate,
-<a href=#462 id=462 data-nosnippet>462</a>                    zoom_level_difference,
-<a href=#463 id=463 data-nosnippet>463</a>                };
-<a href=#464 id=464 data-nosnippet>464</a>            }
-<a href=#465 id=465 data-nosnippet>465</a>            zoom_level_difference += <span class="number">1</span>;
-<a href=#466 id=466 data-nosnippet>466</a>            ancestor_tile_key = candidate.parent_tile_key();
-<a href=#467 id=467 data-nosnippet>467</a>        }
-<a href=#468 id=468 data-nosnippet>468</a>        TileReadiness::Unavailable
-<a href=#469 id=469 data-nosnippet>469</a>    }
-<a href=#470 id=470 data-nosnippet>470</a>}
-<a href=#471 id=471 data-nosnippet>471</a>
-<a href=#472 id=472 data-nosnippet>472</a><span class="doccomment">/// One planned detached warm fetch: the owned inputs (the provider handle,
-<a href=#473 id=473 data-nosnippet>473</a>/// the request formats) plus the shared in-flight registry, runnable as its
-<a href=#474 id=474 data-nosnippet>474</a>/// own background task. Built by [`TileScheduler::plan_warm_tiles`]; the
-<a href=#475 id=475 data-nosnippet>475</a>/// frame path runs it fire-and-forget so no draw ever awaits the network
-<a href=#476 id=476 data-nosnippet>476</a>/// (see the module documentation).
-<a href=#477 id=477 data-nosnippet>477</a></span><span class="kw">pub struct </span>TileWarmTask {
-<a href=#478 id=478 data-nosnippet>478</a>    tile_provider: Arc&lt;<span class="kw">dyn </span>RasterTileProvider&gt;,
-<a href=#479 id=479 data-nosnippet>479</a>    requested_image_format: RasterImageFormat,
-<a href=#480 id=480 data-nosnippet>480</a>    requested_tile_resolution: RasterTileResolution,
-<a href=#481 id=481 data-nosnippet>481</a>    <span class="doccomment">/// The deduplicated, most-detailed-first, budget-capped misses to fetch.
-<a href=#482 id=482 data-nosnippet>482</a>    </span>fetch_tile_keys: Vec&lt;TileKey&gt;,
-<a href=#483 id=483 data-nosnippet>483</a>    warm_fetch_registry: Arc&lt;WarmFetchRegistry&gt;,
-<a href=#484 id=484 data-nosnippet>484</a>}
-<a href=#485 id=485 data-nosnippet>485</a>
-<a href=#486 id=486 data-nosnippet>486</a><span class="doccomment">/// The panic guard of [`TileWarmTask::run`]: it holds the not-yet-delivered
-<a href=#487 id=487 data-nosnippet>487</a>/// planned keys, and its `Drop` clears every one of them from the warming
-<a href=#488 id=488 data-nosnippet>488</a>/// set — so a task that unwinds mid-fetch (or is cancelled because its
-<a href=#489 id=489 data-nosnippet>489</a>/// runtime dropped the future) cannot leave stale in-flight marks in the
-<a href=#490 id=490 data-nosnippet>490</a>/// registry, which would otherwise report those tiles `Deferred` forever and
-<a href=#491 id=491 data-nosnippet>491</a>/// double-fetch nothing in later warm passes. Delivered keys are removed from
-<a href=#492 id=492 data-nosnippet>492</a>/// the owned list before (or regardless of) the guard's drop, and the
-<a href=#493 id=493 data-nosnippet>493</a>/// registry's own drain clears each delivered key at resolve.
-<a href=#494 id=494 data-nosnippet>494</a></span><span class="kw">struct </span>WarmTaskUnwindGuard {
-<a href=#495 id=495 data-nosnippet>495</a>    warm_fetch_registry: Arc&lt;WarmFetchRegistry&gt;,
-<a href=#496 id=496 data-nosnippet>496</a>    remaining_tile_keys: Vec&lt;TileKey&gt;,
-<a href=#497 id=497 data-nosnippet>497</a>}
-<a href=#498 id=498 data-nosnippet>498</a>
-<a href=#499 id=499 data-nosnippet>499</a><span class="kw">impl </span>Drop <span class="kw">for </span>WarmTaskUnwindGuard {
-<a href=#500 id=500 data-nosnippet>500</a>    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#501 id=501 data-nosnippet>501</a>        <span class="kw">let </span><span class="kw-2">mut </span>warming_tile_keys = <span class="self">self
-<a href=#502 id=502 data-nosnippet>502</a>            </span>.warm_fetch_registry
-<a href=#503 id=503 data-nosnippet>503</a>            .warming_tile_keys
-<a href=#504 id=504 data-nosnippet>504</a>            .lock()
-<a href=#505 id=505 data-nosnippet>505</a>            .expect(<span class="string">"the warming set lock is not poisoned"</span>);
-<a href=#506 id=506 data-nosnippet>506</a>        <span class="kw">for </span>tile_key <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.remaining_tile_keys {
-<a href=#507 id=507 data-nosnippet>507</a>            warming_tile_keys.remove(tile_key);
-<a href=#508 id=508 data-nosnippet>508</a>        }
-<a href=#509 id=509 data-nosnippet>509</a>    }
-<a href=#510 id=510 data-nosnippet>510</a>}
-<a href=#511 id=511 data-nosnippet>511</a>
-<a href=#512 id=512 data-nosnippet>512</a><span class="kw">impl </span>TileWarmTask {
-<a href=#513 id=513 data-nosnippet>513</a>    <span class="doccomment">/// The planned fetches' count (an empty task fetches nothing).
-<a href=#514 id=514 data-nosnippet>514</a>    </span><span class="kw">pub fn </span>fetch_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#515 id=515 data-nosnippet>515</a>        <span class="self">self</span>.fetch_tile_keys.len()
-<a href=#516 id=516 data-nosnippet>516</a>    }
-<a href=#517 id=517 data-nosnippet>517</a>
-<a href=#518 id=518 data-nosnippet>518</a>    <span class="doccomment">/// Runs the planned fetches to completion, delivering every outcome —
-<a href=#519 id=519 data-nosnippet>519</a>    /// payload or provider failure — back to the scheduler's channel, and
-<a href=#520 id=520 data-nosnippet>520</a>    /// returns the number of payloads delivered. The fetch loop is serial
-<a href=#521 id=521 data-nosnippet>521</a>    /// (one provider call awaited at a time, mirroring
-<a href=#522 id=522 data-nosnippet>522</a>    /// `TileScheduler::prepare_frame`'s budget behavior); the scheduler
-<a href=#523 id=523 data-nosnippet>523</a>    /// drains the deliveries into its pool at its next resolve. The unwind
-<a href=#524 id=524 data-nosnippet>524</a>    /// guard (see [`WarmTaskUnwindGuard`]) keeps a dropped or panicking run
-<a href=#525 id=525 data-nosnippet>525</a>    /// from stranding stale warming marks.
-<a href=#526 id=526 data-nosnippet>526</a>    </span><span class="kw">pub async fn </span>run(<span class="self">self</span>) -&gt; usize {
-<a href=#527 id=527 data-nosnippet>527</a>        <span class="kw">let </span><span class="kw-2">mut </span>unwind_guard = WarmTaskUnwindGuard {
-<a href=#528 id=528 data-nosnippet>528</a>            warm_fetch_registry: Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.warm_fetch_registry),
-<a href=#529 id=529 data-nosnippet>529</a>            remaining_tile_keys: <span class="self">self</span>.fetch_tile_keys,
-<a href=#530 id=530 data-nosnippet>530</a>        };
-<a href=#531 id=531 data-nosnippet>531</a>        <span class="kw">let </span><span class="kw-2">mut </span>delivered_count = <span class="number">0</span>;
-<a href=#532 id=532 data-nosnippet>532</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(tile_key) = unwind_guard.remaining_tile_keys.first().copied() {
-<a href=#533 id=533 data-nosnippet>533</a>            <span class="macro">tracing::trace!</span>(
-<a href=#534 id=534 data-nosnippet>534</a>                target: TILE_FETCH_TRACING_TARGET,
-<a href=#535 id=535 data-nosnippet>535</a>                zoom_level = tile_key.zoom_level,
-<a href=#536 id=536 data-nosnippet>536</a>                tile_x = tile_key.tile_x,
-<a href=#537 id=537 data-nosnippet>537</a>                tile_y = tile_key.tile_y,
-<a href=#538 id=538 data-nosnippet>538</a>                <span class="string">"detached warm tile fetch issued"
-<a href=#539 id=539 data-nosnippet>539</a>            </span>);
-<a href=#540 id=540 data-nosnippet>540</a>            <span class="kw">let </span>delivered_payload = <span class="kw">match </span><span class="self">self
-<a href=#541 id=541 data-nosnippet>541</a>                </span>.tile_provider
-<a href=#542 id=542 data-nosnippet>542</a>                .fetch_raster_tile(
-<a href=#543 id=543 data-nosnippet>543</a>                    tile_key.tile_x,
-<a href=#544 id=544 data-nosnippet>544</a>                    tile_key.tile_y,
-<a href=#545 id=545 data-nosnippet>545</a>                    tile_key.zoom_level,
-<a href=#546 id=546 data-nosnippet>546</a>                    <span class="self">self</span>.requested_image_format,
-<a href=#547 id=547 data-nosnippet>547</a>                    <span class="self">self</span>.requested_tile_resolution,
-<a href=#548 id=548 data-nosnippet>548</a>                )
-<a href=#549 id=549 data-nosnippet>549</a>                .<span class="kw">await
-<a href=#550 id=550 data-nosnippet>550</a>            </span>{
-<a href=#551 id=551 data-nosnippet>551</a>                <span class="prelude-val">Ok</span>(fetched_tile) =&gt; {
-<a href=#552 id=552 data-nosnippet>552</a>                    <span class="self">self</span>.warm_fetch_registry
-<a href=#553 id=553 data-nosnippet>553</a>                        .delivered_tiles_counter
-<a href=#554 id=554 data-nosnippet>554</a>                        .fetch_add(<span class="number">1</span>, Ordering::Relaxed);
-<a href=#555 id=555 data-nosnippet>555</a>                    delivered_count += <span class="number">1</span>;
-<a href=#556 id=556 data-nosnippet>556</a>                    <span class="prelude-val">Some</span>(fetched_tile.image_bytes)
-<a href=#557 id=557 data-nosnippet>557</a>                }
-<a href=#558 id=558 data-nosnippet>558</a>                <span class="prelude-val">Err</span>(_fetch_error) =&gt; {
-<a href=#559 id=559 data-nosnippet>559</a>                    <span class="comment">// Provider failures surface per-tile: the delivery's
-<a href=#560 id=560 data-nosnippet>560</a>                    // None payload keeps the tile missing and the verdicts
-<a href=#561 id=561 data-nosnippet>561</a>                    // honest, leaving the retry to a later warm pass.
-<a href=#562 id=562 data-nosnippet>562</a>                    </span><span class="macro">tracing::trace!</span>(
-<a href=#563 id=563 data-nosnippet>563</a>                        target: TILE_FETCH_TRACING_TARGET,
-<a href=#564 id=564 data-nosnippet>564</a>                        zoom_level = tile_key.zoom_level,
-<a href=#565 id=565 data-nosnippet>565</a>                        tile_x = tile_key.tile_x,
-<a href=#566 id=566 data-nosnippet>566</a>                        tile_y = tile_key.tile_y,
-<a href=#567 id=567 data-nosnippet>567</a>                        <span class="string">"detached warm tile fetch failed"
-<a href=#568 id=568 data-nosnippet>568</a>                    </span>);
-<a href=#569 id=569 data-nosnippet>569</a>                    <span class="prelude-val">None
-<a href=#570 id=570 data-nosnippet>570</a>                </span>}
-<a href=#571 id=571 data-nosnippet>571</a>            };
-<a href=#572 id=572 data-nosnippet>572</a>            <span class="kw">let _ </span>= <span class="self">self
-<a href=#573 id=573 data-nosnippet>573</a>                </span>.warm_fetch_registry
-<a href=#574 id=574 data-nosnippet>574</a>                .delivery_sender
-<a href=#575 id=575 data-nosnippet>575</a>                .send(WarmFetchOutcome {
-<a href=#576 id=576 data-nosnippet>576</a>                    tile_key,
-<a href=#577 id=577 data-nosnippet>577</a>                    delivered_payload,
-<a href=#578 id=578 data-nosnippet>578</a>                });
-<a href=#579 id=579 data-nosnippet>579</a>            unwind_guard.remaining_tile_keys.remove(<span class="number">0</span>);
-<a href=#580 id=580 data-nosnippet>580</a>        }
-<a href=#581 id=581 data-nosnippet>581</a>        delivered_count
-<a href=#582 id=582 data-nosnippet>582</a>    }
-<a href=#583 id=583 data-nosnippet>583</a>}
-<a href=#584 id=584 data-nosnippet>584</a>
-<a href=#585 id=585 data-nosnippet>585</a><span class="doccomment">/// The idle render-state signal over a captured frame's readiness verdicts:
-<a href=#586 id=586 data-nosnippet>586</a>/// whether every requested tile of the frame resolved `Present` at its own
-<a href=#587 id=587 data-nosnippet>587</a>/// zoom level. The verdict-level twin of [`TileScheduler::is_idle`], kept
-<a href=#588 id=588 data-nosnippet>588</a>/// GPU-free so callers (golden tests, the idle-gated snapshot of
-<a href=#589 id=589 data-nosnippet>589</a>/// [`crate::headless`]) can assert determinism before any capture.
-<a href=#590 id=590 data-nosnippet>590</a>///
-<a href=#591 id=591 data-nosnippet>591</a>/// The two forms agree for a frame checked immediately after the
-<a href=#592 id=592 data-nosnippet>592</a>/// `prepare_frame` that produced it; they can diverge only if the pool
-<a href=#593 id=593 data-nosnippet>593</a>/// changed in between — an eviction leaves the recorded verdicts resolved
-<a href=#594 id=594 data-nosnippet>594</a>/// while `is_idle` reports pending again. The verdict form is exactly the
-<a href=#595 id=595 data-nosnippet>595</a>/// gate a deterministic capture needs at capture time; the pool form is what
-<a href=#596 id=596 data-nosnippet>596</a>/// a caller re-checks before a later frame.
-<a href=#597 id=597 data-nosnippet>597</a></span><span class="kw">pub fn </span>prepared_frame_is_idle(prepared_tiles: <span class="kw-2">&amp;</span>[PreparedTile]) -&gt; bool {
-<a href=#598 id=598 data-nosnippet>598</a>    prepared_tiles
-<a href=#599 id=599 data-nosnippet>599</a>        .iter()
-<a href=#600 id=600 data-nosnippet>600</a>        .all(|prepared_tile| prepared_tile.readiness == TileReadiness::Present)
-<a href=#601 id=601 data-nosnippet>601</a>}
-<a href=#602 id=602 data-nosnippet>602</a>
-<a href=#603 id=603 data-nosnippet>603</a><span class="attr">#[cfg(test)]
-<a href=#604 id=604 data-nosnippet>604</a></span><span class="kw">mod </span>tests {
-<a href=#605 id=605 data-nosnippet>605</a>    <span class="kw">use super</span>::{PreparedTile, TileReadiness, TileScheduler, prepared_frame_is_idle};
-<a href=#606 id=606 data-nosnippet>606</a>    <span class="kw">use </span><span class="kw">crate</span>::tile_key::TileKey;
-<a href=#607 id=607 data-nosnippet>607</a>    <span class="kw">use </span><span class="kw">crate</span>::tile_texture_pool::TileTexturePool;
-<a href=#608 id=608 data-nosnippet>608</a>    <span class="kw">use </span>async_trait::async_trait;
-<a href=#609 id=609 data-nosnippet>609</a>    <span class="kw">use </span>geospatial_traits::RasterTileProvider;
-<a href=#610 id=610 data-nosnippet>610</a>    <span class="kw">use </span>geospatial_types::{RasterImageFormat, RasterTileData, RasterTileResolution, SDKError};
-<a href=#611 id=611 data-nosnippet>611</a>    <span class="kw">use </span>std::collections::HashMap;
-<a href=#612 id=612 data-nosnippet>612</a>    <span class="kw">use </span>std::future::pending;
-<a href=#613 id=613 data-nosnippet>613</a>    <span class="kw">use </span>std::sync::{Arc, Mutex};
-<a href=#614 id=614 data-nosnippet>614</a>    <span class="kw">use </span>std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
-<a href=#615 id=615 data-nosnippet>615</a>
-<a href=#616 id=616 data-nosnippet>616</a>    <span class="doccomment">/// Provider stub returning canned tiles and recording every request.
-<a href=#617 id=617 data-nosnippet>617</a>    </span><span class="kw">struct </span>ScriptedTileProvider {
-<a href=#618 id=618 data-nosnippet>618</a>        scripted_responses: Mutex&lt;HashMap&lt;TileKey, <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, String&gt;&gt;&gt;,
-<a href=#619 id=619 data-nosnippet>619</a>        requested_tiles: Mutex&lt;Vec&lt;TileKey&gt;&gt;,
-<a href=#620 id=620 data-nosnippet>620</a>    }
-<a href=#621 id=621 data-nosnippet>621</a>
-<a href=#622 id=622 data-nosnippet>622</a>    <span class="kw">impl </span>ScriptedTileProvider {
-<a href=#623 id=623 data-nosnippet>623</a>        <span class="kw">fn </span>serving_tiles(served_tiles: <span class="kw">impl </span>IntoIterator&lt;Item = (TileKey, Vec&lt;u8&gt;)&gt;) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
-<a href=#624 id=624 data-nosnippet>624</a>            Arc::new(<span class="self">Self </span>{
-<a href=#625 id=625 data-nosnippet>625</a>                scripted_responses: Mutex::new(
-<a href=#626 id=626 data-nosnippet>626</a>                    served_tiles
-<a href=#627 id=627 data-nosnippet>627</a>                        .into_iter()
-<a href=#628 id=628 data-nosnippet>628</a>                        .map(|(tile_key, image_bytes)| (tile_key, <span class="prelude-val">Ok</span>(image_bytes)))
-<a href=#629 id=629 data-nosnippet>629</a>                        .collect(),
-<a href=#630 id=630 data-nosnippet>630</a>                ),
-<a href=#631 id=631 data-nosnippet>631</a>                requested_tiles: Mutex::new(Vec::new()),
-<a href=#632 id=632 data-nosnippet>632</a>            })
-<a href=#633 id=633 data-nosnippet>633</a>        }
-<a href=#634 id=634 data-nosnippet>634</a>
-<a href=#635 id=635 data-nosnippet>635</a>        <span class="kw">fn </span>failing_tiles(
-<a href=#636 id=636 data-nosnippet>636</a>            served_tiles: <span class="kw">impl </span>IntoIterator&lt;Item = (TileKey, Vec&lt;u8&gt;)&gt;,
-<a href=#637 id=637 data-nosnippet>637</a>            failed_tiles: <span class="kw">impl </span>IntoIterator&lt;Item = TileKey&gt;,
-<a href=#638 id=638 data-nosnippet>638</a>        ) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
-<a href=#639 id=639 data-nosnippet>639</a>            Arc::new(<span class="self">Self </span>{
-<a href=#640 id=640 data-nosnippet>640</a>                scripted_responses: Mutex::new(
-<a href=#641 id=641 data-nosnippet>641</a>                    served_tiles
-<a href=#642 id=642 data-nosnippet>642</a>                        .into_iter()
-<a href=#643 id=643 data-nosnippet>643</a>                        .map(|(tile_key, image_bytes)| (tile_key, <span class="prelude-val">Ok</span>(image_bytes)))
-<a href=#644 id=644 data-nosnippet>644</a>                        .chain(
-<a href=#645 id=645 data-nosnippet>645</a>                            failed_tiles
-<a href=#646 id=646 data-nosnippet>646</a>                                .into_iter()
-<a href=#647 id=647 data-nosnippet>647</a>                                .map(|tile_key| (tile_key, <span class="prelude-val">Err</span>(<span class="string">"unroutable"</span>.to_string()))),
-<a href=#648 id=648 data-nosnippet>648</a>                        )
-<a href=#649 id=649 data-nosnippet>649</a>                        .collect(),
-<a href=#650 id=650 data-nosnippet>650</a>                ),
-<a href=#651 id=651 data-nosnippet>651</a>                requested_tiles: Mutex::new(Vec::new()),
-<a href=#652 id=652 data-nosnippet>652</a>            })
-<a href=#653 id=653 data-nosnippet>653</a>        }
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a>        <span class="kw">fn </span>requested_tile_keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;TileKey&gt; {
-<a href=#656 id=656 data-nosnippet>656</a>            <span class="self">self</span>.requested_tiles.lock().unwrap().clone()
-<a href=#657 id=657 data-nosnippet>657</a>        }
-<a href=#658 id=658 data-nosnippet>658</a>    }
-<a href=#659 id=659 data-nosnippet>659</a>
-<a href=#660 id=660 data-nosnippet>660</a>    <span class="attr">#[async_trait]
-<a href=#661 id=661 data-nosnippet>661</a>    </span><span class="kw">impl </span>RasterTileProvider <span class="kw">for </span>ScriptedTileProvider {
-<a href=#662 id=662 data-nosnippet>662</a>        <span class="kw">async fn </span>fetch_raster_tile(
-<a href=#663 id=663 data-nosnippet>663</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#664 id=664 data-nosnippet>664</a>            tile_x: u32,
-<a href=#665 id=665 data-nosnippet>665</a>            tile_y: u32,
-<a href=#666 id=666 data-nosnippet>666</a>            zoom_level: u8,
-<a href=#667 id=667 data-nosnippet>667</a>            _image_format: RasterImageFormat,
-<a href=#668 id=668 data-nosnippet>668</a>            _tile_resolution: RasterTileResolution,
-<a href=#669 id=669 data-nosnippet>669</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;RasterTileData, SDKError&gt; {
-<a href=#670 id=670 data-nosnippet>670</a>            <span class="kw">let </span>requested_tile_key = TileKey::new(tile_x, tile_y, zoom_level).unwrap();
-<a href=#671 id=671 data-nosnippet>671</a>            <span class="self">self</span>.requested_tiles
-<a href=#672 id=672 data-nosnippet>672</a>                .lock()
-<a href=#673 id=673 data-nosnippet>673</a>                .unwrap()
-<a href=#674 id=674 data-nosnippet>674</a>                .push(requested_tile_key);
-<a href=#675 id=675 data-nosnippet>675</a>            <span class="kw">let </span>scripted_response = <span class="self">self
-<a href=#676 id=676 data-nosnippet>676</a>                </span>.scripted_responses
-<a href=#677 id=677 data-nosnippet>677</a>                .lock()
-<a href=#678 id=678 data-nosnippet>678</a>                .unwrap()
-<a href=#679 id=679 data-nosnippet>679</a>                .get(<span class="kw-2">&amp;</span>requested_tile_key)
-<a href=#680 id=680 data-nosnippet>680</a>                .cloned();
-<a href=#681 id=681 data-nosnippet>681</a>            <span class="kw">match </span>scripted_response {
-<a href=#682 id=682 data-nosnippet>682</a>                <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(image_bytes)) =&gt; <span class="prelude-val">Ok</span>(RasterTileData {
-<a href=#683 id=683 data-nosnippet>683</a>                    tile_x,
-<a href=#684 id=684 data-nosnippet>684</a>                    tile_y,
-<a href=#685 id=685 data-nosnippet>685</a>                    zoom_level,
-<a href=#686 id=686 data-nosnippet>686</a>                    image_format: RasterImageFormat::Png,
-<a href=#687 id=687 data-nosnippet>687</a>                    tile_resolution: RasterTileResolution::Standard,
-<a href=#688 id=688 data-nosnippet>688</a>                    image_bytes,
-<a href=#689 id=689 data-nosnippet>689</a>                }),
-<a href=#690 id=690 data-nosnippet>690</a>                <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(detail)) =&gt; <span class="prelude-val">Err</span>(SDKError::NetworkRequestFailed(detail)),
-<a href=#691 id=691 data-nosnippet>691</a>                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(SDKError::ResponseParsingFailure(
-<a href=#692 id=692 data-nosnippet>692</a>                    <span class="string">"tile not scripted"</span>.to_string(),
-<a href=#693 id=693 data-nosnippet>693</a>                )),
-<a href=#694 id=694 data-nosnippet>694</a>            }
-<a href=#695 id=695 data-nosnippet>695</a>        }
-<a href=#696 id=696 data-nosnippet>696</a>    }
-<a href=#697 id=697 data-nosnippet>697</a>
-<a href=#698 id=698 data-nosnippet>698</a>    <span class="kw">fn </span>tile_key(tile_x: u32, tile_y: u32, zoom_level: u8) -&gt; TileKey {
-<a href=#699 id=699 data-nosnippet>699</a>        TileKey::new(tile_x, tile_y, zoom_level).unwrap()
-<a href=#700 id=700 data-nosnippet>700</a>    }
-<a href=#701 id=701 data-nosnippet>701</a>
-<a href=#702 id=702 data-nosnippet>702</a>    <span class="kw">fn </span>readiness_of(prepared_tiles: <span class="kw-2">&amp;</span>[PreparedTile], requested_tile_key: TileKey) -&gt; TileReadiness {
-<a href=#703 id=703 data-nosnippet>703</a>        prepared_tiles
-<a href=#704 id=704 data-nosnippet>704</a>            .iter()
-<a href=#705 id=705 data-nosnippet>705</a>            .find(|prepared_tile| prepared_tile.requested_tile_key == requested_tile_key)
-<a href=#706 id=706 data-nosnippet>706</a>            .map(|prepared_tile| prepared_tile.readiness)
-<a href=#707 id=707 data-nosnippet>707</a>            .expect(<span class="string">"requested tile missing from the prepared frame"</span>)
-<a href=#708 id=708 data-nosnippet>708</a>    }
-<a href=#709 id=709 data-nosnippet>709</a>
-<a href=#710 id=710 data-nosnippet>710</a>    <span class="attr">#[tokio::test]
-<a href=#711 id=711 data-nosnippet>711</a>    </span><span class="kw">async fn </span>pooled_tiles_render_without_a_second_fetch() {
-<a href=#712 id=712 data-nosnippet>712</a>        <span class="kw">let </span>detailed_tile = tile_key(<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>);
-<a href=#713 id=713 data-nosnippet>713</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([(detailed_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>])]);
-<a href=#714 id=714 data-nosnippet>714</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#715 id=715 data-nosnippet>715</a>            tile_provider.clone(),
-<a href=#716 id=716 data-nosnippet>716</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#717 id=717 data-nosnippet>717</a>            RasterImageFormat::Png,
-<a href=#718 id=718 data-nosnippet>718</a>            RasterTileResolution::Standard,
-<a href=#719 id=719 data-nosnippet>719</a>            <span class="number">8</span>,
-<a href=#720 id=720 data-nosnippet>720</a>        );
-<a href=#721 id=721 data-nosnippet>721</a>        <span class="kw">let </span>first_frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[detailed_tile]).<span class="kw">await</span>;
-<a href=#722 id=722 data-nosnippet>722</a>        <span class="macro">assert_eq!</span>(
-<a href=#723 id=723 data-nosnippet>723</a>            readiness_of(<span class="kw-2">&amp;</span>first_frame, detailed_tile),
-<a href=#724 id=724 data-nosnippet>724</a>            TileReadiness::Present
-<a href=#725 id=725 data-nosnippet>725</a>        );
-<a href=#726 id=726 data-nosnippet>726</a>        <span class="kw">let </span>second_frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[detailed_tile]).<span class="kw">await</span>;
-<a href=#727 id=727 data-nosnippet>727</a>        <span class="macro">assert_eq!</span>(
-<a href=#728 id=728 data-nosnippet>728</a>            readiness_of(<span class="kw-2">&amp;</span>second_frame, detailed_tile),
-<a href=#729 id=729 data-nosnippet>729</a>            TileReadiness::Present
-<a href=#730 id=730 data-nosnippet>730</a>        );
-<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
-<a href=#732 id=732 data-nosnippet>732</a>    }
-<a href=#733 id=733 data-nosnippet>733</a>
-<a href=#734 id=734 data-nosnippet>734</a>    <span class="attr">#[tokio::test]
-<a href=#735 id=735 data-nosnippet>735</a>    </span><span class="kw">async fn </span>duplicated_requests_in_one_frame_fetch_once() {
-<a href=#736 id=736 data-nosnippet>736</a>        <span class="kw">let </span>detailed_tile = tile_key(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>);
-<a href=#737 id=737 data-nosnippet>737</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([(detailed_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>])]);
-<a href=#738 id=738 data-nosnippet>738</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#739 id=739 data-nosnippet>739</a>            tile_provider.clone(),
-<a href=#740 id=740 data-nosnippet>740</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#741 id=741 data-nosnippet>741</a>            RasterImageFormat::Png,
-<a href=#742 id=742 data-nosnippet>742</a>            RasterTileResolution::Standard,
-<a href=#743 id=743 data-nosnippet>743</a>            <span class="number">8</span>,
-<a href=#744 id=744 data-nosnippet>744</a>        );
-<a href=#745 id=745 data-nosnippet>745</a>        <span class="kw">let </span>frame = tile_scheduler
-<a href=#746 id=746 data-nosnippet>746</a>            .prepare_frame(<span class="kw-2">&amp;</span>[detailed_tile, detailed_tile, detailed_tile])
-<a href=#747 id=747 data-nosnippet>747</a>            .<span class="kw">await</span>;
-<a href=#748 id=748 data-nosnippet>748</a>        <span class="macro">assert_eq!</span>(frame.len(), <span class="number">3</span>);
-<a href=#749 id=749 data-nosnippet>749</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
-<a href=#750 id=750 data-nosnippet>750</a>    }
-<a href=#751 id=751 data-nosnippet>751</a>
-<a href=#752 id=752 data-nosnippet>752</a>    <span class="attr">#[tokio::test]
-<a href=#753 id=753 data-nosnippet>753</a>    </span><span class="kw">async fn </span>failed_detail_falls_back_to_the_pooled_parent() {
-<a href=#754 id=754 data-nosnippet>754</a>        <span class="kw">let </span>parent_tile = tile_key(<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>);
-<a href=#755 id=755 data-nosnippet>755</a>        <span class="kw">let </span>child_tile = tile_key(<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>);
-<a href=#756 id=756 data-nosnippet>756</a>        <span class="comment">// The child is scripted to fail; the parent serves.
-<a href=#757 id=757 data-nosnippet>757</a>        </span><span class="kw">let </span>tile_provider =
-<a href=#758 id=758 data-nosnippet>758</a>            ScriptedTileProvider::failing_tiles([(parent_tile, <span class="macro">vec!</span>[<span class="number">2</span>; <span class="number">64</span>])], [child_tile]);
-<a href=#759 id=759 data-nosnippet>759</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#760 id=760 data-nosnippet>760</a>            tile_provider.clone(),
-<a href=#761 id=761 data-nosnippet>761</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#762 id=762 data-nosnippet>762</a>            RasterImageFormat::Png,
-<a href=#763 id=763 data-nosnippet>763</a>            RasterTileResolution::Standard,
-<a href=#764 id=764 data-nosnippet>764</a>            <span class="number">8</span>,
-<a href=#765 id=765 data-nosnippet>765</a>        );
-<a href=#766 id=766 data-nosnippet>766</a>        <span class="kw">let </span>frame = tile_scheduler
-<a href=#767 id=767 data-nosnippet>767</a>            .prepare_frame(<span class="kw-2">&amp;</span>[child_tile, parent_tile])
-<a href=#768 id=768 data-nosnippet>768</a>            .<span class="kw">await</span>;
-<a href=#769 id=769 data-nosnippet>769</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, parent_tile), TileReadiness::Present);
-<a href=#770 id=770 data-nosnippet>770</a>        <span class="kw">match </span>readiness_of(<span class="kw-2">&amp;</span>frame, child_tile) {
-<a href=#771 id=771 data-nosnippet>771</a>            TileReadiness::FallsBackTo {
-<a href=#772 id=772 data-nosnippet>772</a>                fallback_tile_key,
-<a href=#773 id=773 data-nosnippet>773</a>                zoom_level_difference,
-<a href=#774 id=774 data-nosnippet>774</a>            } =&gt; {
-<a href=#775 id=775 data-nosnippet>775</a>                <span class="macro">assert_eq!</span>(fallback_tile_key, parent_tile);
-<a href=#776 id=776 data-nosnippet>776</a>                <span class="macro">assert_eq!</span>(zoom_level_difference, <span class="number">2</span>);
-<a href=#777 id=777 data-nosnippet>777</a>            }
-<a href=#778 id=778 data-nosnippet>778</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"expected a parent fallback, got {other:?}"</span>),
-<a href=#779 id=779 data-nosnippet>779</a>        }
-<a href=#780 id=780 data-nosnippet>780</a>    }
-<a href=#781 id=781 data-nosnippet>781</a>
-<a href=#782 id=782 data-nosnippet>782</a>    <span class="attr">#[tokio::test]
-<a href=#783 id=783 data-nosnippet>783</a>    </span><span class="kw">async fn </span>fetch_budget_defers_the_surplus() {
-<a href=#784 id=784 data-nosnippet>784</a>        <span class="kw">let </span>first_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#785 id=785 data-nosnippet>785</a>        <span class="kw">let </span>second_tile = tile_key(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#786 id=786 data-nosnippet>786</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
-<a href=#787 id=787 data-nosnippet>787</a>            (first_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#788 id=788 data-nosnippet>788</a>            (second_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#789 id=789 data-nosnippet>789</a>        ]);
-<a href=#790 id=790 data-nosnippet>790</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#791 id=791 data-nosnippet>791</a>            tile_provider.clone(),
-<a href=#792 id=792 data-nosnippet>792</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#793 id=793 data-nosnippet>793</a>            RasterImageFormat::Png,
-<a href=#794 id=794 data-nosnippet>794</a>            RasterTileResolution::Standard,
-<a href=#795 id=795 data-nosnippet>795</a>            <span class="number">1</span>,
-<a href=#796 id=796 data-nosnippet>796</a>        );
-<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">let </span>frame = tile_scheduler
-<a href=#798 id=798 data-nosnippet>798</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile])
-<a href=#799 id=799 data-nosnippet>799</a>            .<span class="kw">await</span>;
-<a href=#800 id=800 data-nosnippet>800</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, first_tile), TileReadiness::Present);
-<a href=#801 id=801 data-nosnippet>801</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, second_tile), TileReadiness::Deferred);
-<a href=#802 id=802 data-nosnippet>802</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
-<a href=#803 id=803 data-nosnippet>803</a>        <span class="comment">// The deferred tile completes on the next frame.
-<a href=#804 id=804 data-nosnippet>804</a>        </span><span class="kw">let </span>next_frame = tile_scheduler
-<a href=#805 id=805 data-nosnippet>805</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile])
-<a href=#806 id=806 data-nosnippet>806</a>            .<span class="kw">await</span>;
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="macro">assert_eq!</span>(
-<a href=#808 id=808 data-nosnippet>808</a>            readiness_of(<span class="kw-2">&amp;</span>next_frame, second_tile),
-<a href=#809 id=809 data-nosnippet>809</a>            TileReadiness::Present
-<a href=#810 id=810 data-nosnippet>810</a>        );
-<a href=#811 id=811 data-nosnippet>811</a>    }
-<a href=#812 id=812 data-nosnippet>812</a>
-<a href=#813 id=813 data-nosnippet>813</a>    <span class="attr">#[tokio::test]
-<a href=#814 id=814 data-nosnippet>814</a>    </span><span class="kw">async fn </span>unrouted_tiles_report_unavailable_per_frame() {
-<a href=#815 id=815 data-nosnippet>815</a>        <span class="kw">let </span>failing_tile = tile_key(<span class="number">2</span>, <span class="number">2</span>, <span class="number">4</span>);
-<a href=#816 id=816 data-nosnippet>816</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::failing_tiles([], [failing_tile]);
-<a href=#817 id=817 data-nosnippet>817</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#818 id=818 data-nosnippet>818</a>            tile_provider.clone(),
-<a href=#819 id=819 data-nosnippet>819</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#820 id=820 data-nosnippet>820</a>            RasterImageFormat::Png,
-<a href=#821 id=821 data-nosnippet>821</a>            RasterTileResolution::Standard,
-<a href=#822 id=822 data-nosnippet>822</a>            <span class="number">8</span>,
-<a href=#823 id=823 data-nosnippet>823</a>        );
-<a href=#824 id=824 data-nosnippet>824</a>        <span class="kw">let </span>frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[failing_tile]).<span class="kw">await</span>;
-<a href=#825 id=825 data-nosnippet>825</a>        <span class="macro">assert_eq!</span>(
-<a href=#826 id=826 data-nosnippet>826</a>            readiness_of(<span class="kw-2">&amp;</span>frame, failing_tile),
-<a href=#827 id=827 data-nosnippet>827</a>            TileReadiness::Unavailable
-<a href=#828 id=828 data-nosnippet>828</a>        );
-<a href=#829 id=829 data-nosnippet>829</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
-<a href=#830 id=830 data-nosnippet>830</a>        <span class="comment">// A later frame retries the tile.
-<a href=#831 id=831 data-nosnippet>831</a>        </span>tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[failing_tile]).<span class="kw">await</span>;
-<a href=#832 id=832 data-nosnippet>832</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">2</span>);
-<a href=#833 id=833 data-nosnippet>833</a>    }
-<a href=#834 id=834 data-nosnippet>834</a>
-<a href=#835 id=835 data-nosnippet>835</a>    <span class="attr">#[tokio::test]
-<a href=#836 id=836 data-nosnippet>836</a>    </span><span class="kw">async fn </span>the_fetch_budget_leaves_the_frame_pending() {
-<a href=#837 id=837 data-nosnippet>837</a>        <span class="comment">// Mid-fetch state made observable: the budget stops the second tile's
-<a href=#838 id=838 data-nosnippet>838</a>        // fetch, so it reports `Deferred` and the frame is not idle — later
-<a href=#839 id=839 data-nosnippet>839</a>        // frames still change its pixels even though its fetch never left the
-<a href=#840 id=840 data-nosnippet>840</a>        // scheduler in flight.
-<a href=#841 id=841 data-nosnippet>841</a>        </span><span class="kw">let </span>first_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#842 id=842 data-nosnippet>842</a>        <span class="kw">let </span>deferred_tile = tile_key(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#843 id=843 data-nosnippet>843</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
-<a href=#844 id=844 data-nosnippet>844</a>            (first_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#845 id=845 data-nosnippet>845</a>            (deferred_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#846 id=846 data-nosnippet>846</a>        ]);
-<a href=#847 id=847 data-nosnippet>847</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#848 id=848 data-nosnippet>848</a>            tile_provider.clone(),
-<a href=#849 id=849 data-nosnippet>849</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#850 id=850 data-nosnippet>850</a>            RasterImageFormat::Png,
-<a href=#851 id=851 data-nosnippet>851</a>            RasterTileResolution::Standard,
-<a href=#852 id=852 data-nosnippet>852</a>            <span class="number">1</span>,
-<a href=#853 id=853 data-nosnippet>853</a>        );
-<a href=#854 id=854 data-nosnippet>854</a>        <span class="kw">let </span>frame = tile_scheduler
-<a href=#855 id=855 data-nosnippet>855</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, deferred_tile])
-<a href=#856 id=856 data-nosnippet>856</a>            .<span class="kw">await</span>;
-<a href=#857 id=857 data-nosnippet>857</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, deferred_tile), TileReadiness::Deferred);
-<a href=#858 id=858 data-nosnippet>858</a>        <span class="macro">assert!</span>(
-<a href=#859 id=859 data-nosnippet>859</a>            !tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, deferred_tile]),
-<a href=#860 id=860 data-nosnippet>860</a>            <span class="string">"a budget-deferred tile keeps the frame pending"
-<a href=#861 id=861 data-nosnippet>861</a>        </span>);
-<a href=#862 id=862 data-nosnippet>862</a>        <span class="macro">assert!</span>(!prepared_frame_is_idle(<span class="kw-2">&amp;</span>frame));
-<a href=#863 id=863 data-nosnippet>863</a>        <span class="comment">// The fetch completes on the next frame and the signal flips to idle.
-<a href=#864 id=864 data-nosnippet>864</a>        </span><span class="kw">let </span>next_frame = tile_scheduler
-<a href=#865 id=865 data-nosnippet>865</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, deferred_tile])
-<a href=#866 id=866 data-nosnippet>866</a>            .<span class="kw">await</span>;
-<a href=#867 id=867 data-nosnippet>867</a>        <span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, deferred_tile]));
-<a href=#868 id=868 data-nosnippet>868</a>        <span class="macro">assert!</span>(prepared_frame_is_idle(<span class="kw-2">&amp;</span>next_frame));
-<a href=#869 id=869 data-nosnippet>869</a>    }
-<a href=#870 id=870 data-nosnippet>870</a>
-<a href=#871 id=871 data-nosnippet>871</a>    <span class="attr">#[tokio::test]
-<a href=#872 id=872 data-nosnippet>872</a>    </span><span class="kw">async fn </span>a_failed_fetch_keeps_the_frame_pending() {
-<a href=#873 id=873 data-nosnippet>873</a>        <span class="kw">let </span>failing_tile = tile_key(<span class="number">2</span>, <span class="number">2</span>, <span class="number">4</span>);
-<a href=#874 id=874 data-nosnippet>874</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::failing_tiles([], [failing_tile]);
-<a href=#875 id=875 data-nosnippet>875</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#876 id=876 data-nosnippet>876</a>            tile_provider.clone(),
-<a href=#877 id=877 data-nosnippet>877</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#878 id=878 data-nosnippet>878</a>            RasterImageFormat::Png,
-<a href=#879 id=879 data-nosnippet>879</a>            RasterTileResolution::Standard,
-<a href=#880 id=880 data-nosnippet>880</a>            <span class="number">8</span>,
-<a href=#881 id=881 data-nosnippet>881</a>        );
-<a href=#882 id=882 data-nosnippet>882</a>        <span class="kw">let </span>frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[failing_tile]).<span class="kw">await</span>;
-<a href=#883 id=883 data-nosnippet>883</a>        <span class="macro">assert_eq!</span>(
-<a href=#884 id=884 data-nosnippet>884</a>            readiness_of(<span class="kw-2">&amp;</span>frame, failing_tile),
-<a href=#885 id=885 data-nosnippet>885</a>            TileReadiness::Unavailable
-<a href=#886 id=886 data-nosnippet>886</a>        );
-<a href=#887 id=887 data-nosnippet>887</a>        <span class="macro">assert!</span>(
-<a href=#888 id=888 data-nosnippet>888</a>            !tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[failing_tile]),
-<a href=#889 id=889 data-nosnippet>889</a>            <span class="string">"a provider failure keeps the frame pending: a later frame retries it"
-<a href=#890 id=890 data-nosnippet>890</a>        </span>);
-<a href=#891 id=891 data-nosnippet>891</a>        <span class="macro">assert!</span>(!prepared_frame_is_idle(<span class="kw-2">&amp;</span>frame));
-<a href=#892 id=892 data-nosnippet>892</a>    }
-<a href=#893 id=893 data-nosnippet>893</a>
-<a href=#894 id=894 data-nosnippet>894</a>    <span class="attr">#[tokio::test]
-<a href=#895 id=895 data-nosnippet>895</a>    </span><span class="kw">async fn </span>a_fallback_frame_is_pending_until_its_detail_arrives() {
-<a href=#896 id=896 data-nosnippet>896</a>        <span class="kw">let </span>parent_tile = tile_key(<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>);
-<a href=#897 id=897 data-nosnippet>897</a>        <span class="kw">let </span>failing_child_tile = tile_key(<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>);
-<a href=#898 id=898 data-nosnippet>898</a>        <span class="kw">let </span>tile_provider =
-<a href=#899 id=899 data-nosnippet>899</a>            ScriptedTileProvider::failing_tiles([(parent_tile, <span class="macro">vec!</span>[<span class="number">2</span>; <span class="number">64</span>])], [failing_child_tile]);
-<a href=#900 id=900 data-nosnippet>900</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#901 id=901 data-nosnippet>901</a>            tile_provider.clone(),
-<a href=#902 id=902 data-nosnippet>902</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#903 id=903 data-nosnippet>903</a>            RasterImageFormat::Png,
-<a href=#904 id=904 data-nosnippet>904</a>            RasterTileResolution::Standard,
-<a href=#905 id=905 data-nosnippet>905</a>            <span class="number">8</span>,
-<a href=#906 id=906 data-nosnippet>906</a>        );
-<a href=#907 id=907 data-nosnippet>907</a>        <span class="kw">let </span>frame = tile_scheduler
-<a href=#908 id=908 data-nosnippet>908</a>            .prepare_frame(<span class="kw-2">&amp;</span>[failing_child_tile, parent_tile])
-<a href=#909 id=909 data-nosnippet>909</a>            .<span class="kw">await</span>;
-<a href=#910 id=910 data-nosnippet>910</a>        <span class="macro">assert!</span>(
-<a href=#911 id=911 data-nosnippet>911</a>            !tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[failing_child_tile]),
-<a href=#912 id=912 data-nosnippet>912</a>            <span class="string">"a parent fallback still owes the child's own detail"
-<a href=#913 id=913 data-nosnippet>913</a>        </span>);
-<a href=#914 id=914 data-nosnippet>914</a>        <span class="macro">assert!</span>(!prepared_frame_is_idle(<span class="kw-2">&amp;</span>frame));
-<a href=#915 id=915 data-nosnippet>915</a>        <span class="comment">// The parent-only request set *is* idle: nothing is owed for it.
-<a href=#916 id=916 data-nosnippet>916</a>        </span><span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[parent_tile]));
-<a href=#917 id=917 data-nosnippet>917</a>    }
-<a href=#918 id=918 data-nosnippet>918</a>
-<a href=#919 id=919 data-nosnippet>919</a>    <span class="attr">#[test]
-<a href=#920 id=920 data-nosnippet>920</a>    </span><span class="kw">fn </span>the_readiness_verdicts_decide_the_frame_verdict_alone() {
-<a href=#921 id=921 data-nosnippet>921</a>        <span class="kw">let </span>fallback_child_tile = tile_key(<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>);
-<a href=#922 id=922 data-nosnippet>922</a>        <span class="kw">let </span>prepared_tile = |tile_readiness| PreparedTile {
-<a href=#923 id=923 data-nosnippet>923</a>            requested_tile_key: fallback_child_tile,
-<a href=#924 id=924 data-nosnippet>924</a>            readiness: tile_readiness,
-<a href=#925 id=925 data-nosnippet>925</a>        };
-<a href=#926 id=926 data-nosnippet>926</a>        <span class="kw">for </span>(tile_readiness, expected_idle) <span class="kw">in </span>[
-<a href=#927 id=927 data-nosnippet>927</a>            (TileReadiness::Present, <span class="bool-val">true</span>),
-<a href=#928 id=928 data-nosnippet>928</a>            (
-<a href=#929 id=929 data-nosnippet>929</a>                TileReadiness::FallsBackTo {
-<a href=#930 id=930 data-nosnippet>930</a>                    <span class="comment">// (5, 5, 4)'s own parent.
-<a href=#931 id=931 data-nosnippet>931</a>                    </span>fallback_tile_key: fallback_child_tile
-<a href=#932 id=932 data-nosnippet>932</a>                        .parent_tile_key()
-<a href=#933 id=933 data-nosnippet>933</a>                        .expect(<span class="string">"the fallback child is not the root tile and has a parent"</span>),
-<a href=#934 id=934 data-nosnippet>934</a>                    zoom_level_difference: <span class="number">1</span>,
-<a href=#935 id=935 data-nosnippet>935</a>                },
-<a href=#936 id=936 data-nosnippet>936</a>                <span class="bool-val">false</span>,
-<a href=#937 id=937 data-nosnippet>937</a>            ),
-<a href=#938 id=938 data-nosnippet>938</a>            (TileReadiness::Unavailable, <span class="bool-val">false</span>),
-<a href=#939 id=939 data-nosnippet>939</a>            (TileReadiness::Deferred, <span class="bool-val">false</span>),
-<a href=#940 id=940 data-nosnippet>940</a>        ] {
-<a href=#941 id=941 data-nosnippet>941</a>            <span class="macro">assert_eq!</span>(
-<a href=#942 id=942 data-nosnippet>942</a>                prepared_frame_is_idle(<span class="kw-2">&amp;</span>[prepared_tile(tile_readiness)]),
-<a href=#943 id=943 data-nosnippet>943</a>                expected_idle,
-<a href=#944 id=944 data-nosnippet>944</a>                <span class="string">"verdict {tile_readiness:?}"
-<a href=#945 id=945 data-nosnippet>945</a>            </span>);
-<a href=#946 id=946 data-nosnippet>946</a>        }
-<a href=#947 id=947 data-nosnippet>947</a>        <span class="comment">// An empty request set is idle by vacuity, matching `is_idle`.
-<a href=#948 id=948 data-nosnippet>948</a>        </span><span class="macro">assert!</span>(prepared_frame_is_idle(<span class="kw-2">&amp;</span>[]));
-<a href=#949 id=949 data-nosnippet>949</a>    }
-<a href=#950 id=950 data-nosnippet>950</a>
-<a href=#951 id=951 data-nosnippet>951</a>    <span class="attr">#[tokio::test]
-<a href=#952 id=952 data-nosnippet>952</a>    </span><span class="kw">async fn </span>an_evicted_tile_flips_idleness_back_to_pending() {
-<a href=#953 id=953 data-nosnippet>953</a>        <span class="kw">let </span>first_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#954 id=954 data-nosnippet>954</a>        <span class="kw">let </span>second_tile = tile_key(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#955 id=955 data-nosnippet>955</a>        <span class="kw">let </span>third_tile = tile_key(<span class="number">2</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#956 id=956 data-nosnippet>956</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
-<a href=#957 id=957 data-nosnippet>957</a>            (first_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#958 id=958 data-nosnippet>958</a>            (second_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#959 id=959 data-nosnippet>959</a>            (third_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#960 id=960 data-nosnippet>960</a>        ]);
-<a href=#961 id=961 data-nosnippet>961</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#962 id=962 data-nosnippet>962</a>            tile_provider.clone(),
-<a href=#963 id=963 data-nosnippet>963</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#964 id=964 data-nosnippet>964</a>            RasterImageFormat::Png,
-<a href=#965 id=965 data-nosnippet>965</a>            RasterTileResolution::Standard,
-<a href=#966 id=966 data-nosnippet>966</a>            <span class="number">8</span>,
-<a href=#967 id=967 data-nosnippet>967</a>        );
-<a href=#968 id=968 data-nosnippet>968</a>        tile_scheduler
-<a href=#969 id=969 data-nosnippet>969</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile])
-<a href=#970 id=970 data-nosnippet>970</a>            .<span class="kw">await</span>;
-<a href=#971 id=971 data-nosnippet>971</a>        <span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile]));
-<a href=#972 id=972 data-nosnippet>972</a>        <span class="comment">// An eviction of a requested payload — budget pressure, or the
-<a href=#973 id=973 data-nosnippet>973</a>        // renderer's corrupt-payload eviction — turns the signal pending
-<a href=#974 id=974 data-nosnippet>974</a>        // again; the next prepare frame refetches it.
-<a href=#975 id=975 data-nosnippet>975</a>        </span><span class="macro">assert!</span>(tile_scheduler.texture_pool_mut().evict(<span class="kw-2">&amp;</span>second_tile));
-<a href=#976 id=976 data-nosnippet>976</a>        <span class="macro">assert!</span>(!tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile]));
-<a href=#977 id=977 data-nosnippet>977</a>        <span class="kw">let </span>refetched_frame = tile_scheduler
+<a href=#425 id=425 data-nosnippet>425</a>                    // resolving so fallbacks can cover the gap. The trace is
+<a href=#426 id=426 data-nosnippet>426</a>                    // the only signal on this blocking path, so name the tile
+<a href=#427 id=427 data-nosnippet>427</a>                    // and the failure rather than swallowing it.
+<a href=#428 id=428 data-nosnippet>428</a>                    </span><span class="macro">tracing::trace!</span>(
+<a href=#429 id=429 data-nosnippet>429</a>                        target: TILE_FETCH_TRACING_TARGET,
+<a href=#430 id=430 data-nosnippet>430</a>                        zoom_level = tile_key.zoom_level,
+<a href=#431 id=431 data-nosnippet>431</a>                        tile_x = tile_key.tile_x,
+<a href=#432 id=432 data-nosnippet>432</a>                        tile_y = tile_key.tile_y,
+<a href=#433 id=433 data-nosnippet>433</a>                        failure = %error,
+<a href=#434 id=434 data-nosnippet>434</a>                        <span class="string">"blocking tile fetch failed"
+<a href=#435 id=435 data-nosnippet>435</a>                    </span>);
+<a href=#436 id=436 data-nosnippet>436</a>                }
+<a href=#437 id=437 data-nosnippet>437</a>            }
+<a href=#438 id=438 data-nosnippet>438</a>        }
+<a href=#439 id=439 data-nosnippet>439</a>
+<a href=#440 id=440 data-nosnippet>440</a>        requested_tiles
+<a href=#441 id=441 data-nosnippet>441</a>            .iter()
+<a href=#442 id=442 data-nosnippet>442</a>            .copied()
+<a href=#443 id=443 data-nosnippet>443</a>            .map(|tile_key| PreparedTile {
+<a href=#444 id=444 data-nosnippet>444</a>                requested_tile_key: tile_key,
+<a href=#445 id=445 data-nosnippet>445</a>                readiness: <span class="self">self</span>.resolve_readiness(<span class="kw-2">&amp;</span>tile_key, <span class="kw-2">&amp;</span>fetch_candidates[fetch_budget..]),
+<a href=#446 id=446 data-nosnippet>446</a>            })
+<a href=#447 id=447 data-nosnippet>447</a>            .collect()
+<a href=#448 id=448 data-nosnippet>448</a>    }
+<a href=#449 id=449 data-nosnippet>449</a>
+<a href=#450 id=450 data-nosnippet>450</a>    <span class="kw">fn </span>resolve_readiness(
+<a href=#451 id=451 data-nosnippet>451</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#452 id=452 data-nosnippet>452</a>        requested_tile_key: <span class="kw-2">&amp;</span>TileKey,
+<a href=#453 id=453 data-nosnippet>453</a>        deferred_tiles: <span class="kw-2">&amp;</span>[TileKey],
+<a href=#454 id=454 data-nosnippet>454</a>    ) -&gt; TileReadiness {
+<a href=#455 id=455 data-nosnippet>455</a>        <span class="kw">if </span><span class="self">self</span>.texture_pool.contains(requested_tile_key) {
+<a href=#456 id=456 data-nosnippet>456</a>            <span class="kw">return </span>TileReadiness::Present;
+<a href=#457 id=457 data-nosnippet>457</a>        }
+<a href=#458 id=458 data-nosnippet>458</a>        <span class="kw">if </span><span class="self">self</span>.warm_fetch_registry.is_warming(requested_tile_key) {
+<a href=#459 id=459 data-nosnippet>459</a>            <span class="kw">return </span>TileReadiness::Deferred;
+<a href=#460 id=460 data-nosnippet>460</a>        }
+<a href=#461 id=461 data-nosnippet>461</a>        <span class="kw">if </span>deferred_tiles.contains(requested_tile_key) {
+<a href=#462 id=462 data-nosnippet>462</a>            <span class="kw">return </span>TileReadiness::Deferred;
+<a href=#463 id=463 data-nosnippet>463</a>        }
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="comment">// Nearest pooled ancestor stands in while this tile loads or failed.
+<a href=#465 id=465 data-nosnippet>465</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>ancestor_tile_key = requested_tile_key.parent_tile_key();
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="kw">let </span><span class="kw-2">mut </span>zoom_level_difference: u16 = <span class="number">1</span>;
+<a href=#467 id=467 data-nosnippet>467</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(candidate) = ancestor_tile_key {
+<a href=#468 id=468 data-nosnippet>468</a>            <span class="kw">if </span><span class="self">self</span>.texture_pool.contains(<span class="kw-2">&amp;</span>candidate) {
+<a href=#469 id=469 data-nosnippet>469</a>                <span class="kw">return </span>TileReadiness::FallsBackTo {
+<a href=#470 id=470 data-nosnippet>470</a>                    fallback_tile_key: candidate,
+<a href=#471 id=471 data-nosnippet>471</a>                    zoom_level_difference,
+<a href=#472 id=472 data-nosnippet>472</a>                };
+<a href=#473 id=473 data-nosnippet>473</a>            }
+<a href=#474 id=474 data-nosnippet>474</a>            zoom_level_difference += <span class="number">1</span>;
+<a href=#475 id=475 data-nosnippet>475</a>            ancestor_tile_key = candidate.parent_tile_key();
+<a href=#476 id=476 data-nosnippet>476</a>        }
+<a href=#477 id=477 data-nosnippet>477</a>        TileReadiness::Unavailable
+<a href=#478 id=478 data-nosnippet>478</a>    }
+<a href=#479 id=479 data-nosnippet>479</a>}
+<a href=#480 id=480 data-nosnippet>480</a>
+<a href=#481 id=481 data-nosnippet>481</a><span class="doccomment">/// One planned detached warm fetch: the owned inputs (the provider handle,
+<a href=#482 id=482 data-nosnippet>482</a>/// the request formats) plus the shared in-flight registry, runnable as its
+<a href=#483 id=483 data-nosnippet>483</a>/// own background task. Built by [`TileScheduler::plan_warm_tiles`]; the
+<a href=#484 id=484 data-nosnippet>484</a>/// frame path runs it fire-and-forget so no draw ever awaits the network
+<a href=#485 id=485 data-nosnippet>485</a>/// (see the module documentation).
+<a href=#486 id=486 data-nosnippet>486</a></span><span class="kw">pub struct </span>TileWarmTask {
+<a href=#487 id=487 data-nosnippet>487</a>    tile_provider: Arc&lt;<span class="kw">dyn </span>RasterTileProvider&gt;,
+<a href=#488 id=488 data-nosnippet>488</a>    requested_image_format: RasterImageFormat,
+<a href=#489 id=489 data-nosnippet>489</a>    requested_tile_resolution: RasterTileResolution,
+<a href=#490 id=490 data-nosnippet>490</a>    <span class="doccomment">/// The deduplicated, most-detailed-first, budget-capped misses to fetch.
+<a href=#491 id=491 data-nosnippet>491</a>    </span>fetch_tile_keys: Vec&lt;TileKey&gt;,
+<a href=#492 id=492 data-nosnippet>492</a>    warm_fetch_registry: Arc&lt;WarmFetchRegistry&gt;,
+<a href=#493 id=493 data-nosnippet>493</a>}
+<a href=#494 id=494 data-nosnippet>494</a>
+<a href=#495 id=495 data-nosnippet>495</a><span class="doccomment">/// The panic guard of [`TileWarmTask::run`]: it holds the not-yet-delivered
+<a href=#496 id=496 data-nosnippet>496</a>/// planned keys, and its `Drop` clears every one of them from the warming
+<a href=#497 id=497 data-nosnippet>497</a>/// set — so a task that unwinds mid-fetch (or is cancelled because its
+<a href=#498 id=498 data-nosnippet>498</a>/// runtime dropped the future) cannot leave stale in-flight marks in the
+<a href=#499 id=499 data-nosnippet>499</a>/// registry, which would otherwise report those tiles `Deferred` forever and
+<a href=#500 id=500 data-nosnippet>500</a>/// double-fetch nothing in later warm passes. Delivered keys are removed from
+<a href=#501 id=501 data-nosnippet>501</a>/// the owned list before (or regardless of) the guard's drop, and the
+<a href=#502 id=502 data-nosnippet>502</a>/// registry's own drain clears each delivered key at resolve.
+<a href=#503 id=503 data-nosnippet>503</a></span><span class="kw">struct </span>WarmTaskUnwindGuard {
+<a href=#504 id=504 data-nosnippet>504</a>    warm_fetch_registry: Arc&lt;WarmFetchRegistry&gt;,
+<a href=#505 id=505 data-nosnippet>505</a>    remaining_tile_keys: Vec&lt;TileKey&gt;,
+<a href=#506 id=506 data-nosnippet>506</a>}
+<a href=#507 id=507 data-nosnippet>507</a>
+<a href=#508 id=508 data-nosnippet>508</a><span class="kw">impl </span>Drop <span class="kw">for </span>WarmTaskUnwindGuard {
+<a href=#509 id=509 data-nosnippet>509</a>    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#510 id=510 data-nosnippet>510</a>        <span class="kw">let </span><span class="kw-2">mut </span>warming_tile_keys = <span class="self">self
+<a href=#511 id=511 data-nosnippet>511</a>            </span>.warm_fetch_registry
+<a href=#512 id=512 data-nosnippet>512</a>            .warming_tile_keys
+<a href=#513 id=513 data-nosnippet>513</a>            .lock()
+<a href=#514 id=514 data-nosnippet>514</a>            .expect(<span class="string">"the warming set lock is not poisoned"</span>);
+<a href=#515 id=515 data-nosnippet>515</a>        <span class="kw">for </span>tile_key <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.remaining_tile_keys {
+<a href=#516 id=516 data-nosnippet>516</a>            warming_tile_keys.remove(tile_key);
+<a href=#517 id=517 data-nosnippet>517</a>        }
+<a href=#518 id=518 data-nosnippet>518</a>    }
+<a href=#519 id=519 data-nosnippet>519</a>}
+<a href=#520 id=520 data-nosnippet>520</a>
+<a href=#521 id=521 data-nosnippet>521</a><span class="kw">impl </span>TileWarmTask {
+<a href=#522 id=522 data-nosnippet>522</a>    <span class="doccomment">/// The planned fetches' count (an empty task fetches nothing).
+<a href=#523 id=523 data-nosnippet>523</a>    </span><span class="kw">pub fn </span>fetch_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+<a href=#524 id=524 data-nosnippet>524</a>        <span class="self">self</span>.fetch_tile_keys.len()
+<a href=#525 id=525 data-nosnippet>525</a>    }
+<a href=#526 id=526 data-nosnippet>526</a>
+<a href=#527 id=527 data-nosnippet>527</a>    <span class="doccomment">/// Runs the planned fetches to completion, delivering every outcome —
+<a href=#528 id=528 data-nosnippet>528</a>    /// payload or provider failure — back to the scheduler's channel, and
+<a href=#529 id=529 data-nosnippet>529</a>    /// returns the number of payloads delivered. The fetch loop is serial
+<a href=#530 id=530 data-nosnippet>530</a>    /// (one provider call awaited at a time, mirroring
+<a href=#531 id=531 data-nosnippet>531</a>    /// `TileScheduler::prepare_frame`'s budget behavior); the scheduler
+<a href=#532 id=532 data-nosnippet>532</a>    /// drains the deliveries into its pool at its next resolve. The unwind
+<a href=#533 id=533 data-nosnippet>533</a>    /// guard (see [`WarmTaskUnwindGuard`]) keeps a dropped or panicking run
+<a href=#534 id=534 data-nosnippet>534</a>    /// from stranding stale warming marks.
+<a href=#535 id=535 data-nosnippet>535</a>    </span><span class="kw">pub async fn </span>run(<span class="self">self</span>) -&gt; usize {
+<a href=#536 id=536 data-nosnippet>536</a>        <span class="kw">let </span><span class="kw-2">mut </span>unwind_guard = WarmTaskUnwindGuard {
+<a href=#537 id=537 data-nosnippet>537</a>            warm_fetch_registry: Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.warm_fetch_registry),
+<a href=#538 id=538 data-nosnippet>538</a>            remaining_tile_keys: <span class="self">self</span>.fetch_tile_keys,
+<a href=#539 id=539 data-nosnippet>539</a>        };
+<a href=#540 id=540 data-nosnippet>540</a>        <span class="kw">let </span><span class="kw-2">mut </span>delivered_count = <span class="number">0</span>;
+<a href=#541 id=541 data-nosnippet>541</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(tile_key) = unwind_guard.remaining_tile_keys.first().copied() {
+<a href=#542 id=542 data-nosnippet>542</a>            <span class="macro">tracing::trace!</span>(
+<a href=#543 id=543 data-nosnippet>543</a>                target: TILE_FETCH_TRACING_TARGET,
+<a href=#544 id=544 data-nosnippet>544</a>                zoom_level = tile_key.zoom_level,
+<a href=#545 id=545 data-nosnippet>545</a>                tile_x = tile_key.tile_x,
+<a href=#546 id=546 data-nosnippet>546</a>                tile_y = tile_key.tile_y,
+<a href=#547 id=547 data-nosnippet>547</a>                <span class="string">"detached warm tile fetch issued"
+<a href=#548 id=548 data-nosnippet>548</a>            </span>);
+<a href=#549 id=549 data-nosnippet>549</a>            <span class="kw">let </span>delivered_payload = <span class="kw">match </span><span class="self">self
+<a href=#550 id=550 data-nosnippet>550</a>                </span>.tile_provider
+<a href=#551 id=551 data-nosnippet>551</a>                .fetch_raster_tile(
+<a href=#552 id=552 data-nosnippet>552</a>                    tile_key.tile_x,
+<a href=#553 id=553 data-nosnippet>553</a>                    tile_key.tile_y,
+<a href=#554 id=554 data-nosnippet>554</a>                    tile_key.zoom_level,
+<a href=#555 id=555 data-nosnippet>555</a>                    <span class="self">self</span>.requested_image_format,
+<a href=#556 id=556 data-nosnippet>556</a>                    <span class="self">self</span>.requested_tile_resolution,
+<a href=#557 id=557 data-nosnippet>557</a>                )
+<a href=#558 id=558 data-nosnippet>558</a>                .<span class="kw">await
+<a href=#559 id=559 data-nosnippet>559</a>            </span>{
+<a href=#560 id=560 data-nosnippet>560</a>                <span class="prelude-val">Ok</span>(fetched_tile) =&gt; {
+<a href=#561 id=561 data-nosnippet>561</a>                    <span class="self">self</span>.warm_fetch_registry
+<a href=#562 id=562 data-nosnippet>562</a>                        .delivered_tiles_counter
+<a href=#563 id=563 data-nosnippet>563</a>                        .fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+<a href=#564 id=564 data-nosnippet>564</a>                    delivered_count += <span class="number">1</span>;
+<a href=#565 id=565 data-nosnippet>565</a>                    <span class="prelude-val">Some</span>(fetched_tile.image_bytes)
+<a href=#566 id=566 data-nosnippet>566</a>                }
+<a href=#567 id=567 data-nosnippet>567</a>                <span class="prelude-val">Err</span>(_fetch_error) =&gt; {
+<a href=#568 id=568 data-nosnippet>568</a>                    <span class="comment">// Provider failures surface per-tile: the delivery's
+<a href=#569 id=569 data-nosnippet>569</a>                    // None payload keeps the tile missing and the verdicts
+<a href=#570 id=570 data-nosnippet>570</a>                    // honest, leaving the retry to a later warm pass.
+<a href=#571 id=571 data-nosnippet>571</a>                    </span><span class="macro">tracing::trace!</span>(
+<a href=#572 id=572 data-nosnippet>572</a>                        target: TILE_FETCH_TRACING_TARGET,
+<a href=#573 id=573 data-nosnippet>573</a>                        zoom_level = tile_key.zoom_level,
+<a href=#574 id=574 data-nosnippet>574</a>                        tile_x = tile_key.tile_x,
+<a href=#575 id=575 data-nosnippet>575</a>                        tile_y = tile_key.tile_y,
+<a href=#576 id=576 data-nosnippet>576</a>                        <span class="string">"detached warm tile fetch failed"
+<a href=#577 id=577 data-nosnippet>577</a>                    </span>);
+<a href=#578 id=578 data-nosnippet>578</a>                    <span class="prelude-val">None
+<a href=#579 id=579 data-nosnippet>579</a>                </span>}
+<a href=#580 id=580 data-nosnippet>580</a>            };
+<a href=#581 id=581 data-nosnippet>581</a>            <span class="kw">let _ </span>= <span class="self">self
+<a href=#582 id=582 data-nosnippet>582</a>                </span>.warm_fetch_registry
+<a href=#583 id=583 data-nosnippet>583</a>                .delivery_sender
+<a href=#584 id=584 data-nosnippet>584</a>                .send(WarmFetchOutcome {
+<a href=#585 id=585 data-nosnippet>585</a>                    tile_key,
+<a href=#586 id=586 data-nosnippet>586</a>                    delivered_payload,
+<a href=#587 id=587 data-nosnippet>587</a>                });
+<a href=#588 id=588 data-nosnippet>588</a>            unwind_guard.remaining_tile_keys.remove(<span class="number">0</span>);
+<a href=#589 id=589 data-nosnippet>589</a>        }
+<a href=#590 id=590 data-nosnippet>590</a>        delivered_count
+<a href=#591 id=591 data-nosnippet>591</a>    }
+<a href=#592 id=592 data-nosnippet>592</a>}
+<a href=#593 id=593 data-nosnippet>593</a>
+<a href=#594 id=594 data-nosnippet>594</a><span class="doccomment">/// The idle render-state signal over a captured frame's readiness verdicts:
+<a href=#595 id=595 data-nosnippet>595</a>/// whether every requested tile of the frame resolved `Present` at its own
+<a href=#596 id=596 data-nosnippet>596</a>/// zoom level. The verdict-level twin of [`TileScheduler::is_idle`], kept
+<a href=#597 id=597 data-nosnippet>597</a>/// GPU-free so callers (golden tests, the idle-gated snapshot of
+<a href=#598 id=598 data-nosnippet>598</a>/// [`crate::headless`]) can assert determinism before any capture.
+<a href=#599 id=599 data-nosnippet>599</a>///
+<a href=#600 id=600 data-nosnippet>600</a>/// The two forms agree for a frame checked immediately after the
+<a href=#601 id=601 data-nosnippet>601</a>/// `prepare_frame` that produced it; they can diverge only if the pool
+<a href=#602 id=602 data-nosnippet>602</a>/// changed in between — an eviction leaves the recorded verdicts resolved
+<a href=#603 id=603 data-nosnippet>603</a>/// while `is_idle` reports pending again. The verdict form is exactly the
+<a href=#604 id=604 data-nosnippet>604</a>/// gate a deterministic capture needs at capture time; the pool form is what
+<a href=#605 id=605 data-nosnippet>605</a>/// a caller re-checks before a later frame.
+<a href=#606 id=606 data-nosnippet>606</a></span><span class="kw">pub fn </span>prepared_frame_is_idle(prepared_tiles: <span class="kw-2">&amp;</span>[PreparedTile]) -&gt; bool {
+<a href=#607 id=607 data-nosnippet>607</a>    prepared_tiles
+<a href=#608 id=608 data-nosnippet>608</a>        .iter()
+<a href=#609 id=609 data-nosnippet>609</a>        .all(|prepared_tile| prepared_tile.readiness == TileReadiness::Present)
+<a href=#610 id=610 data-nosnippet>610</a>}
+<a href=#611 id=611 data-nosnippet>611</a>
+<a href=#612 id=612 data-nosnippet>612</a><span class="attr">#[cfg(test)]
+<a href=#613 id=613 data-nosnippet>613</a></span><span class="kw">mod </span>tests {
+<a href=#614 id=614 data-nosnippet>614</a>    <span class="kw">use super</span>::{PreparedTile, TileReadiness, TileScheduler, prepared_frame_is_idle};
+<a href=#615 id=615 data-nosnippet>615</a>    <span class="kw">use </span><span class="kw">crate</span>::tile_key::TileKey;
+<a href=#616 id=616 data-nosnippet>616</a>    <span class="kw">use </span><span class="kw">crate</span>::tile_texture_pool::TileTexturePool;
+<a href=#617 id=617 data-nosnippet>617</a>    <span class="kw">use </span>async_trait::async_trait;
+<a href=#618 id=618 data-nosnippet>618</a>    <span class="kw">use </span>geospatial_traits::RasterTileProvider;
+<a href=#619 id=619 data-nosnippet>619</a>    <span class="kw">use </span>geospatial_types::{RasterImageFormat, RasterTileData, RasterTileResolution, SDKError};
+<a href=#620 id=620 data-nosnippet>620</a>    <span class="kw">use </span>std::collections::HashMap;
+<a href=#621 id=621 data-nosnippet>621</a>    <span class="kw">use </span>std::future::pending;
+<a href=#622 id=622 data-nosnippet>622</a>    <span class="kw">use </span>std::sync::{Arc, Mutex};
+<a href=#623 id=623 data-nosnippet>623</a>    <span class="kw">use </span>std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+<a href=#624 id=624 data-nosnippet>624</a>
+<a href=#625 id=625 data-nosnippet>625</a>    <span class="doccomment">/// Provider stub returning canned tiles and recording every request.
+<a href=#626 id=626 data-nosnippet>626</a>    </span><span class="kw">struct </span>ScriptedTileProvider {
+<a href=#627 id=627 data-nosnippet>627</a>        scripted_responses: Mutex&lt;HashMap&lt;TileKey, <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, String&gt;&gt;&gt;,
+<a href=#628 id=628 data-nosnippet>628</a>        requested_tiles: Mutex&lt;Vec&lt;TileKey&gt;&gt;,
+<a href=#629 id=629 data-nosnippet>629</a>    }
+<a href=#630 id=630 data-nosnippet>630</a>
+<a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">impl </span>ScriptedTileProvider {
+<a href=#632 id=632 data-nosnippet>632</a>        <span class="kw">fn </span>serving_tiles(served_tiles: <span class="kw">impl </span>IntoIterator&lt;Item = (TileKey, Vec&lt;u8&gt;)&gt;) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
+<a href=#633 id=633 data-nosnippet>633</a>            Arc::new(<span class="self">Self </span>{
+<a href=#634 id=634 data-nosnippet>634</a>                scripted_responses: Mutex::new(
+<a href=#635 id=635 data-nosnippet>635</a>                    served_tiles
+<a href=#636 id=636 data-nosnippet>636</a>                        .into_iter()
+<a href=#637 id=637 data-nosnippet>637</a>                        .map(|(tile_key, image_bytes)| (tile_key, <span class="prelude-val">Ok</span>(image_bytes)))
+<a href=#638 id=638 data-nosnippet>638</a>                        .collect(),
+<a href=#639 id=639 data-nosnippet>639</a>                ),
+<a href=#640 id=640 data-nosnippet>640</a>                requested_tiles: Mutex::new(Vec::new()),
+<a href=#641 id=641 data-nosnippet>641</a>            })
+<a href=#642 id=642 data-nosnippet>642</a>        }
+<a href=#643 id=643 data-nosnippet>643</a>
+<a href=#644 id=644 data-nosnippet>644</a>        <span class="kw">fn </span>failing_tiles(
+<a href=#645 id=645 data-nosnippet>645</a>            served_tiles: <span class="kw">impl </span>IntoIterator&lt;Item = (TileKey, Vec&lt;u8&gt;)&gt;,
+<a href=#646 id=646 data-nosnippet>646</a>            failed_tiles: <span class="kw">impl </span>IntoIterator&lt;Item = TileKey&gt;,
+<a href=#647 id=647 data-nosnippet>647</a>        ) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
+<a href=#648 id=648 data-nosnippet>648</a>            Arc::new(<span class="self">Self </span>{
+<a href=#649 id=649 data-nosnippet>649</a>                scripted_responses: Mutex::new(
+<a href=#650 id=650 data-nosnippet>650</a>                    served_tiles
+<a href=#651 id=651 data-nosnippet>651</a>                        .into_iter()
+<a href=#652 id=652 data-nosnippet>652</a>                        .map(|(tile_key, image_bytes)| (tile_key, <span class="prelude-val">Ok</span>(image_bytes)))
+<a href=#653 id=653 data-nosnippet>653</a>                        .chain(
+<a href=#654 id=654 data-nosnippet>654</a>                            failed_tiles
+<a href=#655 id=655 data-nosnippet>655</a>                                .into_iter()
+<a href=#656 id=656 data-nosnippet>656</a>                                .map(|tile_key| (tile_key, <span class="prelude-val">Err</span>(<span class="string">"unroutable"</span>.to_string()))),
+<a href=#657 id=657 data-nosnippet>657</a>                        )
+<a href=#658 id=658 data-nosnippet>658</a>                        .collect(),
+<a href=#659 id=659 data-nosnippet>659</a>                ),
+<a href=#660 id=660 data-nosnippet>660</a>                requested_tiles: Mutex::new(Vec::new()),
+<a href=#661 id=661 data-nosnippet>661</a>            })
+<a href=#662 id=662 data-nosnippet>662</a>        }
+<a href=#663 id=663 data-nosnippet>663</a>
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="kw">fn </span>requested_tile_keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;TileKey&gt; {
+<a href=#665 id=665 data-nosnippet>665</a>            <span class="self">self</span>.requested_tiles.lock().unwrap().clone()
+<a href=#666 id=666 data-nosnippet>666</a>        }
+<a href=#667 id=667 data-nosnippet>667</a>    }
+<a href=#668 id=668 data-nosnippet>668</a>
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="attr">#[async_trait]
+<a href=#670 id=670 data-nosnippet>670</a>    </span><span class="kw">impl </span>RasterTileProvider <span class="kw">for </span>ScriptedTileProvider {
+<a href=#671 id=671 data-nosnippet>671</a>        <span class="kw">async fn </span>fetch_raster_tile(
+<a href=#672 id=672 data-nosnippet>672</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#673 id=673 data-nosnippet>673</a>            tile_x: u32,
+<a href=#674 id=674 data-nosnippet>674</a>            tile_y: u32,
+<a href=#675 id=675 data-nosnippet>675</a>            zoom_level: u8,
+<a href=#676 id=676 data-nosnippet>676</a>            _image_format: RasterImageFormat,
+<a href=#677 id=677 data-nosnippet>677</a>            _tile_resolution: RasterTileResolution,
+<a href=#678 id=678 data-nosnippet>678</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;RasterTileData, SDKError&gt; {
+<a href=#679 id=679 data-nosnippet>679</a>            <span class="kw">let </span>requested_tile_key = TileKey::new(tile_x, tile_y, zoom_level).unwrap();
+<a href=#680 id=680 data-nosnippet>680</a>            <span class="self">self</span>.requested_tiles
+<a href=#681 id=681 data-nosnippet>681</a>                .lock()
+<a href=#682 id=682 data-nosnippet>682</a>                .unwrap()
+<a href=#683 id=683 data-nosnippet>683</a>                .push(requested_tile_key);
+<a href=#684 id=684 data-nosnippet>684</a>            <span class="kw">let </span>scripted_response = <span class="self">self
+<a href=#685 id=685 data-nosnippet>685</a>                </span>.scripted_responses
+<a href=#686 id=686 data-nosnippet>686</a>                .lock()
+<a href=#687 id=687 data-nosnippet>687</a>                .unwrap()
+<a href=#688 id=688 data-nosnippet>688</a>                .get(<span class="kw-2">&amp;</span>requested_tile_key)
+<a href=#689 id=689 data-nosnippet>689</a>                .cloned();
+<a href=#690 id=690 data-nosnippet>690</a>            <span class="kw">match </span>scripted_response {
+<a href=#691 id=691 data-nosnippet>691</a>                <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(image_bytes)) =&gt; <span class="prelude-val">Ok</span>(RasterTileData {
+<a href=#692 id=692 data-nosnippet>692</a>                    tile_x,
+<a href=#693 id=693 data-nosnippet>693</a>                    tile_y,
+<a href=#694 id=694 data-nosnippet>694</a>                    zoom_level,
+<a href=#695 id=695 data-nosnippet>695</a>                    image_format: RasterImageFormat::Png,
+<a href=#696 id=696 data-nosnippet>696</a>                    tile_resolution: RasterTileResolution::Standard,
+<a href=#697 id=697 data-nosnippet>697</a>                    image_bytes,
+<a href=#698 id=698 data-nosnippet>698</a>                }),
+<a href=#699 id=699 data-nosnippet>699</a>                <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(detail)) =&gt; <span class="prelude-val">Err</span>(SDKError::NetworkRequestFailed(detail)),
+<a href=#700 id=700 data-nosnippet>700</a>                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(SDKError::ResponseParsingFailure(
+<a href=#701 id=701 data-nosnippet>701</a>                    <span class="string">"tile not scripted"</span>.to_string(),
+<a href=#702 id=702 data-nosnippet>702</a>                )),
+<a href=#703 id=703 data-nosnippet>703</a>            }
+<a href=#704 id=704 data-nosnippet>704</a>        }
+<a href=#705 id=705 data-nosnippet>705</a>    }
+<a href=#706 id=706 data-nosnippet>706</a>
+<a href=#707 id=707 data-nosnippet>707</a>    <span class="kw">fn </span>tile_key(tile_x: u32, tile_y: u32, zoom_level: u8) -&gt; TileKey {
+<a href=#708 id=708 data-nosnippet>708</a>        TileKey::new(tile_x, tile_y, zoom_level).unwrap()
+<a href=#709 id=709 data-nosnippet>709</a>    }
+<a href=#710 id=710 data-nosnippet>710</a>
+<a href=#711 id=711 data-nosnippet>711</a>    <span class="kw">fn </span>readiness_of(prepared_tiles: <span class="kw-2">&amp;</span>[PreparedTile], requested_tile_key: TileKey) -&gt; TileReadiness {
+<a href=#712 id=712 data-nosnippet>712</a>        prepared_tiles
+<a href=#713 id=713 data-nosnippet>713</a>            .iter()
+<a href=#714 id=714 data-nosnippet>714</a>            .find(|prepared_tile| prepared_tile.requested_tile_key == requested_tile_key)
+<a href=#715 id=715 data-nosnippet>715</a>            .map(|prepared_tile| prepared_tile.readiness)
+<a href=#716 id=716 data-nosnippet>716</a>            .expect(<span class="string">"requested tile missing from the prepared frame"</span>)
+<a href=#717 id=717 data-nosnippet>717</a>    }
+<a href=#718 id=718 data-nosnippet>718</a>
+<a href=#719 id=719 data-nosnippet>719</a>    <span class="attr">#[tokio::test]
+<a href=#720 id=720 data-nosnippet>720</a>    </span><span class="kw">async fn </span>pooled_tiles_render_without_a_second_fetch() {
+<a href=#721 id=721 data-nosnippet>721</a>        <span class="kw">let </span>detailed_tile = tile_key(<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>);
+<a href=#722 id=722 data-nosnippet>722</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([(detailed_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>])]);
+<a href=#723 id=723 data-nosnippet>723</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#724 id=724 data-nosnippet>724</a>            tile_provider.clone(),
+<a href=#725 id=725 data-nosnippet>725</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#726 id=726 data-nosnippet>726</a>            RasterImageFormat::Png,
+<a href=#727 id=727 data-nosnippet>727</a>            RasterTileResolution::Standard,
+<a href=#728 id=728 data-nosnippet>728</a>            <span class="number">8</span>,
+<a href=#729 id=729 data-nosnippet>729</a>        );
+<a href=#730 id=730 data-nosnippet>730</a>        <span class="kw">let </span>first_frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[detailed_tile]).<span class="kw">await</span>;
+<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">assert_eq!</span>(
+<a href=#732 id=732 data-nosnippet>732</a>            readiness_of(<span class="kw-2">&amp;</span>first_frame, detailed_tile),
+<a href=#733 id=733 data-nosnippet>733</a>            TileReadiness::Present
+<a href=#734 id=734 data-nosnippet>734</a>        );
+<a href=#735 id=735 data-nosnippet>735</a>        <span class="kw">let </span>second_frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[detailed_tile]).<span class="kw">await</span>;
+<a href=#736 id=736 data-nosnippet>736</a>        <span class="macro">assert_eq!</span>(
+<a href=#737 id=737 data-nosnippet>737</a>            readiness_of(<span class="kw-2">&amp;</span>second_frame, detailed_tile),
+<a href=#738 id=738 data-nosnippet>738</a>            TileReadiness::Present
+<a href=#739 id=739 data-nosnippet>739</a>        );
+<a href=#740 id=740 data-nosnippet>740</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
+<a href=#741 id=741 data-nosnippet>741</a>    }
+<a href=#742 id=742 data-nosnippet>742</a>
+<a href=#743 id=743 data-nosnippet>743</a>    <span class="attr">#[tokio::test]
+<a href=#744 id=744 data-nosnippet>744</a>    </span><span class="kw">async fn </span>duplicated_requests_in_one_frame_fetch_once() {
+<a href=#745 id=745 data-nosnippet>745</a>        <span class="kw">let </span>detailed_tile = tile_key(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>);
+<a href=#746 id=746 data-nosnippet>746</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([(detailed_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>])]);
+<a href=#747 id=747 data-nosnippet>747</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#748 id=748 data-nosnippet>748</a>            tile_provider.clone(),
+<a href=#749 id=749 data-nosnippet>749</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#750 id=750 data-nosnippet>750</a>            RasterImageFormat::Png,
+<a href=#751 id=751 data-nosnippet>751</a>            RasterTileResolution::Standard,
+<a href=#752 id=752 data-nosnippet>752</a>            <span class="number">8</span>,
+<a href=#753 id=753 data-nosnippet>753</a>        );
+<a href=#754 id=754 data-nosnippet>754</a>        <span class="kw">let </span>frame = tile_scheduler
+<a href=#755 id=755 data-nosnippet>755</a>            .prepare_frame(<span class="kw-2">&amp;</span>[detailed_tile, detailed_tile, detailed_tile])
+<a href=#756 id=756 data-nosnippet>756</a>            .<span class="kw">await</span>;
+<a href=#757 id=757 data-nosnippet>757</a>        <span class="macro">assert_eq!</span>(frame.len(), <span class="number">3</span>);
+<a href=#758 id=758 data-nosnippet>758</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
+<a href=#759 id=759 data-nosnippet>759</a>    }
+<a href=#760 id=760 data-nosnippet>760</a>
+<a href=#761 id=761 data-nosnippet>761</a>    <span class="attr">#[tokio::test]
+<a href=#762 id=762 data-nosnippet>762</a>    </span><span class="kw">async fn </span>failed_detail_falls_back_to_the_pooled_parent() {
+<a href=#763 id=763 data-nosnippet>763</a>        <span class="kw">let </span>parent_tile = tile_key(<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>);
+<a href=#764 id=764 data-nosnippet>764</a>        <span class="kw">let </span>child_tile = tile_key(<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>);
+<a href=#765 id=765 data-nosnippet>765</a>        <span class="comment">// The child is scripted to fail; the parent serves.
+<a href=#766 id=766 data-nosnippet>766</a>        </span><span class="kw">let </span>tile_provider =
+<a href=#767 id=767 data-nosnippet>767</a>            ScriptedTileProvider::failing_tiles([(parent_tile, <span class="macro">vec!</span>[<span class="number">2</span>; <span class="number">64</span>])], [child_tile]);
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#769 id=769 data-nosnippet>769</a>            tile_provider.clone(),
+<a href=#770 id=770 data-nosnippet>770</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#771 id=771 data-nosnippet>771</a>            RasterImageFormat::Png,
+<a href=#772 id=772 data-nosnippet>772</a>            RasterTileResolution::Standard,
+<a href=#773 id=773 data-nosnippet>773</a>            <span class="number">8</span>,
+<a href=#774 id=774 data-nosnippet>774</a>        );
+<a href=#775 id=775 data-nosnippet>775</a>        <span class="kw">let </span>frame = tile_scheduler
+<a href=#776 id=776 data-nosnippet>776</a>            .prepare_frame(<span class="kw-2">&amp;</span>[child_tile, parent_tile])
+<a href=#777 id=777 data-nosnippet>777</a>            .<span class="kw">await</span>;
+<a href=#778 id=778 data-nosnippet>778</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, parent_tile), TileReadiness::Present);
+<a href=#779 id=779 data-nosnippet>779</a>        <span class="kw">match </span>readiness_of(<span class="kw-2">&amp;</span>frame, child_tile) {
+<a href=#780 id=780 data-nosnippet>780</a>            TileReadiness::FallsBackTo {
+<a href=#781 id=781 data-nosnippet>781</a>                fallback_tile_key,
+<a href=#782 id=782 data-nosnippet>782</a>                zoom_level_difference,
+<a href=#783 id=783 data-nosnippet>783</a>            } =&gt; {
+<a href=#784 id=784 data-nosnippet>784</a>                <span class="macro">assert_eq!</span>(fallback_tile_key, parent_tile);
+<a href=#785 id=785 data-nosnippet>785</a>                <span class="macro">assert_eq!</span>(zoom_level_difference, <span class="number">2</span>);
+<a href=#786 id=786 data-nosnippet>786</a>            }
+<a href=#787 id=787 data-nosnippet>787</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"expected a parent fallback, got {other:?}"</span>),
+<a href=#788 id=788 data-nosnippet>788</a>        }
+<a href=#789 id=789 data-nosnippet>789</a>    }
+<a href=#790 id=790 data-nosnippet>790</a>
+<a href=#791 id=791 data-nosnippet>791</a>    <span class="attr">#[tokio::test]
+<a href=#792 id=792 data-nosnippet>792</a>    </span><span class="kw">async fn </span>fetch_budget_defers_the_surplus() {
+<a href=#793 id=793 data-nosnippet>793</a>        <span class="kw">let </span>first_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#794 id=794 data-nosnippet>794</a>        <span class="kw">let </span>second_tile = tile_key(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
+<a href=#796 id=796 data-nosnippet>796</a>            (first_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#797 id=797 data-nosnippet>797</a>            (second_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#798 id=798 data-nosnippet>798</a>        ]);
+<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#800 id=800 data-nosnippet>800</a>            tile_provider.clone(),
+<a href=#801 id=801 data-nosnippet>801</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#802 id=802 data-nosnippet>802</a>            RasterImageFormat::Png,
+<a href=#803 id=803 data-nosnippet>803</a>            RasterTileResolution::Standard,
+<a href=#804 id=804 data-nosnippet>804</a>            <span class="number">1</span>,
+<a href=#805 id=805 data-nosnippet>805</a>        );
+<a href=#806 id=806 data-nosnippet>806</a>        <span class="kw">let </span>frame = tile_scheduler
+<a href=#807 id=807 data-nosnippet>807</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile])
+<a href=#808 id=808 data-nosnippet>808</a>            .<span class="kw">await</span>;
+<a href=#809 id=809 data-nosnippet>809</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, first_tile), TileReadiness::Present);
+<a href=#810 id=810 data-nosnippet>810</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, second_tile), TileReadiness::Deferred);
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
+<a href=#812 id=812 data-nosnippet>812</a>        <span class="comment">// The deferred tile completes on the next frame.
+<a href=#813 id=813 data-nosnippet>813</a>        </span><span class="kw">let </span>next_frame = tile_scheduler
+<a href=#814 id=814 data-nosnippet>814</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile])
+<a href=#815 id=815 data-nosnippet>815</a>            .<span class="kw">await</span>;
+<a href=#816 id=816 data-nosnippet>816</a>        <span class="macro">assert_eq!</span>(
+<a href=#817 id=817 data-nosnippet>817</a>            readiness_of(<span class="kw-2">&amp;</span>next_frame, second_tile),
+<a href=#818 id=818 data-nosnippet>818</a>            TileReadiness::Present
+<a href=#819 id=819 data-nosnippet>819</a>        );
+<a href=#820 id=820 data-nosnippet>820</a>    }
+<a href=#821 id=821 data-nosnippet>821</a>
+<a href=#822 id=822 data-nosnippet>822</a>    <span class="attr">#[tokio::test]
+<a href=#823 id=823 data-nosnippet>823</a>    </span><span class="kw">async fn </span>unrouted_tiles_report_unavailable_per_frame() {
+<a href=#824 id=824 data-nosnippet>824</a>        <span class="kw">let </span>failing_tile = tile_key(<span class="number">2</span>, <span class="number">2</span>, <span class="number">4</span>);
+<a href=#825 id=825 data-nosnippet>825</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::failing_tiles([], [failing_tile]);
+<a href=#826 id=826 data-nosnippet>826</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#827 id=827 data-nosnippet>827</a>            tile_provider.clone(),
+<a href=#828 id=828 data-nosnippet>828</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#829 id=829 data-nosnippet>829</a>            RasterImageFormat::Png,
+<a href=#830 id=830 data-nosnippet>830</a>            RasterTileResolution::Standard,
+<a href=#831 id=831 data-nosnippet>831</a>            <span class="number">8</span>,
+<a href=#832 id=832 data-nosnippet>832</a>        );
+<a href=#833 id=833 data-nosnippet>833</a>        <span class="kw">let </span>frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[failing_tile]).<span class="kw">await</span>;
+<a href=#834 id=834 data-nosnippet>834</a>        <span class="macro">assert_eq!</span>(
+<a href=#835 id=835 data-nosnippet>835</a>            readiness_of(<span class="kw-2">&amp;</span>frame, failing_tile),
+<a href=#836 id=836 data-nosnippet>836</a>            TileReadiness::Unavailable
+<a href=#837 id=837 data-nosnippet>837</a>        );
+<a href=#838 id=838 data-nosnippet>838</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">1</span>);
+<a href=#839 id=839 data-nosnippet>839</a>        <span class="comment">// A later frame retries the tile.
+<a href=#840 id=840 data-nosnippet>840</a>        </span>tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[failing_tile]).<span class="kw">await</span>;
+<a href=#841 id=841 data-nosnippet>841</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys().len(), <span class="number">2</span>);
+<a href=#842 id=842 data-nosnippet>842</a>    }
+<a href=#843 id=843 data-nosnippet>843</a>
+<a href=#844 id=844 data-nosnippet>844</a>    <span class="attr">#[tokio::test]
+<a href=#845 id=845 data-nosnippet>845</a>    </span><span class="kw">async fn </span>the_fetch_budget_leaves_the_frame_pending() {
+<a href=#846 id=846 data-nosnippet>846</a>        <span class="comment">// Mid-fetch state made observable: the budget stops the second tile's
+<a href=#847 id=847 data-nosnippet>847</a>        // fetch, so it reports `Deferred` and the frame is not idle — later
+<a href=#848 id=848 data-nosnippet>848</a>        // frames still change its pixels even though its fetch never left the
+<a href=#849 id=849 data-nosnippet>849</a>        // scheduler in flight.
+<a href=#850 id=850 data-nosnippet>850</a>        </span><span class="kw">let </span>first_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#851 id=851 data-nosnippet>851</a>        <span class="kw">let </span>deferred_tile = tile_key(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#852 id=852 data-nosnippet>852</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
+<a href=#853 id=853 data-nosnippet>853</a>            (first_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#854 id=854 data-nosnippet>854</a>            (deferred_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#855 id=855 data-nosnippet>855</a>        ]);
+<a href=#856 id=856 data-nosnippet>856</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#857 id=857 data-nosnippet>857</a>            tile_provider.clone(),
+<a href=#858 id=858 data-nosnippet>858</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#859 id=859 data-nosnippet>859</a>            RasterImageFormat::Png,
+<a href=#860 id=860 data-nosnippet>860</a>            RasterTileResolution::Standard,
+<a href=#861 id=861 data-nosnippet>861</a>            <span class="number">1</span>,
+<a href=#862 id=862 data-nosnippet>862</a>        );
+<a href=#863 id=863 data-nosnippet>863</a>        <span class="kw">let </span>frame = tile_scheduler
+<a href=#864 id=864 data-nosnippet>864</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, deferred_tile])
+<a href=#865 id=865 data-nosnippet>865</a>            .<span class="kw">await</span>;
+<a href=#866 id=866 data-nosnippet>866</a>        <span class="macro">assert_eq!</span>(readiness_of(<span class="kw-2">&amp;</span>frame, deferred_tile), TileReadiness::Deferred);
+<a href=#867 id=867 data-nosnippet>867</a>        <span class="macro">assert!</span>(
+<a href=#868 id=868 data-nosnippet>868</a>            !tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, deferred_tile]),
+<a href=#869 id=869 data-nosnippet>869</a>            <span class="string">"a budget-deferred tile keeps the frame pending"
+<a href=#870 id=870 data-nosnippet>870</a>        </span>);
+<a href=#871 id=871 data-nosnippet>871</a>        <span class="macro">assert!</span>(!prepared_frame_is_idle(<span class="kw-2">&amp;</span>frame));
+<a href=#872 id=872 data-nosnippet>872</a>        <span class="comment">// The fetch completes on the next frame and the signal flips to idle.
+<a href=#873 id=873 data-nosnippet>873</a>        </span><span class="kw">let </span>next_frame = tile_scheduler
+<a href=#874 id=874 data-nosnippet>874</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, deferred_tile])
+<a href=#875 id=875 data-nosnippet>875</a>            .<span class="kw">await</span>;
+<a href=#876 id=876 data-nosnippet>876</a>        <span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, deferred_tile]));
+<a href=#877 id=877 data-nosnippet>877</a>        <span class="macro">assert!</span>(prepared_frame_is_idle(<span class="kw-2">&amp;</span>next_frame));
+<a href=#878 id=878 data-nosnippet>878</a>    }
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a>    <span class="attr">#[tokio::test]
+<a href=#881 id=881 data-nosnippet>881</a>    </span><span class="kw">async fn </span>a_failed_fetch_keeps_the_frame_pending() {
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="kw">let </span>failing_tile = tile_key(<span class="number">2</span>, <span class="number">2</span>, <span class="number">4</span>);
+<a href=#883 id=883 data-nosnippet>883</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::failing_tiles([], [failing_tile]);
+<a href=#884 id=884 data-nosnippet>884</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#885 id=885 data-nosnippet>885</a>            tile_provider.clone(),
+<a href=#886 id=886 data-nosnippet>886</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#887 id=887 data-nosnippet>887</a>            RasterImageFormat::Png,
+<a href=#888 id=888 data-nosnippet>888</a>            RasterTileResolution::Standard,
+<a href=#889 id=889 data-nosnippet>889</a>            <span class="number">8</span>,
+<a href=#890 id=890 data-nosnippet>890</a>        );
+<a href=#891 id=891 data-nosnippet>891</a>        <span class="kw">let </span>frame = tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[failing_tile]).<span class="kw">await</span>;
+<a href=#892 id=892 data-nosnippet>892</a>        <span class="macro">assert_eq!</span>(
+<a href=#893 id=893 data-nosnippet>893</a>            readiness_of(<span class="kw-2">&amp;</span>frame, failing_tile),
+<a href=#894 id=894 data-nosnippet>894</a>            TileReadiness::Unavailable
+<a href=#895 id=895 data-nosnippet>895</a>        );
+<a href=#896 id=896 data-nosnippet>896</a>        <span class="macro">assert!</span>(
+<a href=#897 id=897 data-nosnippet>897</a>            !tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[failing_tile]),
+<a href=#898 id=898 data-nosnippet>898</a>            <span class="string">"a provider failure keeps the frame pending: a later frame retries it"
+<a href=#899 id=899 data-nosnippet>899</a>        </span>);
+<a href=#900 id=900 data-nosnippet>900</a>        <span class="macro">assert!</span>(!prepared_frame_is_idle(<span class="kw-2">&amp;</span>frame));
+<a href=#901 id=901 data-nosnippet>901</a>    }
+<a href=#902 id=902 data-nosnippet>902</a>
+<a href=#903 id=903 data-nosnippet>903</a>    <span class="attr">#[tokio::test]
+<a href=#904 id=904 data-nosnippet>904</a>    </span><span class="kw">async fn </span>a_fallback_frame_is_pending_until_its_detail_arrives() {
+<a href=#905 id=905 data-nosnippet>905</a>        <span class="kw">let </span>parent_tile = tile_key(<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>);
+<a href=#906 id=906 data-nosnippet>906</a>        <span class="kw">let </span>failing_child_tile = tile_key(<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>);
+<a href=#907 id=907 data-nosnippet>907</a>        <span class="kw">let </span>tile_provider =
+<a href=#908 id=908 data-nosnippet>908</a>            ScriptedTileProvider::failing_tiles([(parent_tile, <span class="macro">vec!</span>[<span class="number">2</span>; <span class="number">64</span>])], [failing_child_tile]);
+<a href=#909 id=909 data-nosnippet>909</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#910 id=910 data-nosnippet>910</a>            tile_provider.clone(),
+<a href=#911 id=911 data-nosnippet>911</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#912 id=912 data-nosnippet>912</a>            RasterImageFormat::Png,
+<a href=#913 id=913 data-nosnippet>913</a>            RasterTileResolution::Standard,
+<a href=#914 id=914 data-nosnippet>914</a>            <span class="number">8</span>,
+<a href=#915 id=915 data-nosnippet>915</a>        );
+<a href=#916 id=916 data-nosnippet>916</a>        <span class="kw">let </span>frame = tile_scheduler
+<a href=#917 id=917 data-nosnippet>917</a>            .prepare_frame(<span class="kw-2">&amp;</span>[failing_child_tile, parent_tile])
+<a href=#918 id=918 data-nosnippet>918</a>            .<span class="kw">await</span>;
+<a href=#919 id=919 data-nosnippet>919</a>        <span class="macro">assert!</span>(
+<a href=#920 id=920 data-nosnippet>920</a>            !tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[failing_child_tile]),
+<a href=#921 id=921 data-nosnippet>921</a>            <span class="string">"a parent fallback still owes the child's own detail"
+<a href=#922 id=922 data-nosnippet>922</a>        </span>);
+<a href=#923 id=923 data-nosnippet>923</a>        <span class="macro">assert!</span>(!prepared_frame_is_idle(<span class="kw-2">&amp;</span>frame));
+<a href=#924 id=924 data-nosnippet>924</a>        <span class="comment">// The parent-only request set *is* idle: nothing is owed for it.
+<a href=#925 id=925 data-nosnippet>925</a>        </span><span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[parent_tile]));
+<a href=#926 id=926 data-nosnippet>926</a>    }
+<a href=#927 id=927 data-nosnippet>927</a>
+<a href=#928 id=928 data-nosnippet>928</a>    <span class="attr">#[test]
+<a href=#929 id=929 data-nosnippet>929</a>    </span><span class="kw">fn </span>the_readiness_verdicts_decide_the_frame_verdict_alone() {
+<a href=#930 id=930 data-nosnippet>930</a>        <span class="kw">let </span>fallback_child_tile = tile_key(<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>);
+<a href=#931 id=931 data-nosnippet>931</a>        <span class="kw">let </span>prepared_tile = |tile_readiness| PreparedTile {
+<a href=#932 id=932 data-nosnippet>932</a>            requested_tile_key: fallback_child_tile,
+<a href=#933 id=933 data-nosnippet>933</a>            readiness: tile_readiness,
+<a href=#934 id=934 data-nosnippet>934</a>        };
+<a href=#935 id=935 data-nosnippet>935</a>        <span class="kw">for </span>(tile_readiness, expected_idle) <span class="kw">in </span>[
+<a href=#936 id=936 data-nosnippet>936</a>            (TileReadiness::Present, <span class="bool-val">true</span>),
+<a href=#937 id=937 data-nosnippet>937</a>            (
+<a href=#938 id=938 data-nosnippet>938</a>                TileReadiness::FallsBackTo {
+<a href=#939 id=939 data-nosnippet>939</a>                    <span class="comment">// (5, 5, 4)'s own parent.
+<a href=#940 id=940 data-nosnippet>940</a>                    </span>fallback_tile_key: fallback_child_tile
+<a href=#941 id=941 data-nosnippet>941</a>                        .parent_tile_key()
+<a href=#942 id=942 data-nosnippet>942</a>                        .expect(<span class="string">"the fallback child is not the root tile and has a parent"</span>),
+<a href=#943 id=943 data-nosnippet>943</a>                    zoom_level_difference: <span class="number">1</span>,
+<a href=#944 id=944 data-nosnippet>944</a>                },
+<a href=#945 id=945 data-nosnippet>945</a>                <span class="bool-val">false</span>,
+<a href=#946 id=946 data-nosnippet>946</a>            ),
+<a href=#947 id=947 data-nosnippet>947</a>            (TileReadiness::Unavailable, <span class="bool-val">false</span>),
+<a href=#948 id=948 data-nosnippet>948</a>            (TileReadiness::Deferred, <span class="bool-val">false</span>),
+<a href=#949 id=949 data-nosnippet>949</a>        ] {
+<a href=#950 id=950 data-nosnippet>950</a>            <span class="macro">assert_eq!</span>(
+<a href=#951 id=951 data-nosnippet>951</a>                prepared_frame_is_idle(<span class="kw-2">&amp;</span>[prepared_tile(tile_readiness)]),
+<a href=#952 id=952 data-nosnippet>952</a>                expected_idle,
+<a href=#953 id=953 data-nosnippet>953</a>                <span class="string">"verdict {tile_readiness:?}"
+<a href=#954 id=954 data-nosnippet>954</a>            </span>);
+<a href=#955 id=955 data-nosnippet>955</a>        }
+<a href=#956 id=956 data-nosnippet>956</a>        <span class="comment">// An empty request set is idle by vacuity, matching `is_idle`.
+<a href=#957 id=957 data-nosnippet>957</a>        </span><span class="macro">assert!</span>(prepared_frame_is_idle(<span class="kw-2">&amp;</span>[]));
+<a href=#958 id=958 data-nosnippet>958</a>    }
+<a href=#959 id=959 data-nosnippet>959</a>
+<a href=#960 id=960 data-nosnippet>960</a>    <span class="attr">#[tokio::test]
+<a href=#961 id=961 data-nosnippet>961</a>    </span><span class="kw">async fn </span>an_evicted_tile_flips_idleness_back_to_pending() {
+<a href=#962 id=962 data-nosnippet>962</a>        <span class="kw">let </span>first_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#963 id=963 data-nosnippet>963</a>        <span class="kw">let </span>second_tile = tile_key(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#964 id=964 data-nosnippet>964</a>        <span class="kw">let </span>third_tile = tile_key(<span class="number">2</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#965 id=965 data-nosnippet>965</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
+<a href=#966 id=966 data-nosnippet>966</a>            (first_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#967 id=967 data-nosnippet>967</a>            (second_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#968 id=968 data-nosnippet>968</a>            (third_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#969 id=969 data-nosnippet>969</a>        ]);
+<a href=#970 id=970 data-nosnippet>970</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#971 id=971 data-nosnippet>971</a>            tile_provider.clone(),
+<a href=#972 id=972 data-nosnippet>972</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#973 id=973 data-nosnippet>973</a>            RasterImageFormat::Png,
+<a href=#974 id=974 data-nosnippet>974</a>            RasterTileResolution::Standard,
+<a href=#975 id=975 data-nosnippet>975</a>            <span class="number">8</span>,
+<a href=#976 id=976 data-nosnippet>976</a>        );
+<a href=#977 id=977 data-nosnippet>977</a>        tile_scheduler
 <a href=#978 id=978 data-nosnippet>978</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile])
 <a href=#979 id=979 data-nosnippet>979</a>            .<span class="kw">await</span>;
-<a href=#980 id=980 data-nosnippet>980</a>        <span class="macro">assert_eq!</span>(
-<a href=#981 id=981 data-nosnippet>981</a>            readiness_of(<span class="kw-2">&amp;</span>refetched_frame, second_tile),
-<a href=#982 id=982 data-nosnippet>982</a>            TileReadiness::Present
-<a href=#983 id=983 data-nosnippet>983</a>        );
-<a href=#984 id=984 data-nosnippet>984</a>        <span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile]));
-<a href=#985 id=985 data-nosnippet>985</a>    }
-<a href=#986 id=986 data-nosnippet>986</a>
-<a href=#987 id=987 data-nosnippet>987</a>    <span class="attr">#[tokio::test]
-<a href=#988 id=988 data-nosnippet>988</a>    </span><span class="kw">async fn </span>an_eviction_outside_the_request_set_does_not_disturb_idleness() {
-<a href=#989 id=989 data-nosnippet>989</a>        <span class="kw">let </span>requested_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
-<a href=#990 id=990 data-nosnippet>990</a>        <span class="kw">let </span>unrelated_tile = tile_key(<span class="number">6</span>, <span class="number">6</span>, <span class="number">3</span>);
-<a href=#991 id=991 data-nosnippet>991</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
-<a href=#992 id=992 data-nosnippet>992</a>            (requested_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#993 id=993 data-nosnippet>993</a>            (unrelated_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
-<a href=#994 id=994 data-nosnippet>994</a>        ]);
-<a href=#995 id=995 data-nosnippet>995</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#996 id=996 data-nosnippet>996</a>            tile_provider.clone(),
-<a href=#997 id=997 data-nosnippet>997</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#998 id=998 data-nosnippet>998</a>            RasterImageFormat::Png,
-<a href=#999 id=999 data-nosnippet>999</a>            RasterTileResolution::Standard,
-<a href=#1000 id=1000 data-nosnippet>1000</a>            <span class="number">8</span>,
-<a href=#1001 id=1001 data-nosnippet>1001</a>        );
-<a href=#1002 id=1002 data-nosnippet>1002</a>        tile_scheduler
-<a href=#1003 id=1003 data-nosnippet>1003</a>            .prepare_frame(<span class="kw-2">&amp;</span>[requested_tile, unrelated_tile])
-<a href=#1004 id=1004 data-nosnippet>1004</a>            .<span class="kw">await</span>;
-<a href=#1005 id=1005 data-nosnippet>1005</a>        <span class="macro">assert!</span>(tile_scheduler.texture_pool_mut().evict(<span class="kw-2">&amp;</span>unrelated_tile));
-<a href=#1006 id=1006 data-nosnippet>1006</a>        <span class="macro">assert!</span>(
-<a href=#1007 id=1007 data-nosnippet>1007</a>            tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[requested_tile]),
-<a href=#1008 id=1008 data-nosnippet>1008</a>            <span class="string">"an eviction of a payload the request set does not ask for leaves the frame idle"
-<a href=#1009 id=1009 data-nosnippet>1009</a>        </span>);
-<a href=#1010 id=1010 data-nosnippet>1010</a>    }
-<a href=#1011 id=1011 data-nosnippet>1011</a>
-<a href=#1012 id=1012 data-nosnippet>1012</a>    <span class="doccomment">/// Provider stub whose fetches never answer: it models a stalled
-<a href=#1013 id=1013 data-nosnippet>1013</a>    /// network the detached warm run parks on, so its future can be
-<a href=#1014 id=1014 data-nosnippet>1014</a>    /// cancelled mid-await deterministically.
-<a href=#1015 id=1015 data-nosnippet>1015</a>    </span><span class="kw">struct </span>StalledTileProvider;
-<a href=#1016 id=1016 data-nosnippet>1016</a>
-<a href=#1017 id=1017 data-nosnippet>1017</a>    <span class="attr">#[async_trait]
-<a href=#1018 id=1018 data-nosnippet>1018</a>    </span><span class="kw">impl </span>RasterTileProvider <span class="kw">for </span>StalledTileProvider {
-<a href=#1019 id=1019 data-nosnippet>1019</a>        <span class="kw">async fn </span>fetch_raster_tile(
-<a href=#1020 id=1020 data-nosnippet>1020</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#1021 id=1021 data-nosnippet>1021</a>            _tile_x: u32,
-<a href=#1022 id=1022 data-nosnippet>1022</a>            _tile_y: u32,
-<a href=#1023 id=1023 data-nosnippet>1023</a>            _zoom_level: u8,
-<a href=#1024 id=1024 data-nosnippet>1024</a>            _image_format: RasterImageFormat,
-<a href=#1025 id=1025 data-nosnippet>1025</a>            _tile_resolution: RasterTileResolution,
-<a href=#1026 id=1026 data-nosnippet>1026</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;RasterTileData, SDKError&gt; {
-<a href=#1027 id=1027 data-nosnippet>1027</a>            <span class="comment">// A break-less loop over a never-yielding pending future is the
-<a href=#1028 id=1028 data-nosnippet>1028</a>            // permanent stall itself: the run parks at its await point until
-<a href=#1029 id=1029 data-nosnippet>1029</a>            // it is cancelled.
-<a href=#1030 id=1030 data-nosnippet>1030</a>            </span><span class="kw">loop </span>{
-<a href=#1031 id=1031 data-nosnippet>1031</a>                pending::&lt;()&gt;().<span class="kw">await</span>;
-<a href=#1032 id=1032 data-nosnippet>1032</a>            }
-<a href=#1033 id=1033 data-nosnippet>1033</a>        }
-<a href=#1034 id=1034 data-nosnippet>1034</a>    }
-<a href=#1035 id=1035 data-nosnippet>1035</a>
-<a href=#1036 id=1036 data-nosnippet>1036</a>    <span class="doccomment">/// Provider stub that panics on fetch for one tile and serves a canned
-<a href=#1037 id=1037 data-nosnippet>1037</a>    /// payload for every other, modelling an unexpected provider bug.
-<a href=#1038 id=1038 data-nosnippet>1038</a>    </span><span class="kw">struct </span>PanickingTileProvider {
-<a href=#1039 id=1039 data-nosnippet>1039</a>        panicking_tile_key: TileKey,
-<a href=#1040 id=1040 data-nosnippet>1040</a>    }
-<a href=#1041 id=1041 data-nosnippet>1041</a>
-<a href=#1042 id=1042 data-nosnippet>1042</a>    <span class="attr">#[async_trait]
-<a href=#1043 id=1043 data-nosnippet>1043</a>    </span><span class="kw">impl </span>RasterTileProvider <span class="kw">for </span>PanickingTileProvider {
-<a href=#1044 id=1044 data-nosnippet>1044</a>        <span class="kw">async fn </span>fetch_raster_tile(
-<a href=#1045 id=1045 data-nosnippet>1045</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#1046 id=1046 data-nosnippet>1046</a>            tile_x: u32,
-<a href=#1047 id=1047 data-nosnippet>1047</a>            tile_y: u32,
-<a href=#1048 id=1048 data-nosnippet>1048</a>            zoom_level: u8,
-<a href=#1049 id=1049 data-nosnippet>1049</a>            _image_format: RasterImageFormat,
-<a href=#1050 id=1050 data-nosnippet>1050</a>            _tile_resolution: RasterTileResolution,
-<a href=#1051 id=1051 data-nosnippet>1051</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;RasterTileData, SDKError&gt; {
-<a href=#1052 id=1052 data-nosnippet>1052</a>            <span class="kw">let </span>requested_tile_key = TileKey::new(tile_x, tile_y, zoom_level).unwrap();
-<a href=#1053 id=1053 data-nosnippet>1053</a>            <span class="kw">if </span>requested_tile_key == <span class="self">self</span>.panicking_tile_key {
-<a href=#1054 id=1054 data-nosnippet>1054</a>                <span class="macro">panic!</span>(<span class="string">"the provider bug fires"</span>);
-<a href=#1055 id=1055 data-nosnippet>1055</a>            }
-<a href=#1056 id=1056 data-nosnippet>1056</a>            <span class="prelude-val">Ok</span>(RasterTileData {
-<a href=#1057 id=1057 data-nosnippet>1057</a>                tile_x,
-<a href=#1058 id=1058 data-nosnippet>1058</a>                tile_y,
-<a href=#1059 id=1059 data-nosnippet>1059</a>                zoom_level,
-<a href=#1060 id=1060 data-nosnippet>1060</a>                image_format: RasterImageFormat::Png,
-<a href=#1061 id=1061 data-nosnippet>1061</a>                tile_resolution: RasterTileResolution::Standard,
-<a href=#1062 id=1062 data-nosnippet>1062</a>                image_bytes: <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>],
-<a href=#1063 id=1063 data-nosnippet>1063</a>            })
-<a href=#1064 id=1064 data-nosnippet>1064</a>        }
-<a href=#1065 id=1065 data-nosnippet>1065</a>    }
-<a href=#1066 id=1066 data-nosnippet>1066</a>
-<a href=#1067 id=1067 data-nosnippet>1067</a>    <span class="doccomment">/// The vtable and data pointer of the never-waking waker: every vtable
-<a href=#1068 id=1068 data-nosnippet>1068</a>    /// call is a no-op, so a manual poll never touches the data pointer.
-<a href=#1069 id=1069 data-nosnippet>1069</a>    </span><span class="kw">const </span>NOOP_WAKER_VTABLE: RawWakerVTable = RawWakerVTable::new(
-<a href=#1070 id=1070 data-nosnippet>1070</a>        |<span class="kw">_</span>| RawWaker::new(std::ptr::null::&lt;()&gt;(), <span class="kw-2">&amp;</span>NOOP_WAKER_VTABLE),
-<a href=#1071 id=1071 data-nosnippet>1071</a>        |<span class="kw">_</span>| {},
-<a href=#1072 id=1072 data-nosnippet>1072</a>        |<span class="kw">_</span>| {},
-<a href=#1073 id=1073 data-nosnippet>1073</a>        |<span class="kw">_</span>| {},
-<a href=#1074 id=1074 data-nosnippet>1074</a>    );
+<a href=#980 id=980 data-nosnippet>980</a>        <span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile]));
+<a href=#981 id=981 data-nosnippet>981</a>        <span class="comment">// An eviction of a requested payload — budget pressure, or the
+<a href=#982 id=982 data-nosnippet>982</a>        // renderer's corrupt-payload eviction — turns the signal pending
+<a href=#983 id=983 data-nosnippet>983</a>        // again; the next prepare frame refetches it.
+<a href=#984 id=984 data-nosnippet>984</a>        </span><span class="macro">assert!</span>(tile_scheduler.texture_pool_mut().evict(<span class="kw-2">&amp;</span>second_tile));
+<a href=#985 id=985 data-nosnippet>985</a>        <span class="macro">assert!</span>(!tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile]));
+<a href=#986 id=986 data-nosnippet>986</a>        <span class="kw">let </span>refetched_frame = tile_scheduler
+<a href=#987 id=987 data-nosnippet>987</a>            .prepare_frame(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile])
+<a href=#988 id=988 data-nosnippet>988</a>            .<span class="kw">await</span>;
+<a href=#989 id=989 data-nosnippet>989</a>        <span class="macro">assert_eq!</span>(
+<a href=#990 id=990 data-nosnippet>990</a>            readiness_of(<span class="kw-2">&amp;</span>refetched_frame, second_tile),
+<a href=#991 id=991 data-nosnippet>991</a>            TileReadiness::Present
+<a href=#992 id=992 data-nosnippet>992</a>        );
+<a href=#993 id=993 data-nosnippet>993</a>        <span class="macro">assert!</span>(tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[first_tile, second_tile, third_tile]));
+<a href=#994 id=994 data-nosnippet>994</a>    }
+<a href=#995 id=995 data-nosnippet>995</a>
+<a href=#996 id=996 data-nosnippet>996</a>    <span class="attr">#[tokio::test]
+<a href=#997 id=997 data-nosnippet>997</a>    </span><span class="kw">async fn </span>an_eviction_outside_the_request_set_does_not_disturb_idleness() {
+<a href=#998 id=998 data-nosnippet>998</a>        <span class="kw">let </span>requested_tile = tile_key(<span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>);
+<a href=#999 id=999 data-nosnippet>999</a>        <span class="kw">let </span>unrelated_tile = tile_key(<span class="number">6</span>, <span class="number">6</span>, <span class="number">3</span>);
+<a href=#1000 id=1000 data-nosnippet>1000</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([
+<a href=#1001 id=1001 data-nosnippet>1001</a>            (requested_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#1002 id=1002 data-nosnippet>1002</a>            (unrelated_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>]),
+<a href=#1003 id=1003 data-nosnippet>1003</a>        ]);
+<a href=#1004 id=1004 data-nosnippet>1004</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#1005 id=1005 data-nosnippet>1005</a>            tile_provider.clone(),
+<a href=#1006 id=1006 data-nosnippet>1006</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#1007 id=1007 data-nosnippet>1007</a>            RasterImageFormat::Png,
+<a href=#1008 id=1008 data-nosnippet>1008</a>            RasterTileResolution::Standard,
+<a href=#1009 id=1009 data-nosnippet>1009</a>            <span class="number">8</span>,
+<a href=#1010 id=1010 data-nosnippet>1010</a>        );
+<a href=#1011 id=1011 data-nosnippet>1011</a>        tile_scheduler
+<a href=#1012 id=1012 data-nosnippet>1012</a>            .prepare_frame(<span class="kw-2">&amp;</span>[requested_tile, unrelated_tile])
+<a href=#1013 id=1013 data-nosnippet>1013</a>            .<span class="kw">await</span>;
+<a href=#1014 id=1014 data-nosnippet>1014</a>        <span class="macro">assert!</span>(tile_scheduler.texture_pool_mut().evict(<span class="kw-2">&amp;</span>unrelated_tile));
+<a href=#1015 id=1015 data-nosnippet>1015</a>        <span class="macro">assert!</span>(
+<a href=#1016 id=1016 data-nosnippet>1016</a>            tile_scheduler.is_idle(<span class="kw-2">&amp;</span>[requested_tile]),
+<a href=#1017 id=1017 data-nosnippet>1017</a>            <span class="string">"an eviction of a payload the request set does not ask for leaves the frame idle"
+<a href=#1018 id=1018 data-nosnippet>1018</a>        </span>);
+<a href=#1019 id=1019 data-nosnippet>1019</a>    }
+<a href=#1020 id=1020 data-nosnippet>1020</a>
+<a href=#1021 id=1021 data-nosnippet>1021</a>    <span class="doccomment">/// Provider stub whose fetches never answer: it models a stalled
+<a href=#1022 id=1022 data-nosnippet>1022</a>    /// network the detached warm run parks on, so its future can be
+<a href=#1023 id=1023 data-nosnippet>1023</a>    /// cancelled mid-await deterministically.
+<a href=#1024 id=1024 data-nosnippet>1024</a>    </span><span class="kw">struct </span>StalledTileProvider;
+<a href=#1025 id=1025 data-nosnippet>1025</a>
+<a href=#1026 id=1026 data-nosnippet>1026</a>    <span class="attr">#[async_trait]
+<a href=#1027 id=1027 data-nosnippet>1027</a>    </span><span class="kw">impl </span>RasterTileProvider <span class="kw">for </span>StalledTileProvider {
+<a href=#1028 id=1028 data-nosnippet>1028</a>        <span class="kw">async fn </span>fetch_raster_tile(
+<a href=#1029 id=1029 data-nosnippet>1029</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#1030 id=1030 data-nosnippet>1030</a>            _tile_x: u32,
+<a href=#1031 id=1031 data-nosnippet>1031</a>            _tile_y: u32,
+<a href=#1032 id=1032 data-nosnippet>1032</a>            _zoom_level: u8,
+<a href=#1033 id=1033 data-nosnippet>1033</a>            _image_format: RasterImageFormat,
+<a href=#1034 id=1034 data-nosnippet>1034</a>            _tile_resolution: RasterTileResolution,
+<a href=#1035 id=1035 data-nosnippet>1035</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;RasterTileData, SDKError&gt; {
+<a href=#1036 id=1036 data-nosnippet>1036</a>            <span class="comment">// A break-less loop over a never-yielding pending future is the
+<a href=#1037 id=1037 data-nosnippet>1037</a>            // permanent stall itself: the run parks at its await point until
+<a href=#1038 id=1038 data-nosnippet>1038</a>            // it is cancelled.
+<a href=#1039 id=1039 data-nosnippet>1039</a>            </span><span class="kw">loop </span>{
+<a href=#1040 id=1040 data-nosnippet>1040</a>                pending::&lt;()&gt;().<span class="kw">await</span>;
+<a href=#1041 id=1041 data-nosnippet>1041</a>            }
+<a href=#1042 id=1042 data-nosnippet>1042</a>        }
+<a href=#1043 id=1043 data-nosnippet>1043</a>    }
+<a href=#1044 id=1044 data-nosnippet>1044</a>
+<a href=#1045 id=1045 data-nosnippet>1045</a>    <span class="doccomment">/// Provider stub that panics on fetch for one tile and serves a canned
+<a href=#1046 id=1046 data-nosnippet>1046</a>    /// payload for every other, modelling an unexpected provider bug.
+<a href=#1047 id=1047 data-nosnippet>1047</a>    </span><span class="kw">struct </span>PanickingTileProvider {
+<a href=#1048 id=1048 data-nosnippet>1048</a>        panicking_tile_key: TileKey,
+<a href=#1049 id=1049 data-nosnippet>1049</a>    }
+<a href=#1050 id=1050 data-nosnippet>1050</a>
+<a href=#1051 id=1051 data-nosnippet>1051</a>    <span class="attr">#[async_trait]
+<a href=#1052 id=1052 data-nosnippet>1052</a>    </span><span class="kw">impl </span>RasterTileProvider <span class="kw">for </span>PanickingTileProvider {
+<a href=#1053 id=1053 data-nosnippet>1053</a>        <span class="kw">async fn </span>fetch_raster_tile(
+<a href=#1054 id=1054 data-nosnippet>1054</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#1055 id=1055 data-nosnippet>1055</a>            tile_x: u32,
+<a href=#1056 id=1056 data-nosnippet>1056</a>            tile_y: u32,
+<a href=#1057 id=1057 data-nosnippet>1057</a>            zoom_level: u8,
+<a href=#1058 id=1058 data-nosnippet>1058</a>            _image_format: RasterImageFormat,
+<a href=#1059 id=1059 data-nosnippet>1059</a>            _tile_resolution: RasterTileResolution,
+<a href=#1060 id=1060 data-nosnippet>1060</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;RasterTileData, SDKError&gt; {
+<a href=#1061 id=1061 data-nosnippet>1061</a>            <span class="kw">let </span>requested_tile_key = TileKey::new(tile_x, tile_y, zoom_level).unwrap();
+<a href=#1062 id=1062 data-nosnippet>1062</a>            <span class="kw">if </span>requested_tile_key == <span class="self">self</span>.panicking_tile_key {
+<a href=#1063 id=1063 data-nosnippet>1063</a>                <span class="macro">panic!</span>(<span class="string">"the provider bug fires"</span>);
+<a href=#1064 id=1064 data-nosnippet>1064</a>            }
+<a href=#1065 id=1065 data-nosnippet>1065</a>            <span class="prelude-val">Ok</span>(RasterTileData {
+<a href=#1066 id=1066 data-nosnippet>1066</a>                tile_x,
+<a href=#1067 id=1067 data-nosnippet>1067</a>                tile_y,
+<a href=#1068 id=1068 data-nosnippet>1068</a>                zoom_level,
+<a href=#1069 id=1069 data-nosnippet>1069</a>                image_format: RasterImageFormat::Png,
+<a href=#1070 id=1070 data-nosnippet>1070</a>                tile_resolution: RasterTileResolution::Standard,
+<a href=#1071 id=1071 data-nosnippet>1071</a>                image_bytes: <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>],
+<a href=#1072 id=1072 data-nosnippet>1072</a>            })
+<a href=#1073 id=1073 data-nosnippet>1073</a>        }
+<a href=#1074 id=1074 data-nosnippet>1074</a>    }
 <a href=#1075 id=1075 data-nosnippet>1075</a>
-<a href=#1076 id=1076 data-nosnippet>1076</a>    <span class="doccomment">/// A `std` task waker that never wakes anything: enough to drive one
-<a href=#1077 id=1077 data-nosnippet>1077</a>    /// `poll` of a future to its first await point.
-<a href=#1078 id=1078 data-nosnippet>1078</a>    </span><span class="kw">fn </span>noop_waker() -&gt; Waker {
-<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="comment">// SAFETY: every vtable function is a no-op operating on a null data
-<a href=#1080 id=1080 data-nosnippet>1080</a>        // pointer, which the waker contract permits since nothing ever
-<a href=#1081 id=1081 data-nosnippet>1081</a>        // dereferences it.
-<a href=#1082 id=1082 data-nosnippet>1082</a>        </span><span class="kw">unsafe </span>{ Waker::from_raw(RawWaker::new(std::ptr::null::&lt;()&gt;(), <span class="kw-2">&amp;</span>NOOP_WAKER_VTABLE)) }
-<a href=#1083 id=1083 data-nosnippet>1083</a>    }
+<a href=#1076 id=1076 data-nosnippet>1076</a>    <span class="doccomment">/// The vtable and data pointer of the never-waking waker: every vtable
+<a href=#1077 id=1077 data-nosnippet>1077</a>    /// call is a no-op, so a manual poll never touches the data pointer.
+<a href=#1078 id=1078 data-nosnippet>1078</a>    </span><span class="kw">const </span>NOOP_WAKER_VTABLE: RawWakerVTable = RawWakerVTable::new(
+<a href=#1079 id=1079 data-nosnippet>1079</a>        |<span class="kw">_</span>| RawWaker::new(std::ptr::null::&lt;()&gt;(), <span class="kw-2">&amp;</span>NOOP_WAKER_VTABLE),
+<a href=#1080 id=1080 data-nosnippet>1080</a>        |<span class="kw">_</span>| {},
+<a href=#1081 id=1081 data-nosnippet>1081</a>        |<span class="kw">_</span>| {},
+<a href=#1082 id=1082 data-nosnippet>1082</a>        |<span class="kw">_</span>| {},
+<a href=#1083 id=1083 data-nosnippet>1083</a>    );
 <a href=#1084 id=1084 data-nosnippet>1084</a>
-<a href=#1085 id=1085 data-nosnippet>1085</a>    <span class="attr">#[tokio::test]
-<a href=#1086 id=1086 data-nosnippet>1086</a>    </span><span class="kw">async fn </span>the_detached_warm_run_delivers_its_detail_through_the_resolve() {
-<a href=#1087 id=1087 data-nosnippet>1087</a>        <span class="kw">let </span>warm_tile = tile_key(<span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>);
-<a href=#1088 id=1088 data-nosnippet>1088</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([(warm_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>])]);
-<a href=#1089 id=1089 data-nosnippet>1089</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#1090 id=1090 data-nosnippet>1090</a>            tile_provider.clone(),
-<a href=#1091 id=1091 data-nosnippet>1091</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#1092 id=1092 data-nosnippet>1092</a>            RasterImageFormat::Png,
-<a href=#1093 id=1093 data-nosnippet>1093</a>            RasterTileResolution::Standard,
-<a href=#1094 id=1094 data-nosnippet>1094</a>            <span class="number">8</span>,
-<a href=#1095 id=1095 data-nosnippet>1095</a>        );
-<a href=#1096 id=1096 data-nosnippet>1096</a>        <span class="kw">let </span>resolved_before_warm = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[warm_tile]);
-<a href=#1097 id=1097 data-nosnippet>1097</a>        <span class="macro">assert_eq!</span>(
-<a href=#1098 id=1098 data-nosnippet>1098</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_before_warm, warm_tile),
-<a href=#1099 id=1099 data-nosnippet>1099</a>            TileReadiness::Unavailable
-<a href=#1100 id=1100 data-nosnippet>1100</a>        );
-<a href=#1101 id=1101 data-nosnippet>1101</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[warm_tile]);
-<a href=#1102 id=1102 data-nosnippet>1102</a>        <span class="kw">let </span>resolved_while_warming = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[warm_tile]);
-<a href=#1103 id=1103 data-nosnippet>1103</a>        <span class="macro">assert_eq!</span>(
-<a href=#1104 id=1104 data-nosnippet>1104</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_while_warming, warm_tile),
-<a href=#1105 id=1105 data-nosnippet>1105</a>            TileReadiness::Deferred,
-<a href=#1106 id=1106 data-nosnippet>1106</a>            <span class="string">"a tile with a warm fetch in flight reports its in-flight state"
-<a href=#1107 id=1107 data-nosnippet>1107</a>        </span>);
-<a href=#1108 id=1108 data-nosnippet>1108</a>        tokio::spawn(warm_task.run())
-<a href=#1109 id=1109 data-nosnippet>1109</a>            .<span class="kw">await
-<a href=#1110 id=1110 data-nosnippet>1110</a>            </span>.expect(<span class="string">"the scripted warm run never panics"</span>);
-<a href=#1111 id=1111 data-nosnippet>1111</a>        <span class="kw">let </span>resolved_after_warm = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[warm_tile]);
+<a href=#1085 id=1085 data-nosnippet>1085</a>    <span class="doccomment">/// A `std` task waker that never wakes anything: enough to drive one
+<a href=#1086 id=1086 data-nosnippet>1086</a>    /// `poll` of a future to its first await point.
+<a href=#1087 id=1087 data-nosnippet>1087</a>    </span><span class="kw">fn </span>noop_waker() -&gt; Waker {
+<a href=#1088 id=1088 data-nosnippet>1088</a>        <span class="comment">// SAFETY: every vtable function is a no-op operating on a null data
+<a href=#1089 id=1089 data-nosnippet>1089</a>        // pointer, which the waker contract permits since nothing ever
+<a href=#1090 id=1090 data-nosnippet>1090</a>        // dereferences it.
+<a href=#1091 id=1091 data-nosnippet>1091</a>        </span><span class="kw">unsafe </span>{ Waker::from_raw(RawWaker::new(std::ptr::null::&lt;()&gt;(), <span class="kw-2">&amp;</span>NOOP_WAKER_VTABLE)) }
+<a href=#1092 id=1092 data-nosnippet>1092</a>    }
+<a href=#1093 id=1093 data-nosnippet>1093</a>
+<a href=#1094 id=1094 data-nosnippet>1094</a>    <span class="attr">#[tokio::test]
+<a href=#1095 id=1095 data-nosnippet>1095</a>    </span><span class="kw">async fn </span>the_detached_warm_run_delivers_its_detail_through_the_resolve() {
+<a href=#1096 id=1096 data-nosnippet>1096</a>        <span class="kw">let </span>warm_tile = tile_key(<span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>);
+<a href=#1097 id=1097 data-nosnippet>1097</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::serving_tiles([(warm_tile, <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">64</span>])]);
+<a href=#1098 id=1098 data-nosnippet>1098</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#1099 id=1099 data-nosnippet>1099</a>            tile_provider.clone(),
+<a href=#1100 id=1100 data-nosnippet>1100</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#1101 id=1101 data-nosnippet>1101</a>            RasterImageFormat::Png,
+<a href=#1102 id=1102 data-nosnippet>1102</a>            RasterTileResolution::Standard,
+<a href=#1103 id=1103 data-nosnippet>1103</a>            <span class="number">8</span>,
+<a href=#1104 id=1104 data-nosnippet>1104</a>        );
+<a href=#1105 id=1105 data-nosnippet>1105</a>        <span class="kw">let </span>resolved_before_warm = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[warm_tile]);
+<a href=#1106 id=1106 data-nosnippet>1106</a>        <span class="macro">assert_eq!</span>(
+<a href=#1107 id=1107 data-nosnippet>1107</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_before_warm, warm_tile),
+<a href=#1108 id=1108 data-nosnippet>1108</a>            TileReadiness::Unavailable
+<a href=#1109 id=1109 data-nosnippet>1109</a>        );
+<a href=#1110 id=1110 data-nosnippet>1110</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[warm_tile]);
+<a href=#1111 id=1111 data-nosnippet>1111</a>        <span class="kw">let </span>resolved_while_warming = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[warm_tile]);
 <a href=#1112 id=1112 data-nosnippet>1112</a>        <span class="macro">assert_eq!</span>(
-<a href=#1113 id=1113 data-nosnippet>1113</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_warm, warm_tile),
-<a href=#1114 id=1114 data-nosnippet>1114</a>            TileReadiness::Present
-<a href=#1115 id=1115 data-nosnippet>1115</a>        );
-<a href=#1116 id=1116 data-nosnippet>1116</a>        <span class="macro">assert_eq!</span>(tile_scheduler.delivered_warm_tile_count(), <span class="number">1</span>);
-<a href=#1117 id=1117 data-nosnippet>1117</a>        <span class="comment">// The pooled detail is never refetched, not even by the blocking
-<a href=#1118 id=1118 data-nosnippet>1118</a>        // reference path.
-<a href=#1119 id=1119 data-nosnippet>1119</a>        </span><span class="kw">let _ </span>= tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[warm_tile]).<span class="kw">await</span>;
-<a href=#1120 id=1120 data-nosnippet>1120</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys(), <span class="macro">vec!</span>[warm_tile]);
-<a href=#1121 id=1121 data-nosnippet>1121</a>    }
-<a href=#1122 id=1122 data-nosnippet>1122</a>
-<a href=#1123 id=1123 data-nosnippet>1123</a>    <span class="attr">#[tokio::test]
-<a href=#1124 id=1124 data-nosnippet>1124</a>    </span><span class="kw">async fn </span>a_warm_run_with_provider_failures_resolves_the_state_honestly() {
-<a href=#1125 id=1125 data-nosnippet>1125</a>        <span class="kw">let </span>failing_tile = tile_key(<span class="number">2</span>, <span class="number">3</span>, <span class="number">6</span>);
-<a href=#1126 id=1126 data-nosnippet>1126</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::failing_tiles([], [failing_tile]);
-<a href=#1127 id=1127 data-nosnippet>1127</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#1128 id=1128 data-nosnippet>1128</a>            tile_provider.clone(),
-<a href=#1129 id=1129 data-nosnippet>1129</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#1130 id=1130 data-nosnippet>1130</a>            RasterImageFormat::Png,
-<a href=#1131 id=1131 data-nosnippet>1131</a>            RasterTileResolution::Standard,
-<a href=#1132 id=1132 data-nosnippet>1132</a>            <span class="number">8</span>,
-<a href=#1133 id=1133 data-nosnippet>1133</a>        );
-<a href=#1134 id=1134 data-nosnippet>1134</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[failing_tile]);
-<a href=#1135 id=1135 data-nosnippet>1135</a>        <span class="kw">let </span>joined = tokio::spawn(warm_task.run()).<span class="kw">await</span>.expect(<span class="string">"no panic"</span>);
-<a href=#1136 id=1136 data-nosnippet>1136</a>        <span class="macro">assert_eq!</span>(joined, <span class="number">0</span>, <span class="string">"a failed fetch delivers no payload"</span>);
-<a href=#1137 id=1137 data-nosnippet>1137</a>        <span class="macro">assert_eq!</span>(tile_scheduler.delivered_warm_tile_count(), <span class="number">0</span>);
-<a href=#1138 id=1138 data-nosnippet>1138</a>        <span class="comment">// The failed tile's warming flag cleared at the drain, so a later
-<a href=#1139 id=1139 data-nosnippet>1139</a>        // warm pass may retry it.
-<a href=#1140 id=1140 data-nosnippet>1140</a>        </span><span class="kw">let </span>retried_warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[failing_tile]);
-<a href=#1141 id=1141 data-nosnippet>1141</a>        <span class="macro">assert_eq!</span>(retried_warm_task.fetch_count(), <span class="number">1</span>);
-<a href=#1142 id=1142 data-nosnippet>1142</a>    }
-<a href=#1143 id=1143 data-nosnippet>1143</a>
-<a href=#1144 id=1144 data-nosnippet>1144</a>    <span class="attr">#[tokio::test]
-<a href=#1145 id=1145 data-nosnippet>1145</a>    </span><span class="kw">async fn </span>a_cancelled_warm_run_unmarks_its_remaining_tiles() {
-<a href=#1146 id=1146 data-nosnippet>1146</a>        <span class="kw">let </span>stalled_tile = tile_key(<span class="number">9</span>, <span class="number">3</span>, <span class="number">6</span>);
-<a href=#1147 id=1147 data-nosnippet>1147</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#1148 id=1148 data-nosnippet>1148</a>            Arc::new(StalledTileProvider),
-<a href=#1149 id=1149 data-nosnippet>1149</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#1150 id=1150 data-nosnippet>1150</a>            RasterImageFormat::Png,
-<a href=#1151 id=1151 data-nosnippet>1151</a>            RasterTileResolution::Standard,
-<a href=#1152 id=1152 data-nosnippet>1152</a>            <span class="number">8</span>,
-<a href=#1153 id=1153 data-nosnippet>1153</a>        );
-<a href=#1154 id=1154 data-nosnippet>1154</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[stalled_tile]);
-<a href=#1155 id=1155 data-nosnippet>1155</a>        <span class="kw">let </span><span class="kw-2">mut </span>run_future = Box::pin(warm_task.run());
-<a href=#1156 id=1156 data-nosnippet>1156</a>        <span class="kw">let </span>never_waking_waker = noop_waker();
-<a href=#1157 id=1157 data-nosnippet>1157</a>        <span class="kw">let </span><span class="kw-2">mut </span>never_waking_context = Context::from_waker(<span class="kw-2">&amp;</span>never_waking_waker);
-<a href=#1158 id=1158 data-nosnippet>1158</a>        <span class="macro">assert_eq!</span>(
-<a href=#1159 id=1159 data-nosnippet>1159</a>            run_future.as_mut().poll(<span class="kw-2">&amp;mut </span>never_waking_context),
-<a href=#1160 id=1160 data-nosnippet>1160</a>            Poll::Pending,
-<a href=#1161 id=1161 data-nosnippet>1161</a>            <span class="string">"the stalled fetch parks the run at its await point"
-<a href=#1162 id=1162 data-nosnippet>1162</a>        </span>);
-<a href=#1163 id=1163 data-nosnippet>1163</a>        <span class="comment">// Dropping the run future mid-fetch (the detached task's runtime
-<a href=#1164 id=1164 data-nosnippet>1164</a>        // shutting down, or a panic in a later poll) must leave no stale
-<a href=#1165 id=1165 data-nosnippet>1165</a>        // warming mark behind.
-<a href=#1166 id=1166 data-nosnippet>1166</a>        </span>drop(run_future);
-<a href=#1167 id=1167 data-nosnippet>1167</a>        <span class="kw">let </span>resolved_after_cancel = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[stalled_tile]);
-<a href=#1168 id=1168 data-nosnippet>1168</a>        <span class="macro">assert_eq!</span>(
-<a href=#1169 id=1169 data-nosnippet>1169</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_cancel, stalled_tile),
-<a href=#1170 id=1170 data-nosnippet>1170</a>            TileReadiness::Unavailable,
-<a href=#1171 id=1171 data-nosnippet>1171</a>            <span class="string">"a cancelled warm fetch must not leave the tile marked warming"
-<a href=#1172 id=1172 data-nosnippet>1172</a>        </span>);
-<a href=#1173 id=1173 data-nosnippet>1173</a>        <span class="macro">assert_eq!</span>(
-<a href=#1174 id=1174 data-nosnippet>1174</a>            tile_scheduler
-<a href=#1175 id=1175 data-nosnippet>1175</a>                .plan_warm_tiles(<span class="kw-2">&amp;</span>[stalled_tile])
-<a href=#1176 id=1176 data-nosnippet>1176</a>                .fetch_count(),
-<a href=#1177 id=1177 data-nosnippet>1177</a>            <span class="number">1</span>,
-<a href=#1178 id=1178 data-nosnippet>1178</a>            <span class="string">"the unmarked tile is fetchable again"
-<a href=#1179 id=1179 data-nosnippet>1179</a>        </span>);
-<a href=#1180 id=1180 data-nosnippet>1180</a>    }
-<a href=#1181 id=1181 data-nosnippet>1181</a>
-<a href=#1182 id=1182 data-nosnippet>1182</a>    <span class="attr">#[tokio::test]
-<a href=#1183 id=1183 data-nosnippet>1183</a>    </span><span class="kw">async fn </span>a_panicking_warm_run_unmarks_its_remaining_tiles_in_the_registry() {
-<a href=#1184 id=1184 data-nosnippet>1184</a>        <span class="kw">let </span>panicking_tile = tile_key(<span class="number">7</span>, <span class="number">3</span>, <span class="number">6</span>);
-<a href=#1185 id=1185 data-nosnippet>1185</a>        <span class="kw">let </span>served_tile = tile_key(<span class="number">8</span>, <span class="number">3</span>, <span class="number">6</span>);
-<a href=#1186 id=1186 data-nosnippet>1186</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
-<a href=#1187 id=1187 data-nosnippet>1187</a>            Arc::new(PanickingTileProvider {
-<a href=#1188 id=1188 data-nosnippet>1188</a>                panicking_tile_key: panicking_tile,
-<a href=#1189 id=1189 data-nosnippet>1189</a>            }),
-<a href=#1190 id=1190 data-nosnippet>1190</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
-<a href=#1191 id=1191 data-nosnippet>1191</a>            RasterImageFormat::Png,
-<a href=#1192 id=1192 data-nosnippet>1192</a>            RasterTileResolution::Standard,
-<a href=#1193 id=1193 data-nosnippet>1193</a>            <span class="number">8</span>,
-<a href=#1194 id=1194 data-nosnippet>1194</a>        );
-<a href=#1195 id=1195 data-nosnippet>1195</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[panicking_tile, served_tile]);
-<a href=#1196 id=1196 data-nosnippet>1196</a>        <span class="kw">let </span>joined = tokio::spawn(warm_task.run()).<span class="kw">await</span>;
-<a href=#1197 id=1197 data-nosnippet>1197</a>        <span class="macro">assert!</span>(
-<a href=#1198 id=1198 data-nosnippet>1198</a>            joined.is_err(),
-<a href=#1199 id=1199 data-nosnippet>1199</a>            <span class="string">"the panicking fetch must end the run with a panic"
-<a href=#1200 id=1200 data-nosnippet>1200</a>        </span>);
-<a href=#1201 id=1201 data-nosnippet>1201</a>        <span class="comment">// The unwind guard unmarked every still-undelivered key, so both
-<a href=#1202 id=1202 data-nosnippet>1202</a>        // tiles resolve without in-flight marks and are fetchable again.
-<a href=#1203 id=1203 data-nosnippet>1203</a>        </span><span class="kw">let </span>resolved_after_panic = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[panicking_tile, served_tile]);
-<a href=#1204 id=1204 data-nosnippet>1204</a>        <span class="macro">assert_eq!</span>(
-<a href=#1205 id=1205 data-nosnippet>1205</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_panic, panicking_tile),
-<a href=#1206 id=1206 data-nosnippet>1206</a>            TileReadiness::Unavailable
-<a href=#1207 id=1207 data-nosnippet>1207</a>        );
-<a href=#1208 id=1208 data-nosnippet>1208</a>        <span class="macro">assert_eq!</span>(
-<a href=#1209 id=1209 data-nosnippet>1209</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_panic, served_tile),
-<a href=#1210 id=1210 data-nosnippet>1210</a>            TileReadiness::Unavailable
-<a href=#1211 id=1211 data-nosnippet>1211</a>        );
-<a href=#1212 id=1212 data-nosnippet>1212</a>        <span class="macro">assert_eq!</span>(
-<a href=#1213 id=1213 data-nosnippet>1213</a>            tile_scheduler
-<a href=#1214 id=1214 data-nosnippet>1214</a>                .plan_warm_tiles(<span class="kw-2">&amp;</span>[panicking_tile, served_tile])
-<a href=#1215 id=1215 data-nosnippet>1215</a>                .fetch_count(),
-<a href=#1216 id=1216 data-nosnippet>1216</a>            <span class="number">2</span>,
-<a href=#1217 id=1217 data-nosnippet>1217</a>            <span class="string">"the unmarked tiles are fetchable again"
-<a href=#1218 id=1218 data-nosnippet>1218</a>        </span>);
-<a href=#1219 id=1219 data-nosnippet>1219</a>    }
-<a href=#1220 id=1220 data-nosnippet>1220</a>}
+<a href=#1113 id=1113 data-nosnippet>1113</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_while_warming, warm_tile),
+<a href=#1114 id=1114 data-nosnippet>1114</a>            TileReadiness::Deferred,
+<a href=#1115 id=1115 data-nosnippet>1115</a>            <span class="string">"a tile with a warm fetch in flight reports its in-flight state"
+<a href=#1116 id=1116 data-nosnippet>1116</a>        </span>);
+<a href=#1117 id=1117 data-nosnippet>1117</a>        tokio::spawn(warm_task.run())
+<a href=#1118 id=1118 data-nosnippet>1118</a>            .<span class="kw">await
+<a href=#1119 id=1119 data-nosnippet>1119</a>            </span>.expect(<span class="string">"the scripted warm run never panics"</span>);
+<a href=#1120 id=1120 data-nosnippet>1120</a>        <span class="kw">let </span>resolved_after_warm = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[warm_tile]);
+<a href=#1121 id=1121 data-nosnippet>1121</a>        <span class="macro">assert_eq!</span>(
+<a href=#1122 id=1122 data-nosnippet>1122</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_warm, warm_tile),
+<a href=#1123 id=1123 data-nosnippet>1123</a>            TileReadiness::Present
+<a href=#1124 id=1124 data-nosnippet>1124</a>        );
+<a href=#1125 id=1125 data-nosnippet>1125</a>        <span class="macro">assert_eq!</span>(tile_scheduler.delivered_warm_tile_count(), <span class="number">1</span>);
+<a href=#1126 id=1126 data-nosnippet>1126</a>        <span class="comment">// The pooled detail is never refetched, not even by the blocking
+<a href=#1127 id=1127 data-nosnippet>1127</a>        // reference path.
+<a href=#1128 id=1128 data-nosnippet>1128</a>        </span><span class="kw">let _ </span>= tile_scheduler.prepare_frame(<span class="kw-2">&amp;</span>[warm_tile]).<span class="kw">await</span>;
+<a href=#1129 id=1129 data-nosnippet>1129</a>        <span class="macro">assert_eq!</span>(tile_provider.requested_tile_keys(), <span class="macro">vec!</span>[warm_tile]);
+<a href=#1130 id=1130 data-nosnippet>1130</a>    }
+<a href=#1131 id=1131 data-nosnippet>1131</a>
+<a href=#1132 id=1132 data-nosnippet>1132</a>    <span class="attr">#[tokio::test]
+<a href=#1133 id=1133 data-nosnippet>1133</a>    </span><span class="kw">async fn </span>a_warm_run_with_provider_failures_resolves_the_state_honestly() {
+<a href=#1134 id=1134 data-nosnippet>1134</a>        <span class="kw">let </span>failing_tile = tile_key(<span class="number">2</span>, <span class="number">3</span>, <span class="number">6</span>);
+<a href=#1135 id=1135 data-nosnippet>1135</a>        <span class="kw">let </span>tile_provider = ScriptedTileProvider::failing_tiles([], [failing_tile]);
+<a href=#1136 id=1136 data-nosnippet>1136</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#1137 id=1137 data-nosnippet>1137</a>            tile_provider.clone(),
+<a href=#1138 id=1138 data-nosnippet>1138</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#1139 id=1139 data-nosnippet>1139</a>            RasterImageFormat::Png,
+<a href=#1140 id=1140 data-nosnippet>1140</a>            RasterTileResolution::Standard,
+<a href=#1141 id=1141 data-nosnippet>1141</a>            <span class="number">8</span>,
+<a href=#1142 id=1142 data-nosnippet>1142</a>        );
+<a href=#1143 id=1143 data-nosnippet>1143</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[failing_tile]);
+<a href=#1144 id=1144 data-nosnippet>1144</a>        <span class="kw">let </span>joined = tokio::spawn(warm_task.run()).<span class="kw">await</span>.expect(<span class="string">"no panic"</span>);
+<a href=#1145 id=1145 data-nosnippet>1145</a>        <span class="macro">assert_eq!</span>(joined, <span class="number">0</span>, <span class="string">"a failed fetch delivers no payload"</span>);
+<a href=#1146 id=1146 data-nosnippet>1146</a>        <span class="macro">assert_eq!</span>(tile_scheduler.delivered_warm_tile_count(), <span class="number">0</span>);
+<a href=#1147 id=1147 data-nosnippet>1147</a>        <span class="comment">// The failed tile's warming flag cleared at the drain, so a later
+<a href=#1148 id=1148 data-nosnippet>1148</a>        // warm pass may retry it.
+<a href=#1149 id=1149 data-nosnippet>1149</a>        </span><span class="kw">let </span>retried_warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[failing_tile]);
+<a href=#1150 id=1150 data-nosnippet>1150</a>        <span class="macro">assert_eq!</span>(retried_warm_task.fetch_count(), <span class="number">1</span>);
+<a href=#1151 id=1151 data-nosnippet>1151</a>    }
+<a href=#1152 id=1152 data-nosnippet>1152</a>
+<a href=#1153 id=1153 data-nosnippet>1153</a>    <span class="attr">#[tokio::test]
+<a href=#1154 id=1154 data-nosnippet>1154</a>    </span><span class="kw">async fn </span>a_cancelled_warm_run_unmarks_its_remaining_tiles() {
+<a href=#1155 id=1155 data-nosnippet>1155</a>        <span class="kw">let </span>stalled_tile = tile_key(<span class="number">9</span>, <span class="number">3</span>, <span class="number">6</span>);
+<a href=#1156 id=1156 data-nosnippet>1156</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#1157 id=1157 data-nosnippet>1157</a>            Arc::new(StalledTileProvider),
+<a href=#1158 id=1158 data-nosnippet>1158</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#1159 id=1159 data-nosnippet>1159</a>            RasterImageFormat::Png,
+<a href=#1160 id=1160 data-nosnippet>1160</a>            RasterTileResolution::Standard,
+<a href=#1161 id=1161 data-nosnippet>1161</a>            <span class="number">8</span>,
+<a href=#1162 id=1162 data-nosnippet>1162</a>        );
+<a href=#1163 id=1163 data-nosnippet>1163</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[stalled_tile]);
+<a href=#1164 id=1164 data-nosnippet>1164</a>        <span class="kw">let </span><span class="kw-2">mut </span>run_future = Box::pin(warm_task.run());
+<a href=#1165 id=1165 data-nosnippet>1165</a>        <span class="kw">let </span>never_waking_waker = noop_waker();
+<a href=#1166 id=1166 data-nosnippet>1166</a>        <span class="kw">let </span><span class="kw-2">mut </span>never_waking_context = Context::from_waker(<span class="kw-2">&amp;</span>never_waking_waker);
+<a href=#1167 id=1167 data-nosnippet>1167</a>        <span class="macro">assert_eq!</span>(
+<a href=#1168 id=1168 data-nosnippet>1168</a>            run_future.as_mut().poll(<span class="kw-2">&amp;mut </span>never_waking_context),
+<a href=#1169 id=1169 data-nosnippet>1169</a>            Poll::Pending,
+<a href=#1170 id=1170 data-nosnippet>1170</a>            <span class="string">"the stalled fetch parks the run at its await point"
+<a href=#1171 id=1171 data-nosnippet>1171</a>        </span>);
+<a href=#1172 id=1172 data-nosnippet>1172</a>        <span class="comment">// Dropping the run future mid-fetch (the detached task's runtime
+<a href=#1173 id=1173 data-nosnippet>1173</a>        // shutting down, or a panic in a later poll) must leave no stale
+<a href=#1174 id=1174 data-nosnippet>1174</a>        // warming mark behind.
+<a href=#1175 id=1175 data-nosnippet>1175</a>        </span>drop(run_future);
+<a href=#1176 id=1176 data-nosnippet>1176</a>        <span class="kw">let </span>resolved_after_cancel = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[stalled_tile]);
+<a href=#1177 id=1177 data-nosnippet>1177</a>        <span class="macro">assert_eq!</span>(
+<a href=#1178 id=1178 data-nosnippet>1178</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_cancel, stalled_tile),
+<a href=#1179 id=1179 data-nosnippet>1179</a>            TileReadiness::Unavailable,
+<a href=#1180 id=1180 data-nosnippet>1180</a>            <span class="string">"a cancelled warm fetch must not leave the tile marked warming"
+<a href=#1181 id=1181 data-nosnippet>1181</a>        </span>);
+<a href=#1182 id=1182 data-nosnippet>1182</a>        <span class="macro">assert_eq!</span>(
+<a href=#1183 id=1183 data-nosnippet>1183</a>            tile_scheduler
+<a href=#1184 id=1184 data-nosnippet>1184</a>                .plan_warm_tiles(<span class="kw-2">&amp;</span>[stalled_tile])
+<a href=#1185 id=1185 data-nosnippet>1185</a>                .fetch_count(),
+<a href=#1186 id=1186 data-nosnippet>1186</a>            <span class="number">1</span>,
+<a href=#1187 id=1187 data-nosnippet>1187</a>            <span class="string">"the unmarked tile is fetchable again"
+<a href=#1188 id=1188 data-nosnippet>1188</a>        </span>);
+<a href=#1189 id=1189 data-nosnippet>1189</a>    }
+<a href=#1190 id=1190 data-nosnippet>1190</a>
+<a href=#1191 id=1191 data-nosnippet>1191</a>    <span class="attr">#[tokio::test]
+<a href=#1192 id=1192 data-nosnippet>1192</a>    </span><span class="kw">async fn </span>a_panicking_warm_run_unmarks_its_remaining_tiles_in_the_registry() {
+<a href=#1193 id=1193 data-nosnippet>1193</a>        <span class="kw">let </span>panicking_tile = tile_key(<span class="number">7</span>, <span class="number">3</span>, <span class="number">6</span>);
+<a href=#1194 id=1194 data-nosnippet>1194</a>        <span class="kw">let </span>served_tile = tile_key(<span class="number">8</span>, <span class="number">3</span>, <span class="number">6</span>);
+<a href=#1195 id=1195 data-nosnippet>1195</a>        <span class="kw">let </span><span class="kw-2">mut </span>tile_scheduler = TileScheduler::new(
+<a href=#1196 id=1196 data-nosnippet>1196</a>            Arc::new(PanickingTileProvider {
+<a href=#1197 id=1197 data-nosnippet>1197</a>                panicking_tile_key: panicking_tile,
+<a href=#1198 id=1198 data-nosnippet>1198</a>            }),
+<a href=#1199 id=1199 data-nosnippet>1199</a>            TileTexturePool::new(<span class="number">1 </span>&lt;&lt; <span class="number">20</span>),
+<a href=#1200 id=1200 data-nosnippet>1200</a>            RasterImageFormat::Png,
+<a href=#1201 id=1201 data-nosnippet>1201</a>            RasterTileResolution::Standard,
+<a href=#1202 id=1202 data-nosnippet>1202</a>            <span class="number">8</span>,
+<a href=#1203 id=1203 data-nosnippet>1203</a>        );
+<a href=#1204 id=1204 data-nosnippet>1204</a>        <span class="kw">let </span>warm_task = tile_scheduler.plan_warm_tiles(<span class="kw-2">&amp;</span>[panicking_tile, served_tile]);
+<a href=#1205 id=1205 data-nosnippet>1205</a>        <span class="kw">let </span>joined = tokio::spawn(warm_task.run()).<span class="kw">await</span>;
+<a href=#1206 id=1206 data-nosnippet>1206</a>        <span class="macro">assert!</span>(
+<a href=#1207 id=1207 data-nosnippet>1207</a>            joined.is_err(),
+<a href=#1208 id=1208 data-nosnippet>1208</a>            <span class="string">"the panicking fetch must end the run with a panic"
+<a href=#1209 id=1209 data-nosnippet>1209</a>        </span>);
+<a href=#1210 id=1210 data-nosnippet>1210</a>        <span class="comment">// The unwind guard unmarked every still-undelivered key, so both
+<a href=#1211 id=1211 data-nosnippet>1211</a>        // tiles resolve without in-flight marks and are fetchable again.
+<a href=#1212 id=1212 data-nosnippet>1212</a>        </span><span class="kw">let </span>resolved_after_panic = tile_scheduler.resolve_frame(<span class="kw-2">&amp;</span>[panicking_tile, served_tile]);
+<a href=#1213 id=1213 data-nosnippet>1213</a>        <span class="macro">assert_eq!</span>(
+<a href=#1214 id=1214 data-nosnippet>1214</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_panic, panicking_tile),
+<a href=#1215 id=1215 data-nosnippet>1215</a>            TileReadiness::Unavailable
+<a href=#1216 id=1216 data-nosnippet>1216</a>        );
+<a href=#1217 id=1217 data-nosnippet>1217</a>        <span class="macro">assert_eq!</span>(
+<a href=#1218 id=1218 data-nosnippet>1218</a>            readiness_of(<span class="kw-2">&amp;</span>resolved_after_panic, served_tile),
+<a href=#1219 id=1219 data-nosnippet>1219</a>            TileReadiness::Unavailable
+<a href=#1220 id=1220 data-nosnippet>1220</a>        );
+<a href=#1221 id=1221 data-nosnippet>1221</a>        <span class="macro">assert_eq!</span>(
+<a href=#1222 id=1222 data-nosnippet>1222</a>            tile_scheduler
+<a href=#1223 id=1223 data-nosnippet>1223</a>                .plan_warm_tiles(<span class="kw-2">&amp;</span>[panicking_tile, served_tile])
+<a href=#1224 id=1224 data-nosnippet>1224</a>                .fetch_count(),
+<a href=#1225 id=1225 data-nosnippet>1225</a>            <span class="number">2</span>,
+<a href=#1226 id=1226 data-nosnippet>1226</a>            <span class="string">"the unmarked tiles are fetchable again"
+<a href=#1227 id=1227 data-nosnippet>1227</a>        </span>);
+<a href=#1228 id=1228 data-nosnippet>1228</a>    }
+<a href=#1229 id=1229 data-nosnippet>1229</a>}
 </code></pre></div></section></main></body></html>

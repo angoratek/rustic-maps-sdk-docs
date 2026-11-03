@@ -100,40 +100,46 @@
 <a href=#100 id=100 data-nosnippet>100</a></span><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
 <a href=#101 id=101 data-nosnippet>101</a></span><span class="kw">pub const </span>REQUEST_TIMEOUT: Duration = Duration::from_secs(<span class="number">30</span>);
 <a href=#102 id=102 data-nosnippet>102</a>
-<a href=#103 id=103 data-nosnippet>103</a><span class="doccomment">/// A portable sleep used by provider retry back-off and the rate limiter:
-<a href=#104 id=104 data-nosnippet>104</a>/// `tokio::time` natively, a browser timer on wasm. The browser timer's
-<a href=#105 id=105 data-nosnippet>105</a>/// future is not `Send`, so the wait is bridged through a oneshot channel and
-<a href=#106 id=106 data-nosnippet>106</a>/// the timer callback; the awaited half stays `Send`.
-<a href=#107 id=107 data-nosnippet>107</a></span><span class="kw">pub async fn </span>sleep(duration: Duration) {
-<a href=#108 id=108 data-nosnippet>108</a>    <span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
-<a href=#109 id=109 data-nosnippet>109</a>    </span>tokio::time::sleep(duration).<span class="kw">await</span>;
-<a href=#110 id=110 data-nosnippet>110</a>    <span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
-<a href=#111 id=111 data-nosnippet>111</a>    </span>{
-<a href=#112 id=112 data-nosnippet>112</a>        <span class="comment">// Browser timers take millisecond integers; clamp the value to the
-<a href=#113 id=113 data-nosnippet>113</a>        // timer's representable range.
-<a href=#114 id=114 data-nosnippet>114</a>        </span><span class="kw">const </span>MILLISECONDS_MAXIMUM: u128 = u32::MAX <span class="kw">as </span>u128;
-<a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span>milliseconds = duration.as_millis().min(MILLISECONDS_MAXIMUM) <span class="kw">as </span>u32;
-<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">let </span>(wake_sender, wake_receiver) = futures::channel::oneshot::channel::&lt;()&gt;();
-<a href=#117 id=117 data-nosnippet>117</a>        gloo_timers::callback::Timeout::new(milliseconds, <span class="kw">move </span>|| {
-<a href=#118 id=118 data-nosnippet>118</a>            <span class="kw">let _ </span>= wake_sender.send(());
-<a href=#119 id=119 data-nosnippet>119</a>        })
-<a href=#120 id=120 data-nosnippet>120</a>        .forget();
-<a href=#121 id=121 data-nosnippet>121</a>        <span class="kw">let _ </span>= wake_receiver.<span class="kw">await</span>;
-<a href=#122 id=122 data-nosnippet>122</a>    }
-<a href=#123 id=123 data-nosnippet>123</a>}
-<a href=#124 id=124 data-nosnippet>124</a>
-<a href=#125 id=125 data-nosnippet>125</a><span class="doccomment">/// The target's default transport: the `reqwest` implementation natively,
-<a href=#126 id=126 data-nosnippet>126</a>/// browser `fetch` on wasm.
-<a href=#127 id=127 data-nosnippet>127</a></span><span class="kw">pub fn </span>default_transport() -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>HttpTransport&gt;, SDKError&gt; {
-<a href=#128 id=128 data-nosnippet>128</a>    <span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
-<a href=#129 id=129 data-nosnippet>129</a>    </span>{
-<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span>transport = ReqwestTransport::new()
-<a href=#131 id=131 data-nosnippet>131</a>            .map_err(|error| SDKError::NetworkRequestFailed(error.to_string()))<span class="question-mark">?</span>;
-<a href=#132 id=132 data-nosnippet>132</a>        <span class="prelude-val">Ok</span>(Arc::new(transport))
-<a href=#133 id=133 data-nosnippet>133</a>    }
-<a href=#134 id=134 data-nosnippet>134</a>    <span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
+<a href=#103 id=103 data-nosnippet>103</a><span class="doccomment">/// The whole-request deadline the browser transport applies. A `fetch` has
+<a href=#104 id=104 data-nosnippet>104</a>/// no timeout of its own: without one, a stalled connection pins an in-flight
+<a href=#105 id=105 data-nosnippet>105</a>/// request slot for the life of the page.
+<a href=#106 id=106 data-nosnippet>106</a></span><span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
+<a href=#107 id=107 data-nosnippet>107</a></span><span class="kw">pub const </span>BROWSER_REQUEST_TIMEOUT: Duration = Duration::from_secs(<span class="number">30</span>);
+<a href=#108 id=108 data-nosnippet>108</a>
+<a href=#109 id=109 data-nosnippet>109</a><span class="doccomment">/// A portable sleep used by provider retry back-off and the rate limiter:
+<a href=#110 id=110 data-nosnippet>110</a>/// `tokio::time` natively, a browser timer on wasm. The browser timer's
+<a href=#111 id=111 data-nosnippet>111</a>/// future is not `Send`, so the wait is bridged through a oneshot channel and
+<a href=#112 id=112 data-nosnippet>112</a>/// the timer callback; the awaited half stays `Send`.
+<a href=#113 id=113 data-nosnippet>113</a></span><span class="kw">pub async fn </span>sleep(duration: Duration) {
+<a href=#114 id=114 data-nosnippet>114</a>    <span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
+<a href=#115 id=115 data-nosnippet>115</a>    </span>tokio::time::sleep(duration).<span class="kw">await</span>;
+<a href=#116 id=116 data-nosnippet>116</a>    <span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
+<a href=#117 id=117 data-nosnippet>117</a>    </span>{
+<a href=#118 id=118 data-nosnippet>118</a>        <span class="comment">// Browser timers take millisecond integers; clamp the value to the
+<a href=#119 id=119 data-nosnippet>119</a>        // timer's representable range.
+<a href=#120 id=120 data-nosnippet>120</a>        </span><span class="kw">const </span>MILLISECONDS_MAXIMUM: u128 = u32::MAX <span class="kw">as </span>u128;
+<a href=#121 id=121 data-nosnippet>121</a>        <span class="kw">let </span>milliseconds = duration.as_millis().min(MILLISECONDS_MAXIMUM) <span class="kw">as </span>u32;
+<a href=#122 id=122 data-nosnippet>122</a>        <span class="kw">let </span>(wake_sender, wake_receiver) = futures::channel::oneshot::channel::&lt;()&gt;();
+<a href=#123 id=123 data-nosnippet>123</a>        gloo_timers::callback::Timeout::new(milliseconds, <span class="kw">move </span>|| {
+<a href=#124 id=124 data-nosnippet>124</a>            <span class="kw">let _ </span>= wake_sender.send(());
+<a href=#125 id=125 data-nosnippet>125</a>        })
+<a href=#126 id=126 data-nosnippet>126</a>        .forget();
+<a href=#127 id=127 data-nosnippet>127</a>        <span class="kw">let _ </span>= wake_receiver.<span class="kw">await</span>;
+<a href=#128 id=128 data-nosnippet>128</a>    }
+<a href=#129 id=129 data-nosnippet>129</a>}
+<a href=#130 id=130 data-nosnippet>130</a>
+<a href=#131 id=131 data-nosnippet>131</a><span class="doccomment">/// The target's default transport: the `reqwest` implementation natively,
+<a href=#132 id=132 data-nosnippet>132</a>/// browser `fetch` on wasm.
+<a href=#133 id=133 data-nosnippet>133</a></span><span class="kw">pub fn </span>default_transport() -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>HttpTransport&gt;, SDKError&gt; {
+<a href=#134 id=134 data-nosnippet>134</a>    <span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
 <a href=#135 id=135 data-nosnippet>135</a>    </span>{
-<a href=#136 id=136 data-nosnippet>136</a>        <span class="prelude-val">Ok</span>(Arc::new(BrowserFetchTransport::new()))
-<a href=#137 id=137 data-nosnippet>137</a>    }
-<a href=#138 id=138 data-nosnippet>138</a>}
+<a href=#136 id=136 data-nosnippet>136</a>        <span class="kw">let </span>transport = ReqwestTransport::new()
+<a href=#137 id=137 data-nosnippet>137</a>            .map_err(|error| SDKError::NetworkRequestFailed(error.to_string()))<span class="question-mark">?</span>;
+<a href=#138 id=138 data-nosnippet>138</a>        <span class="prelude-val">Ok</span>(Arc::new(transport))
+<a href=#139 id=139 data-nosnippet>139</a>    }
+<a href=#140 id=140 data-nosnippet>140</a>    <span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
+<a href=#141 id=141 data-nosnippet>141</a>    </span>{
+<a href=#142 id=142 data-nosnippet>142</a>        <span class="prelude-val">Ok</span>(Arc::new(BrowserFetchTransport::new()))
+<a href=#143 id=143 data-nosnippet>143</a>    }
+<a href=#144 id=144 data-nosnippet>144</a>}
 </code></pre></div></section></main></body></html>

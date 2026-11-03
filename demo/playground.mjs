@@ -3526,6 +3526,10 @@
       // rows stay disabled until it does (a click is never a silent no-op).
       refresh_base_map_toggle_enabled_state();
       window.mapRendererMode = () => renderer_mode;
+      window.mapRendererDetail = () => renderer_detail;
+      // The live GPU canvas binding, read by the failure-injection test so a
+      // rejected frame can be forced without touching production behaviour.
+      window.mapGpuCanvas = () => gpu_map_canvas;
       window.mapLastFrameStats = () => last_frame_statistics;
       // The live camera state, read by the UX tests (docs/ReferenceAppUX.md
       // §10.1) instead of parsing the readout's presentation text.
@@ -4011,6 +4015,30 @@
       const MAP_TILE_ARRIVED_EVENT_NAME = 'map-tile-arrived';
       map_canvas.addEventListener(MAP_TILE_ARRIVED_EVENT_NAME, () => schedule_render());
 
+      // A rejected `renderFrame` must never freeze the page: report the
+      // failure, drop to the 2D tile-grid overlay (the documented degradation
+      // path) and keep the render loop running, so the map still pans.
+      function degrade_to_overlay_after_frame_failure(frame_failure) {
+        const failure_text = String(frame_failure?.message ?? frame_failure);
+        gpu_map_canvas = null;
+        renderer_mode = 'overlay';
+        renderer_detail = `WebGPU frame failed: ${failure_text}`;
+        show_error_report('Render frame', failure_text);
+        status_line_element.setAttribute('data-readiness', 'degraded');
+        status_line_element.textContent =
+          `${ui_label_text('readiness.chip_degraded_prefix')}2D grid`;
+        set_overlay_controls_enabled(
+          false,
+          'Scene overlays draw on the WebGPU surface only; this session ' +
+            `uses the 2D tile grid (${renderer_detail}).`,
+        );
+        follow_demo_start_control.disabled = true;
+        follow_demo_live_line.textContent =
+          'Simulated trips need the 3D map renderer; this browser is using ' +
+          'the 2D fallback.';
+        refresh_base_map_toggle_enabled_state();
+      }
+
       async function run_render_step() {
         render_busy = true;
         try {
@@ -4018,14 +4046,18 @@
             // The GPU binding consumes its camera by value, so the frame
             // builds its own camera from the current state.
             const frame_start_milliseconds = performance.now();
-            last_frame_statistics = await gpu_map_canvas.renderFrame(
-              build_camera(), FIELD_OF_VIEW_DEGREES);
-            record_frame_performance(
-              last_frame_statistics,
-              performance.now() - frame_start_milliseconds,
-            );
-            frame_draw_count += 1;
-            pump_toward_settled_frame(last_frame_statistics);
+            try {
+              last_frame_statistics = await gpu_map_canvas.renderFrame(
+                build_camera(), FIELD_OF_VIEW_DEGREES);
+              record_frame_performance(
+                last_frame_statistics,
+                performance.now() - frame_start_milliseconds,
+              );
+              frame_draw_count += 1;
+              pump_toward_settled_frame(last_frame_statistics);
+            } catch (frame_failure) {
+              degrade_to_overlay_after_frame_failure(frame_failure);
+            }
           }
           const camera = build_camera();
           refresh_scale_bar(camera);

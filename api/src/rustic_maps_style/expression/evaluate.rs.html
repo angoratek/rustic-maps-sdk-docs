@@ -610,6 +610,13 @@
 <a href=#610 id=610 data-nosnippet>610</a>        };
 <a href=#611 id=611 data-nosnippet>611</a>        accumulated = operation(accumulated, number);
 <a href=#612 id=612 data-nosnippet>612</a>    }
-<a href=#613 id=613 data-nosnippet>613</a>    <span class="prelude-val">Ok</span>(Value::Number(accumulated))
-<a href=#614 id=614 data-nosnippet>614</a>}
+<a href=#613 id=613 data-nosnippet>613</a>    <span class="comment">// The sibling numeric operators map NaN to `Null`; an accumulating
+<a href=#614 id=614 data-nosnippet>614</a>    // operation must do the same for any non-finite result, or an infinity
+<a href=#615 id=615 data-nosnippet>615</a>    // reaches geometry as a degenerate vertex.
+<a href=#616 id=616 data-nosnippet>616</a>    </span><span class="kw">if </span>accumulated.is_finite() {
+<a href=#617 id=617 data-nosnippet>617</a>        <span class="prelude-val">Ok</span>(Value::Number(accumulated))
+<a href=#618 id=618 data-nosnippet>618</a>    } <span class="kw">else </span>{
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="prelude-val">Ok</span>(Value::Null)
+<a href=#620 id=620 data-nosnippet>620</a>    }
+<a href=#621 id=621 data-nosnippet>621</a>}
 </code></pre></div></section></main></body></html>

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-87eb3fe5.js";
+            window.path_to_searchindex_js = "searchindex-685d49e1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -175,7 +175,8 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
+                        <!-- generated-api-reference-provenance: revision=e2546a5ec8c516be3f9cc076338cadc47ef8f1c0:sha256:4c5bb1889b79190345e0f497a533696ddcdfc9e80e3c27b3f03773864fd2972e -->
+<h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
 </blockquote>
@@ -420,7 +421,7 @@
 <tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>trafficFlowCacheStatistics</code></td><td><code>trafficFlowCacheStatistics(): object | null</code></td><td>Returns <code>object | null</code>. Throws the verbatim failure message as a string.</td><td>Reads the serving traffic-flow cache’s counters: <code>{hitCount, missCount, entryCount, evictionCount, segmentCount, gridZoomLevel, maximumEntryCount, timeToLiveSeconds}</code>, or null while no traffic provider is registered. A page’s developer console shows these; nothing mutates through this call.</td></tr>
+<tr><td><code>trafficFlowCacheStatistics</code></td><td><code>trafficFlowCacheStatistics(): any</code></td><td>Returns <code>any</code>. Throws the verbatim failure message as a string.</td><td>Reads the serving traffic-flow cache’s counters: <code>{hitCount, missCount, entryCount, evictionCount, segmentCount, gridZoomLevel, maximumEntryCount, timeToLiveSeconds}</code>, or null while no traffic provider is registered. A page’s developer console shows these; nothing mutates through this call.</td></tr>
 <tr><td><code>configureProvider</code></td><td><code>configureProvider(contract: string, providerKey: string, credential: string): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Chooses the provider that serves one capability, leaving every other capability untouched — the contract’s <code>MapSdk::configureProvider</code>. <code>contract</code> is the capability’s name (<code>Geocoding</code>, <code>Routing</code>, <code>DistanceMatrix</code>, <code>PlaceSearch</code>, <code>TrafficIncidents</code>, <code>TrafficFlow</code>, <code>Elevation</code>, <code>RasterTiles</code>, <code>VectorTiles</code> or <code>OfflineRouting</code>; the registry’s <code>…Provider</code> spelling is accepted too). <code>providerKey</code> is a provider this build carries, and <code>credential</code> its key — an empty string is accepted only for a provider that needs none. Fails with <code>ProviderNotConfigured</code> when the key is unknown to this build, <code>ProviderRequestRejected</code> when the provider needs a credential and none was supplied, and <code>UnsupportedCapability</code> when the key serves no such capability. A refused call leaves the previously serving provider in place.</td></tr>
 <tr><td><code>setProviderCredential</code></td><td><code>setProviderCredential(credential: string): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Registers a provider for every capability it serves — the all-in-one convenience, the contract’s <code>MapSdk::setProviderCredential</code> with the provider key fixed to this build’s full-service provider. A blank credential is refused; the credential lives in module memory only and is never logged. Configure one capability at a time with [<code>configure_provider</code>] to mix providers across capabilities.</td></tr>
 <tr><td><code>setProviderBaseUrl</code></td><td><code>setProviderBaseUrl(providerKey: string, baseUrl: string): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Points a provider key’s requests at a base URL instead of its public endpoint — a browser-only seam for a page that serves the provider’s routes itself, such as the test harness. Register the provider after calling this; the override applies to every later registration of the key.</td></tr>
