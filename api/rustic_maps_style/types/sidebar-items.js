@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["CirclePitchAlignment","CirclePitchScale","LineCap","LineJoin","Property","SymbolPlacement","TextJustify","TextTransform","Value","Visibility"],"trait":["PropertyValue"]};
+window.SIDEBAR_ITEMS = {"enum":["CirclePitchAlignment","CirclePitchScale","LineCap","LineJoin","Property","SymbolPlacement","TextAnchor","TextJustify","TextRotationAlignment","TextTransform","Value","Visibility"],"trait":["PropertyValue"]};
