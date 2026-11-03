@@ -37,4 +37,11 @@
 <a href=#37 id=37 data-nosnippet>37</a>/// the workspace documentation links it.
 <a href=#38 id=38 data-nosnippet>38</a></span><span class="kw">pub const </span>SPECIFICATION_DOCUMENTATION_URL: <span class="kw-2">&amp;</span>str =
 <a href=#39 id=39 data-nosnippet>39</a>    <span class="string">"https://github.com/mapbox/vector-tile-spec/tree/2.1"</span>;
+<a href=#40 id=40 data-nosnippet>40</a>
+<a href=#41 id=41 data-nosnippet>41</a><span class="doccomment">/// The largest plain vector-tile payload a decoder accepts after any gzip
+<a href=#42 id=42 data-nosnippet>42</a>/// decompression. A tile payload is untrusted network input, so a decompression
+<a href=#43 id=43 data-nosnippet>43</a>/// bomb must fail as a typed refusal rather than exhaust the process; sixteen
+<a href=#44 id=44 data-nosnippet>44</a>/// megabytes is far above any real tile (a dense z14 city tile is tens of
+<a href=#45 id=45 data-nosnippet>45</a>/// kilobytes) while staying a bounded allocation.
+<a href=#46 id=46 data-nosnippet>46</a></span><span class="kw">pub const </span>MAXIMUM_DECOMPRESSED_VECTOR_TILE_BYTES: usize = <span class="number">16 </span>* <span class="number">1024 </span>* <span class="number">1024</span>;
 </code></pre></div></section></main></body></html>

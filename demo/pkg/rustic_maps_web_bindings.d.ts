@@ -925,7 +925,7 @@ export function tilesCovering(south_west_latitude: number, south_west_longitude:
  * is registered. A page's developer console shows these; nothing mutates
  * through this call.
  */
-export function trafficFlowCacheStatistics(): object | undefined;
+export function trafficFlowCacheStatistics(): any;
 
 /**
  * The geographic bounds of one web-mercator tile, as
@@ -1102,12 +1102,14 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1607: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1607_100: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1607_99: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8409: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8430: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_6316: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1669: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1669_101: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1669_102: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8504: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8525: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1673: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_1673_100: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_6395: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
