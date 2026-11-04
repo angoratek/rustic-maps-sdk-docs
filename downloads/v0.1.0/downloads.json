@@ -3,13 +3,13 @@
   "files": [
     {
       "name": "rustic-maps-sdk-android-v0.1.0.aar",
-      "bytes": 16708813,
-      "sha256": "afaa291ad9922a156d21abb2b02fd6742ab9ab88fc5aaf694285e4b55a0da9fb"
+      "bytes": 16719767,
+      "sha256": "cd04ec015833b93736cbd25ced8cff951b768d2f838fb9bb4c8dc54ba658a6d4"
     },
     {
       "name": "rustic-maps-sdk-ios-v0.1.0.xcframework.zip",
-      "bytes": 103887178,
-      "sha256": "e5b8e66906e72740a60adce88fcaa38b92c425af1361526db4a4303a40192381"
+      "bytes": 103900666,
+      "sha256": "7bc233f949165043bcb3e359f200243976fb97725ddb9ab9ea272bcd244aba59"
     },
     {
       "name": "rustic-maps-sdk-notices-v0.1.0.md",
@@ -18,18 +18,18 @@
     },
     {
       "name": "rustic-maps-sdk-rn-v0.1.0.tgz",
-      "bytes": 268930213,
-      "sha256": "723451420cd0de6ef9ecd8883ba94602067d486501f7b6fe23e1791a749549b4"
+      "bytes": 268959523,
+      "sha256": "85c4b34c3a24645a40ead42b6296abdd77dd6c4bac39eb5946c51fc476e16ca0"
     },
     {
       "name": "rustic-maps-sdk-rust-v0.1.0.tar.gz",
-      "bytes": 29184446,
-      "sha256": "e7a87eb90347ec6e5e515fc302470403b8fbe79457f62884eaa2994addfdfe2e"
+      "bytes": 29197165,
+      "sha256": "1f242de53cef85fc73da1e8c6536bb9119324148f98941af622ccd82a0b00826"
     },
     {
       "name": "rustic-maps-sdk-web-v0.1.0.tgz",
-      "bytes": 1741359,
-      "sha256": "c0df3a80bba5ef7dd04464c1f7fc42f36a0677d956e7dcaee0ff1b90563ea5d3"
+      "bytes": 1741550,
+      "sha256": "742c77a9e733a650ee0c6829c751b79dc6dc7ee060e0a489d614896454181f9d"
     }
   ]
 }
