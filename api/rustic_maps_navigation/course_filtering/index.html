@@ -23,7 +23,7 @@ fallback, and an unreported course retains the trip’s previous course
 policies (<a href="../reducer/enum.NavigationEvent.html#variant.StartTrip" title="variant rustic_maps_navigation::reducer::NavigationEvent::StartTrip"><code>crate::reducer::NavigationEvent::StartTrip</code></a> carries it), and
 the reducer stamps every fix’s effective course into
 <a href="../state/struct.TripNavigationState.html#structfield.course_heading_degrees" title="field rustic_maps_navigation::state::TripNavigationState::course_heading_degrees"><code>TripNavigationState::course_heading_degrees</code></a>
-during the same position snap pass, so consumers (a course wedge, a follow
+during the same position snap pass, so consumers (a course dart, a follow
 camera) read one course field instead of re-filtering raw courses per
 platform.</p>
 </div></details><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.CourseFiltering.html" title="enum rustic_maps_navigation::course_filtering::CourseFiltering">Course<wbr>Filtering</a></dt><dd>How the trip reports its course.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.effective_course_heading_degrees.html" title="fn rustic_maps_navigation::course_filtering::effective_course_heading_degrees">effective_<wbr>course_<wbr>heading_<wbr>degrees</a></dt><dd>Computes the effective course of one processed fix under the trip’s

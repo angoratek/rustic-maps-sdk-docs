@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-13f974d5.js";
+            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e43faa06.js"></script>
+        <script src="toc-18302c03.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -226,8 +226,11 @@ cosign verify-blob &lt;artifact-file&gt; \
 <code>--ignore-missing</code> flag keeps the <code>sha256sum</code> run to the files you actually
 downloaded.</p>
 <h3 id="rust"><a class="header" href="#rust">Rust</a></h3>
-<p>The Rust archive carries the workspace crates at this version. Unpack it and
-point a path dependency at the crates you use:</p>
+<p>The Rust archive carries the workspace source at this version. It contains no
+compiled libraries, generated bindings or credentials; Cargo builds the crates
+you use from source. The <a href="rust.html#install-from-the-source-archive">Rust guide</a>
+lists what the archive contains and what it leaves out. Unpack it and point a
+path dependency at the crates you use:</p>
 <pre><code class="language-toml">[dependencies]
 rustic-maps-rendering = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-rendering" }
 rustic-maps-navigation = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-navigation" }

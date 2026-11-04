@@ -261,6 +261,41 @@
           "fixture": "crates/valhalla-provider/fixtures/route_sacramento.json"
         }
       ]
+    },
+    {
+      "provider_key": "photon",
+      "display_name": "Photon",
+      "credential_label": "",
+      "served_contracts": [
+        "geocoding",
+        "place_search"
+      ],
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — search by Photon",
+      "terms_note": "The public Photon instance is offered for reasonable, non-commercial use with no uptime or latency guarantee; a self-hosted Photon deployment follows its operator's terms.",
+      "demo_base_url": "https://photon.komoot.io",
+      "demo_base_url_note": "Public Photon instance, best-effort and not for production use.",
+      "settings_hint": "Enter the base URL of your Photon deployment, or use the public instance declared by the registry.",
+      "wasm_registration": "photon",
+      "fixture_routes": [
+        {
+          "purpose": "search",
+          "method": "GET",
+          "path_pattern": "^api$",
+          "fixture": "crates/photon-provider/fixtures/search_sacramento.json"
+        },
+        {
+          "purpose": "reverse_geocoding",
+          "method": "GET",
+          "path_pattern": "^reverse$",
+          "fixture": "crates/photon-provider/fixtures/reverse_sacramento.json"
+        }
+      ]
     }
   ]
 }

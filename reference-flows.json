@@ -5,7 +5,7 @@
     "purpose": "The ordered reference-application flows every target must run, with the visible outcome, copy ID and automation hook of each step (docs/design/ReferenceApplicationBehavior.md)."
   },
   "schema_documentation": {
-    "flow": "flow_id, label, scenario, screenshot_step_id (a step ID, or null when the flow is not the screenshot scenario), preconditions, steps",
+    "flow": "flow_id, label, scenario, screenshot_step_id (a step ID, or null when the flow is not the screenshot scenario), screenshot_frames (the published frame set on the reference flow), preconditions, steps",
     "step": "step_id, action, outcomes, hooks",
     "action": "kind plus the fields that kind uses: field (origin|destination), value, target, provider_key",
     "outcome": "kind (state|visible|condition|copy) and id; state IDs come from states, copy IDs from platform/reference-tokens.json ui_labels, visible and condition IDs from component_vocabulary",
@@ -81,6 +81,18 @@
     {
       "id": "speed_controls",
       "description": "the playback speed chips"
+    },
+    {
+      "id": "first_instruction_shown",
+      "description": "the turn banner names the first instruction of the trip"
+    },
+    {
+      "id": "navigation_speed_one",
+      "description": "the 1x playback-speed chip is selected"
+    },
+    {
+      "id": "vector_base",
+      "description": "the styled vector base with its place labels"
     },
     {
       "id": "provider_settings_sheet",
@@ -218,6 +230,7 @@
       "label": "Search, plan and simulate",
       "scenario": "reference",
       "screenshot_step_id": "drive",
+      "screenshot_frames": ["plan_sheet", "provider_section", "navigation", "vector_base"],
       "preconditions": [
         "keyless",
         "shared artifacts loaded"
@@ -457,6 +470,14 @@
             {
               "kind": "copy",
               "id": "navigation.speed_label"
+            },
+            {
+              "kind": "condition",
+              "id": "first_instruction_shown"
+            },
+            {
+              "kind": "condition",
+              "id": "navigation_speed_one"
             }
           ],
           "hooks": {
