@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-61b0e61b.js";
+            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=bf124e9e4b7c0b0c9a11619e7946c989eaa2dd9c:sha256:6f93c70d0c5c79a6a0b23917cb9b3a444a8c78fd5b69faff7e3db3a44041d0b5 -->
+                        <!-- generated-api-reference-provenance: revision=17b2fb3f095e66aee140126cb261212b855a80a8:sha256:5ddab5419f2874dcfae9ed9fe48f9243d92bdf8adee1ecb72577c73ff81dcd03 -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -1178,6 +1178,7 @@
 <tr><td><code>VECTOR_STYLE_ID_BRIGHT_LIGHT</code></td><td>const</td><td><code>pub const VECTOR_STYLE_ID_BRIGHT_LIGHT: &amp;str</code></td><td>OpenFreeMap’s <strong>Bright</strong> style (the OpenMapTiles schema’s rich light palette): the named light style the vector base offers.</td></tr>
 <tr><td><code>VECTOR_STYLE_ID_FIORD_DARK</code></td><td>const</td><td><code>pub const VECTOR_STYLE_ID_FIORD_DARK: &amp;str</code></td><td>OpenFreeMap’s <strong>Fiord</strong> style: the named dark palette with legible road classes.</td></tr>
 <tr><td><code>VECTOR_STYLE_ID_POSITRON_LIGHT</code></td><td>const</td><td><code>pub const VECTOR_STYLE_ID_POSITRON_LIGHT: &amp;str</code></td><td>OpenFreeMap’s <strong>Positron</strong> style: the quiet, deliberately monochrome light palette.</td></tr>
+<tr><td><code>VECTOR_STYLE_ID_LABEL_COVERAGE_PROBE</code></td><td>const</td><td><code>pub const VECTOR_STYLE_ID_LABEL_COVERAGE_PROBE: &amp;str</code></td><td>The browser SDF coverage probe’s measurement fixture: a literal white <code>I</code> at 48 point pixels on black, painted over the committed OpenMapTiles fixture. It is not a cartographic base map; the probe uses it to isolate one glyph edge through the same vector-source path the cartographic styles use.</td></tr>
 <tr><td><code>vector_tile_style_from_id</code></td><td>function</td><td><code>pub fn vector_tile_style_from_id( style_id: &amp;str, ) -&gt; Result&lt;CompiledStyle, VectorStyleArtifactError&gt;</code></td><td>Parses and compiles the built-in style document a style id names. # Parameters - <code>style_id</code> — one of the exported <code>VECTOR_STYLE_ID_*</code> identifiers. # Returns The compiled style, ready to resolve at a frame zoom and feature. # Errors An unknown id and a malformed document both report the typed artifact error rather than a guess.</td></tr>
 <tr><td><code>VectorStyleArtifactError</code></td><td>struct</td><td><code>pub struct VectorStyleArtifactError</code></td><td>Why a style document could not be parsed into a compiled style.</td></tr>
 <tr><td><code>vector_tile_style_from_json</code></td><td>function</td><td><code>pub fn vector_tile_style_from_json( style_json: &amp;str, ) -&gt; Result&lt;CompiledStyle, VectorStyleArtifactError&gt;</code></td><td>Parses and compiles a version-8 style document. The compile step is infallible; only a malformed document reports an error.</td></tr>

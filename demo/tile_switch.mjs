@@ -331,14 +331,13 @@ export function vectorStyleIdForDescriptor(
  * @param {string} [options.selectedStyleId] the style the page's picker chose
  *   (one of the descriptor's offered styles), overriding the theme join
  * @param {function} options.fetchAndBuildVectorOverlays injected decoder
- * @returns {Promise<{overlays: object[], labels: object[],
- *   overlayCount: number, labelCount: number, failures: object[],
+ * @returns {Promise<{overlays: object[],
+ *   overlayCount: number, failures: object[],
  *   superseded: boolean}>} `overlays` is the base's own geometry (without
  *   `contentOverlays`), so the caller can recompose after a later content
- *   change, and `labels` is the base's symbol-layer text for the canvas'
- *   label layer; `superseded` is true when a newer call replaced this one
- *   before it applied its list — the caller must not publish such a result
- *   as the current base layer.
+ *   change; `superseded` is true when a newer call replaced this one before
+ *   it applied its list — the caller must not publish such a result as the
+ *   current base layer.
  */
 export async function loadVectorBaseOverlays({
   canvas,
@@ -381,15 +380,12 @@ export async function loadVectorBaseOverlays({
   });
   const failures = [];
   const overlays = [];
-  const labels = [];
   for (const descriptor of descriptors) {
     for (const address of tile_addresses) {
       if (load_generation !== active_load_generation) {
         return {
           overlays: [],
-          labels: [],
           overlayCount: 0,
-          labelCount: 0,
           failures,
           superseded: true,
         };
@@ -406,13 +402,13 @@ export async function loadVectorBaseOverlays({
           styleId: vectorStyleIdForDescriptor(descriptor, styleTheme, selectedStyleId),
         });
         // A decoder may answer the plain overlay array (older seams and test
-        // fakes) or the `{overlays, labels}` object this slice's decoder
-        // returns; both keep the base's geometry and labels together.
+        // fakes) or the `{overlays}` object this slice's decoder returns; this
+        // legacy page-driven path composes geometry only, because the
+        // canvas-owned vector source draws its labels internally.
         if (Array.isArray(decoded_tile)) {
           overlays.push(...decoded_tile);
         } else {
           overlays.push(...(decoded_tile?.overlays ?? []));
-          labels.push(...(decoded_tile?.labels ?? []));
         }
       } catch (tile_failure) {
         failures.push({
@@ -430,26 +426,19 @@ export async function loadVectorBaseOverlays({
   if (load_generation !== active_load_generation) {
     return {
       overlays: [],
-      labels: [],
       overlayCount: 0,
-      labelCount: 0,
       failures,
       superseded: true,
     };
   }
   // The base paints first and the caller's own overlays paint over it, so a
   // vector base never has to displace the scene toggles or a route line. The
-  // labels ride the canvas' own label layer (absence-tolerant, so a fake
-  // canvas that only draws overlays still works).
+  // canvas-owned vector source (`setVectorTileSource`) draws the base's labels
+  // itself, so this legacy page-driven path composes geometry only.
   canvas.setOverlays([...overlays, ...contentOverlays]);
-  if (typeof canvas.setLabels === 'function') {
-    canvas.setLabels(labels);
-  }
   return {
     overlays,
-    labels,
     overlayCount: overlays.length,
-    labelCount: labels.length,
     failures,
     superseded: false,
   };

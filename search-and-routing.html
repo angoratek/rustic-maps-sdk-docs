@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-61b0e61b.js";
+            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -179,6 +179,50 @@
 <p>Turn a typed query into places, plan a route between them, and draw it on
 the map. This guide continues from <a href="first-map.html">Your first map</a>; every
 code block compiles against the <a href="udl-contract.html">FFI contract</a>.</p>
+<h2 id="choose-the-transport-mode-and-strategy"><a class="header" href="#choose-the-transport-mode-and-strategy">Choose the transport mode and strategy</a></h2>
+<p><code>RouteOptions</code> carries the transport mode and the route strategy for every
+plan. The SDK can express Car, Walk and Bicycle, and the Fastest and Shortest
+strategies. A provider may not serve all of them, so read
+<code>routeCapabilities()</code> before you show the control. It answers the supported
+modes and whether Shortest is available.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Car</th><th>Walk</th><th>Bicycle</th><th>Fastest</th><th>Shortest</th></tr>
+</thead>
+<tbody>
+<tr><td>MapQuest</td><td>yes</td><td>yes</td><td>yes</td><td>yes</td><td>automobile only</td></tr>
+<tr><td>Valhalla</td><td>yes</td><td>yes</td><td>yes</td><td>yes</td><td>automobile only</td></tr>
+<tr><td>OSRM</td><td>yes</td><td>yes</td><td>yes</td><td>yes</td><td>no</td></tr>
+</tbody>
+</table>
+</div>
+<p>Shortest applies to automobile plans only. A walk plan always sends Fastest.
+OSRM has no route-service switch for the ranking, so both strategies produce
+the same request and the deployment’s profile decides the path.</p>
+<p>A choice the provider reports as unsupported is disabled with a reason. A
+remembered choice the provider cannot honour falls back without being
+rewritten: an unsupported mode falls back to Car, then Walk, and Shortest
+falls back to Fastest. Returning to a provider that supports the choice
+restores it.</p>
+<p>The exact disabled-with-reason sentence each surface shows:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Surface</th><th>Unsupported mode</th><th>Unsupported Shortest</th></tr>
+</thead>
+<tbody>
+<tr><td>Android</td><td><code>{mode} directions are not available from this provider.</code></td><td><code>Shortest route strategy is not available from this provider.</code></td></tr>
+<tr><td>iOS</td><td><code>{mode} is not offered by the serving routing provider.</code></td><td><code>Shortest is not offered by the serving routing provider.</code></td></tr>
+<tr><td>React Native</td><td><code>The serving provider does not support walking routes.</code> or <code>The serving provider does not support car routes.</code></td><td><code>The serving provider does not support shortest routes.</code></td></tr>
+<tr><td>WebAssembly</td><td>No reason line. The browser API exposes <code>routeCapabilities()</code>; the demo sends the selected pair and the route card states the mode and strategy.</td><td>No reason line. The selected strategy is sent, and the provider’s documented ranking applies.</td></tr>
+</tbody>
+</table>
+</div>
+<p>On Android, iOS and React Native, if the capability read fails because no
+routing provider is installed, the surface disables both mode choices and
+Shortest with the contract’s sentence,
+<code>no 'RoutingProvider' provider is configured</code>.</p>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>

@@ -626,13 +626,6 @@ export class MapView {
         }
     }
     /**
-     * Clears the label candidate list; following frames draw no labels
-     * until [`MapView::set_labels`] supplies a new list.
-     */
-    clearLabels() {
-        wasm.mapview_clearLabels(this.__wbg_ptr);
-    }
-    /**
      * Clears the location-indicator layer; following frames draw no
      * indicator until [`MapView::set_location_indicator`] supplies a
      * new one.
@@ -866,61 +859,6 @@ export class MapView {
      */
     setCameraGestureActive(active) {
         wasm.mapview_setCameraGestureActive(this.__wbg_ptr, active);
-    }
-    /**
-     * Decodes one Mapbox glyph-protocol range and packs it into the
-     * `R8Unorm` atlas the label layer draws with. Answers the decoded font
-     * stack name, glyph count and page dimensions for the page's status
-     * readout. A malformed payload or an un-packable range is a
-     * coded `responseParsingFailure` rejection and keeps the previous font
-     * in force.
-     * @param {Uint8Array} glyph_range_bytes
-     * @returns {object}
-     */
-    setGlyphRange(glyph_range_bytes) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            const ptr0 = passArray8ToWasm0(glyph_range_bytes, wasm.__wbindgen_export);
-            const len0 = WASM_VECTOR_LEN;
-            wasm.mapview_setGlyphRange(retptr, this.__wbg_ptr, ptr0, len0);
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-            if (r2) {
-                throw takeObject(r1);
-            }
-            return takeObject(r0);
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
-    }
-    /**
-     * Replaces the label candidates drawn over the overlays in every
-     * following [`MapView::render_frame`], and answers how many the call
-     * accepted. Each descriptor carries its text, geographic anchor, paint,
-     * halos, size and collision fields; [`MapView::set_glyph_range`] must
-     * supply the glyphs before anything draws. Every invalid descriptor
-     * rejects the whole call with a coded `invalidRenderInput` failure and
-     * keeps the previous list in force; nothing panics.
-     * @param {any[]} labels
-     * @returns {number}
-     */
-    setLabels(labels) {
-        try {
-            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            const ptr0 = passArrayJsValueToWasm0(labels, wasm.__wbindgen_export);
-            const len0 = WASM_VECTOR_LEN;
-            wasm.mapview_setLabels(retptr, this.__wbg_ptr, ptr0, len0);
-            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-            if (r2) {
-                throw takeObject(r1);
-            }
-            return r0 >>> 0;
-        } finally {
-            wasm.__wbindgen_add_to_stack_pointer(16);
-        }
     }
     /**
      * Sets the location-indicator layer drawn over the overlays in every
@@ -2677,75 +2615,6 @@ export function vectorTileGeographicBounds(tile_zoom_level, tile_x, tile_y) {
 }
 
 /**
- * Decodes and styles one vector tile into the label descriptors the WebGPU
- * canvas' [`crate::canvas::MapView::set_labels`] consumes. A point-placed
- * symbol candidate carries its anchor; a line-placed one (a road name) also
- * carries the line geometry the canvas runs the text along.
- *
- * The address and wire bytes are validated exactly like the overlay export,
- * and the labels come from the same style conversion (the symbol layers'
- * text fallbacks, paint, size stops, priority, rank and overlap rule), so the
- * overlay and label halves of one tile cannot disagree. Size stops evaluate
- * at the tile's own integer zoom level — the page lists tiles at the camera's
- * rounded zoom — and the canvas places the labels at the exact frame camera
- * pose. A malformed payload
- * or an out-of-grid address rejects with a coded error; nothing throws
- * across the wasm boundary as a panic.
- * @param {Uint8Array} tile_bytes
- * @param {number} tile_zoom_level
- * @param {number} tile_x
- * @param {number} tile_y
- * @returns {Array<any>}
- */
-export function vectorTileLabelDescriptors(tile_bytes, tile_zoom_level, tile_x, tile_y) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(tile_bytes, wasm.__wbindgen_export);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.vectorTileLabelDescriptors(retptr, ptr0, len0, tile_zoom_level, tile_x, tile_y);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
- * The same label conversion painted with the committed style a style id
- * names; an unknown style id rejects with the documented list of known ids.
- * @param {Uint8Array} tile_bytes
- * @param {number} tile_zoom_level
- * @param {number} tile_x
- * @param {number} tile_y
- * @param {string} style_id
- * @returns {Array<any>}
- */
-export function vectorTileLabelDescriptorsForStyle(tile_bytes, tile_zoom_level, tile_x, tile_y, style_id) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(tile_bytes, wasm.__wbindgen_export);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(style_id, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len1 = WASM_VECTOR_LEN;
-        wasm.vectorTileLabelDescriptorsForStyle(retptr, ptr0, len0, tile_zoom_level, tile_x, tile_y, ptr1, len1);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
  * Decodes and styles one vector tile into the overlay descriptor list the
  * WebGPU canvas consumes.
  *
@@ -3970,7 +3839,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_8903(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_8892(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -5021,38 +4890,38 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2726, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8882);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2728, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8871);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 452, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1983);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 450, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1966);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 456, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1987);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 454, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1970);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 456, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1987_144);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 454, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1970_139);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 452, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1983_145);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 450, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1966_140);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 452, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1983_146);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 450, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1966_141);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000007: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2547, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6711);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2550, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6701);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000008: function(arg0) {
@@ -5126,26 +4995,26 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_6711(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_6711(arg0, arg1);
+function __wasm_bindgen_func_elem_6701(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6701(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_1987(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_1987(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_1970(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_1970(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_1987_144(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_1987_144(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_1970_139(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_1970_139(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_8903(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_8903(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_8892(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_8892(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_8882(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_8871(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_8882(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_8871(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5156,10 +5025,10 @@ function __wasm_bindgen_func_elem_8882(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1983(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1966(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1983(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1966(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5170,10 +5039,10 @@ function __wasm_bindgen_func_elem_1983(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1983_145(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1966_140(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1983_145(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1966_140(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5184,10 +5053,10 @@ function __wasm_bindgen_func_elem_1983_145(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1983_146(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1966_141(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1983_146(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1966_141(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {

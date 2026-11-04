@@ -229,6 +229,12 @@
         {
           "purpose": "routing",
           "method": "GET",
+          "path_pattern": "^route/v1/driving/-122\\.3937,37\\.7955;-122\\.2711,37\\.8044$",
+          "fixture": "crates/osrm-provider/fixtures/san_francisco_oakland_ferry_route.json"
+        },
+        {
+          "purpose": "routing",
+          "method": "GET",
           "path_pattern": "^route/v1/[a-z]+/.*$",
           "fixture": "crates/osrm-provider/fixtures/sacramento_route.json"
         }
