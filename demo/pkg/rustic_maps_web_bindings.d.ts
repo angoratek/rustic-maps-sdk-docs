@@ -221,11 +221,6 @@ export class MapView {
      */
     addOverlay(overlay: any): string;
     /**
-     * Clears the label candidate list; following frames draw no labels
-     * until [`MapView::set_labels`] supplies a new list.
-     */
-    clearLabels(): void;
-    /**
      * Clears the location-indicator layer; following frames draw no
      * indicator until [`MapView::set_location_indicator`] supplies a
      * new one.
@@ -361,25 +356,6 @@ export class MapView {
      * the platform's gesture recognizers already move it.
      */
     setCameraGestureActive(active: boolean): void;
-    /**
-     * Decodes one Mapbox glyph-protocol range and packs it into the
-     * `R8Unorm` atlas the label layer draws with. Answers the decoded font
-     * stack name, glyph count and page dimensions for the page's status
-     * readout. A malformed payload or an un-packable range is a
-     * coded `responseParsingFailure` rejection and keeps the previous font
-     * in force.
-     */
-    setGlyphRange(glyph_range_bytes: Uint8Array): object;
-    /**
-     * Replaces the label candidates drawn over the overlays in every
-     * following [`MapView::render_frame`], and answers how many the call
-     * accepted. Each descriptor carries its text, geographic anchor, paint,
-     * halos, size and collision fields; [`MapView::set_glyph_range`] must
-     * supply the glyphs before anything draws. Every invalid descriptor
-     * rejects the whole call with a coded `invalidRenderInput` failure and
-     * keeps the previous list in force; nothing panics.
-     */
-    setLabels(labels: any[]): number;
     /**
      * Sets the location-indicator layer drawn over the overlays in every
      * following [`MapView::render_frame`] (the native surface's top layer),
@@ -1215,30 +1191,6 @@ export function trafficFlowCacheStatistics(): any;
 export function vectorTileGeographicBounds(tile_zoom_level: number, tile_x: number, tile_y: number): object;
 
 /**
- * Decodes and styles one vector tile into the label descriptors the WebGPU
- * canvas' [`crate::canvas::MapView::set_labels`] consumes. A point-placed
- * symbol candidate carries its anchor; a line-placed one (a road name) also
- * carries the line geometry the canvas runs the text along.
- *
- * The address and wire bytes are validated exactly like the overlay export,
- * and the labels come from the same style conversion (the symbol layers'
- * text fallbacks, paint, size stops, priority, rank and overlap rule), so the
- * overlay and label halves of one tile cannot disagree. Size stops evaluate
- * at the tile's own integer zoom level — the page lists tiles at the camera's
- * rounded zoom — and the canvas places the labels at the exact frame camera
- * pose. A malformed payload
- * or an out-of-grid address rejects with a coded error; nothing throws
- * across the wasm boundary as a panic.
- */
-export function vectorTileLabelDescriptors(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number): Array<any>;
-
-/**
- * The same label conversion painted with the committed style a style id
- * names; an unknown style id rejects with the documented list of known ids.
- */
-export function vectorTileLabelDescriptorsForStyle(tile_bytes: Uint8Array, tile_zoom_level: number, tile_x: number, tile_y: number, style_id: string): Array<any>;
-
-/**
  * Decodes and styles one vector tile into the overlay descriptor list the
  * WebGPU canvas consumes.
  *
@@ -1339,7 +1291,6 @@ export interface InitOutput {
     readonly mapssdk_compiledVersion: (a: number, b: number) => void;
     readonly mapssdk_create: () => number;
     readonly mapview_addOverlay: (a: number, b: number, c: number) => void;
-    readonly mapview_clearLabels: (a: number) => void;
     readonly mapview_clearLocationIndicator: (a: number) => void;
     readonly mapview_clearOverlays: (a: number) => void;
     readonly mapview_clearVectorTileSource: (a: number, b: number) => void;
@@ -1352,8 +1303,6 @@ export interface InitOutput {
     readonly mapview_setBackgroundColor: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly mapview_setBaseMapVisible: (a: number, b: number) => void;
     readonly mapview_setCameraGestureActive: (a: number, b: number) => void;
-    readonly mapview_setGlyphRange: (a: number, b: number, c: number, d: number) => void;
-    readonly mapview_setLabels: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setVectorTileSource: (a: number, b: number, c: number) => void;
@@ -1420,19 +1369,17 @@ export interface InitOutput {
     readonly tracecursor_seekToSampleIndex: (a: number, b: number) => void;
     readonly trafficFlowCacheStatistics: (a: number) => void;
     readonly vectorTileGeographicBounds: (a: number, b: number, c: number, d: number) => void;
-    readonly vectorTileLabelDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
-    readonly vectorTileLabelDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1983: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1983_145: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1983_146: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8882: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8903: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1987: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_1987_144: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_6711: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1966: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1966_140: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1966_141: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8871: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8892: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1970: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_1970_139: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_6701: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

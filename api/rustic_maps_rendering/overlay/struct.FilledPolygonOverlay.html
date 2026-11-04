@@ -5,7 +5,7 @@
     pub rgba_outline_color: <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;[<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f32.html">f32</a>; <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.array.html">4</a>]&gt;,
     pub antialias: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.bool.html">bool</a>,
     pub translate_pixels: [<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>; <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.array.html">2</a>],
-    pub translate_anchor: TranslateAnchor,
+    pub translate_anchor: <a class="enum" href="../../rustic_maps_style/types/enum.TranslateAnchor.html" title="enum rustic_maps_style::types::TranslateAnchor">TranslateAnchor</a>,
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A filled polygon: one outer ring plus any hole rings, bridge-joined and
 ear-clip triangulated in one pass and painted solid
 <a href="struct.FilledPolygonOverlay.html#structfield.rgba_color" title="field rustic_maps_rendering::overlay::FilledPolygonOverlay::rgba_color"><code>FilledPolygonOverlay::rgba_color</code></a> (through the overlay pipeline’s alpha
@@ -32,7 +32,7 @@ outside the fill; producers emit contained holes.</p>
 </div><span id="structfield.antialias" class="structfield section-header"><a href="#structfield.antialias" class="anchor field">§</a><code>antialias: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.bool.html">bool</a></code></span><div class="docblock"><p>Whether the fill’s edge is antialiased. A disabled edge paints no
 outline even when an edge color is present.</p>
 </div><span id="structfield.translate_pixels" class="structfield section-header"><a href="#structfield.translate_pixels" class="anchor field">§</a><code>translate_pixels: [<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>; <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.array.html">2</a>]</code></span><div class="docblock"><p>The fill’s displacement from its geometry, in screen pixels.</p>
-</div><span id="structfield.translate_anchor" class="structfield section-header"><a href="#structfield.translate_anchor" class="anchor field">§</a><code>translate_anchor: TranslateAnchor</code></span><div class="docblock"><p>The frame of reference the displacement is measured against. The
+</div><span id="structfield.translate_anchor" class="structfield section-header"><a href="#structfield.translate_anchor" class="anchor field">§</a><code>translate_anchor: <a class="enum" href="../../rustic_maps_style/types/enum.TranslateAnchor.html" title="enum rustic_maps_style::types::TranslateAnchor">TranslateAnchor</a></code></span><div class="docblock"><p>The frame of reference the displacement is measured against. The
 renderer’s own default is the viewport, so a shape built through
 <a href="struct.FilledPolygonOverlay.html#method.new" title="associated function rustic_maps_rendering::overlay::FilledPolygonOverlay::new"><code>FilledPolygonOverlay::new</code></a> keeps painting unchanged; a style layer
 carries the specification’s <code>map</code> default explicitly.</p>

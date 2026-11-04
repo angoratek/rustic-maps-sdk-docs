@@ -856,11 +856,10 @@
       const initial_demo_preferences = read_demo_preferences();
       let demo_preferences = { ...initial_demo_preferences };
       // The Directions choices every route plan carries. The wasm façade
-      // exposes no route-capabilities report today, and every routing
-      // provider this build can register honours Car, Walk and both
-      // strategies, so all four choices are offered. When the façade gains
-      // the capability report, gate the strategy row on it here instead of
-      // offering a choice the serving provider cannot honour.
+      // exposes `routeCapabilities()`, but this demo does not gate the control
+      // on it: the selected pair is sent, and a provider without a shortest
+      // switch applies its own documented ranking. The route card states
+      // the mode and strategy the plan carried.
       let directions_transportation_mode =
         initial_demo_preferences.directionsTransportationMode;
       let directions_route_strategy =

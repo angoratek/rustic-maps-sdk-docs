@@ -2,7 +2,7 @@
 <p>The client validates the base URL once, then builds each request as
 <code>{base_url}/{path}</code> with the caller’s query pairs. The route service has no
 request body, so only idempotent GETs are needed.</p>
-</div></details><h2 id="implementations" class="section-header">Implementations<a href="#implementations" class="anchor">§</a></h2><div id="implementations-list"><details class="toggle implementors-toggle" open><summary><section id="impl-OsrmHttpClient" class="impl"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#74-193">Source</a><a href="#impl-OsrmHttpClient" class="anchor">§</a><h3 class="code-header">impl <a class="struct" href="struct.OsrmHttpClient.html" title="struct osrm_provider::client::OsrmHttpClient">OsrmHttpClient</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.new" class="method"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#87-97">Source</a><h4 class="code-header">pub fn <a href="#method.new" class="fn">new</a>(configuration: <a class="struct" href="struct.OsrmProviderConfiguration.html" title="struct osrm_provider::client::OsrmProviderConfiguration">OsrmProviderConfiguration</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Self, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</h4></section></summary><div class="docblock"><p>Builds a client around the target’s default transport.</p>
+</div></details><h2 id="implementations" class="section-header">Implementations<a href="#implementations" class="anchor">§</a></h2><div id="implementations-list"><details class="toggle implementors-toggle" open><summary><section id="impl-OsrmHttpClient" class="impl"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#74-195">Source</a><a href="#impl-OsrmHttpClient" class="anchor">§</a><h3 class="code-header">impl <a class="struct" href="struct.OsrmHttpClient.html" title="struct osrm_provider::client::OsrmHttpClient">OsrmHttpClient</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.new" class="method"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#87-93">Source</a><h4 class="code-header">pub fn <a href="#method.new" class="fn">new</a>(configuration: <a class="struct" href="struct.OsrmProviderConfiguration.html" title="struct osrm_provider::client::OsrmProviderConfiguration">OsrmProviderConfiguration</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Self, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</h4></section></summary><div class="docblock"><p>Builds a client around the target’s default transport.</p>
 <h5 id="parameters"><a class="doc-anchor" href="#parameters">§</a>Parameters</h5>
 <ul>
 <li><code>configuration</code> — deployment base URL and user agent.</li>
@@ -13,14 +13,16 @@ request body, so only idempotent GETs are needed.</p>
 <p>Returns <a href="../../geospatial_types/error/enum.SDKError.html#variant.NetworkRequestFailed" title="variant geospatial_types::error::SDKError::NetworkRequestFailed"><code>SDKError::NetworkRequestFailed</code></a> when <code>base_url</code> is not an
 absolute http or https URL or when the native HTTP transport cannot be
 built.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.with_transport" class="method"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#113-125">Source</a><h4 class="code-header">pub fn <a href="#method.with_transport" class="fn">with_transport</a>(
+</div></details><details class="toggle method-toggle" open><summary><section id="method.with_transport" class="method"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#111-127">Source</a><h4 class="code-header">pub fn <a href="#method.with_transport" class="fn">with_transport</a>(
     configuration: <a class="struct" href="struct.OsrmProviderConfiguration.html" title="struct osrm_provider::client::OsrmProviderConfiguration">OsrmProviderConfiguration</a>,
     maximum_retry_attempts: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u32.html">u32</a>,
     transport: <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;dyn <a class="trait" href="../../provider_transport/trait.HttpTransport.html" title="trait provider_transport::HttpTransport">HttpTransport</a>&gt;,
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Self, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</h4></section></summary><div class="docblock"><p>Builds a client around an explicit transport and retry budget (the
 registration path and tests use this seam; request building,
 interpretation and retry behavior are identical whichever transport is
-supplied).</p>
+supplied). The supplied transport is wrapped for observation, so every
+request made through this client reports one redacted observation
+whichever construction path built it.</p>
 <h5 id="parameters-1"><a class="doc-anchor" href="#parameters-1">§</a>Parameters</h5>
 <ul>
 <li><code>configuration</code> — deployment base URL and user agent.</li>
@@ -31,7 +33,7 @@ transient failure.</li>
 <h5 id="errors-1"><a class="doc-anchor" href="#errors-1">§</a>Errors</h5>
 <p>Returns <a href="../../geospatial_types/error/enum.SDKError.html#variant.NetworkRequestFailed" title="variant geospatial_types::error::SDKError::NetworkRequestFailed"><code>SDKError::NetworkRequestFailed</code></a> when <code>base_url</code> is not an
 absolute http or https URL.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.get_json" class="method"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#145-158">Source</a><h4 class="code-header">pub async fn <a href="#method.get_json" class="fn">get_json</a>(
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_json" class="method"><a class="src rightside" href="../../src/osrm_provider/client.rs.html#147-160">Source</a><h4 class="code-header">pub async fn <a href="#method.get_json" class="fn">get_json</a>(
     &amp;self,
     path: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
     query_pairs: &amp;[(<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)],

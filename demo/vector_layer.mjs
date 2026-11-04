@@ -12,8 +12,6 @@
 // handed to `setOverlays` verbatim.
 import {
   vectorTileGeographicBounds,
-  vectorTileLabelDescriptors,
-  vectorTileLabelDescriptorsForStyle,
   vectorTileOverlayDescriptors,
   vectorTileOverlayDescriptorsForStyle,
 } from './pkg/rustic_maps_web_bindings.js';
@@ -74,40 +72,12 @@ export function buildVectorOverlaysFromBytes({
   );
 }
 
-// Builds the `setLabels` descriptors from already-fetched wire bytes. The
-// canvas places them at every frame's camera pose and rejects collisions; the
-// glyphs themselves come from the same-origin glyph range the page loads.
-// `styleId` selects the same committed style variant the overlay builder uses.
-export function buildVectorLabelsFromBytes({
-  tileBytes,
-  tileZoomLevel,
-  tileX,
-  tileY,
-  styleId,
-}) {
-  if (styleId === undefined) {
-    return vectorTileLabelDescriptors(
-      tileBytes,
-      tileZoomLevel,
-      tileX,
-      tileY,
-    );
-  }
-  return vectorTileLabelDescriptorsForStyle(
-    tileBytes,
-    tileZoomLevel,
-    tileX,
-    tileY,
-    styleId,
-  );
-}
-
-// Fetches one tile and returns its overlay descriptors and its label
-// descriptors, both in style-layer order. The coordinates are geographic, so
-// `tileSizePixels` does not change them; the option is accepted so the
-// raster⇄vector switch can pass the same tile-size setting to both paths, and
-// it is validated here. The object shape lets one fetch feed both the overlay
-// and label seams; callers that only draw overlays read `.overlays`.
+// Fetches one tile and returns its overlay descriptors in style-layer order.
+// The coordinates are geographic, so `tileSizePixels` does not change them;
+// the option is accepted so the raster⇄vector switch can pass the same
+// tile-size setting to both paths, and it is validated here. The object shape
+// lets a caller read `.overlays` without depending on the decoder's return
+// form.
 export async function fetchAndBuildVectorOverlays({
   url,
   tileZoomLevel,
@@ -118,13 +88,6 @@ export async function fetchAndBuildVectorOverlays({
 }) {
   validated_tile_size_pixels(tileSizePixels);
   const tileBytes = await fetchVectorTileBytes(url);
-  const labels = buildVectorLabelsFromBytes({
-    tileBytes,
-    tileZoomLevel,
-    tileX,
-    tileY,
-    styleId,
-  });
   return {
     overlays: buildVectorOverlaysFromBytes({
       tileBytes,
@@ -133,7 +96,6 @@ export async function fetchAndBuildVectorOverlays({
       tileY,
       styleId,
     }),
-    labels,
   };
 }
 
