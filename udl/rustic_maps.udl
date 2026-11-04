@@ -1493,6 +1493,20 @@ interface MapSdk {
     /// # Returns
     /// The retained entries, oldest first.
     sequence<ProviderFailureDiagnostic> latest_provider_failure_diagnostics();
+
+    /// Reads the serving traffic-flow cache's counters and budget, for a
+    /// diagnostics panel or a developer console.
+    ///
+    /// The hits and misses prove a repeated pane was answered without asking
+    /// the provider; the entry count and budget show how many cells the cache
+    /// holds and how many it may hold before the least recently used is
+    /// evicted. Read-only: the readback never mutates the cache.
+    ///
+    /// # Returns
+    /// The counters and configuration, or null when no traffic-flow provider
+    /// is registered or the registered provider owns its own freshness policy
+    /// and answers uncached.
+    TrafficFlowCacheStatistics? traffic_flow_cache_statistics();
 };
 
 /// The effective raster-tile caching terms of the installed cache, shaped for
@@ -1510,6 +1524,29 @@ dictionary TileCacheTerms {
     /// The cache category's default time-to-live for raster tiles, in seconds
     /// (thirty days); the value a freshly registered cache starts at.
     u64 default_time_to_live_seconds;
+};
+
+/// The serving traffic-flow cache's counters beside the budget they obey,
+/// shaped for a diagnostics readback: the hits and misses prove a repeated
+/// pane was answered without asking the provider, and the entry budget bounds
+/// how many cells the cache may hold at once.
+dictionary TrafficFlowCacheStatistics {
+    /// Requests answered entirely from fresh cells.
+    u64 hit_count;
+    /// Requests that had to ask the provider for at least one cell.
+    u64 miss_count;
+    /// Cells currently held.
+    u64 entry_count;
+    /// Cells dropped to stay inside the entry budget.
+    u64 eviction_count;
+    /// Flow segments currently held across every cell.
+    u64 segment_count;
+    /// Zoom level the cells are keyed at.
+    u32 grid_zoom_level;
+    /// Cells the cache may hold before the least recently used is evicted.
+    u64 maximum_entry_count;
+    /// Seconds a stored cell stays fresh.
+    u64 time_to_live_seconds;
 };
 
 // ---------------------------------------------------------------------------

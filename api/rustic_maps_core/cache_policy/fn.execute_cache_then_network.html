@@ -4,9 +4,9 @@
     request_fingerprint: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
     time_to_live_seconds: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u64.html">u64</a>,
     network_fetch: impl <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/ops/function/trait.FnOnce.html" title="trait core::ops::function::FnOnce">FnOnce</a>() -&gt; FetchFuture,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;, <a class="enum" href="enum.CacheThenNetworkOutcome.html" title="enum rustic_maps_core::cache_policy::CacheThenNetworkOutcome">CacheThenNetworkOutcome</a>), SDKError&gt;<div class="where">where
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;D&gt;, <a class="enum" href="enum.CacheThenNetworkOutcome.html" title="enum rustic_maps_core::cache_policy::CacheThenNetworkOutcome">CacheThenNetworkOutcome</a>), <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;<div class="where">where
     D: <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> + 'static,
-    FetchFuture: <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;D, SDKError&gt;&gt;,</div></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Executes the cache-then-network policy.</p>
+    FetchFuture: <a class="trait" href="https://doc.rust-lang.org/1.99.0/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;D, <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;&gt;,</div></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Executes the cache-then-network policy.</p>
 <p>The store is consulted first. On a hit, the cached value is returned. On a
 miss, <code>network_fetch</code> is awaited once, the result is stored for
 <code>time_to_live_seconds</code>, and the fresh value is returned.</p>
@@ -26,7 +26,7 @@ network call.</li>
 <p>The value and <a href="enum.CacheThenNetworkOutcome.html#variant.CacheHit" title="variant rustic_maps_core::cache_policy::CacheThenNetworkOutcome::CacheHit"><code>CacheThenNetworkOutcome::CacheHit</code></a> or
 <a href="enum.CacheThenNetworkOutcome.html#variant.NetworkFetch" title="variant rustic_maps_core::cache_policy::CacheThenNetworkOutcome::NetworkFetch"><code>CacheThenNetworkOutcome::NetworkFetch</code></a>, saying where it came from.</p>
 <h2 id="errors"><a class="doc-anchor" href="#errors">§</a>Errors</h2>
-<p>Returns the network fetch’s [<code>SDKError</code>] when the fetch fails. A cache
+<p>Returns the network fetch’s <a href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError"><code>SDKError</code></a> when the fetch fails. A cache
 store is an accelerator, never a gate: a failed lookup degrades to a miss
 and a failed write degrades to cache-less operation, so neither fails a
 healthy request.</p>

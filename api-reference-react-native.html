@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-96577402.js";
+            window.path_to_searchindex_js = "searchindex-13f974d5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=084355352f089d864cee65f968ab8589ec753bf6:sha256:4258b73a7d949a3ab4652bd9bb0dd7fb5f7ad92b266a6f2721048079bfd330a5 -->
+                        <!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -415,6 +415,7 @@
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): void</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
 <tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>flushRecentDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity, maximumCount: number): number</code></td><td>Returns <code>number</code>.</td><td>Delivers up to <code>maximum_count</code> of the most recent buffered events at <code>minimum_severity</code> or above to the listener, oldest first, and returns how many were delivered. The flush does not remove events, so a later flush can deliver them again. The flush is bounded and synchronous; the listener must not block. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered. - <code>maximum_count</code> — upper bound on delivered events. # Returns The number of events delivered.</td></tr>
 <tr><td><code>latestProviderFailureDiagnostics</code></td><td><code>latestProviderFailureDiagnostics(): ProviderFailureDiagnostic[]</code></td><td>Returns <code>ProviderFailureDiagnostic[]</code>.</td><td>Returns the retained diagnostics of failed provider calls made by foreign provider implementations, oldest first. A failure is recorded whether the implementation threw one of the contract’s <code>SdkError</code> variants or failed without a mapped error. The buffer keeps a bounded number of the most recent failures and drops older ones. Reading is non-destructive: the call neither records nor clears entries. The typed error still surfaces at the failing call; this readback lets a failure be classified after the fact. See <code>ProviderFailureDiagnostic</code> for the fields of an entry. # Returns The retained entries, oldest first.</td></tr>
+<tr><td><code>trafficFlowCacheStatistics</code></td><td><code>trafficFlowCacheStatistics(): TrafficFlowCacheStatistics | undefined</code></td><td>Returns <code>TrafficFlowCacheStatistics | undefined</code>.</td><td>Reads the serving traffic-flow cache’s counters and budget, for a diagnostics panel or a developer console. The hits and misses prove a repeated pane was answered without asking the provider; the entry count and budget show how many cells the cache holds and how many it may hold before the least recently used is evicted. Read-only: the readback never mutates the cache. # Returns The counters and configuration, or null when no traffic-flow provider is registered or the registered provider owns its own freshness policy and answers uncached.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1132,6 +1133,25 @@
 <tr><td><code>effectiveTimeToLiveSeconds</code></td><td><code>bigint</code></td><td>Time-to-live currently in force on the installed cache, in seconds: the category default, or the last accepted override (clamped to the ceiling when the override exceeded it).</td></tr>
 <tr><td><code>providerTermsCeilingSeconds?</code></td><td><code>bigint</code></td><td>The installed provider’s declared caching-terms ceiling in seconds, or null when the provider declares no ceiling; the requested time-to-live then applies verbatim.</td></tr>
 <tr><td><code>defaultTimeToLiveSeconds</code></td><td><code>bigint</code></td><td>The cache category’s default time-to-live for raster tiles, in seconds (thirty days); the value a freshly registered cache starts at.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="trafficflowcachestatistics"><a class="header" href="#trafficflowcachestatistics">TrafficFlowCacheStatistics</a></h3>
+<p>The serving traffic-flow cache’s counters beside the budget they obey, shaped for a diagnostics readback: the hits and misses prove a repeated pane was answered without asking the provider, and the entry budget bounds how many cells the cache may hold at once.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>hitCount</code></td><td><code>bigint</code></td><td>Requests answered entirely from fresh cells.</td></tr>
+<tr><td><code>missCount</code></td><td><code>bigint</code></td><td>Requests that had to ask the provider for at least one cell.</td></tr>
+<tr><td><code>entryCount</code></td><td><code>bigint</code></td><td>Cells currently held.</td></tr>
+<tr><td><code>evictionCount</code></td><td><code>bigint</code></td><td>Cells dropped to stay inside the entry budget.</td></tr>
+<tr><td><code>segmentCount</code></td><td><code>bigint</code></td><td>Flow segments currently held across every cell.</td></tr>
+<tr><td><code>gridZoomLevel</code></td><td><code>number</code></td><td>Zoom level the cells are keyed at.</td></tr>
+<tr><td><code>maximumEntryCount</code></td><td><code>bigint</code></td><td>Cells the cache may hold before the least recently used is evicted.</td></tr>
+<tr><td><code>timeToLiveSeconds</code></td><td><code>bigint</code></td><td>Seconds a stored cell stays fresh.</td></tr>
 </tbody>
 </table>
 </div>

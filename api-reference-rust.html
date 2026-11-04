@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-96577402.js";
+            window.path_to_searchindex_js = "searchindex-13f974d5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=084355352f089d864cee65f968ab8589ec753bf6:sha256:4258b73a7d949a3ab4652bd9bb0dd7fb5f7ad92b266a6f2721048079bfd330a5 -->
+                        <!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -547,6 +547,7 @@
 <tr><td><code>TrafficFlowCacheConfiguration</code></td><td>struct</td><td><code>pub struct TrafficFlowCacheConfiguration</code></td><td>How a cache answers traffic-flow requests.</td></tr>
 <tr><td><code>TrafficFlowGridCell</code></td><td>struct</td><td><code>pub struct TrafficFlowGridCell</code></td><td>One grid cell at the cache’s zoom level.</td></tr>
 <tr><td><code>TrafficFlowCacheStatistics</code></td><td>struct</td><td><code>pub struct TrafficFlowCacheStatistics</code></td><td>What the cache has answered: read by the frame diagnostics and the developer console, never mutated by a caller.</td></tr>
+<tr><td><code>TrafficFlowCacheReadback</code></td><td>struct</td><td><code>pub struct TrafficFlowCacheReadback</code></td><td>A serving traffic-flow cache’s counters beside the budget they obey. The readback a developer console shows and a native surface crosses the contract with: the hits and misses prove a repeated pane was answered without asking the provider, and <code>maximum_entry_count</code> bounds how many cells the cache may hold at once.</td></tr>
 <tr><td><code>TrafficFlowGridCache</code></td><td>struct</td><td><code>pub struct TrafficFlowGridCache</code></td><td>The grid-keyed traffic-flow cache. One instance serves one provider’s answers; [<code>GridCachedTrafficFlowProvider</code>] wraps a provider with it. The cache is shared through an <code>Arc</code> so the provider wrapper can report statistics while a frame reads them.</td></tr>
 <tr><td><code>GridCachedTrafficFlowProvider</code></td><td>struct</td><td><code>pub struct GridCachedTrafficFlowProvider</code></td><td>A traffic-flow provider whose answers are cached by grid cell. The wrapper answers a request from fresh cells when it can, asks the underlying provider for exactly the cells it does not have — as their union bounding box, in one call — and stores the answer per cell. It never holds the cache lock across the provider await.</td></tr>
 <tr><td><code>system_clock_time_seconds</code></td><td>function</td><td><code>pub fn system_clock_time_seconds() -&gt; u64</code></td><td>A portable clock for tests and hosts that only need monotonic seconds: whole seconds since the Unix epoch, clamped to zero before it. The browser build must not call this (the standard library’s clock panics there); the browser registration supplies <code>Date.now()</code> instead.</td></tr>
