@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_SPRITE_PIXEL_RATIO","SPRITE_ATLAS_PIXEL_BYTES"],"struct":["SpriteAtlas","SpriteAtlasError","SpriteIcon","SpriteIndex","SpriteTextureRectangle"],"trait":["SpriteSource"]};

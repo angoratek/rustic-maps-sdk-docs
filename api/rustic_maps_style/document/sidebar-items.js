@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["LayerType","Projection","SourceSpec"],"struct":["GeoJsonSourceSpec","LayerLayout","LayerPaint","MapStyleDocument","OpaqueSourceSpec","RasterSourceSpec","StyleLayer","VectorLayerSpec","VectorSourceSpec"]};
+window.SIDEBAR_ITEMS = {"enum":["LayerType","Projection","SourceSpec"],"struct":["GeoJsonSourceSpec","LayerLayout","LayerPaint","MapStyleDocument","OpaqueSourceSpec","RasterSourceSpec","SpriteSpec","StyleLayer","VectorLayerSpec","VectorSourceSpec"]};

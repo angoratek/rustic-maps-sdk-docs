@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
+            window.path_to_searchindex_js = "searchindex-22837c1c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -181,10 +181,25 @@ map. It selects the base map or vector style, turns the traffic layer on and
 off, toggles demo overlays, and reports the device location source. This page
 shows the control in every reference application, what each section does, and
 where the settings surface stops.</p>
-<!-- Screenshot placeholders for the keyed capture set, one revision, phone width:
-     img/android-layers-panel.png, img/ios-layers-panel.png,
-     img/react-native-layers-panel.png, img/wasm-layers-panel.png.
-     Add the image links when the set is captured, with the panel closed and open. -->
+<h2 id="the-control-on-every-platform"><a class="header" href="#the-control-on-every-platform">The control on every platform</a></h2>
+<p>The round <strong>Map layers</strong> control sits directly above the attribution control
+on the map’s end edge. Each pair below shows the same map with the panel
+closed, then open on the same camera pose. MapQuest serves the raster base.
+The panel scrolls when it is taller than the phone, so the open frames show
+its lower rows: the last base-map rows, <strong>Traffic</strong>, <strong>Overlays</strong> with its
+<strong>Clear overlays</strong> action, and <strong>Device location</strong>.</p>
+<h3 id="android"><a class="header" href="#android">Android</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-layers-closed.png" alt="The Android map with the layers control closed over MapQuest’s raster base: the Ready chip, the applied-key line, the round layers control with its active dot, and the attribution control above the peek plan sheet"><span class="img-wrapper"><img src="img/android-layers-closed.png" alt="The Android map with the layers control closed over MapQuest’s raster base: the Ready chip, the applied-key line, the round layers control with its active dot, and the attribution control above the peek plan sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-layers-open.png" alt="The Android layers panel open over the same map: the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/android-layers-open.png" alt="The Android layers panel open over the same map: the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
+<h3 id="ios"><a class="header" href="#ios">iOS</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-layers-closed.png" alt="The iOS map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, the scale bar, and the attribution control above the peek plan sheet"><span class="img-wrapper"><img src="img/ios-layers-closed.png" alt="The iOS map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, the scale bar, and the attribution control above the peek plan sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-layers-open.png" alt="The iOS layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/ios-layers-open.png" alt="The iOS layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
+<h3 id="react-native"><a class="header" href="#react-native">React Native</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-layers-closed.png" alt="The React Native map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, and the attribution control above the peek plan sheet"><span class="img-wrapper"><img src="img/react-native-layers-closed.png" alt="The React Native map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, and the attribution control above the peek plan sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-layers-open.png" alt="The React Native layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/react-native-layers-open.png" alt="The React Native layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
+<h3 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-layers-closed.png" alt="The browser map with the layers control closed over MapQuest’s raster base: the zoom and 2D controls at the top end, the readiness chip and scale bar at the bottom start, and the round layers control above the attribution control"><span class="img-wrapper"><img src="img/wasm-layers-closed.png" alt="The browser map with the layers control closed over MapQuest’s raster base: the zoom and 2D controls at the top end, the readiness chip and scale bar at the bottom start, and the round layers control above the attribution control"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-layers-open.png" alt="The browser layers panel open over the same map: Base map with the MapQuest Raster row serving, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/wasm-layers-open.png" alt="The browser layers panel open over the same map: Base map with the MapQuest Raster row serving, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
 <h2 id="what-you-get"><a class="header" href="#what-you-get">What you get</a></h2>
 <ul>
 <li>One round control on the map that switches the base map or vector style,
