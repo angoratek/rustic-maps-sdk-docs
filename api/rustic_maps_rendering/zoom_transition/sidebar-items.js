@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ZOOM_TRANSITION_FADE_MILLISECONDS","ZOOM_TRANSITION_MAXIMUM_HOLD_MILLISECONDS","ZOOM_TRANSITION_READY_TILE_FRACTION"],"fn":["requested_level_ready_tile_fraction"],"struct":["ZoomTransition","ZoomTransitionFrame"]};

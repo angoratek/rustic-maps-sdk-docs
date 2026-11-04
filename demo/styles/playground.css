@@ -54,6 +54,7 @@
         --panel-padding: 14px;
         --stack-tight: 8px;
         --stack-group: 12px;
+        --map-control-diameter: 40px;
         --radius-surface: 12px;
         --radius-control: 8px;
         --radius-inline: 6px;
@@ -540,9 +541,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
-        min-height: 36px;
+        width: var(--map-control-diameter);
+        height: var(--map-control-diameter);
+        min-height: var(--map-control-diameter);
         padding: 0;
         font-size: 16px;
         font-weight: var(--type-body-strong-weight);
@@ -607,9 +608,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
-        min-height: 44px;
+        width: var(--map-control-diameter);
+        height: var(--map-control-diameter);
+        min-height: var(--map-control-diameter);
         padding: 0;
         font-size: 18px;
         color: var(--text-primary-color);
@@ -964,13 +965,6 @@
       /* Simulated navigation card set (docs/ReferenceAppUX.md §7),
          spec-driven layout preview until the wasm contract wave. */
       #navigation-demo-panel summary { cursor: pointer; }
-      /* The base-map switch (M9): one pressed choice per provider-declared
-         base layer; the pressed state is the accent. */
-      #base-map-toggle { display: flex; flex-wrap: wrap; gap: var(--stack-tight); }
-      #base-map-toggle button[aria-pressed="true"] {
-        border-color: var(--accent-color);
-        color: var(--accent-text-color);
-      }
       /* The trip planner (the playground's consumer surface): a search field,
          suggestion chips, result rows and the two trip actions on one
          eight-point rhythm. Every spacing value is a token; the field and
@@ -990,25 +984,6 @@
         font-size: var(--type-headline-size);
         letter-spacing: -0.01em;
         color: var(--text-primary-color);
-      }
-      /* The vector style picker: one row beside the base-map rows, shown only
-         while a vector base is active. */
-      .base-map-style-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--stack-tight);
-        font-size: var(--type-caption-size);
-        color: var(--text-secondary-color);
-      }
-      .base-map-style-row[hidden] { display: none; }
-      #vector-style-select {
-        font: inherit;
-        color: var(--text-primary-color);
-        background: var(--field-fill-color);
-        border: 1px solid var(--surface-border-color);
-        border-radius: var(--radius-control);
-        padding: 6px 8px;
       }
       .trip-subtitle {
         margin: calc(-1 * var(--stack-group) + 6px) 0 0;
@@ -1137,19 +1112,6 @@
         border-radius: 999px;
       }
       .trip-suggestion-chip:hover {
-        color: var(--accent-text-color);
-        border-color: var(--accent-color);
-      }
-      /* The Demo plans picker (M31): the same chip look as the demo-place
-         quick picks, without their trip-planner offset. A selected plan keeps
-         the accent mark the native pickers give it. */
-      .demo-plan-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin: 8px 0;
-      }
-      .demo-plan-chips .trip-suggestion-chip[aria-pressed='true'] {
         color: var(--accent-text-color);
         border-color: var(--accent-color);
       }
@@ -1439,8 +1401,8 @@
              column; the compass rides the column's top (the §4.2 top-end
              slot is the playground's readout dock at this breakpoint, so
              the compass joins the cluster here instead). Circular button
-             dimensions are the layout constants (48 dp circle on native);
-             they are literal here — CSS cannot reference the JS mirror. */
+             dimensions are the shared 40-unit control diameter; they are
+             literal here because CSS cannot reference the JS mirror. */
       #map-control-cluster {
         position: fixed;
         top: 50%;
@@ -1456,9 +1418,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 48px;
-        min-height: 48px;
+        width: var(--map-control-diameter);
+        height: var(--map-control-diameter);
+        min-height: var(--map-control-diameter);
         padding: 0;
         font-size: 20px;
         font-weight: var(--type-body-strong-weight);

@@ -262,26 +262,6 @@
         </label>
       </section>
 
-<section class="control-group" id="demo-plans-controls" aria-describedby="demo-plans-status">
-        <h2 class="group-label" id="demo-plans-heading"
-            data-ui-label="plans.heading">Demo plans</h2>
-        <p class="reason-strip">Select a recorded plan to draw its route, then
-          start the simulated trip to replay its trace.</p>
-        <div id="demo-plan-chips" class="demo-plan-chips" role="group"
-             aria-labelledby="demo-plans-heading"></div>
-        <p id="demo-plan-description" class="trip-footnote" hidden></p>
-        <button id="demo-plan-clear-control" type="button" class="quiet">Clear plan</button>
-        <p id="demo-plans-status" class="reason-strip" role="status" hidden></p>
-      </section>
-
-<fieldset id="scene-overlay-controls" class="control-group" aria-describedby="scene-overlay-reason">
-        <legend data-ui-label="scenes.heading">Demo scenes</legend>
-        <div id="overlay-scene-toggles"></div>
-        <button id="clear-overlays-control" type="button" class="primary"
-                data-ui-label="overlays.clear_action">Clear overlays</button>
-        <p id="scene-overlay-reason" class="reason-strip" hidden></p>
-      </fieldset>
-
 <section class="control-group" id="offline-maps-controls" aria-describedby="offline-maps-status">
         <h2 class="group-label" data-ui-label="offline.heading">Offline maps</h2>
         <p class="reason-strip">Plan over the committed routing graph the browser
@@ -395,26 +375,6 @@
             <div id="capability-provider-controls"></div>
             <p id="capability-provider-status" class="reason-strip" role="status" hidden></p>
           </section>
-          <!-- The base-map flow every platform serves from Settings
-               (docs/ReferenceAppUX.md §4.1): the serving base row opens a
-               menu of the registry's raster sources and vector styles. -->
-          <section class="settings-section" id="base-map-controls"
-                   aria-describedby="base-map-status">
-            <h3 class="settings-section-title">Base map</h3>
-            <div id="base-map-toggle" role="group" aria-label="Base map tiles"></div>
-            <label class="base-map-style-row" id="vector-style-row" hidden>Vector style
-              <select id="vector-style-select" aria-label="Vector base style"></select>
-            </label>
-            <p id="base-map-status" class="reason-strip" hidden></p>
-            <!-- The same limit the three native shells state in their base-map
-                 menu: the vector pipeline draws land, water and roads, and its
-                 label pass paints point-placed Latin place and point-of-interest
-                 names (road names wait for the line-placement slice). -->
-            <p class="base-map-labels-note" id="base-map-labels-note">
-              Vector styles draw land, water, roads with their names, and Latin
-              place names.
-            </p>
-          </section>
           <section class="settings-section" id="location-controls"
                    aria-describedby="device-location-status">
             <h3 class="settings-section-title">Location</h3>
@@ -491,6 +451,7 @@
           <section class="map-layers-section" aria-labelledby="map-layers-base-heading">
             <h3 id="map-layers-base-heading">Base map</h3>
             <div id="map-layer-base-rows" role="group" aria-label="Base map"></div>
+            <p id="map-layers-base-status" class="reason-strip" role="status" hidden></p>
           </section>
           <section class="map-layers-section" aria-labelledby="map-layers-traffic-heading">
             <h3 id="map-layers-traffic-heading">Traffic</h3>
@@ -498,7 +459,10 @@
           </section>
           <section class="map-layers-section" aria-labelledby="map-layers-overlays-heading">
             <h3 id="map-layers-overlays-heading">Overlays</h3>
+            <p id="map-layers-scenes-reason" class="reason-strip" hidden></p>
             <div id="map-layer-scene-rows"></div>
+            <button id="map-layers-clear-scenes" type="button" class="quiet"
+                    data-ui-label="overlays.clear_action">Clear overlays</button>
           </section>
           <section class="map-layers-section" aria-labelledby="map-layers-location-heading">
             <h3 id="map-layers-location-heading">Device location</h3>

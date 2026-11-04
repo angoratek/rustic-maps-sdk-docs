@@ -713,6 +713,25 @@ export class MapView {
         }
     }
     /**
+     * Drops the canvas' pooled raster state and re-plans the next frame's
+     * fetches from the current raster sources (the UDL
+     * `MapView.reload_tile_source` contract member, served on the canvas).
+     *
+     * The scheduler, its payload pool, the staging provider's staged and
+     * decoded payloads, the uploaded textures and the retained cross-fade
+     * level are replaced or cleared, so a source change reaches the next
+     * frame without constructing a new canvas and no payload fetched from
+     * the previous source draws again. Overlays, labels, the vector base and
+     * the location layer survive the reload; fixtures and the registered
+     * live sources are consulted afresh on the next tile pass.
+     *
+     * A call made while a frame owns the draw state is applied before the
+     * next frame's tile pass. A call before initialization is a no-op.
+     */
+    reloadTileSource() {
+        wasm.mapview_reloadTileSource(this.__wbg_ptr);
+    }
+    /**
      * Removes the overlay addressed by `identifier`; answers whether the
      * identifier was present (an unknown identifier is not an error).
      * @param {string} identifier
@@ -733,6 +752,10 @@ export class MapView {
      * `drawnTiles` (tiles with pooled imagery over their span this frame),
      * `drawnFragments` (draw quads after world-copy fragment splitting),
      * `missingTiles` (requested tiles with no pooled imagery this frame),
+     * `zoomTransitionRunning` (whether a tile zoom-level cross-fade still
+     * owes frames, so the page keeps drawing at the animation cadence),
+     * `retainedTiles` (retired-level tiles drawn over the new level for that
+     * cross-fade),
      * `tileZoomLevel` (the fetch zoom, clamped to the recorded fixtures),
      * `tileResolution` (the resolution the frame's fixtures were
      * fetched and sampled at) and `overlayTriangles` (triangles in the
@@ -963,13 +986,16 @@ export class MapView {
      * The descriptor is one plain JavaScript object carrying the UDL
      * `UrlTemplateVectorTileSource` fields in lower camel case:
      * `{urlTemplate, sourceName, attributionText, styleId,
-     * minimumZoomLevel, maximumZoomLevel}`. The template must be an absolute
-     * `http`/`https` URL carrying `{z}`, `{x}` and `{y}`; the style id must
-     * name one of the committed style artifacts (`bright-light`,
-     * `fiord-dark`, …). The whole source builds before this view changes, so
-     * a refused call (a malformed template, an empty name, an inverted zoom
-     * range or an unknown style id) throws a coded failure and leaves the
-     * previous base in force.
+     * minimumZoomLevel, maximumZoomLevel}`, plus the optional
+     * `tokenBucketCapacityTokens` and `refillTokensPerSecond` pacing rates
+     * (absent fields keep the SDK's documented bucket). The template must be
+     * an absolute `http`/`https` URL carrying `{z}`, `{x}` and `{y}`; the
+     * style id must name one of the committed style artifacts
+     * (`bright-light`, `fiord-dark`, …). The whole source builds before
+     * this view changes, so a refused call (a malformed template, an empty
+     * name, an inverted zoom range, an unusable pacing rate or an unknown
+     * style id) throws a coded failure and leaves the previous base in
+     * force.
      *
      * While a source is installed the canvas hides the raster base and paints
      * the style's own background, exactly like the native surface; the
@@ -2193,14 +2219,16 @@ export function providerRegistrations() {
  * The declaration arrives as one plain object with the contract's
  * `UrlTemplateRasterTileSource` fields, lower-camel-cased: `urlTemplate`,
  * `sourceName`, `minimumZoomLevel`, `maximumZoomLevel`, `imageFormat`
- * (`Png` or `Jpeg`), `tileResolution` (`Standard` or `Retina`) and
- * `userAgent`. Zoom levels and texts fall back to the documented defaults;
- * the format defaults to `Png` and the resolution to `Standard`.
+ * (`Png` or `Jpeg`), `tileResolution` (`Standard` or `Retina`), `userAgent`,
+ * and the optional `tokenBucketCapacityTokens` / `refillTokensPerSecond`
+ * pacing rates. Zoom levels and texts fall back to the documented defaults;
+ * the format defaults to `Png`, the resolution to `Standard`, and absent
+ * pacing fields to the SDK's documented bucket.
  *
- * A malformed template, a blank source name or an inverted zoom range throws
- * `InvalidCoordinateInput` with a precise detail, and the previous source
- * keeps serving. The canvas' live raster fallback fetches through the
- * registered source at the zoom ceiling it declares.
+ * A malformed template, a blank source name, an inverted zoom range or an
+ * unusable pacing rate throws `InvalidCoordinateInput` with a precise detail,
+ * and the previous source keeps serving. The canvas' live raster fallback
+ * fetches through the registered source at the zoom ceiling it declares.
  * @param {any} source
  */
 export function registerUrlTemplateRasterTileSource(source) {
@@ -3919,7 +3947,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_8780(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_8870(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -4970,38 +4998,38 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2695, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8759);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2723, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8849);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 425, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1901);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 452, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1980);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 429, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1905);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 456, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1984);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 429, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1905_142);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 456, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1984_143);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 425, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1901_143);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 452, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1980_144);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 425, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1901_144);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 452, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1980_145);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000007: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2519, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6627);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2547, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6708);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000008: function(arg0) {
@@ -5075,26 +5103,26 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_6627(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_6627(arg0, arg1);
+function __wasm_bindgen_func_elem_6708(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6708(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_1905(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_1905(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_1984(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_1984(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_1905_142(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_1905_142(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_1984_143(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_1984_143(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_8780(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_8780(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_8870(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_8870(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_8759(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_8849(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_8759(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_8849(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5105,10 +5133,10 @@ function __wasm_bindgen_func_elem_8759(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1901(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1980(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1901(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1980(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5119,10 +5147,10 @@ function __wasm_bindgen_func_elem_1901(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1901_143(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1980_144(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1901_143(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1980_144(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5133,10 +5161,10 @@ function __wasm_bindgen_func_elem_1901_143(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1901_144(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1980_145(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1901_144(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1980_145(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {

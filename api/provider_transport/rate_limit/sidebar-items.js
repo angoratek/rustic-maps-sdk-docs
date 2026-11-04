@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["TokenBucketRateLimiter"]};
+window.SIDEBAR_ITEMS = {"constant":["MINIMUM_EXCLUSIVE_REFILL_TOKENS_PER_SECOND","MINIMUM_TOKEN_BUCKET_CAPACITY_TOKENS"],"struct":["TokenBucketRateLimiter"]};

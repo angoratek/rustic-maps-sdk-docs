@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-13f974d5.js";
+            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e43faa06.js"></script>
+        <script src="toc-18302c03.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
+                        <!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -572,6 +572,7 @@
 <tr><td><code>setLocationIndicator</code></td><td><code>setLocationIndicator(state: LocationIndicatorState, style: LocationIndicatorStyle): void</code></td><td>Throws <code>SdkError</code>.</td><td>Sets the single location layer drawn after the tile pass and the overlay pass (topmost SDK layer), replacing any earlier state. Validation is all-or-nothing: a state or style that fails validation throws and keeps the earlier indicator. The state outlives attach and detach cycles like the overlay list. Every null style field resolves to the documented default. # Parameters - <code>state</code> — position, course and accuracy to draw. - <code>style</code> — visual form and style of the layer. # Errors Throws <code>InvalidRenderInput</code> for a state or style the layer cannot draw.</td></tr>
 <tr><td><code>clearLocationIndicator</code></td><td><code>clearLocationIndicator(): void</code></td><td>—</td><td>Clears the location layer; following frames draw tiles and overlays alone until <code>set_location_indicator</code> supplies new state.</td></tr>
 <tr><td><code>isFrameSettled</code></td><td><code>isFrameSettled(camera: MapCamera): boolean</code></td><td>Returns <code>boolean</code>. Throws <code>SdkError</code>.</td><td>Reads whether the view’s presented state would not change if <code>draw</code> ran again right now. Answers true when this camera value equals the last drawn camera, the overlay list and the location indicator are unchanged since that draw, and the last frame’s tile statistics resolved no pending pixels (no fallback, deferred or unavailable tiles). It answers false while a draw is in flight and before a frame has ever drawn. A pure query: it never draws, fetches or mutates state, so a platform render pump can call it every display frame and skip <code>draw</code> when it answers true, letting the presented frame stand and resuming on any change or on the next pending detail’s arrival. # Returns True when a redraw would not change the presented frame. # Errors Throws <code>RenderingSurfaceUnavailable</code> when the view is detached.</td></tr>
+<tr><td><code>reloadTileSource</code></td><td><code>reloadTileSource(): void</code></td><td>Throws <code>SdkError</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: UrlTemplateVectorTileSource): void</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws <code>SdkError</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>vectorTileSourceStatus(): VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
@@ -1080,6 +1081,8 @@
 <tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>The image format the tileset serves. Fetched tiles report this format whatever the caller requests: the tile bytes are the truth, and the renderer decodes by the record it receives.</td></tr>
 <tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>The pixel resolution the tileset serves (the same rule as the format: the fetched tile reports what it contains).</td></tr>
 <tr><td><code>userAgent</code></td><td><code>string</code></td><td>The <code>User-Agent</code> header every tile request carries; empty sends none. A public tile service identifies its clients by it, and several usage policies refuse clients that send nothing.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A source with a stricter published budget lowers the value here. It must be finite and at least one, or registration throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A source with a stricter published budget lowers the value here. It must be finite and strictly positive, or registration throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1100,6 +1103,8 @@
 <tr><td><code>styleId</code></td><td><code>string</code></td><td>The built-in style id the base paints with.</td></tr>
 <tr><td><code>minimumZoomLevel</code></td><td><code>number</code></td><td>Lowest zoom level the tileset serves.</td></tr>
 <tr><td><code>maximumZoomLevel</code></td><td><code>number</code></td><td>Highest zoom level the tileset serves.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A tileset with a stricter published budget lowers the value here. It must be finite and at least one, or installation throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A tileset with a stricter published budget lowers the value here. It must be finite and strictly positive, or installation throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1492,7 +1497,7 @@
 </table>
 </div>
 <h3 id="locationindicatorstyle"><a class="header" href="#locationindicatorstyle">LocationIndicatorStyle</a></h3>
-<p>Style of the location layer; null fields keep the documented defaults. The disc and wedge are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
+<p>Style of the location layer; null fields keep the documented defaults. The puck and its ring and halo are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1500,9 +1505,11 @@
 </thead>
 <tbody>
 <tr><td><code>visualKind</code></td><td><code>LocationIndicatorVisualKind</code></td><td>Which visual form this layer draws.</td></tr>
-<tr><td><code>radiusPixels?</code></td><td><code>number</code></td><td>Disc radius in screen pixels; null keeps the default.</td></tr>
-<tr><td><code>rgbaColor?</code></td><td><code>OverlayColor</code></td><td>Disc fill color; null keeps the default.</td></tr>
-<tr><td><code>showAccuracyRing?</code></td><td><code>boolean</code></td><td>Accuracy ring drawn around the disc (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
+<tr><td><code>radiusPixels?</code></td><td><code>number</code></td><td>Accent-core radius in screen pixels; the ring and halo are added outside it; null keeps the default.</td></tr>
+<tr><td><code>rgbaColor?</code></td><td><code>OverlayColor</code></td><td>Accent fill color of the core disc and navigation dart; null keeps the default.</td></tr>
+<tr><td><code>ringRgbaColor?</code></td><td><code>OverlayColor</code></td><td>Ring color: the ring around the puck and the navigation dart’s outline; null keeps the default white.</td></tr>
+<tr><td><code>haloRgbaColor?</code></td><td><code>OverlayColor</code></td><td>Halo color drawn under the puck; null keeps the default.</td></tr>
+<tr><td><code>showAccuracyRing?</code></td><td><code>boolean</code></td><td>Accuracy ring drawn around the puck (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
 </tbody>
 </table>
 </div>
@@ -1897,8 +1904,8 @@
 <tr><th>Variant</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>TrackingDot</code></td><td>Plain disc (tracking mode: no course known or no route).</td></tr>
-<tr><td><code>GuidedCourseArrow</code></td><td>Disc plus course-directed heading wedge (navigation follow mode).</td></tr>
+<tr><td><code>TrackingDot</code></td><td>The soft tracking dot (no course known or no route): accent core, white ring and dark halo.</td></tr>
+<tr><td><code>GuidedCourseArrow</code></td><td>The course-directed navigation dart inside the same ring and halo (navigation follow mode); degrades to the tracking dot without a course.</td></tr>
 </tbody>
 </table>
 </div>

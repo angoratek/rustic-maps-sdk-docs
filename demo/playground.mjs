@@ -117,6 +117,12 @@
 
       const INITIAL_ZOOM_LEVEL = 14;
       const FIELD_OF_VIEW_DEGREES = 60;
+      /** Characters a query needs before type-ahead asks the provider. */
+      const AUTOCOMPLETE_MINIMUM_QUERY_CHARACTERS = 3;
+      /** Quiet period between the last keystroke and the type-ahead request. */
+      const AUTOCOMPLETE_DEBOUNCE_MILLISECONDS = 250;
+      /** The type-ahead row cap. */
+      const AUTOCOMPLETE_MAXIMUM_RESULTS = 5;
       /** Full circle in degrees (the bearing's wrap modulus). */
       const FULL_CIRCLE_DEGREES = 360.0;
       const MINIMUM_ZOOM_LEVEL = 0;
@@ -1621,7 +1627,7 @@
             lastSearchFieldKey: field_key,
             lastSearchQueryText: query_text,
           });
-          if (applied_provider_keys.size === 0) {
+          if (!search_provider_is_registered()) {
             const query_lowercase = query_text.toLowerCase();
             const matching_places = demo_places
               .filter((demo_place) => demo_place.name.toLowerCase().includes(query_lowercase))
@@ -1671,6 +1677,79 @@
           });
         }
 
+        // --- Type-ahead (docs/design/Autocomplete.md) -----------------------
+        // Per-field quiet timers and generations: each keystroke restarts the
+        // timer, and an answer whose generation is stale is dropped, so a
+        // superseded query can never replace the list.
+        const trip_suggestion_timers = { origin: null, destination: null };
+        const trip_suggestion_generations = { origin: 0, destination: 0 };
+
+        /** Whether the SDK has a provider installed for place text: the
+         * capability readback is the truth, so a provider registered outside
+         * the settings surface (the test seam, or a keyless default) still
+         * serves the type-ahead. */
+        function search_provider_is_registered() {
+          try {
+            return window.mapTest.providerRegistrations().some(
+              (registration) =>
+                registration.registered
+                && (registration.contract === 'PlaceSearch'
+                  || registration.contract === 'Geocoding'));
+          } catch {
+            return false;
+          }
+        }
+
+        /** Suggestions for one field: the SDK's suggest call when a provider
+         * is registered, the demo places otherwise. Errors become one inline
+         * sentence and no rows. */
+        async function suggest_trip_field(field_key, query_text) {
+          active_trip_field_key = field_key;
+          if (!search_provider_is_registered()) {
+            const query_lowercase = query_text.toLowerCase();
+            return demo_places
+              .filter((demo_place) =>
+                demo_place.name.toLowerCase().includes(query_lowercase))
+              .map(trip_place_from_demo_place)
+              .slice(0, AUTOCOMPLETE_MAXIMUM_RESULTS);
+          }
+          try {
+            const place_rows = await window.mapTest.suggestPlaces(query_text);
+            return place_rows.map((place_row) => ({
+              name: place_row.structuredAddressText,
+              note: place_row.qualityText,
+              latitude: place_row.latitudeDegrees,
+              longitude: place_row.longitudeDegrees,
+            })).slice(0, AUTOCOMPLETE_MAXIMUM_RESULTS);
+          } catch (error) {
+            set_provider_status(`Refused: ${String(error)}`, 'warning');
+            return [];
+          }
+        }
+
+        /** Restarts one field's quiet timer; below the character threshold it
+         * clears the list without asking anyone. */
+        function schedule_trip_suggestions(field_key) {
+          const field = trip_fields[field_key];
+          if (trip_suggestion_timers[field_key] !== null) {
+            clearTimeout(trip_suggestion_timers[field_key]);
+            trip_suggestion_timers[field_key] = null;
+          }
+          const generation = trip_suggestion_generations[field_key] + 1;
+          trip_suggestion_generations[field_key] = generation;
+          const query_text = field.input.value.trim();
+          if (query_text.length < AUTOCOMPLETE_MINIMUM_QUERY_CHARACTERS) {
+            trip_search_results_element.hidden = true;
+            return;
+          }
+          trip_suggestion_timers[field_key] = setTimeout(async () => {
+            if (generation !== trip_suggestion_generations[field_key]) return;
+            const result_rows = await suggest_trip_field(field_key, query_text);
+            if (generation !== trip_suggestion_generations[field_key]) return;
+            render_trip_results(field_key, result_rows);
+          }, AUTOCOMPLETE_DEBOUNCE_MILLISECONDS);
+        }
+
         for (const field_key of TRIP_FIELD_KEYS) {
           const field = trip_fields[field_key];
           // Typing invalidates the earlier selection: the field's text is
@@ -1680,6 +1759,7 @@
             active_trip_field_key = field_key;
             persist_trip_field_texts();
             refresh_trip_plan_route_state();
+            schedule_trip_suggestions(field_key);
           });
           field.input.addEventListener('focus', () => {
             active_trip_field_key = field_key;
@@ -2023,81 +2103,34 @@
             'success');
         }
 
-        // Demo plans (M31, docs/ReferenceAppUX.md §4.1): the Advanced panel's
-        // picker offers the shared artifact's recorded plans. Selecting one
+        // Demo plans (M31, docs/ReferenceAppUX.md §4.1): the shared artifact's
+        // recorded plans stay available to tests, launch automation and the
+        // tutorials, while the drawer no longer offers a picker. Selecting one
         // loads its trace, draws and frames the recorded route, and makes it
-        // the walk the simulated trip replays (the native pickers' contract).
-        // The trip planner's own Plan route supersedes the selection.
+        // the walk the simulated trip replays. The trip planner's own Plan
+        // route supersedes the selection.
         const DEMO_PLAN_TRACE_URL_PREFIX = 'navigation-traces/';
         const demo_plan_definitions = REFERENCE_SCENE_ARTIFACT.demo_plans ?? [];
-        const demo_plan_chips_element = document.getElementById('demo-plan-chips');
-        const demo_plan_description_element =
-          document.getElementById('demo-plan-description');
-        const demo_plan_status_element = document.getElementById('demo-plans-status');
-        const demo_plan_clear_control =
-          document.getElementById('demo-plan-clear-control');
-        let selected_demo_plan_chip = null;
 
-        function set_demo_plan_status(text) {
-          demo_plan_status_element.textContent = text;
-          demo_plan_status_element.hidden = text === '';
-        }
-
-        /** Marks one plan chip selected, or clears the mark with null. */
-        function mark_demo_plan_chip(plan_chip) {
-          if (selected_demo_plan_chip !== null) {
-            selected_demo_plan_chip.classList.remove('selected');
-            selected_demo_plan_chip.setAttribute('aria-pressed', 'false');
-          }
-          selected_demo_plan_chip = plan_chip;
-          if (plan_chip !== null) {
-            plan_chip.classList.add('selected');
-            plan_chip.setAttribute('aria-pressed', 'true');
-          }
-        }
-
-        /** Clears the picker selection and the plan's drawn route (a later
-         * planned route takes over both). */
+        /** Clears the selected plan and its drawn route (a later planned
+         * route takes over both). */
         function clear_selected_demo_plan({ remember = true } = {}) {
           if (selected_demo_plan_trace === null) return;
           selected_demo_plan_trace = null;
           planned_route_record = null;
           trip_route_overlays = [];
           apply_overlays();
-          mark_demo_plan_chip(null);
-          demo_plan_description_element.textContent = '';
-          demo_plan_description_element.hidden = true;
           trip_source_line.hidden = true;
           trip_source_line.textContent = '';
-          set_demo_plan_status('');
           if (remember) {
             write_demo_preferences({ demoPlanScenario: null });
-          }
-        }
-
-        /** Builds one chip per artifact plan, in artifact order. */
-        function render_demo_plan_chips() {
-          demo_plan_chips_element.replaceChildren();
-          for (const plan_definition of demo_plan_definitions) {
-            const plan_chip = document.createElement('button');
-            plan_chip.type = 'button';
-            plan_chip.className = 'trip-suggestion-chip';
-            plan_chip.textContent = plan_definition.label;
-            plan_chip.dataset.demoPlanScenario = plan_definition.scenario;
-            plan_chip.setAttribute('aria-pressed', 'false');
-            plan_chip.addEventListener('click', () => {
-              select_demo_plan(plan_definition, plan_chip);
-            });
-            demo_plan_chips_element.append(plan_chip);
           }
         }
 
         /** Loads one plan's recorded trace, draws and frames its route, and
          * arms the simulated-trip control to replay it. A refusal is reported
          * verbatim; nothing is invented. */
-        async function select_demo_plan(plan_definition, plan_chip,
-          { remember = true } = {}) {
-          set_demo_plan_status('');
+        async function select_demo_plan(plan_definition, { remember = true } = {}) {
           try {
             const trace_url =
               `${DEMO_PLAN_TRACE_URL_PREFIX}${plan_definition.scenario}.json`;
@@ -2144,38 +2177,36 @@
             apply_overlays();
             frame_trip_route(route_bounding_box(recorded_trace.route, polyline));
             trip_route_result.hidden = true;
-            mark_demo_plan_chip(plan_chip);
-            demo_plan_description_element.textContent = plan_definition.description;
-            demo_plan_description_element.hidden = false;
             trip_source_line.hidden = false;
             trip_source_line.textContent = ui_label_text_with_values(
               'plan.trip_source_demo_plan', { plan: plan_definition.label });
             render_navigation_idle(
               'Start the simulated trip to replay the selected plan\'s recorded trace.');
-            set_demo_plan_status('Recorded demo plan ready.');
             if (remember) {
               write_demo_preferences({
                 demoPlanScenario: plan_definition.scenario,
               });
             }
             clear_error_report();
+            return true;
           } catch (plan_failure) {
             const failure_text = String(plan_failure?.message ?? plan_failure);
-            set_demo_plan_status(`Refused: ${failure_text}`);
             show_error_report('Demo plan', failure_text);
+            return false;
           }
         }
 
-        demo_plan_clear_control.addEventListener('click', () => {
-          if (selected_demo_plan_trace === null) return;
-          if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) {
-            end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
+        /** The launch-automation seam for one recorded plan: the drawer no
+         * longer renders a picker, so tests and tutorials name the scenario. */
+        window.selectDemoPlanScenario = async (scenario) => {
+          const plan_definition = demo_plan_definitions.find(
+            (candidate) => candidate.scenario === scenario);
+          if (plan_definition === undefined) {
+            throw new Error(`no recorded plan "${scenario}" is declared`);
           }
-          clear_selected_demo_plan();
-          render_navigation_idle(NAVIGATION_IDLE_REASON_TEXT);
-        });
-
-        render_demo_plan_chips();
+          const applied = await select_demo_plan(plan_definition);
+          return applied ? plan_definition.scenario : null;
+        };
 
         // Restoring the remembered plan replays no trip and spends no
         // provider call: it loads the committed trace, draws its route and
@@ -2189,11 +2220,8 @@
           if (remembered_scenario !== null) {
             const plan_definition = demo_plan_definitions.find(
               (candidate) => candidate.scenario === remembered_scenario);
-            const plan_chip = demo_plan_chips_element.querySelector(
-              `[data-demo-plan-scenario="${remembered_scenario}"]`);
-            if (plan_definition !== undefined && plan_chip !== null) {
-              await select_demo_plan(
-                plan_definition, plan_chip, { remember: false });
+            if (plan_definition !== undefined) {
+              await select_demo_plan(plan_definition, { remember: false });
             }
           }
           // A trip may have started while the recorded trace loaded; the
@@ -2622,38 +2650,33 @@
         });
       }
 
-      // Scene-overlay controls: one toggle per Sacramento demo overlay kind
-      // (a shared-artifact scene, labeled from the artifact too), plus a
-      // clear button. They draw on the GPU surface only, so the fieldset
-      // stays disabled with a reason while the renderer is unavailable and
-      // whenever the session is in the degraded 2D path
-      // (docs/ReferenceAppUX.md §6.2).
-      const overlay_fieldset = document.getElementById('scene-overlay-controls');
-      const overlay_reason_element = document.getElementById('scene-overlay-reason');
-      const overlay_scene_toggles = document.getElementById('overlay-scene-toggles');
+      // Scene-overlay state: one checkbox per Sacramento demo overlay kind,
+      // kept as the shared value the layers panel's switches read and write.
+      // The panel's overlay section is the single visible home; the scenes
+      // draw on the GPU surface only, so its switches stay disabled with a
+      // reason while the renderer is unavailable and whenever the session is
+      // in the degraded 2D path (docs/ReferenceAppUX.md §6.2).
       const overlay_checkboxes = Object.fromEntries(
         Object.entries(REFERENCE_SCENE_ARTIFACT.overlay_scenes).map(
           ([scene_key]) => {
-            const scene_toggle_row = document.createElement('label');
-            scene_toggle_row.className = 'toggle-row';
             const scene_checkbox = document.createElement('input');
             scene_checkbox.type = 'checkbox';
-            scene_checkbox.id = `${scene_key}-overlay-control`;
-            scene_toggle_row.appendChild(scene_checkbox);
-            scene_toggle_row.appendChild(
-              document.createTextNode(SACRAMENTO_OVERLAY_SCENE_LABELS[scene_key]),
-            );
-            overlay_scene_toggles.appendChild(scene_toggle_row);
             return [scene_key, scene_checkbox];
           },
         ),
       );
-      const clear_overlays_control = document.getElementById('clear-overlays-control');
 
       function set_overlay_controls_enabled(enabled, reason_text) {
-        overlay_fieldset.disabled = !enabled;
-        overlay_reason_element.hidden = enabled;
-        overlay_reason_element.textContent = enabled ? '' : reason_text;
+        const scene_reason_element =
+          document.getElementById('map-layers-scenes-reason');
+        if (scene_reason_element !== null) {
+          scene_reason_element.hidden = enabled;
+          scene_reason_element.textContent = enabled ? '' : reason_text;
+        }
+        for (const switch_element of document.querySelectorAll(
+          '#map-layer-scene-rows [role="switch"]')) {
+          switch_element.disabled = !enabled;
+        }
       }
 
       // Replaces the wasm canvas' overlay list with the toggled Sacramento
@@ -2706,16 +2729,22 @@
           refresh_map_layers_panel();
         });
       }
-      clear_overlays_control.addEventListener('click', () => {
-        clear_error_report();
-        for (const checkbox of Object.values(overlay_checkboxes)) {
-          checkbox.checked = false;
-        }
-        write_demo_preferences({ overlaySceneKeys: [] });
-        apply_overlays();
-        schedule_render();
-        refresh_map_layers_panel();
-      });
+      // The layers panel's clear action (the native layers panels' shared
+      // control): unchecking every scene switch clears the page's overlay
+      // list exactly as untoggling each scene would.
+      const map_layers_clear_scenes_control =
+        document.getElementById('map-layers-clear-scenes');
+      if (map_layers_clear_scenes_control !== null) {
+        map_layers_clear_scenes_control.addEventListener('click', () => {
+          for (const checkbox of Object.values(overlay_checkboxes)) {
+            checkbox.checked = false;
+          }
+          write_demo_preferences({ overlaySceneKeys: [] });
+          apply_overlays();
+          schedule_render();
+          refresh_map_layers_panel();
+        });
+      }
       // Restoring a scene selection only marks the toggles; the renderer's
       // first overlay push happens once the GPU surface is up.
       for (const scene_key of initial_demo_preferences.overlaySceneKeys) {
@@ -2779,23 +2808,13 @@
           (provider_descriptor.vector_styles ?? []).some(
             (style_choice) => style_choice.style_id === 'bright-light',
           )) ?? VECTOR_BASE_MAP_DESCRIPTORS[0])?.provider_key ?? null;
-      const base_map_toggle_element = document.getElementById('base-map-toggle');
-      const base_map_status_element = document.getElementById('base-map-status');
-      const vector_style_row_element = document.getElementById('vector-style-row');
-      const base_map_labels_note_element =
-        document.getElementById('base-map-labels-note');
-      const vector_style_select_element = document.getElementById('vector-style-select');
+      // The base map's own status line lives in the layers panel's Base map
+      // section (the single home for base selection).
+      const base_map_status_element =
+        document.getElementById('map-layers-base-status');
       // The style the visitor picked from the active vector descriptor's
       // offered styles, or null for "the one matching the resolved theme".
       let current_vector_style_id = null;
-
-      /** The active descriptor's offered named styles (registry data only). */
-      function offered_vector_styles() {
-        const vector_descriptor = selected_vector_descriptor();
-        return Array.isArray(vector_descriptor?.vector_styles)
-          ? vector_descriptor.vector_styles
-          : [];
-      }
 
       /** The style the base paints now: the picked one, else the theme join. */
       function active_vector_style_id() {
@@ -2804,37 +2823,6 @@
         return vectorStyleIdForDescriptor(
           vector_descriptor, resolved_theme_name(), current_vector_style_id);
       }
-
-      /** Lists the active descriptor's styles and shows the picker only while
-       * a vector base is active. */
-      function render_vector_style_picker() {
-        const offered_styles = offered_vector_styles();
-        vector_style_row_element.hidden =
-          current_tile_mode !== TILE_LAYER_MODES.vector || offered_styles.length === 0;
-        // The vector pipeline has no text stage yet; the note shares the
-        // picker's visibility so it only claims what the active base does.
-        base_map_labels_note_element.hidden = vector_style_row_element.hidden;
-        vector_style_select_element.textContent = '';
-        for (const style_choice of offered_styles) {
-          const style_option = document.createElement('option');
-          style_option.value = style_choice.style_id;
-          style_option.textContent = style_choice.display_name;
-          vector_style_select_element.appendChild(style_option);
-        }
-        const active_style_id = active_vector_style_id();
-        if (active_style_id !== null) {
-          vector_style_select_element.value = active_style_id;
-        }
-      }
-      vector_style_select_element.addEventListener('change', () => {
-        current_vector_style_id = vector_style_select_element.value;
-        write_demo_preferences({ baseMap: current_base_map_preference() });
-        apply_vector_base_clear_color();
-        install_vector_base_source();
-        schedule_render();
-        refresh_map_layers_panel();
-        refresh_attribution_notice();
-      });
 
       /** The registry descriptor declaring a fixture route for one purpose. */
       function base_map_descriptor_for_route_purpose(route_purpose) {
@@ -2848,64 +2836,6 @@
       function selected_vector_descriptor() {
         return VECTOR_BASE_MAP_DESCRIPTORS.find((provider_descriptor) =>
           provider_descriptor.provider_key === current_vector_provider_key) ?? null;
-      }
-
-      /** One base-layer row per provider-declared raster and vector source. */
-      function render_base_map_toggle() {
-        base_map_toggle_element.textContent = '';
-        const base_layer_rows = [
-          ...RASTER_BASE_MAP_DESCRIPTORS.map((provider_descriptor) => ({
-            mode: TILE_LAYER_MODES.raster,
-            provider_key: null,
-            title: 'Raster',
-            provider_descriptor,
-          })),
-          ...VECTOR_BASE_MAP_DESCRIPTORS.map((provider_descriptor) => ({
-            mode: TILE_LAYER_MODES.vector,
-            provider_key: provider_descriptor.provider_key,
-            title: 'Vector',
-            provider_descriptor,
-          })),
-        ];
-        for (const base_layer_row of base_layer_rows) {
-          const toggle_button = document.createElement('button');
-          toggle_button.type = 'button';
-          toggle_button.dataset.tileMode = base_layer_row.mode;
-          if (base_layer_row.provider_key !== null) {
-            toggle_button.dataset.providerKey = base_layer_row.provider_key;
-          }
-          toggle_button.textContent =
-            `${base_layer_row.title} · ${base_layer_row.provider_descriptor.display_name}`;
-          toggle_button.addEventListener('click', () => switch_tile_mode(
-            base_layer_row.mode, base_layer_row.provider_key));
-          base_map_toggle_element.appendChild(toggle_button);
-        }
-        refresh_base_map_toggle_pressed_state();
-      }
-
-      /**
-       * Enables the vector rows only once the GPU renderer has answered: before
-       * that the click would be a silent no-op, so the row is honestly
-       * disabled instead (the raster row always works).
-       */
-      function refresh_base_map_toggle_enabled_state() {
-        for (const toggle_button of base_map_toggle_element
-          .querySelectorAll('[data-tile-mode]')) {
-          const button_needs_gpu =
-            toggle_button.dataset.tileMode === TILE_LAYER_MODES.vector;
-          toggle_button.disabled = button_needs_gpu && renderer_mode !== 'gpu';
-        }
-      }
-
-      /** Marks the button whose layer is active. */
-      function refresh_base_map_toggle_pressed_state() {
-        for (const toggle_button of base_map_toggle_element
-          .querySelectorAll('[data-tile-mode]')) {
-          const button_is_active = toggle_button.dataset.tileMode === current_tile_mode
-            && (current_tile_mode === TILE_LAYER_MODES.raster
-              || toggle_button.dataset.providerKey === current_vector_provider_key);
-          toggle_button.setAttribute('aria-pressed', String(button_is_active));
-        }
       }
 
       /** Shows (or clears) the base-map status line. */
@@ -3034,7 +2964,6 @@
         if (next_mode === TILE_LAYER_MODES.vector) {
           current_vector_provider_key = next_provider_key;
         }
-        refresh_base_map_toggle_pressed_state();
         if (next_mode === TILE_LAYER_MODES.raster) {
           // Removing the source makes the canvas draw the raster tier again;
           // the frame after this switch has no vector geometry or labels.
@@ -3052,7 +2981,6 @@
           );
           apply_overlays();
           set_base_map_status(null);
-          render_vector_style_picker();
         } else {
           applyTileLayerMode({ canvas: gpu_map_canvas, mode: TILE_LAYER_MODES.vector });
           apply_vector_base_clear_color();
@@ -3062,7 +2990,6 @@
             renderer_mode === 'gpu',
             'Scene overlays need the GPU renderer; this browser fell back to the 2D grid.',
           );
-          render_vector_style_picker();
           apply_overlays();
           install_vector_base_source();
         }
@@ -3134,7 +3061,6 @@
         }
         // The theme may have changed which offered style is the default; the
         // source carries the style id, so a reinstall paints the new palette.
-        render_vector_style_picker();
         apply_vector_base_clear_color();
         install_vector_base_source();
       }
@@ -3143,8 +3069,6 @@
       window.mapVectorProviderKey = () => current_vector_provider_key;
       window.mapVectorBaseStatus = () =>
         base_map_status_element.hidden ? null : base_map_status_element.textContent;
-      render_base_map_toggle();
-      render_vector_style_picker();
 
       // --- The on-map layer control (docs/design/MapControlsAndTrafficLayer.md) ----
       // One round control docked above the attribution notice. Its panel
@@ -3223,6 +3147,13 @@
           row_element.type = 'button';
           row_element.id = base_row.row_identifier;
           row_element.className = 'map-layers-base-row';
+          row_element.dataset.tileMode = base_row.mode;
+          if (base_row.provider_descriptor !== null) {
+            row_element.dataset.providerKey = base_row.provider_descriptor.provider_key;
+          }
+          if (base_row.style_id !== null) {
+            row_element.dataset.styleId = base_row.style_id;
+          }
           const row_label_element = document.createElement('span');
           row_label_element.textContent = base_row.label;
           const row_mark_element = document.createElement('span');
@@ -3312,15 +3243,20 @@
       function refresh_map_layers_panel() {
         if (!map_layers_panel_ready) return;
         const active_row_identifier = active_base_row_identifier();
+        // The vector rows need the GPU renderer; before it answers (or on the
+        // 2D path) a click would be a silent no-op, so they are disabled.
+        const renderer_is_gpu = window.mapRendererMode?.() === 'gpu';
         for (const [row_identifier, binding] of map_layers_base_row_bindings) {
           const refusal_text = base_row_credential_refusal(
             binding.base_row.provider_descriptor,
             applied_provider_keys,
             { servedFromFixtures: binding.base_row.served_from_fixtures },
           );
+          const row_needs_gpu =
+            binding.base_row.mode === TILE_LAYER_MODES.vector && !renderer_is_gpu;
           const is_active = row_identifier === active_row_identifier;
           binding.row_element.setAttribute('aria-pressed', String(is_active));
-          binding.row_element.disabled = refusal_text !== null;
+          binding.row_element.disabled = refusal_text !== null || row_needs_gpu;
           binding.row_mark_element.textContent = refusal_text
             ?? (is_active ? MAP_LAYERS_SERVING_TEXT : '');
           binding.row_mark_element.className = refusal_text !== null
@@ -4028,7 +3964,7 @@
       let last_frame_statistics = null;
       // The base-map rows render before the renderer answers; the vector
       // rows stay disabled until it does (a click is never a silent no-op).
-      refresh_base_map_toggle_enabled_state();
+      refresh_map_layers_panel();
       window.mapRendererMode = () => renderer_mode;
       window.mapRendererDetail = () => renderer_detail;
       // The live GPU canvas binding, read by the failure-injection test so a
@@ -4566,7 +4502,7 @@
         follow_demo_live_line.textContent =
           'Simulated trips need the 3D map renderer; this browser is using ' +
           'the 2D fallback.';
-        refresh_base_map_toggle_enabled_state();
+        refresh_map_layers_panel();
       }
 
       async function run_render_step() {
@@ -4619,7 +4555,18 @@
       // and unavailable fixtures never settle, so the retries stay bounded
       // and the count publishes as a frame fact (§4.1).
       function pump_toward_settled_frame(frame_statistics) {
-        if (!frame_statistics || frame_statistics.missingTiles === 0) {
+        if (!frame_statistics) {
+          consecutive_missing_tile_renders = 0;
+          return;
+        }
+        // A zoom cross-fade is an animation: the next frame comes on the
+        // browser's animation cadence, not the missing-tile retry cadence.
+        if (frame_statistics.zoomTransitionRunning) {
+          consecutive_missing_tile_renders = 0;
+          requestAnimationFrame(() => schedule_render());
+          return;
+        }
+        if (frame_statistics.missingTiles === 0) {
           consecutive_missing_tile_renders = 0;
           return;
         }
@@ -6595,7 +6542,7 @@
         apply_overlays();
         // The vector base rows were rendered before the renderer answered;
         // they become clickable now (or stay disabled on the 2D path).
-        refresh_base_map_toggle_enabled_state();
+        refresh_map_layers_panel();
         // The remembered choices land before the first interactive frame.
         // The demo plan restore loads a committed trace (never a provider);
         // the base-map switch waits until the renderer can serve it.

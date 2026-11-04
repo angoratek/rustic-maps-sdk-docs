@@ -1003,6 +1003,17 @@ dictionary UrlTemplateRasterTileSource {
     /// A public tile service identifies its clients by it, and several usage
     /// policies refuse clients that send nothing.
     string user_agent;
+    /// Immediate tile requests this source admits before pacing starts;
+    /// null keeps the default of eight, matched to the renderer's fetch
+    /// window. A source with a stricter published budget lowers the value
+    /// here. It must be finite and at least one, or registration throws
+    /// naming the source.
+    double? token_bucket_capacity_tokens = null;
+    /// Sustained tile request rate in tokens per second; null keeps the
+    /// default of eight per second. A source with a stricter published
+    /// budget lowers the value here. It must be finite and strictly
+    /// positive, or registration throws naming the source.
+    double? refill_tokens_per_second = null;
 };
 
 /// One provider-neutral vector base-map source: a web-mercator XYZ vector
@@ -1038,6 +1049,17 @@ dictionary UrlTemplateVectorTileSource {
     u8 minimum_zoom_level;
     /// Highest zoom level the tileset serves.
     u8 maximum_zoom_level;
+    /// Immediate tile requests this source admits before pacing starts;
+    /// null keeps the default of eight, matched to the renderer's fetch
+    /// window. A tileset with a stricter published budget lowers the value
+    /// here. It must be finite and at least one, or installation throws
+    /// naming the source.
+    double? token_bucket_capacity_tokens = null;
+    /// Sustained tile request rate in tokens per second; null keeps the
+    /// default of eight per second. A tileset with a stricter published
+    /// budget lowers the value here. It must be finite and strictly
+    /// positive, or installation throws naming the source.
+    double? refill_tokens_per_second = null;
 };
 
 /// The vector base source's status: what the view is drawing a styled base
@@ -2514,6 +2536,30 @@ interface MapView {
     [Throws=SdkError]
     boolean is_frame_settled(MapCamera camera);
 
+    /// Re-resolves the raster-tile provider and drops the scheduler's pooled
+    /// raster state, so a provider, credential or source change reaches the
+    /// following frames without an attach/detach cycle.
+    ///
+    /// The next frame plans its fetches afresh: tiles, warm fetches in flight
+    /// and the retained cross-fade level from the previous source are
+    /// dropped, so no earlier imagery draws again. Overlays, the location
+    /// layer, the camera, the device pixel ratio and the vector base survive
+    /// the reload. The view is left unsettled until the next frame draws, so
+    /// a render pump that skips settled frames draws the re-planned tiles.
+    ///
+    /// A call made while a frame draws is applied when that frame finishes,
+    /// and the following frames use the new provider; a later call replaces
+    /// the earlier one. While detached there is no pooled state to clear and
+    /// the next attach resolves the current provider, so the call succeeds
+    /// and changes nothing.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` when the view is attached and no
+    /// raster-tile provider is registered; the previous source stays in
+    /// force.
+    [Throws=SdkError]
+    void reload_tile_source();
+
     /// Installs a vector base map, a provider-neutral vector tileset painted
     /// with one of the SDK's built-in styles, replacing any vector base already
     /// installed.
@@ -2591,23 +2637,34 @@ dictionary FrameStatistics {
 
 /// Which visual form the location layer draws.
 enum LocationIndicatorVisualKind {
-    /// Plain disc (tracking mode: no course known or no route).
+    /// The soft tracking dot (no course known or no route): accent core,
+    /// white ring and dark halo.
     "TrackingDot",
-    /// Disc plus course-directed heading wedge (navigation follow mode).
+    /// The course-directed navigation dart inside the same ring and halo
+    /// (navigation follow mode); degrades to the tracking dot without a
+    /// course.
     "GuidedCourseArrow",
 };
 
 /// Style of the location layer; null fields keep the documented defaults. The
-/// disc and wedge are screen-sized pixel constants (a position marker scales
-/// with the screen, not the ground); the accuracy ring is ground-sized.
+/// puck and its ring and halo are screen-sized pixel constants (a position
+/// marker scales with the screen, not the ground); the accuracy ring is
+/// ground-sized.
 dictionary LocationIndicatorStyle {
     /// Which visual form this layer draws.
     LocationIndicatorVisualKind visual_kind;
-    /// Disc radius in screen pixels; null keeps the default.
+    /// Accent-core radius in screen pixels; the ring and halo are added
+    /// outside it; null keeps the default.
     double? radius_pixels;
-    /// Disc fill color; null keeps the default.
+    /// Accent fill color of the core disc and navigation dart; null keeps the
+    /// default.
     OverlayColor? rgba_color;
-    /// Accuracy ring drawn around the disc (shown only when a fix carries a
+    /// Ring color: the ring around the puck and the navigation dart's
+    /// outline; null keeps the default white.
+    OverlayColor? ring_rgba_color;
+    /// Halo color drawn under the puck; null keeps the default.
+    OverlayColor? halo_rgba_color;
+    /// Accuracy ring drawn around the puck (shown only when a fix carries a
     /// reported accuracy); null keeps the default (shown whenever the fix
     /// reports an accuracy that reaches the minimum draw size).
     boolean? show_accuracy_ring;

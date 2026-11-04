@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["AUTOCOMPLETE_RESULT_LIMIT","SEARCH_RESULT_LIMIT"],"struct":["PhotonPlaceProvider"]};

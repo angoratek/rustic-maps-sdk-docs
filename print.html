@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-13f974d5.js";
+            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e43faa06.js"></script>
+        <script src="toc-18302c03.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -294,6 +294,10 @@ routing</a>.</li>
 navigation</a>.</li>
 <li>Keep rendering and routing working without a network: <a href="#offline-maps-1">Offline
 maps</a>.</li>
+<li>Switch the base map, traffic and device location from the map: <a href="#map-layers-and-traffic">Map
+layers and traffic</a>.</li>
+<li>Serve each capability from a different provider: <a href="#mix-providers-per-capability">Mix providers per
+capability</a>.</li>
 <li>See the core running from a browser, no build step: <a href="#live-demo">Live
 demo</a>.</li>
 </ol>
@@ -733,6 +737,8 @@ project.</p>
 <tr><td>Search results and a planned route</td><td><a href="#search-and-routing">Search and routing</a></td></tr>
 <tr><td>A moving trip with turn-by-turn guidance</td><td><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></td></tr>
 <tr><td>Routing with no network</td><td><a href="#offline-maps-1">Offline maps</a></td></tr>
+<tr><td>Base maps, traffic and device location from the map</td><td><a href="#map-layers-and-traffic">Map layers and traffic</a></td></tr>
+<tr><td>A different provider for each capability</td><td><a href="#mix-providers-per-capability">Mix providers per capability</a></td></tr>
 <tr><td>The model behind these calls</td><td><a href="#map-concepts">Map concepts</a></td></tr>
 <tr><td>The exact surface, member by member</td><td><a href="#rustic-maps-sdk-contract">The FFI contract</a></td></tr>
 <tr><td>Frame costs and how to measure them</td><td><a href="#performance-and-profiling">Performance and profiling</a></td></tr>
@@ -1172,6 +1178,37 @@ Rust and have no platform dependency.</p>
 </div>
 <p>The crates are consumed from the SDK source today; a registry package follows
 the first Rust release.</p>
+<h2 id="install-from-the-source-archive"><a class="header" href="#install-from-the-source-archive">Install from the source archive</a></h2>
+<p>The Rust artifact is <code>rustic-maps-sdk-rust-v0.1.0.tar.gz</code>: the tracked source
+tree at the release commit, under one <code>rustic-maps-sdk-rust-v0.1.0/</code>
+directory. It contains the workspace manifest and lock file, every workspace
+crate, the provider crates and their committed sample responses, the platform
+package sources and build scripts, the documentation sources, and both license
+files (MIT and Apache-2.0).</p>
+<ol>
+<li>Download the archive and its <code>.sha256</code> sidecar from
+<a href="#downloads">Downloads</a>.</li>
+<li>Verify the checksum against the sidecar.</li>
+<li>Unpack the archive.</li>
+<li>Point a path dependency at the crate you use, as the
+<a href="#rust-1">Downloads</a> page shows.</li>
+</ol>
+<p>The archive contains source only. Cargo builds the crates your application
+uses from that source, including their tests. The workspace lock file pins
+dependency versions; Cargo downloads those dependencies from their own
+sources unless your environment already provides them. Rust 1.87 or newer is
+required, and the workspace uses the 2024 edition.</p>
+<p>The archive does not ship:</p>
+<ul>
+<li>compiled libraries, an AAR, an XCFramework, a wasm module, or npm tarballs;
+the platform artifacts are separate downloads;</li>
+<li>generated Kotlin, Swift or TypeScript bindings; the build scripts generate
+them from the contract;</li>
+<li>a provider credential, a local configuration file, or an environment file;</li>
+<li>the release’s Sigstore signature bundles; they attach to each published
+artifact on the release record;</li>
+<li>the Git history; the archive is the release commit’s snapshot.</li>
+</ul>
 <h2 id="camera-and-projection-without-a-gpu"><a class="header" href="#camera-and-projection-without-a-gpu">Camera and projection without a GPU</a></h2>
 <p>Camera math and projection are pure Rust and run anywhere:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -3264,6 +3301,174 @@ controller.feed_fix(source.fix_at_elapsed_seconds(0.0))?;
 source above) and reads <code>latest_fix</code>, <code>smoothed_course_heading_degrees</code> and
 <code>is_stale</code>. See <a href="#use-the-sdk-from-rust">Use the SDK from Rust</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="map-layers-and-traffic"><a class="header" href="#map-layers-and-traffic">Map layers and traffic</a></h1>
+<p>The floating map layers control changes what the map draws without leaving the
+map. It selects the base map or vector style, turns the traffic layer on and
+off, toggles demo overlays, and reports the device location source. This page
+shows the control in every reference application, what each section does, and
+where the settings surface stops.</p>
+<!-- Screenshot placeholders for the keyed capture set, one revision, phone width:
+     img/android-layers-panel.png, img/ios-layers-panel.png,
+     img/react-native-layers-panel.png, img/wasm-layers-panel.png.
+     Add the image links when the set is captured, with the panel closed and open. -->
+<h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What you get</a></h2>
+<ul>
+<li>One round control on the map that switches the base map or vector style,
+the traffic layer, the demo overlays and the device location source.</li>
+<li>A panel that states an unavailable layer with the reason instead of showing
+a switch that pretends to work.</li>
+<li>An attribution control that follows the layers on screen.</li>
+<li>A settings surface that keeps provider credentials and per-capability
+providers, not a second path for the layers.</li>
+</ul>
+<h2 id="what-you-need-1"><a class="header" href="#what-you-need-1">What you need</a></h2>
+<ul>
+<li>A reference application for Android, iOS, React Native, or the browser
+demo. A Rust application draws its own control and calls the same SDK
+operations.</li>
+<li>A browser with WebGPU for the browser demo.</li>
+<li>A MapQuest API key for live traffic. The base maps, vector styles, demo
+overlays and device location work without a key.</li>
+</ul>
+<h2 id="open-the-layers-control"><a class="header" href="#open-the-layers-control">Open the layers control</a></h2>
+<ol>
+<li>Find the round control on the map’s end edge, directly above the
+attribution control.</li>
+<li>Select it. Its accessible name is <strong>Map layers</strong>. It carries a dot while a
+non-default layer is active: a vector style, traffic, or any demo overlay.</li>
+<li>Read the panel. Its sections are <strong>Base map</strong>, <strong>Traffic</strong>, <strong>Overlays</strong>
+and <strong>Device location</strong>, in that order. The panel opens upward, scrolls
+when it is taller than the screen, and keeps the attribution control
+visible.</li>
+<li>Close it with <strong>Close</strong>, the Escape key, or the platform back action. Focus
+returns to the round control.</li>
+</ol>
+<p>In every reference application the collapsed control and the attribution
+control share one diameter, so the two sit in one column on the map’s end
+edge. The table states where the panel appears.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Platform</th><th>Where the panel appears</th></tr>
+</thead>
+<tbody>
+<tr><td>Rust</td><td>No reference application; your application draws its own control over the same SDK operations</td></tr>
+<tr><td>Android</td><td>A panel in the bottom dock, above the attribution control and clear of the home sheet</td></tr>
+<tr><td>iOS</td><td>A sheet at the panel height fraction, opened from the round control</td></tr>
+<tr><td>React Native</td><td>A modal panel over the map, with the same four sections</td></tr>
+<tr><td>WebAssembly</td><td>A panel in the bottom-end dock, opened above the round control</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="choose-a-base-map-or-a-vector-style"><a class="header" href="#choose-a-base-map-or-a-vector-style">Choose a base map or a vector style</a></h2>
+<ol>
+<li>Open <strong>Base map</strong>.</li>
+<li>Pick a row. The raster sources come first, in registry order, followed by
+one row for every committed vector style: Carto Light and Carto Dark from
+OpenStreetMap US, and Bright, Fiord and Positron from OpenFreeMap.</li>
+<li>Read the row’s state. The active row says <strong>Serving</strong>, a selectable row
+says <strong>Select</strong>, and a provider that declares a credential the session has
+not applied says <strong>Needs API key</strong> and stays disabled.</li>
+</ol>
+<p>Selecting a vector style installs the styled base over the raster tiles and
+beneath your overlays. Selecting a raster source removes the vector base. The
+attribution line follows the active entry. The vector base carries the label
+note its styles earn: land, water and roads with their names, and Latin place
+and road names; shields are not drawn.</p>
+<p>The choice is remembered with the app’s other choices and restored on the
+next launch. The settings surface does not repeat this selection.</p>
+<h2 id="turn-traffic-on"><a class="header" href="#turn-traffic-on">Turn traffic on</a></h2>
+<ol>
+<li>Open <strong>Traffic</strong>.</li>
+<li>Turn the switch on. If no provider serves traffic flow, the switch reads
+<strong>Needs API key</strong> or <strong>Not configured</strong>, stays off, and states the reason.</li>
+<li>Pan or zoom. Each settled camera asks the traffic-flow capability for the
+visible bounds after 400 milliseconds, with at most one request in flight.
+A newer camera change replaces a pending request.</li>
+<li>Turn the switch off to remove the overlay and stop the requests.</li>
+</ol>
+<p>While the layer is on, congestion-colored flow lines draw over the base map
+and under the route and overlays. The attribution control appends the serving
+provider’s attribution for as long as the layer draws. A failed refresh keeps
+the previous lines and shows the failure detail in the panel. A
+<code>ProviderNotConfigured</code> failure turns the switch off with its reason.</p>
+<h2 id="toggle-and-clear-the-demo-overlays"><a class="header" href="#toggle-and-clear-the-demo-overlays">Toggle and clear the demo overlays</a></h2>
+<ol>
+<li>Open <strong>Overlays</strong>.</li>
+<li>Turn one switch on for each shared demo scene you want.</li>
+<li>Select <strong>Clear overlays</strong> to turn every scene off in one action.</li>
+</ol>
+<p>A scene that cannot run right now is disabled with its reason. The scene
+switches write the same remembered choice the rest of the app reads, so a
+relaunch restores them.</p>
+<h2 id="use-the-device-location-source"><a class="header" href="#use-the-device-location-source">Use the device location source</a></h2>
+<p>The <strong>Device location</strong> row is the status and stop surface for the source. It
+reads one of five states:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>State</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td>Off</td><td>The source is not running</td></tr>
+<tr><td>Waiting for a fix</td><td>The source is starting and has not produced a position</td></tr>
+<tr><td>Active</td><td>The source is running and the map can follow it</td></tr>
+<tr><td>Permission denied</td><td>The platform refused the location permission</td></tr>
+<tr><td>Unavailable</td><td>The platform has no usable location source</td></tr>
+</tbody>
+</table>
+</div>
+<p>Select <strong>Stop</strong> while the source runs to turn it off.</p>
+<p>The round <strong>My location</strong> control on the map starts the same source. It asks
+for permission when needed, centers on the first fix, and re-centers after you
+pan or zoom away. Each route field also carries a <strong>My location</strong> chip. The
+chip starts the source when it is off and fills only its own field with the
+latest fix; a chip that cannot start is disabled with the same reason the row
+states.</p>
+<p>The home sheet’s device location row is a pointer to this panel, not a second
+control.</p>
+<h2 id="read-attribution-and-terms"><a class="header" href="#read-attribution-and-terms">Read attribution and terms</a></h2>
+<p>The attribution control is the info button on the map’s end edge, labelled
+<strong>Map attribution and terms</strong>. Its panel carries the serving base map’s
+attribution line and terms note. While traffic draws, the panel also carries
+the traffic provider’s attribution. A layer change is announced in the live
+region so assistive technology hears it. Keep the attribution visible in your
+application and copy the terms note into your own compliance surface.</p>
+<h2 id="what-the-settings-surface-keeps"><a class="header" href="#what-the-settings-surface-keeps">What the settings surface keeps</a></h2>
+<p>The settings surface and the map control divide the work:</p>
+<ul>
+<li><strong>Settings</strong> keeps one credential row per provider that declares a
+credential, with explicit Apply and Clear actions and an opt-in remember
+choice for the device.</li>
+<li><strong>Settings</strong> keeps one provider row per capability, in the order the
+capability readback returns. Each row names the serving provider and offers
+a picker limited to the providers that declare the capability on that
+platform.</li>
+<li><strong>Settings</strong> keeps the offline maps card, the diagnostics sheet and the
+theme choice.</li>
+<li><strong>The map layers control</strong> owns the base map, the vector style, traffic,
+the demo overlays and the device location source. The raster-tile and
+vector-tile capability rows are read-only and point to the control.</li>
+</ul>
+<p>The control never asks for, holds or stores a provider credential. Traffic
+uses the credential the settings surface already applied.</p>
+<h2 id="expected-result"><a class="header" href="#expected-result">Expected result</a></h2>
+<p>After a base or style switch, the map repaints with the new imagery and the
+attribution line changes. With traffic on, the panel switch reads <strong>On</strong> and
+the flow lines draw until you turn it off. With the device location source
+active, the panel reads <strong>Active</strong> and the round control re-centers on your
+position. After a relaunch, the same base map, traffic state, overlays and
+remembered provider choices return.</p>
+<h2 id="where-to-go-next-3"><a class="header" href="#where-to-go-next-3">Where to go next</a></h2>
+<ul>
+<li><a href="#mix-providers-per-capability">Mix providers per capability</a> configures a
+different provider for search, routing and tiles.</li>
+<li><a href="#show-the-devices-location">Show the device’s location</a> covers the permission and
+position sources the map control starts.</li>
+<li><a href="#screenshots">Screenshots</a> shows the reference scenario on every
+platform.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="provider-capabilities-in-rust"><a class="header" href="#provider-capabilities-in-rust">Provider capabilities in Rust</a></h1>
 <p>The Rust crates are the SDK’s implementation layer. A provider is a struct
 that implements one or more of the vendor-neutral traits in
@@ -3275,7 +3480,7 @@ downloadable artifacts are the Android, iOS, React Native, and WebAssembly
 targets. If you build inside the repository, the traits, registry, provider
 crates, renderer, navigation reducer, and offline archive APIs are available
 directly.</p>
-<h2 id="what-you-need-1"><a class="header" href="#what-you-need-1">What you need</a></h2>
+<h2 id="what-you-need-2"><a class="header" href="#what-you-need-2">What you need</a></h2>
 <ul>
 <li>Rust 1.87 or newer, with the repository’s Cargo workspace.</li>
 <li>A provider credential only for the live provider APIs, read at runtime and
@@ -3486,7 +3691,7 @@ before a native or browser application can select it.</li>
 <li>Tests never reach the network. Provider responses in tests come from
 committed sample data served under the provider’s key.</li>
 </ul>
-<h2 id="where-to-go-next-3"><a class="header" href="#where-to-go-next-3">Where to go next</a></h2>
+<h2 id="where-to-go-next-4"><a class="header" href="#where-to-go-next-4">Where to go next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> for the descriptor and dispatch
 work around a provider crate.</li>
@@ -3501,7 +3706,7 @@ vector base maps, the disk tile cache, offline routing and turn-by-turn
 navigation. This page lists the providers the shared registry declares, the
 public Kotlin calls each capability uses, and the code that switches a base
 map or registers a provider.</p>
-<h2 id="what-you-need-2"><a class="header" href="#what-you-need-2">What you need</a></h2>
+<h2 id="what-you-need-3"><a class="header" href="#what-you-need-3">What you need</a></h2>
 <ul>
 <li>The Android bindings artifact and the <code>MapView</code> artifact, with
 <code>minSdk = 24</code>.</li>
@@ -3621,13 +3826,13 @@ mapSdk.registerUrlTemplateRasterTileSource(
         userAgent = "MyMapApp/1.0 (+https://example.com)",
     ),
 )
-mapView.reloadRasterTileSource()
+mapView.reloadTileSource()
 </code></pre>
 <p>The registration replaces the raster-tile slot only; geocoding, routing,
 search, and traffic keep serving. It drops an installed tile cache, because
 the cache terms belong to the provider that installed it. <code>MapView</code>
 resolves its raster provider when it attaches and keeps tiles by coordinate,
-so call <code>reloadRasterTileSource()</code> after the registration to make the new
+so call <code>reloadTileSource()</code> after the registration to make the new
 source serve the next frame.</p>
 <h2 id="register-a-provider"><a class="header" href="#register-a-provider">Register a provider</a></h2>
 <p>MapQuest registers from one runtime credential. The contract call installs
@@ -3677,7 +3882,7 @@ and offline routing are set through the map and offline surfaces instead.</li>
 <li>Tests never reach the network. Provider responses in tests come from
 committed sample data served under the provider’s key.</li>
 </ul>
-<h2 id="where-to-go-next-4"><a class="header" href="#where-to-go-next-4">Where to go next</a></h2>
+<h2 id="where-to-go-next-5"><a class="header" href="#where-to-go-next-5">Where to go next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> for the two implementation routes.</li>
 <li><a href="#search-and-routing">Search and routing</a> for the provider calls in a
@@ -3691,7 +3896,7 @@ vector base maps, the disk tile cache, offline routing and turn-by-turn
 navigation. This page lists the providers the shared registry declares, the
 public Swift calls each capability uses, and the code that switches a base
 map or registers a provider.</p>
-<h2 id="what-you-need-3"><a class="header" href="#what-you-need-3">What you need</a></h2>
+<h2 id="what-you-need-4"><a class="header" href="#what-you-need-4">What you need</a></h2>
 <ul>
 <li>The <code>RusticMapsSDK</code> bindings product and the <code>MapNativeCoreUI</code> product,
 with an iOS 17 deployment target.</li>
@@ -3823,7 +4028,7 @@ try mapSdk.registerUrlTemplateRasterTileSource(
 search, and traffic keep serving. It drops an installed tile cache, because
 the cache terms belong to the provider that installed it. The shipped
 <code>MapNativeCoreUI</code> view resolves its raster provider when it attaches and
-keeps tiles by coordinate, so call <code>reloadRasterTileSource()</code> after the
+keeps tiles by coordinate, so call <code>reloadTileSource()</code> after the
 registration to make the new source serve the next frame.</p>
 <h2 id="register-a-provider-1"><a class="header" href="#register-a-provider-1">Register a provider</a></h2>
 <p>MapQuest registers from one runtime credential. The contract call installs
@@ -3863,7 +4068,7 @@ and offline routing are set through the map and offline surfaces instead.</li>
 <li>Tests never reach the network. Provider responses in tests come from
 committed sample data served under the provider’s key.</li>
 </ul>
-<h2 id="where-to-go-next-5"><a class="header" href="#where-to-go-next-5">Where to go next</a></h2>
+<h2 id="where-to-go-next-6"><a class="header" href="#where-to-go-next-6">Where to go next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> for the two implementation routes.</li>
 <li><a href="#search-and-routing">Search and routing</a> for the provider calls in a
@@ -3879,7 +4084,7 @@ exports the navigation and offline-routing classes. The component draws the
 surface and switches the vector base. This page lists the registry’s
 providers, the public calls each capability uses, and the code that switches
 a base map or registers a provider.</p>
-<h2 id="what-you-need-4"><a class="header" href="#what-you-need-4">What you need</a></h2>
+<h2 id="what-you-need-5"><a class="header" href="#what-you-need-5">What you need</a></h2>
 <ul>
 <li>An initialized bare React Native application on Android arm64-v8a or iOS,
 with the <code>@angoratek/rustic-maps-sdk</code> package installed.</li>
@@ -3992,7 +4197,7 @@ raster source.</p>
 if (!registration.isApplied) {
   throw new Error(registration.detailText);
 }
-mapView.reloadRasterTileSource();
+mapView.reloadTileSource();
 </code></pre>
 <p>The <code>imageFormat</code> and <code>tileResolution</code> values are the generated enum
 ordinals: <code>imageFormat: 0</code> is PNG and <code>tileResolution: 0</code> is standard
@@ -4000,7 +4205,7 @@ resolution. The registration replaces the raster-tile slot only; geocoding,
 routing, search, and traffic keep serving. It drops an installed tile cache,
 because the cache terms belong to the provider that installed it. The
 component resolves its raster provider when it attaches, so call
-<code>reloadRasterTileSource()</code> after the registration to make the new source
+<code>reloadTileSource()</code> after the registration to make the new source
 serve the next frame.</p>
 <h2 id="register-a-provider-2"><a class="header" href="#register-a-provider-2">Register a provider</a></h2>
 <p>The package owns one native SDK per process. Create it with
@@ -4042,7 +4247,7 @@ URL-template source.</li>
 <li>Tests never reach the network. Provider responses in tests come from
 committed sample data served under the provider’s key.</li>
 </ul>
-<h2 id="where-to-go-next-6"><a class="header" href="#where-to-go-next-6">Where to go next</a></h2>
+<h2 id="where-to-go-next-7"><a class="header" href="#where-to-go-next-7">Where to go next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> for the two implementation routes.</li>
 <li><a href="#search-and-routing">Search and routing</a> for the provider calls in a
@@ -4057,7 +4262,7 @@ the navigation driving core. It has no native view and no disk cache. This
 page lists the registry’s providers, the public JavaScript calls each
 capability uses, and the code that switches a base map or registers a
 provider.</p>
-<h2 id="what-you-need-5"><a class="header" href="#what-you-need-5">What you need</a></h2>
+<h2 id="what-you-need-6"><a class="header" href="#what-you-need-6">What you need</a></h2>
 <ul>
 <li>A Chromium-based browser with WebGPU, and the WebAssembly package served
 from the page’s own origin over HTTPS or localhost.</li>
@@ -4222,7 +4427,7 @@ after the frame settles.</li>
 <li>Tests never reach the network. Recorded tiles and provider responses are
 served from the page’s own origin.</li>
 </ul>
-<h2 id="where-to-go-next-7"><a class="header" href="#where-to-go-next-7">Where to go next</a></h2>
+<h2 id="where-to-go-next-8"><a class="header" href="#where-to-go-next-8">Where to go next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> for the two implementation routes.</li>
 <li><a href="#search-and-routing">Search and routing</a> for the provider calls in a
@@ -4632,7 +4837,7 @@ crate, its sample-data directory, the descriptor, and the dispatch arms.</li>
 <li>The platform builds and the provider’s own tests pass on the exact tree
 you ship.</li>
 </ol>
-<h2 id="where-to-go-next-8"><a class="header" href="#where-to-go-next-8">Where to go next</a></h2>
+<h2 id="where-to-go-next-9"><a class="header" href="#where-to-go-next-9">Where to go next</a></h2>
 <ul>
 <li><a href="#provider-capabilities-on-android">Android</a>, <a href="#provider-capabilities-on-ios">iOS</a>,
 <a href="#provider-capabilities-on-react-native">React Native</a>,
@@ -4649,7 +4854,7 @@ provider-backed app can add.</li>
 application searches with one vendor, routes with a self-hosted engine and
 draws its base map from a public tileset. This page shows how selection
 works, what the SDK reports back, and what the reference apps put on screen.</p>
-<h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What you get</a></h2>
+<h2 id="what-you-get-2"><a class="header" href="#what-you-get-2">What you get</a></h2>
 <ul>
 <li>One call per capability, so a choice never disturbs the rest of the map.</li>
 <li>A readback that names the serving provider for every capability.</li>
@@ -4718,34 +4923,126 @@ capability in a stable order.</p>
 // VectorTiles: OpenStreetMap US
 // OfflineRouting: not configured
 </code></pre>
-<h2 id="keyless-providers"><a class="header" href="#keyless-providers">Keyless providers</a></h2>
-<p>A self-hosted routing engine has no credential. Pass an empty string, or pass
-the deployment’s base URL, which the provider reads as its address:</p>
+<h2 id="what-the-readback-reports"><a class="header" href="#what-the-readback-reports">What the readback reports</a></h2>
+<p><code>providerRegistrations()</code> returns one entry per capability, every time,
+including capabilities with no provider. The order is stable:
+Geocoding, Routing, Distance Matrix, Place Search, Traffic Incidents, Traffic
+Flow, Elevation, Raster Tiles, Vector Tiles, Offline Routing.</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Provider</th><th>Credential field</th></tr>
+<tr><th>Field</th><th>Meaning</th></tr>
 </thead>
 <tbody>
-<tr><td>OSRM</td><td>Base URL of the deployment; empty for a local server on port 5000</td></tr>
-<tr><td>Valhalla</td><td>Base URL of the deployment; empty for a local server on port 8002</td></tr>
+<tr><td><code>contract</code></td><td>The capability the entry describes</td></tr>
+<tr><td><code>provider_key</code></td><td>The serving provider’s stable key, empty when none is installed</td></tr>
+<tr><td><code>display_name</code></td><td>The provider’s name from the shared registry, empty when none is installed</td></tr>
+<tr><td><code>registered</code></td><td>Whether a provider is installed for the capability</td></tr>
 </tbody>
 </table>
 </div>
-<p>A provider that declares a credential refuses a blank one and keeps the
-previous provider serving.</p>
-<h2 id="what-the-reference-apps-show"><a class="header" href="#what-the-reference-apps-show">What the reference apps show</a></h2>
-<p>Every reference app renders one settings row per capability, in the order the
-readback returns. Each row shows the serving provider’s display name and a
-picker limited to the providers that declare that capability. The choice is
-remembered across launches with the app’s other remembered choices; a
-capability with no provider reads “Not configured”.</p>
+<p>Binding surfaces spell the fields in their own style; the Kotlin example
+above reads <code>displayName</code>. Read the list after a selection and once at
+startup. The readback never changes a provider.</p>
+<h2 id="keyless-and-keyed-providers"><a class="header" href="#keyless-and-keyed-providers">Keyless and keyed providers</a></h2>
+<p>A provider’s descriptor declares whether it needs a credential. The two paths
+differ only in the value passed to <code>configureProvider</code>.</p>
+<p><strong>Keyed.</strong> Apply the credential through the settings surface, then select the
+provider for a capability:</p>
+<ol>
+<li>Apply the provider’s key. <code>setProviderCredential(key)</code> fills every
+capability that vendor serves. MapQuest fills geocoding, routing, the
+distance matrix, place search, traffic incidents, traffic flow and raster
+tiles.</li>
+<li>Replace any capability that should use another provider with
+<code>configureProvider</code>. The other capabilities keep serving.</li>
+<li>A provider that declares a credential refuses a blank one. The refusal
+leaves the previous provider serving and states the reason in the row.</li>
+</ol>
+<p><strong>Keyless.</strong> A self-hosted routing engine or a public instance has no key:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Credential value</th></tr>
+</thead>
+<tbody>
+<tr><td>OSRM</td><td>The deployment’s base URL; an empty value means <code>http://localhost:5000</code></td></tr>
+<tr><td>Valhalla</td><td>The deployment’s base URL; an empty value means <code>http://localhost:8002</code></td></tr>
+<tr><td>Photon</td><td>The deployment’s base URL; an empty value means the public instance at <code>https://photon.komoot.io</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>For OSRM and Valhalla, pass the public demo address when you want the shared
+server. An empty value points at the local deployment instead. The reference
+applications pass the registry descriptor’s public address for a keyless
+pick, so a selection never silently points at a local deployment.</p>
+<h2 id="public-demo-endpoints-and-their-limits"><a class="header" href="#public-demo-endpoints-and-their-limits">Public demo endpoints and their limits</a></h2>
+<p>These services are shared, and each one states what it accepts. They are for
+evaluation and reference applications, not production traffic.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Capabilities</th><th>Public endpoint</th><th>Limit</th></tr>
+</thead>
+<tbody>
+<tr><td>OSRM</td><td>Routing</td><td><code>https://router.project-osrm.org</code></td><td>One request per second; reasonable non-commercial use; no uptime, latency or data-update guarantee</td></tr>
+<tr><td>Valhalla</td><td>Routing</td><td><code>https://valhalla1.openstreetmap.de</code></td><td>One request per second; an identifying User-Agent; OpenStreetMap attribution; no high-traffic or production use</td></tr>
+<tr><td>Photon</td><td>Geocoding, place search</td><td><code>https://photon.komoot.io</code></td><td>Reasonable non-commercial use; best effort; no uptime or latency guarantee</td></tr>
+</tbody>
+</table>
+</div>
+<p>The tile services carry their own limits:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Capabilities</th><th>Endpoint</th><th>Limit</th></tr>
+</thead>
+<tbody>
+<tr><td>OpenStreetMap Standard</td><td>Raster tiles</td><td><code>https://tile.openstreetmap.org/{z}/{x}/{y}.png</code></td><td>Low-volume use only, with attribution</td></tr>
+<tr><td>OpenFreeMap</td><td>Vector tiles</td><td><code>https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf</code></td><td>Free public use with attribution; bulk downloads limited to 3,000 tiles or 50 MB per download</td></tr>
+<tr><td>OpenStreetMap US</td><td>Vector tiles</td><td><code>https://tiles.openstreetmap.us/vector/sourdough/{z}/{x}/{y}.mvt</code></td><td>Free for low-volume, non-commercial use with attribution</td></tr>
+<tr><td>MapQuest</td><td>Geocoding, routing, distance matrix, place search, traffic, raster tiles</td><td>Keyed service</td><td>Rate limits apply; raster tiles carry a 30-day caching ceiling</td></tr>
+</tbody>
+</table>
+</div>
+<p>Run a deployment of your own when your volume exceeds a shared service’s
+limit. The terms note on each provider’s settings row repeats the limit that
+applies.</p>
+<h2 id="what-the-settings-surface-shows"><a class="header" href="#what-the-settings-surface-shows">What the settings surface shows</a></h2>
+<p>The settings surface renders one row per capability in the readback’s order.
+Each row composes the serving provider and its state in one line, such as
+<code>MapQuest · Ready</code>, <code>OSRM · Ready</code> or <code>MapQuest · Needs API key</code>. A picker
+offers the providers that declare that capability on the platform; a
+capability with no provider reads <code>Not configured</code>.</p>
+<p>The choice is remembered with the app’s other remembered choices and
+re-applied at startup, after the session’s credentials. A refused
+re-application reports in its row and leaves the previous provider serving.
+Raster tiles and vector tiles are read-only in settings because the map’s
+layer control owns the base map; their rows point to the control.</p>
+<h2 id="failure-and-next-step"><a class="header" href="#failure-and-next-step">Failure and next step</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Situation</th><th>What you see</th></tr>
+</thead>
+<tbody>
+<tr><td>A capability has no provider</td><td><code>Not configured</code> on its row; a call fails with <code>ProviderNotConfigured</code> naming the capability</td></tr>
+<tr><td>A provider declares a credential the session lacks</td><td><code>{display name} · Needs API key</code>; the picker entry is disabled</td></tr>
+<tr><td>A selection is refused</td><td>The provider’s reason in the row; the previous provider keeps serving</td></tr>
+<tr><td>A keyless routing provider is selected</td><td><code>Demo server: {url}</code> under the row, with the descriptor’s limit note</td></tr>
+<tr><td>A public demo routing server does not answer</td><td><code>The demo server did not answer. Retry, or enter your own deployment address.</code></td></tr>
+<tr><td>A keyless demo has no recorded result</td><td><code>No demo place matches the {field}; apply a provider key in Settings for live search.</code> or <code>No recorded demo route from {origin} to {destination}; apply a provider key for live routing.</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>A failure never swaps in a different provider. The row states the reason and
+the previous choice keeps serving until you choose again.</p>
 <h2 id="rules-to-keep"><a class="header" href="#rules-to-keep">Rules to keep</a></h2>
 <ul>
 <li>A provider’s name belongs in its crate, its sample-data directory, the
 shared registry descriptor and the catalog row. Nothing else names it.</li>
-<li>Sample responses are committed fixtures served under
-<code>/providers/{provider_key}/…</code>; tests never reach the network.</li>
+<li>Sample responses are recorded data served from the demo’s own origin;
+tests never reach the network.</li>
 <li>Changing a capability never silently changes another. If a call would
 replace more than the capability it names, it is not this API.</li>
 </ul>
@@ -4755,6 +5052,8 @@ replace more than the capability it names, it is not this API.</li>
 catalog row.</li>
 <li><a href="#search-and-routing">Search and routing</a> covers the calls the
 capabilities serve.</li>
+<li><a href="#map-layers-and-traffic">Map layers and traffic</a> covers the on-map
+control that owns the base map and the traffic layer.</li>
 <li><a href="#provider-capabilities-in-rust">Provider capabilities in Rust</a> lists the
 traits each capability maps to.</li>
 </ul>
@@ -4810,8 +5109,11 @@ cosign verify-blob &lt;artifact-file&gt; \
 <code>--ignore-missing</code> flag keeps the <code>sha256sum</code> run to the files you actually
 downloaded.</p>
 <h3 id="rust-1"><a class="header" href="#rust-1">Rust</a></h3>
-<p>The Rust archive carries the workspace crates at this version. Unpack it and
-point a path dependency at the crates you use:</p>
+<p>The Rust archive carries the workspace source at this version. It contains no
+compiled libraries, generated bindings or credentials; Cargo builds the crates
+you use from source. The <a href="#install-from-the-source-archive">Rust guide</a>
+lists what the archive contains and what it leaves out. Unpack it and point a
+path dependency at the crates you use:</p>
 <pre><code class="language-toml">[dependencies]
 rustic-maps-rendering = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-rendering" }
 rustic-maps-navigation = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-navigation" }
@@ -4845,69 +5147,81 @@ produces the artifact the tutorials install —</p>
 steps the release pipeline runs.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="screenshots"><a class="header" href="#screenshots">Screenshots</a></h1>
-<p>Every capture below comes from the reference application for that platform,
-on one revision of the SDK, on the same recorded Capitol Park ⇔ Tower Bridge
-trip, with no provider credential stored in the build. Each platform shows
-the same three moments of the same flow: the plan sheet with both endpoints
-chosen, the provider section with every row’s display name and credential
-state, and the simulated trip.</p>
+<p>Every capture below comes from the reference application for that platform, on
+one revision of the SDK, at phone width, on the same recorded Capitol Park ⇔
+Tower Bridge trip. Each run injects one MapQuest credential into the session
+through the platform’s runtime seam; the credential is never stored in the
+build, the page, the image or this page. Each platform shows the same four
+moments of the same flow: the plan sheet with both endpoints chosen, the
+provider section with every row’s display name and credential state, the
+simulated trip at its first instruction with 1× playback speed, and the styled
+vector base with its place labels.</p>
 <h2 id="the-plan-sheet"><a class="header" href="#the-plan-sheet">The plan sheet</a></h2>
 <p>The labelled Origin and Destination fields with their A/B markers, each
 field’s own Search action, a My location chip, and the swap action. The route
-card states distance, duration, mode and strategy.</p>
+card states distance, duration, mode and strategy. The readiness chip and the
+applied-key line show that the session’s provider credential is serving.</p>
 <h3 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-plan-sheet.png" alt="The Android plan sheet: A Origin holding Capitol Park and B Destination holding Tower Bridge, each with a Search action and a My location chip, the Swap origin and destination action, Done, the Directions mode and strategy chips, and the Plan route action, over the Bright vector base and the recorded route"><span class="img-wrapper"><img src="img/android-plan-sheet.png" alt="The Android plan sheet: A Origin holding Capitol Park and B Destination holding Tower Bridge, each with a Search action and a My location chip, the Swap origin and destination action, Done, the Directions mode and strategy chips, and the Plan route action, over the Bright vector base and the recorded route"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-plan-sheet.png" alt="The Android plan sheet: A Origin holding Capitol Park and B Destination holding Tower Bridge, each with a Search action and a My location chip, the Swap origin and destination action, Done, the Directions controls, the Plan route action and the MapQuest key applied line, over the Bright vector base"><span class="img-wrapper"><img src="img/android-plan-sheet.png" alt="The Android plan sheet: A Origin holding Capitol Park and B Destination holding Tower Bridge, each with a Search action and a My location chip, the Swap origin and destination action, Done, the Directions controls, the Plan route action and the MapQuest key applied line, over the Bright vector base"></span></label></p>
 <h3 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-plan-sheet.png" alt="The iOS plan sheet: the same A and B endpoint fields with their Search actions and My location chips, the swap action, Done, the assignment hint, the Directions controls and Plan route, over the Bright vector base"><span class="img-wrapper"><img src="img/ios-plan-sheet.png" alt="The iOS plan sheet: the same A and B endpoint fields with their Search actions and My location chips, the swap action, Done, the assignment hint, the Directions controls and Plan route, over the Bright vector base"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-plan-sheet.png" alt="The iOS plan sheet: the same A and B endpoint fields with their Search actions and My location chips, the swap action, Done, the assignment hint, the Directions controls and Plan route, under the Ready chip over the Bright vector base"><span class="img-wrapper"><img src="img/ios-plan-sheet.png" alt="The iOS plan sheet: the same A and B endpoint fields with their Search actions and My location chips, the swap action, Done, the assignment hint, the Directions controls and Plan route, under the Ready chip over the Bright vector base"></span></label></p>
 <h3 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-plan-sheet.png" alt="The React Native plan sheet: the same A and B endpoint fields, Search actions, My location chips, swap action and Plan route, over the Bright vector base"><span class="img-wrapper"><img src="img/react-native-plan-sheet.png" alt="The React Native plan sheet: the same A and B endpoint fields, Search actions, My location chips, swap action and Plan route, over the Bright vector base"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-plan-sheet.png" alt="The React Native plan sheet: the A and B endpoint fields holding Capitol Park and Tower Bridge, each with its Search action and the live type-ahead’s result rows below it, the My location chips, the swap action and Done, over the Bright vector base"><span class="img-wrapper"><img src="img/react-native-plan-sheet.png" alt="The React Native plan sheet: the A and B endpoint fields holding Capitol Park and Tower Bridge, each with its Search action and the live type-ahead’s result rows below it, the My location chips, the swap action and Done, over the Bright vector base"></span></label></p>
 <h3 id="webassembly--the-browser-build"><a class="header" href="#webassembly--the-browser-build">WebAssembly — the browser build</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-plan-sheet.png" alt="The browser plan sheet: the A and B endpoint fields with Search actions, My location chips, the swap action, the demo-place list and the recorded route card, over the Bright vector base"><span class="img-wrapper"><img src="img/wasm-plan-sheet.png" alt="The browser plan sheet: the A and B endpoint fields with Search actions, My location chips, the swap action, the demo-place list and the recorded route card, over the Bright vector base"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-plan-sheet.png" alt="The browser plan sheet: the A and B endpoint fields with Search actions, My location chips, the swap action, the applied-key line, the demo-place list and the route card, over the Bright vector base"><span class="img-wrapper"><img src="img/wasm-plan-sheet.png" alt="The browser plan sheet: the A and B endpoint fields with Search actions, My location chips, the swap action, the applied-key line, the demo-place list and the route card, over the Bright vector base"></span></label></p>
 <h2 id="providers-and-credentials-1"><a class="header" href="#providers-and-credentials-1">Providers and credentials</a></h2>
 <p>Each capability row names the serving provider and its credential state in
-one line, such as <code>MapQuest · Needs API key</code> or <code>OSRM · Ready</code>. A keyless
-routing provider states its public demo server and the terms that server
-carries.</p>
+one line, such as <code>MapQuest · Ready</code> or <code>OSRM · Ready</code>. A keyless routing
+provider states its public demo server and the terms that server carries. The
+applied provider’s own row states that its key is applied.</p>
 <h3 id="android-2"><a class="header" href="#android-2">Android</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-provider-section.png" alt="The Android settings sheet at Providers by capability: Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, and the Distance Matrix, Place Search and Traffic Incidents rows"><span class="img-wrapper"><img src="img/android-provider-section.png" alt="The Android settings sheet at Providers by capability: Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, and the Distance Matrix, Place Search and Traffic Incidents rows"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-provider-section.png" alt="The Android settings sheet at Capabilities: Geocoding, Routing, Distance Matrix and Place Search each reading MapQuest · Ready with MapQuest’s terms note, scrolled below the applied key’s attribution, over the Bright vector base"><span class="img-wrapper"><img src="img/android-provider-section.png" alt="The Android settings sheet at Capabilities: Geocoding, Routing, Distance Matrix and Place Search each reading MapQuest · Ready with MapQuest’s terms note, scrolled below the applied key’s attribution, over the Bright vector base"></span></label></p>
 <h3 id="ios-2"><a class="header" href="#ios-2">iOS</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: Base map OpenFreeMap · Bright, Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, Distance matrix and Place search"><span class="img-wrapper"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: Base map OpenFreeMap · Bright, Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, Distance matrix and Place search"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: the Routing, Distance matrix, Place search, Traffic incidents and Traffic flow capability rows each reading MapQuest · Ready with MapQuest’s terms note, over the Bright vector base"><span class="img-wrapper"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: the Routing, Distance matrix, Place search, Traffic incidents and Traffic flow capability rows each reading MapQuest · Ready with MapQuest’s terms note, over the Bright vector base"></span></label></p>
 <h3 id="react-native-2"><a class="header" href="#react-native-2">React Native</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding with MapQuest · Needs API key; Routing with MapQuest · Needs API key, OSRM · Ready and Valhalla · Ready; Distance matrix, Place search and Traffic incidents"><span class="img-wrapper"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding with MapQuest · Needs API key; Routing with MapQuest · Needs API key, OSRM · Ready and Valhalla · Ready; Distance matrix, Place search and Traffic incidents"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding, Routing, Distance matrix and Place search each reading MapQuest · Ready on their serving line and picker, over the Bright vector base"><span class="img-wrapper"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding, Routing, Distance matrix and Place search each reading MapQuest · Ready on their serving line and picker, over the Bright vector base"></span></label></p>
 <h3 id="webassembly-2"><a class="header" href="#webassembly-2">WebAssembly</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row, the live connection check, and Providers by capability with Geocoding, Routing OSRM · Ready and its demo server, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles"><span class="img-wrapper"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row, the live connection check, and Providers by capability with Geocoding, Routing OSRM · Ready and its demo server, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row marked applied, the live connection check, and Providers by capability with Geocoding, Routing, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles all reading MapQuest · Ready"><span class="img-wrapper"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row marked applied, the live connection check, and Providers by capability with Geocoding, Routing, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles all reading MapQuest · Ready"></span></label></p>
 <h2 id="simulated-navigation"><a class="header" href="#simulated-navigation">Simulated navigation</a></h2>
-<p>The reference scenario: the turn-by-turn banner with the next maneuver, the
-planned route polyline with its endpoints, the ETA-distance line, and the
-playback-speed controls with voice guidance, pause and exit.</p>
+<p>The reference scenario at its first instruction: the turn-by-turn banner with
+the next maneuver and the then line, the planned route polyline with its
+endpoints, the ETA-distance line, and the playback-speed controls with <strong>1×</strong>
+selected, beside voice guidance, pause and exit.</p>
 <h3 id="android-1-1"><a class="header" href="#android-1-1">Android</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-navigation.png" alt="The Android simulated trip: the 50 m turn banner with the then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"><span class="img-wrapper"><img src="img/android-navigation.png" alt="The Android simulated trip: the 50 m turn banner with the then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-navigation.png" alt="The Android simulated trip at its first instruction: the 60 m turn banner with the then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips with 1× selected, voice guidance, Pause and Exit, over the Bright vector base"><span class="img-wrapper"><img src="img/android-navigation.png" alt="The Android simulated trip at its first instruction: the 60 m turn banner with the then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips with 1× selected, voice guidance, Pause and Exit, over the Bright vector base"></span></label></p>
 <h3 id="ios-1-1"><a class="header" href="#ios-1-1">iOS</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-navigation.png" alt="The iOS simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Seek, Pause and Exit"><span class="img-wrapper"><img src="img/ios-navigation.png" alt="The iOS simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Seek, Pause and Exit"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-navigation.png" alt="The iOS simulated trip at its first instruction: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips with 1× selected, voice guidance, Pause and Exit, over the Bright vector base"><span class="img-wrapper"><img src="img/ios-navigation.png" alt="The iOS simulated trip at its first instruction: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips with 1× selected, voice guidance, Pause and Exit, over the Bright vector base"></span></label></p>
 <h3 id="react-native-1-1"><a class="header" href="#react-native-1-1">React Native</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-navigation.png" alt="The React Native simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"><span class="img-wrapper"><img src="img/react-native-navigation.png" alt="The React Native simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-navigation.png" alt="The React Native simulated trip at its first instruction: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips with 1× selected, voice guidance, Pause and Exit, over the Bright vector base"><span class="img-wrapper"><img src="img/react-native-navigation.png" alt="The React Native simulated trip at its first instruction: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips with 1× selected, voice guidance, Pause and Exit, over the Bright vector base"></span></label></p>
 <h3 id="webassembly-1-1"><a class="header" href="#webassembly-1-1">WebAssembly</a></h3>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-navigation.png" alt="The browser simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, and the trip drawer with the ETA-distance line, the speed chips and Exit"><span class="img-wrapper"><img src="img/wasm-navigation.png" alt="The browser simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, and the trip drawer with the ETA-distance line, the speed chips and Exit"></span></label></p>
-<h2 id="vector-base-with-place-labels"><a class="header" href="#vector-base-with-place-labels">Vector base with place labels</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"><span class="img-wrapper"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"></span></label></p>
-<p>Labels are renderer output, not page markup: the decoder hands the renderer
-the <code>place</code> and <code>transportation_name</code> features, the style’s symbol layers
-name the text, and the embedded glyph atlas supplies the shapes. Street
-names ride their own roads, rotated to the road’s bearing and skipped when
-the text would not fit; place names sit above them, and a collision pass
-keeps one from covering another. They arrive with the vector base; a raster
-base carries its imagery’s own labels instead. Every surface draws them.</p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-navigation.png" alt="The browser simulated trip at its first instruction: the 100 m turn banner and then line, the route polyline, the compass, the scale bar, and the trip drawer with the ETA-distance line and the speed chips with 1× selected, over the Bright vector base"><span class="img-wrapper"><img src="img/wasm-navigation.png" alt="The browser simulated trip at its first instruction: the 100 m turn banner and then line, the route polyline, the compass, the scale bar, and the trip drawer with the ETA-distance line and the speed chips with 1× selected, over the Bright vector base"></span></label></p>
+<h2 id="vector-base"><a class="header" href="#vector-base">Vector base</a></h2>
+<p>The OpenFreeMap Bright styled vector base with the embedded glyph atlas’s
+street and place labels. Streets are named along their own lines, rotated to
+the road’s bearing and skipped when the text would not fit; place names sit
+above them, and a collision pass keeps one from covering another. They arrive
+with the vector base; a raster base carries its imagery’s own labels instead.
+Every surface draws them, and the labels are renderer output rather than page
+markup.</p>
+<h3 id="android-2-1"><a class="header" href="#android-2-1">Android</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-vector-base.png" alt="The Android map over the Bright vector base: streets named along their own lines and place names above them, Downtown, Midtown, Old Sacramento, Alkali Flat, Mansion Flats and Richmond Grove, with the peek plan sheet below"><span class="img-wrapper"><img src="img/android-vector-base.png" alt="The Android map over the Bright vector base: streets named along their own lines and place names above them, Downtown, Midtown, Old Sacramento, Alkali Flat, Mansion Flats and Richmond Grove, with the peek plan sheet below"></span></label></p>
+<h3 id="ios-2-1"><a class="header" href="#ios-2-1">iOS</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-vector-base.png" alt="The iOS map over the Bright vector base: streets named along their own lines and place names above them, Sacramento, Downtown, Old Sacramento, Alkali Flat, Mansion Flats and Richmond Grove, with the peek plan sheet below"><span class="img-wrapper"><img src="img/ios-vector-base.png" alt="The iOS map over the Bright vector base: streets named along their own lines and place names above them, Sacramento, Downtown, Old Sacramento, Alkali Flat, Mansion Flats and Richmond Grove, with the peek plan sheet below"></span></label></p>
+<h3 id="react-native-2-1"><a class="header" href="#react-native-2-1">React Native</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-vector-base.png" alt="The React Native map over the Bright vector base: streets named along their own lines and place names above them, Sacramento, Downtown, Old Sacramento, Alkali Flat, Mansion Flats and Richmond Grove, with the peek plan sheet below"><span class="img-wrapper"><img src="img/react-native-vector-base.png" alt="The React Native map over the Bright vector base: streets named along their own lines and place names above them, Sacramento, Downtown, Old Sacramento, Alkali Flat, Mansion Flats and Richmond Grove, with the peek plan sheet below"></span></label></p>
+<h3 id="webassembly-2-1"><a class="header" href="#webassembly-2-1">WebAssembly</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-vector-base.png" alt="The browser map over the Bright vector base: streets named along their own lines and place names above them, Sacramento, Downtown, Alkali Flat, Mansion Flats and Richmond Grove, with the map controls and scale bar"><span class="img-wrapper"><img src="img/wasm-vector-base.png" alt="The browser map over the Bright vector base: streets named along their own lines and place names above them, Sacramento, Downtown, Alkali Flat, Mansion Flats and Richmond Grove, with the map controls and scale bar"></span></label></p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
-<p>The twelve captures share one design language and show the same three
+<p>The sixteen captures share one design language and show the same four
 moments of the same flow. They also share one vocabulary: <em>plan sheet</em>,
 <em>Origin</em> and <em>Destination</em>, <em>Search</em>, <em>My location</em>, <em>swap</em>, <em>route card</em>,
 <em>provider section</em>, <em>maneuver banner</em>, <em>then line</em>, <em>route polyline</em>,
 <em>map control cluster</em>, <em>compass</em>, <em>scale bar</em>, <em>ETA-distance line</em>,
-<em>speed chips</em>, and the browser’s <em>trip drawer</em>. Differences are the
-platform’s own chrome: Compose’s Material surface on Android, SwiftUI’s
-safe-area handling on iOS, the React Native host view, and the browser’s
-WebGPU canvas. The map content, the guidance, the control cluster and the
-scale ladder are the same.</p>
+<em>speed chips</em>, the browser’s <em>trip drawer</em>, <em>vector base</em>, and <em>place labels</em>.
+Differences are the platform’s own chrome: Compose’s Material surface on
+Android, SwiftUI’s safe-area handling on iOS, the React Native host view, and
+the browser’s WebGPU canvas. The map content, the guidance, the control
+cluster, the scale ladder and the drawn labels are the same.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="versions-and-support"><a class="header" href="#versions-and-support">Versions and support</a></h1>
 <p>This page explains how versions are numbered, what a released version line
@@ -6268,6 +6582,7 @@ redistribute the SDK or ship an application built on it, reproduce the
 <ul>
 <li><a href="https://maplibre.org/">MapLibre</a> — its open map renderers and how they frame tile scheduling, frustum listing and tile budgeting are the mature prior art this SDK’s renderer seams knowingly re-implement from first principles.</li>
 <li><a href="https://github.com/maplibre/demotiles">MapLibre style specification and demotiles</a> — the version-8 document model, typed expressions, filters and CSS colour parsing in <code>rustic-maps-style</code> are a from-scratch Rust implementation of the published MapLibre style specification; no specification text, schema or C++ source is copied. <code>crates/rustic-maps-style/fixtures/styles/demotiles-style.json</code> is a verbatim copy of <a href="https://demotiles.maplibre.org/style.json">https://demotiles.maplibre.org/style.json</a> (BSD 3-Clause, Copyright (c) 2021 MapLibre), retained as test data only. Its licence text is committed at <code>docs/THIRD_PARTY_LICENSES/maplibre-demotiles-LICENSE.txt</code>. The style’s metadata carries its own attribution: “This style was generated on MapTiler Cloud. Usage is governed by the license terms in https://github.com/maplibre/demotiles/blob/gh-pages/LICENSE”.</li>
+<li><a href="https://github.com/notofonts/latin-greek-cyrillic">Noto Sans</a> — the committed glyph range <code>crates/rustic-maps-rendering/fixtures/render/glyphs/noto_sans_regular_0-255.pbf</code> is Noto Sans font material served in the Mapbox glyph protocol, retained as test data for the label pass. The Noto Sans Regular stack is licensed under the SIL Open Font License 1.1 (Copyright 2022 The Noto Project Authors), committed at <code>docs/THIRD_PARTY_LICENSES/noto-sans-OFL-1.1.txt</code>; no font file ships in the SDK packages.</li>
 <li><a href="https://tile.openstreetmap.us/">OpenStreetMap US Tile Service</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> — the demotiles vector tiles are © OpenStreetMap contributors, licensed under the Open Database License (ODbL), and its country data derives from Natural Earth; that attribution accompanies the committed fixture and is reproduced in <code>crates/rustic-maps-style/fixtures/styles/README.md</code>.</li>
 <li><a href="https://www.openstreetmap.org/">OpenStreetMap</a> and its ODbL database — the map-data backbone this SDK renders; the ODbL attribution obligations above are real and are honored in every reference app.</li>
 <li><a href="https://github.com/mozilla/uniffi-rs">UniFFI</a> — whose UDL-first, contract-as-single-source-of-truth binding approach this SDK adopts for its Kotlin/Swift/React Native FFI surface.</li>
@@ -6427,7 +6742,7 @@ offline graph.</li>
 <li><a href="#react-native-api-reference">React Native API reference</a></li>
 <li><a href="#webassembly-api-reference">WebAssembly API reference</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -6836,6 +7151,7 @@ offline graph.</li>
 <tr><td><code>tile_texture_pool</code></td><td>module</td><td><code>pub mod tile_texture_pool</code></td><td>—</td></tr>
 <tr><td><code>vector_base</code></td><td>module</td><td><code>pub mod vector_base</code></td><td>—</td></tr>
 <tr><td><code>vector_style</code></td><td>module</td><td><code>pub mod vector_style</code></td><td>—</td></tr>
+<tr><td><code>zoom_transition</code></td><td>module</td><td><code>pub mod zoom_transition</code></td><td>—</td></tr>
 </tbody>
 </table>
 </div>
@@ -6959,7 +7275,7 @@ offline graph.</li>
 <p>The pass is deliberately GPU-free, like the overlay assembly: the native headless renderer, the native surface and the browser canvas all call the same functions and upload the same vertices, so the backends cannot drift in where a label lands or which labels survive.</p>
 <p>Three stages:</p>
 <ol>
-<li>[<code>label_candidates_for_vector_tile</code>] walks a decoded tile’s symbol-layer features and reads each label’s text through the compiled style’s text-field expression. Candidates keep the style’s paint, size, priority, rank, placement and overlap rule. A symbol layer’s filter also gates a feature before it becomes a candidate: the converted styles encode the zoom-stepped rank ceiling and the per-class minimum zooms as <code>step</code> expressions on <code>["zoom"]</code> inside an <code>all</code> filter. A [<code>SymbolPlacement::Point</code>] layer anchors a candidate at each of the feature’s points; a [<code>SymbolPlacement::Line</code>] layer carries the feature’s whole line geometry so the frame can place the text along it. 2. [<code>LabelLayer::place</code>] projects the candidates through the frame camera, sorts them by priority, then style order, then rank (the documented collision-priority rule: lower priority is more important), and greedily rejects any label whose padded screen rectangle intersects a label already placed. <code>allow_overlap</code> labels skip the test and never block later labels. The frame places at most [<code>MAXIMUM_LABELS_PER_FRAME</code>] labels: once that budget is spent, every remaining candidate is dropped even if it would fit, so a dense downtown cannot out-shout the places that matter. A label whose text repeats an already-placed label is dropped, so the buffered overlap between adjacent tiles cannot paint one place twice. The output order is a pure function of the input order and the camera.</li>
+<li>[<code>label_candidates_for_vector_tile</code>] walks a decoded tile’s symbol-layer features and reads each label’s text through the compiled style’s text-field expression. Candidates keep the style’s paint, size, priority, rank, placement and overlap rule. A symbol layer’s filter also gates a feature before it becomes a candidate: the converted styles encode the zoom-stepped rank ceiling and the per-class minimum zooms as <code>step</code> expressions on <code>["zoom"]</code> inside an <code>all</code> filter. A [<code>SymbolPlacement::Point</code>] layer anchors a candidate at each of the feature’s points; a [<code>SymbolPlacement::Line</code>] layer carries the feature’s whole line geometry so the frame can place the text along it. 2. [<code>LabelLayer::place</code>] projects the candidates through the frame camera, sorts them by priority, then style order, then rank (the documented collision-priority rule: lower priority is more important), and greedily rejects any label whose padded screen rectangle intersects a label already placed. <code>allow_overlap</code> labels skip the test and never block later labels. The frame places at most [<code>MAXIMUM_LABELS_PER_FRAME</code>] labels: once that budget is spent, every remaining candidate is dropped even if it would fit, so a dense downtown cannot out-shout the places that matter. A label whose text repeats an already-placed label is dropped, so the buffered overlap between adjacent tiles cannot paint one place twice. The output order is a pure function of the input order and the camera, unless the caller hands the previous frame’s placed labels to [<code>LabelLayer::place_with_history</code>]: those names keep their place in the order, so a panning frame holds a name on screen instead of letting a newcomer take its space on one frame and lose it on the next.</li>
 </ol>
 <p>A line-placed label projects its geometry and takes its longest straight run (consecutive near-collinear segments) as the text’s run: the text is centered halfway along that run, rotated to its chord bearing, flipped so it always reads upright, and skipped when the run is shorter than the text plus the collision padding at each end. The collision rectangle is the axis-aligned box around the rotated text, so it rejects exactly like a point label’s. 3. [<code>LabelLayer::quad_vertices</code>] lays the glyph bitmaps out on the atlas and emits clip-space textured quads, halo first and text second. A rotated label rotates each glyph’s screen-space rectangle about the label’s anchor before converting it to clip space, so every backend that draws these vertices carries rotation without a second vertex format.</p>
 <p>Latin text is measured from the decoded glyph ranges and nothing here shapes complex scripts (see <code>rustic-maps-glyphs</code>). A frame with no symbol layers or no glyphs produces no vertices, so the tiles-only pipelines stay byte-identical.</p>
@@ -7064,11 +7380,15 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="module-location_indicator"><a class="header" href="#module-location_indicator">Module <code>location_indicator</code></a></h3>
-<p>GPU-free location-indicator assembly: the position fix drawn as a screen-facing disc with its optional ground-projected accuracy ring and a course-directed wing, in the same clip-space stream pattern the overlay layer uses (see [<code>crate::overlay</code>]).</p>
+<p>GPU-free location-indicator assembly: the position fix drawn as a screen-facing two-mode puck over its optional ground-projected accuracy ring, in the same clip-space stream pattern the overlay layer uses (see [<code>crate::overlay</code>]).</p>
 <p>The indicator is the third draw layer of a frame — the explicit draw order is tiles, then overlays, then the indicator ([<code>LOCATION_INDICATOR_TOP_LAYER_DRAW_ORDER</code>]) — so the fix’s visuals always paint over route lines and polygons without the overlay list growing or reordering. The vertices reuse the [<code>crate::overlay::ClipSpaceOverlayVertex</code>] type and draw through the existing overlay solid-color pipeline (a shader/layout-identical third pass), alpha-blended over what the first two layers drew.</p>
+<p>The puck has two modes:</p>
+<ul>
+<li><strong>Tracking mode</strong> ([<code>LocationIndicatorVisualKind::TrackingDot</code>], or a fix without a course): a soft dot — an accent core disc, a white ring around it, and a subtle dark halo under both for legibility on light and dark maps. * <strong>Navigation mode</strong> ([<code>LocationIndicatorVisualKind::GuidedCourseArrow</code>] with a reported course): an up-course dart with a white outline and the accent fill inside the same white ring and halo, rotating with the course. Without a course the navigation form degrades to the tracking dot.</li>
+</ul>
 <p>Layer semantics:</p>
 <ul>
-<li><strong>Screen anchoring.</strong> The disc and its wing are screen-space shapes anchored at the fix’s projected position — the fix’s pixel stays fixed under zoom and pan while the layers beneath move, exactly like point markers do (center anchoring, “screen-facing”). At pitch this keeps the dot legible where a ground-projected dot would foreshorten to a sliver, and the wing rotates with the camera’s bearing so a course heading reads as the same compass direction it reads on the ground. * <strong>The guided-course visual.</strong> [<code>LocationIndicatorVisualKind::GuidedCourseArrow</code>] draws the course wing — a cone of [<code>HEADING_WEDGE_HALF_ANGLE_DEGREES</code>] half-angle reaching [<code>LOCATION_COURSE_WEDGE_REACH_PIXELS</code>] up-course from the disc center — underneath the same disc the plain form draws; with the course unknown (<code>None</code>) it degrades to the plain dot. The visual is a disc with a course cone, not a separate arrow sprite. * <strong>Accuracy ring.</strong> A ground-projected circle of the fix’s horizontal accuracy — the honest reading of “this fix is this accurate” — drawn through the filled-polygon machinery, so it foreshortens into the ellipse the ground shows at pitch and splits at world-copy boundaries like every other ground shape. A fix more accurate than [<code>MINIMUM_ACCURACY_RING_DRAW_METERS</code>] draws no ring (a circle inside the disc itself carries no information), and an absurdly coarse fix clamps to [<code>MAXIMUM_ACCURACY_RING_DIAMETER_PIXELS</code>] on screen instead of flooding the viewport. * <strong>World copies.</strong> The screen-facing shapes anchor once per visible world-copy window like the tile spans’ fragments, so at the zoom &lt; 1 world-copy views the indicator draws in every copy that renders the fix; the ground ring splits across windows in the polygon machinery. * <strong>Behind the camera.</strong> A screen-shape anchor whose homogeneous weight is not positive (the fix behind the camera plane) draws no disc or wing — the screen-space shapes’ documented skip — while the ground-projected ring still projects by genuine corners and leaves near-plane straddling to the GPU’s frustum clip.</li>
+<li><strong>Screen anchoring.</strong> The puck is a screen-space shape anchored at the fix’s projected position — the fix’s pixel stays fixed under zoom and pan while the layers beneath move, exactly like point markers do (center anchoring, “screen-facing”). At pitch this keeps the puck legible where a ground-projected dot would foreshorten to a sliver, and the dart rotates with the camera’s bearing so a course heading reads as the same compass direction it reads on the ground. * <strong>Accuracy ring.</strong> A ground-projected circle of the fix’s horizontal accuracy — the honest reading of “this fix is this accurate” — drawn through the filled-polygon machinery, so it foreshortens into the ellipse the ground shows at pitch and splits at world-copy boundaries like every other ground shape. A fix more accurate than [<code>MINIMUM_ACCURACY_RING_DRAW_METERS</code>] draws no ring (a circle inside the puck itself carries no information), and an absurdly coarse fix clamps to [<code>MAXIMUM_ACCURACY_RING_DIAMETER_PIXELS</code>] on screen instead of flooding the viewport. * <strong>World copies.</strong> The screen-facing shapes anchor once per visible world-copy window like the tile spans’ fragments, so at the zoom &lt; 1 world-copy views the indicator draws in every copy that renders the fix; the ground ring splits across windows in the polygon machinery. * <strong>Behind the camera.</strong> A screen-shape anchor whose homogeneous weight is not positive (the fix behind the camera plane) draws no puck — the screen-space shapes’ documented skip — while the ground-projected ring still projects by genuine corners and leaves near-plane straddling to the GPU’s frustum clip.</li>
 </ul>
 <div class="table-wrapper">
 <table>
@@ -7076,22 +7396,28 @@ offline graph.</li>
 <tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>DEFAULT_LOCATION_DISC_RADIUS_PIXELS</code></td><td>const</td><td><code>pub const DEFAULT_LOCATION_DISC_RADIUS_PIXELS: f64</code></td><td>Default location-disc radius in screen pixels: about 11 px, small enough not to hide the map beneath it and large enough to read at a glance.</td></tr>
-<tr><td><code>DEFAULT_LOCATION_DISC_RGBA</code></td><td>const</td><td><code>pub const DEFAULT_LOCATION_DISC_RGBA: [f32; 4]</code></td><td>Default disc color: an opaque accent blue.</td></tr>
-<tr><td><code>DEFAULT_ACCURACY_RING_RGBA</code></td><td>const</td><td><code>pub const DEFAULT_ACCURACY_RING_RGBA: [f32; 4]</code></td><td>Default accuracy-ring color: the same accent blue with low alpha, so the underlying tiles stay readable beneath the ring’s fill.</td></tr>
-<tr><td><code>LOCATION_DISC_FAN_SIDES</code></td><td>const</td><td><code>pub const LOCATION_DISC_FAN_SIDES: usize</code></td><td>Circle-fan resolution of the location disc: 24 sides, so the disc reads round at every radius the style admits.</td></tr>
+<tr><td><code>DEFAULT_LOCATION_DISC_RADIUS_PIXELS</code></td><td>const</td><td><code>pub const DEFAULT_LOCATION_DISC_RADIUS_PIXELS: f64</code></td><td>Default accent-core radius in screen pixels: about 11 px, small enough not to hide the map beneath the puck and large enough to read at a glance.</td></tr>
+<tr><td><code>DEFAULT_LOCATION_DISC_RGBA</code></td><td>const</td><td><code>pub const DEFAULT_LOCATION_DISC_RGBA: [f32; 4]</code></td><td>Default accent fill color: an opaque blue, used for the tracking core disc and the navigation dart’s fill.</td></tr>
+<tr><td><code>DEFAULT_LOCATION_RING_RGBA</code></td><td>const</td><td><code>pub const DEFAULT_LOCATION_RING_RGBA: [f32; 4]</code></td><td>Default ring color: opaque white, used for the ring around the puck and for the navigation dart’s outline.</td></tr>
+<tr><td><code>DEFAULT_LOCATION_HALO_RGBA</code></td><td>const</td><td><code>pub const DEFAULT_LOCATION_HALO_RGBA: [f32; 4]</code></td><td>Default halo color: near-black at low alpha, drawn under the puck so the white ring reads on a light map as well as on a dark one.</td></tr>
+<tr><td><code>DEFAULT_ACCURACY_RING_RGBA</code></td><td>const</td><td><code>pub const DEFAULT_ACCURACY_RING_RGBA: [f32; 4]</code></td><td>Default accuracy-ring color: the accent blue with low alpha, so the underlying tiles stay readable beneath the ring’s fill.</td></tr>
+<tr><td><code>LOCATION_DISC_FAN_SIDES</code></td><td>const</td><td><code>pub const LOCATION_DISC_FAN_SIDES: usize</code></td><td>Circle-fan resolution of the puck’s discs and rings: 24 sides, so they read round at every radius the style admits.</td></tr>
 <tr><td><code>LOCATION_ACCURACY_RING_FAN_SIDES</code></td><td>const</td><td><code>pub const LOCATION_ACCURACY_RING_FAN_SIDES: usize</code></td><td>Arc resolution of the accuracy ring’s ground-space circle: 32 straight sides keep the drawn ellipse sub-pixel at the clamped diameter.</td></tr>
-<tr><td><code>LOCATION_COURSE_WEDGE_FAN_SIDES</code></td><td>const</td><td><code>pub const LOCATION_COURSE_WEDGE_FAN_SIDES: usize</code></td><td>Arc resolution of the course wing’s cone: smooth at the wing’s small reach.</td></tr>
-<tr><td><code>HEADING_WEDGE_HALF_ANGLE_DEGREES</code></td><td>const</td><td><code>pub const HEADING_WEDGE_HALF_ANGLE_DEGREES: f64</code></td><td>Half-angle of the course wing’s cone, in degrees: a total cone of about 50°, which reads clearly as a direction of travel.</td></tr>
-<tr><td><code>LOCATION_COURSE_WEDGE_REACH_PIXELS</code></td><td>const</td><td><code>pub const LOCATION_COURSE_WEDGE_REACH_PIXELS: f64</code></td><td>Course wing reach in screen pixels, measured from the fix’s projected center: the wing extends this far up-course so it reads over and past the dot.</td></tr>
-<tr><td><code>MINIMUM_ACCURACY_RING_DRAW_METERS</code></td><td>const</td><td><code>pub const MINIMUM_ACCURACY_RING_DRAW_METERS: f64</code></td><td>Fixes more accurate than this radius (in meters) draw no accuracy ring: the circle would sit entirely inside the default disc, carrying no information.</td></tr>
+<tr><td><code>LOCATION_PUCK_RING_WIDTH_PIXELS</code></td><td>const</td><td><code>pub const LOCATION_PUCK_RING_WIDTH_PIXELS: f64</code></td><td>Width of the white ring around the accent core in screen pixels.</td></tr>
+<tr><td><code>LOCATION_PUCK_HALO_WIDTH_PIXELS</code></td><td>const</td><td><code>pub const LOCATION_PUCK_HALO_WIDTH_PIXELS: f64</code></td><td>Width of the dark halo outside the white ring in screen pixels.</td></tr>
+<tr><td><code>LOCATION_NAVIGATION_DART_OUTLINE_WIDTH_PIXELS</code></td><td>const</td><td><code>pub const LOCATION_NAVIGATION_DART_OUTLINE_WIDTH_PIXELS: f64</code></td><td>Width of the navigation dart’s white outline in screen pixels.</td></tr>
+<tr><td><code>LOCATION_NAVIGATION_DART_TIP_RADIUS_RATIO</code></td><td>const</td><td><code>pub const LOCATION_NAVIGATION_DART_TIP_RADIUS_RATIO: f64</code></td><td>How far the navigation dart’s tip reaches, as a fraction of the accent core radius. Below 1.0 so the dart sits inside the ring.</td></tr>
+<tr><td><code>LOCATION_NAVIGATION_DART_BASE_HALF_WIDTH_RATIO</code></td><td>const</td><td><code>pub const LOCATION_NAVIGATION_DART_BASE_HALF_WIDTH_RATIO: f64</code></td><td>Half the dart’s rear width, as a fraction of the accent core radius.</td></tr>
+<tr><td><code>LOCATION_NAVIGATION_DART_BASE_OFFSET_RATIO</code></td><td>const</td><td><code>pub const LOCATION_NAVIGATION_DART_BASE_OFFSET_RATIO: f64</code></td><td>How far the dart’s two rear corners sit down-course, as a fraction of the accent core radius.</td></tr>
+<tr><td><code>LOCATION_NAVIGATION_DART_NOTCH_OFFSET_RATIO</code></td><td>const</td><td><code>pub const LOCATION_NAVIGATION_DART_NOTCH_OFFSET_RATIO: f64</code></td><td>How far the dart’s tail notch sits down-course, as a fraction of the accent core radius. Smaller than [<code>LOCATION_NAVIGATION_DART_BASE_OFFSET_RATIO</code>], which gives the dart its swept-back tail.</td></tr>
+<tr><td><code>MINIMUM_ACCURACY_RING_DRAW_METERS</code></td><td>const</td><td><code>pub const MINIMUM_ACCURACY_RING_DRAW_METERS: f64</code></td><td>Fixes more accurate than this radius (in meters) draw no accuracy ring: the circle would sit entirely inside the default puck, carrying no information.</td></tr>
 <tr><td><code>MAXIMUM_ACCURACY_RING_DIAMETER_PIXELS</code></td><td>const</td><td><code>pub const MAXIMUM_ACCURACY_RING_DIAMETER_PIXELS: f64</code></td><td>Screen-diameter cap of the accuracy ring: an absurdly coarse fix clamps its ring to this diameter instead of flooding the viewport.</td></tr>
 <tr><td><code>LOCATION_INDICATOR_TOP_LAYER_DRAW_ORDER</code></td><td>const</td><td><code>pub const LOCATION_INDICATOR_TOP_LAYER_DRAW_ORDER: u8</code></td><td>Explicit draw order of the location indicator layer: the top layer of a frame’s explicit three-layer order — tiles (0), overlays (1), the indicator (2).</td></tr>
 <tr><td><code>LocationIndicatorState</code></td><td>struct</td><td><code>pub struct LocationIndicatorState</code></td><td>A presentable position fix: the state half of one [<code>LocationIndicatorLayer</code>].</td></tr>
 <tr><td><code>LocationIndicatorVisualKind</code></td><td>enum</td><td><code>pub enum LocationIndicatorVisualKind</code></td><td>Which visual form a location indicator draws.</td></tr>
 <tr><td><code>LocationIndicatorStyle</code></td><td>struct</td><td><code>pub struct LocationIndicatorStyle</code></td><td>Style of the location indicator; <code>None</code> fields keep the documented module defaults (the overlay style pattern).</td></tr>
 <tr><td><code>LocationIndicatorLayer</code></td><td>struct</td><td><code>pub struct LocationIndicatorLayer</code></td><td>The state and style of one location-indicator layer; assemble its vertices with [<code>location_indicator_vertices</code>].</td></tr>
-<tr><td><code>location_indicator_vertices</code></td><td>function</td><td><code>pub fn location_indicator_vertices( camera: &amp;MapCamera, viewport: &amp;ViewportPixels, field_of_view_degrees: f64, location_indicator_layer: Option&lt;&amp;LocationIndicatorLayer&gt;, ) -&gt; Vec&lt;ClipSpaceOverlayVertex&gt;</code></td><td>Assembles the location-indicator layer of one frame into the flat clip-space triangle list the overlay pipeline draws. A <code>None</code> layer (the cleared state) produces no vertices; a fix whose anchor projects behind the camera produces no disc or wing for any window, while its accuracy ring (a ground-projected polygon) still assembles with genuine corners for the GPU’s frustum clip.</td></tr>
+<tr><td><code>location_indicator_vertices</code></td><td>function</td><td><code>pub fn location_indicator_vertices( camera: &amp;MapCamera, viewport: &amp;ViewportPixels, field_of_view_degrees: f64, location_indicator_layer: Option&lt;&amp;LocationIndicatorLayer&gt;, ) -&gt; Vec&lt;ClipSpaceOverlayVertex&gt;</code></td><td>Assembles the location-indicator layer of one frame into the flat clip-space triangle list the overlay pipeline draws. A <code>None</code> layer (the cleared state) produces no vertices; a fix whose anchor projects behind the camera produces no puck for any window, while its accuracy ring (a ground-projected polygon) still assembles with genuine corners for the GPU’s frustum clip.</td></tr>
 </tbody>
 </table>
 </div>
@@ -7197,6 +7523,7 @@ offline graph.</li>
 <tr><td><code>VIEWPORT_NORMALIZED_DEVICE_BOUNDS</code></td><td>const</td><td><code>pub const VIEWPORT_NORMALIZED_DEVICE_BOUNDS: [f32; 2]</code></td><td>Normalized-device-coordinate bounds of the viewport in both axes. Quads whose entire projected bounding box lies outside these bounds are culled during assembly.</td></tr>
 <tr><td><code>TileWorldSpan</code></td><td>struct</td><td><code>pub struct TileWorldSpan</code></td><td>Normalized-world rectangle one tile occupies: x grows eastward and y grows southward across <code>[0, 1]</code> (web-mercator convention), so the tile grid subdivides the unit square from the north.</td></tr>
 <tr><td><code>TextureWindow</code></td><td>struct</td><td><code>pub struct TextureWindow</code></td><td>The sub-window of a texture that a quad samples: u grows rightward with the texture columns and v grows downward with the texture rows, so at v = 0 the image’s top row — the northern edge of a tile — is sampled. All components lie in <code>[0, 1]</code>.</td></tr>
+<tr><td><code>RetainedTileLevel</code></td><td>struct</td><td><code>pub struct RetainedTileLevel</code></td><td>A retired tile zoom level drawn over the newly requested one while a zoom crosses a tile level.</td></tr>
 <tr><td><code>TileQuad</code></td><td>struct</td><td><code>pub struct TileQuad</code></td><td>One textured quad to draw for a frame, in normalized world coordinates.</td></tr>
 <tr><td><code>ClipSpaceTileVertex</code></td><td>struct</td><td><code>pub struct ClipSpaceTileVertex</code></td><td>One quad corner as consumed by the GPU pipeline: a position in clip space (homogeneous coordinates; the perspective divide happens on the GPU) and the texture coordinates to sample there. <code>repr(C)</code> keeps the field order the vertex buffer layout expects.</td></tr>
 <tr><td><code>Renderer</code></td><td>struct</td><td><code>pub struct Renderer</code></td><td>Quad assembler for one frame: turns prepared tiles into draw items and projects their corners into clip space. Construct it once and reuse it across frames; it holds only the field of view.</td></tr>
@@ -7304,6 +7631,7 @@ offline graph.</li>
 <tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
 </thead>
 <tbody>
+<tr><td><code>TILE_FETCH_CONCURRENCY</code></td><td>const</td><td><code>pub const TILE_FETCH_CONCURRENCY: usize</code></td><td>The number of tile fetches one warm pass or blocking frame keeps in flight. A viewport holds a dozen or more tiles, so a serial pass spends most of its time waiting on one round trip at a time and the map fills in visibly tile by tile. Eight concurrent fetches fill a normal viewport within one provider round trip while staying inside what a public tile service and a browser’s per-host connection pool comfortably serve; the provider’s token bucket is sized to match (<code>DEFAULT_TOKEN_BUCKET_CAPACITY_TOKENS</code> and <code>DEFAULT_REFILL_TOKENS_PER_SECOND</code> in the URL-template providers).</td></tr>
 <tr><td><code>TileReadiness</code></td><td>enum</td><td><code>pub enum TileReadiness</code></td><td>How a requested tile resolves for one frame.</td></tr>
 <tr><td><code>PreparedTile</code></td><td>struct</td><td><code>pub struct PreparedTile</code></td><td>One requested tile and how it resolved.</td></tr>
 <tr><td><code>TileScheduler</code></td><td>struct</td><td><code>pub struct TileScheduler</code></td><td>Schedules raster tile fetches into a [<code>TileTexturePool</code>].</td></tr>
@@ -7401,6 +7729,25 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
+<h3 id="module-zoom_transition"><a class="header" href="#module-zoom_transition">Module <code>zoom_transition</code></a></h3>
+<p>Cross-fade between adjoining tile zoom levels.</p>
+<p>A camera crossing half a zoom level replaces its whole requested tile set in one frame: the new level’s tiles are fetched from scratch while the old level’s pixels are no longer drawn, so the view flashes the background and then fills in tile by tile. This module keeps the previous level on screen instead: while the new level’s tiles arrive it draws the retired level over them at full opacity, and once enough of the new level is present it dissolves the retired level out over a short fade. The tiles are projected with the current camera, so the per-tile world spans scale them automatically as the zoom changes.</p>
+<p>The surface session (native) and the canvas draw state (browser) each own one [<code>ZoomTransition</code>] and feed it every frame’s requested tile zoom level, its present-tile fraction and a monotonic timestamp.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ZOOM_TRANSITION_FADE_MILLISECONDS</code></td><td>const</td><td><code>pub const ZOOM_TRANSITION_FADE_MILLISECONDS: f64</code></td><td>Duration of the dissolve from the previous tile level to the new one.</td></tr>
+<tr><td><code>ZOOM_TRANSITION_MAXIMUM_HOLD_MILLISECONDS</code></td><td>const</td><td><code>pub const ZOOM_TRANSITION_MAXIMUM_HOLD_MILLISECONDS: f64</code></td><td>Longest the previous level stays at full opacity while the new level’s tiles are still arriving. Without it a provider failure or a viewport wider than its fetch budget could keep a stale level up indefinitely.</td></tr>
+<tr><td><code>ZOOM_TRANSITION_READY_TILE_FRACTION</code></td><td>const</td><td><code>pub const ZOOM_TRANSITION_READY_TILE_FRACTION: f64</code></td><td>Fraction of the new level’s visible tiles that must be present before the dissolve starts. A couple of slow stragglers must not hold the retired level at full opacity, which would delay the new detail indefinitely.</td></tr>
+<tr><td><code>ZoomTransitionFrame</code></td><td>struct</td><td><code>pub struct ZoomTransitionFrame</code></td><td>What one frame’s transition contributes to the draw list.</td></tr>
+<tr><td><code>ZoomTransition</code></td><td>struct</td><td><code>pub struct ZoomTransition</code></td><td>The tile-level cross-fade state of one surface.</td></tr>
+<tr><td><code>requested_level_ready_tile_fraction</code></td><td>function</td><td><code>pub fn requested_level_ready_tile_fraction(prepared_tiles: &amp;[PreparedTile]) -&gt; f64</code></td><td>The fraction of a resolved frame’s requested tiles that are present at their own level. An empty request counts as ready: there is nothing left for the new level to fill in.</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="rustic_maps_navigation"><a class="header" href="#rustic_maps_navigation">rustic_maps_navigation</a></h2>
 <p>Turn-by-turn navigation for a planned route.</p>
 <p>The crate is a pure event reducer: [<code>reduce_navigation_event</code>] maps [<code>NavigationEvent</code>]s onto a [<code>NavigationSession</code>] without touching the network, the clock or the GPU. Each location fix is judged for deviation ([<code>deviation</code>]), snapped onto the route geometry ([<code>geometry</code>]), and evaluated against a pluggable [<code>StepAdvanceCondition</code>]. When the driver leaves the route, the caller supplies a replacement route through [<code>NavigationEvent::RerouteProvided</code>] and the reducer swaps it in. [<code>NavigationPhase</code>] moves through <code>Navigating</code>, <code>OffRoute</code> and <code>Arrived</code>; <code>OffRoute</code> is a pause the driver can recover from by returning to the route.</p>
@@ -7445,7 +7792,7 @@ offline graph.</li>
 <ul>
 <li>[<code>CourseFiltering::Raw</code>] reports the fix’s course verbatim — the tunnel or canyon exit hatch where a garbage route projection must not override a correct physical course. - [<code>CourseFiltering::SnapToRoute</code>] projects the course onto the route line: while the fix is not judged fully off route, the reported course is the bearing of the route line at the user’s snapped position — every materially disagreeing raw course is replaced in one step, and the course stops jittering against the very line the position was already snapped onto. Without a route line to trust (the fix did not snap, or the projected segment carries no direction), the fix’s own course remains the fallback, and an unreported course retains the trip’s previous course (the same degradation continuity the snapped position keeps).</li>
 </ul>
-<p>The filtering is decided per trip, like the step-advance and deviation policies ([<code>crate::reducer::NavigationEvent::StartTrip</code>] carries it), and the reducer stamps every fix’s effective course into <a href="crate::state::TripNavigationState::course_heading_degrees"><code>TripNavigationState::course_heading_degrees</code></a> during the same position snap pass, so consumers (a course wedge, a follow camera) read one course field instead of re-filtering raw courses per platform.</p>
+<p>The filtering is decided per trip, like the step-advance and deviation policies ([<code>crate::reducer::NavigationEvent::StartTrip</code>] carries it), and the reducer stamps every fix’s effective course into <a href="crate::state::TripNavigationState::course_heading_degrees"><code>TripNavigationState::course_heading_degrees</code></a> during the same position snap pass, so consumers (a course dart, a follow camera) read one course field instead of re-filtering raw courses per platform.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -7718,7 +8065,7 @@ offline graph.</li>
 <li><a href="#how-it-works">How it works</a> explains the rendering and navigation pipelines.</li>
 <li><a href="#performance-and-profiling">Performance and profiling</a> covers the frame budget.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -8115,6 +8462,7 @@ offline graph.</li>
 <tr><td><code>setLocationIndicator</code></td><td><code>fun setLocationIndicator(state: LocationIndicatorState, style: LocationIndicatorStyle): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Sets the single location layer drawn after the tile pass and the overlay pass (topmost SDK layer), replacing any earlier state. Validation is all-or-nothing: a state or style that fails validation throws and keeps the earlier indicator. The state outlives attach and detach cycles like the overlay list. Every null style field resolves to the documented default. # Parameters - <code>state</code> — position, course and accuracy to draw. - <code>style</code> — visual form and style of the layer. # Errors Throws <code>InvalidRenderInput</code> for a state or style the layer cannot draw.</td></tr>
 <tr><td><code>clearLocationIndicator</code></td><td><code>fun clearLocationIndicator(): Unit</code></td><td>—</td><td>Clears the location layer; following frames draw tiles and overlays alone until <code>set_location_indicator</code> supplies new state.</td></tr>
 <tr><td><code>isFrameSettled</code></td><td><code>fun isFrameSettled(camera: MapCamera): Boolean</code></td><td>Returns <code>Boolean</code>. Throws <code>SdkException</code>.</td><td>Reads whether the view’s presented state would not change if <code>draw</code> ran again right now. Answers true when this camera value equals the last drawn camera, the overlay list and the location indicator are unchanged since that draw, and the last frame’s tile statistics resolved no pending pixels (no fallback, deferred or unavailable tiles). It answers false while a draw is in flight and before a frame has ever drawn. A pure query: it never draws, fetches or mutates state, so a platform render pump can call it every display frame and skip <code>draw</code> when it answers true, letting the presented frame stand and resuming on any change or on the next pending detail’s arrival. # Returns True when a redraw would not change the presented frame. # Errors Throws <code>RenderingSurfaceUnavailable</code> when the view is detached.</td></tr>
+<tr><td><code>reloadTileSource</code></td><td><code>fun reloadTileSource(): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>fun setVectorTileSource(source: UrlTemplateVectorTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>fun clearVectorTileSource(): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>fun vectorTileSourceStatus(): VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
@@ -8623,6 +8971,8 @@ offline graph.</li>
 <tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>The image format the tileset serves. Fetched tiles report this format whatever the caller requests: the tile bytes are the truth, and the renderer decodes by the record it receives.</td></tr>
 <tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>The pixel resolution the tileset serves (the same rule as the format: the fetched tile reports what it contains).</td></tr>
 <tr><td><code>userAgent</code></td><td><code>String</code></td><td>The <code>User-Agent</code> header every tile request carries; empty sends none. A public tile service identifies its clients by it, and several usage policies refuse clients that send nothing.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A source with a stricter published budget lowers the value here. It must be finite and at least one, or registration throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A source with a stricter published budget lowers the value here. It must be finite and strictly positive, or registration throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -8643,6 +8993,8 @@ offline graph.</li>
 <tr><td><code>styleId</code></td><td><code>String</code></td><td>The built-in style id the base paints with.</td></tr>
 <tr><td><code>minimumZoomLevel</code></td><td><code>UByte</code></td><td>Lowest zoom level the tileset serves.</td></tr>
 <tr><td><code>maximumZoomLevel</code></td><td><code>UByte</code></td><td>Highest zoom level the tileset serves.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A tileset with a stricter published budget lowers the value here. It must be finite and at least one, or installation throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A tileset with a stricter published budget lowers the value here. It must be finite and strictly positive, or installation throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -9035,7 +9387,7 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="locationindicatorstyle"><a class="header" href="#locationindicatorstyle">LocationIndicatorStyle</a></h3>
-<p>Style of the location layer; null fields keep the documented defaults. The disc and wedge are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
+<p>Style of the location layer; null fields keep the documented defaults. The puck and its ring and halo are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -9043,9 +9395,11 @@ offline graph.</li>
 </thead>
 <tbody>
 <tr><td><code>visualKind</code></td><td><code>LocationIndicatorVisualKind</code></td><td>Which visual form this layer draws.</td></tr>
-<tr><td><code>radiusPixels</code></td><td><code>Double?</code></td><td>Disc radius in screen pixels; null keeps the default.</td></tr>
-<tr><td><code>rgbaColor</code></td><td><code>OverlayColor?</code></td><td>Disc fill color; null keeps the default.</td></tr>
-<tr><td><code>showAccuracyRing</code></td><td><code>Boolean?</code></td><td>Accuracy ring drawn around the disc (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
+<tr><td><code>radiusPixels</code></td><td><code>Double?</code></td><td>Accent-core radius in screen pixels; the ring and halo are added outside it; null keeps the default.</td></tr>
+<tr><td><code>rgbaColor</code></td><td><code>OverlayColor?</code></td><td>Accent fill color of the core disc and navigation dart; null keeps the default.</td></tr>
+<tr><td><code>ringRgbaColor</code></td><td><code>OverlayColor?</code></td><td>Ring color: the ring around the puck and the navigation dart’s outline; null keeps the default white.</td></tr>
+<tr><td><code>haloRgbaColor</code></td><td><code>OverlayColor?</code></td><td>Halo color drawn under the puck; null keeps the default.</td></tr>
+<tr><td><code>showAccuracyRing</code></td><td><code>Boolean?</code></td><td>Accuracy ring drawn around the puck (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
 </tbody>
 </table>
 </div>
@@ -9440,8 +9794,8 @@ offline graph.</li>
 <tr><th>Variant</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>TRACKING_DOT</code></td><td>Plain disc (tracking mode: no course known or no route).</td></tr>
-<tr><td><code>GUIDED_COURSE_ARROW</code></td><td>Disc plus course-directed heading wedge (navigation follow mode).</td></tr>
+<tr><td><code>TRACKING_DOT</code></td><td>The soft tracking dot (no course known or no route): accent core, white ring and dark halo.</td></tr>
+<tr><td><code>GUIDED_COURSE_ARROW</code></td><td>The course-directed navigation dart inside the same ring and halo (navigation follow mode); degrades to the tracking dot without a course.</td></tr>
 </tbody>
 </table>
 </div>
@@ -9543,7 +9897,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
 <h1 id="ios-api-reference"><a class="header" href="#ios-api-reference">iOS API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Swift bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -9940,6 +10294,7 @@ offline graph.</li>
 <tr><td><code>setLocationIndicator</code></td><td><code>func setLocationIndicator(state: LocationIndicatorState, style: LocationIndicatorStyle) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Sets the single location layer drawn after the tile pass and the overlay pass (topmost SDK layer), replacing any earlier state. Validation is all-or-nothing: a state or style that fails validation throws and keeps the earlier indicator. The state outlives attach and detach cycles like the overlay list. Every null style field resolves to the documented default. # Parameters - <code>state</code> — position, course and accuracy to draw. - <code>style</code> — visual form and style of the layer. # Errors Throws <code>InvalidRenderInput</code> for a state or style the layer cannot draw.</td></tr>
 <tr><td><code>clearLocationIndicator</code></td><td><code>func clearLocationIndicator()</code></td><td>—</td><td>Clears the location layer; following frames draw tiles and overlays alone until <code>set_location_indicator</code> supplies new state.</td></tr>
 <tr><td><code>isFrameSettled</code></td><td><code>func isFrameSettled(camera: MapCamera) throws -&gt; Bool</code></td><td>Returns <code>Bool</code>. Throws <code>SdkError</code>.</td><td>Reads whether the view’s presented state would not change if <code>draw</code> ran again right now. Answers true when this camera value equals the last drawn camera, the overlay list and the location indicator are unchanged since that draw, and the last frame’s tile statistics resolved no pending pixels (no fallback, deferred or unavailable tiles). It answers false while a draw is in flight and before a frame has ever drawn. A pure query: it never draws, fetches or mutates state, so a platform render pump can call it every display frame and skip <code>draw</code> when it answers true, letting the presented frame stand and resuming on any change or on the next pending detail’s arrival. # Returns True when a redraw would not change the presented frame. # Errors Throws <code>RenderingSurfaceUnavailable</code> when the view is detached.</td></tr>
+<tr><td><code>reloadTileSource</code></td><td><code>func reloadTileSource() throws</code></td><td>Throws <code>SdkError</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>func setVectorTileSource(source: UrlTemplateVectorTileSource) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>func clearVectorTileSource() throws</code></td><td>Throws <code>SdkError</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>func vectorTileSourceStatus() -&gt; VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
@@ -10448,6 +10803,8 @@ offline graph.</li>
 <tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>The image format the tileset serves. Fetched tiles report this format whatever the caller requests: the tile bytes are the truth, and the renderer decodes by the record it receives.</td></tr>
 <tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>The pixel resolution the tileset serves (the same rule as the format: the fetched tile reports what it contains).</td></tr>
 <tr><td><code>userAgent</code></td><td><code>String</code></td><td>The <code>User-Agent</code> header every tile request carries; empty sends none. A public tile service identifies its clients by it, and several usage policies refuse clients that send nothing.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A source with a stricter published budget lowers the value here. It must be finite and at least one, or registration throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A source with a stricter published budget lowers the value here. It must be finite and strictly positive, or registration throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -10468,6 +10825,8 @@ offline graph.</li>
 <tr><td><code>styleId</code></td><td><code>String</code></td><td>The built-in style id the base paints with.</td></tr>
 <tr><td><code>minimumZoomLevel</code></td><td><code>UInt8</code></td><td>Lowest zoom level the tileset serves.</td></tr>
 <tr><td><code>maximumZoomLevel</code></td><td><code>UInt8</code></td><td>Highest zoom level the tileset serves.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A tileset with a stricter published budget lowers the value here. It must be finite and at least one, or installation throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A tileset with a stricter published budget lowers the value here. It must be finite and strictly positive, or installation throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -10860,7 +11219,7 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="locationindicatorstyle-1"><a class="header" href="#locationindicatorstyle-1">LocationIndicatorStyle</a></h3>
-<p>Style of the location layer; null fields keep the documented defaults. The disc and wedge are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
+<p>Style of the location layer; null fields keep the documented defaults. The puck and its ring and halo are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -10868,9 +11227,11 @@ offline graph.</li>
 </thead>
 <tbody>
 <tr><td><code>visualKind</code></td><td><code>LocationIndicatorVisualKind</code></td><td>Which visual form this layer draws.</td></tr>
-<tr><td><code>radiusPixels</code></td><td><code>Double?</code></td><td>Disc radius in screen pixels; null keeps the default.</td></tr>
-<tr><td><code>rgbaColor</code></td><td><code>OverlayColor?</code></td><td>Disc fill color; null keeps the default.</td></tr>
-<tr><td><code>showAccuracyRing</code></td><td><code>Bool?</code></td><td>Accuracy ring drawn around the disc (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
+<tr><td><code>radiusPixels</code></td><td><code>Double?</code></td><td>Accent-core radius in screen pixels; the ring and halo are added outside it; null keeps the default.</td></tr>
+<tr><td><code>rgbaColor</code></td><td><code>OverlayColor?</code></td><td>Accent fill color of the core disc and navigation dart; null keeps the default.</td></tr>
+<tr><td><code>ringRgbaColor</code></td><td><code>OverlayColor?</code></td><td>Ring color: the ring around the puck and the navigation dart’s outline; null keeps the default white.</td></tr>
+<tr><td><code>haloRgbaColor</code></td><td><code>OverlayColor?</code></td><td>Halo color drawn under the puck; null keeps the default.</td></tr>
+<tr><td><code>showAccuracyRing</code></td><td><code>Bool?</code></td><td>Accuracy ring drawn around the puck (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
 </tbody>
 </table>
 </div>
@@ -11265,8 +11626,8 @@ offline graph.</li>
 <tr><th>Variant</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>trackingDot</code></td><td>Plain disc (tracking mode: no course known or no route).</td></tr>
-<tr><td><code>guidedCourseArrow</code></td><td>Disc plus course-directed heading wedge (navigation follow mode).</td></tr>
+<tr><td><code>trackingDot</code></td><td>The soft tracking dot (no course known or no route): accent core, white ring and dark halo.</td></tr>
+<tr><td><code>guidedCourseArrow</code></td><td>The course-directed navigation dart inside the same ring and halo (navigation follow mode); degrades to the tracking dot without a course.</td></tr>
 </tbody>
 </table>
 </div>
@@ -11368,7 +11729,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -11765,6 +12126,7 @@ offline graph.</li>
 <tr><td><code>setLocationIndicator</code></td><td><code>setLocationIndicator(state: LocationIndicatorState, style: LocationIndicatorStyle): void</code></td><td>Throws <code>SdkError</code>.</td><td>Sets the single location layer drawn after the tile pass and the overlay pass (topmost SDK layer), replacing any earlier state. Validation is all-or-nothing: a state or style that fails validation throws and keeps the earlier indicator. The state outlives attach and detach cycles like the overlay list. Every null style field resolves to the documented default. # Parameters - <code>state</code> — position, course and accuracy to draw. - <code>style</code> — visual form and style of the layer. # Errors Throws <code>InvalidRenderInput</code> for a state or style the layer cannot draw.</td></tr>
 <tr><td><code>clearLocationIndicator</code></td><td><code>clearLocationIndicator(): void</code></td><td>—</td><td>Clears the location layer; following frames draw tiles and overlays alone until <code>set_location_indicator</code> supplies new state.</td></tr>
 <tr><td><code>isFrameSettled</code></td><td><code>isFrameSettled(camera: MapCamera): boolean</code></td><td>Returns <code>boolean</code>. Throws <code>SdkError</code>.</td><td>Reads whether the view’s presented state would not change if <code>draw</code> ran again right now. Answers true when this camera value equals the last drawn camera, the overlay list and the location indicator are unchanged since that draw, and the last frame’s tile statistics resolved no pending pixels (no fallback, deferred or unavailable tiles). It answers false while a draw is in flight and before a frame has ever drawn. A pure query: it never draws, fetches or mutates state, so a platform render pump can call it every display frame and skip <code>draw</code> when it answers true, letting the presented frame stand and resuming on any change or on the next pending detail’s arrival. # Returns True when a redraw would not change the presented frame. # Errors Throws <code>RenderingSurfaceUnavailable</code> when the view is detached.</td></tr>
+<tr><td><code>reloadTileSource</code></td><td><code>reloadTileSource(): void</code></td><td>Throws <code>SdkError</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: UrlTemplateVectorTileSource): void</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws <code>SdkError</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>vectorTileSourceStatus(): VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
@@ -12273,6 +12635,8 @@ offline graph.</li>
 <tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>The image format the tileset serves. Fetched tiles report this format whatever the caller requests: the tile bytes are the truth, and the renderer decodes by the record it receives.</td></tr>
 <tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>The pixel resolution the tileset serves (the same rule as the format: the fetched tile reports what it contains).</td></tr>
 <tr><td><code>userAgent</code></td><td><code>string</code></td><td>The <code>User-Agent</code> header every tile request carries; empty sends none. A public tile service identifies its clients by it, and several usage policies refuse clients that send nothing.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A source with a stricter published budget lowers the value here. It must be finite and at least one, or registration throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A source with a stricter published budget lowers the value here. It must be finite and strictly positive, or registration throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -12293,6 +12657,8 @@ offline graph.</li>
 <tr><td><code>styleId</code></td><td><code>string</code></td><td>The built-in style id the base paints with.</td></tr>
 <tr><td><code>minimumZoomLevel</code></td><td><code>number</code></td><td>Lowest zoom level the tileset serves.</td></tr>
 <tr><td><code>maximumZoomLevel</code></td><td><code>number</code></td><td>Highest zoom level the tileset serves.</td></tr>
+<tr><td><code>null</code></td><td><code>double? token_bucket_capacity_tokens =</code></td><td>Immediate tile requests this source admits before pacing starts; null keeps the default of eight, matched to the renderer’s fetch window. A tileset with a stricter published budget lowers the value here. It must be finite and at least one, or installation throws naming the source.</td></tr>
+<tr><td><code>null</code></td><td><code>double? refill_tokens_per_second =</code></td><td>Sustained tile request rate in tokens per second; null keeps the default of eight per second. A tileset with a stricter published budget lowers the value here. It must be finite and strictly positive, or installation throws naming the source.</td></tr>
 </tbody>
 </table>
 </div>
@@ -12685,7 +13051,7 @@ offline graph.</li>
 </table>
 </div>
 <h3 id="locationindicatorstyle-2"><a class="header" href="#locationindicatorstyle-2">LocationIndicatorStyle</a></h3>
-<p>Style of the location layer; null fields keep the documented defaults. The disc and wedge are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
+<p>Style of the location layer; null fields keep the documented defaults. The puck and its ring and halo are screen-sized pixel constants (a position marker scales with the screen, not the ground); the accuracy ring is ground-sized.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -12693,9 +13059,11 @@ offline graph.</li>
 </thead>
 <tbody>
 <tr><td><code>visualKind</code></td><td><code>LocationIndicatorVisualKind</code></td><td>Which visual form this layer draws.</td></tr>
-<tr><td><code>radiusPixels?</code></td><td><code>number</code></td><td>Disc radius in screen pixels; null keeps the default.</td></tr>
-<tr><td><code>rgbaColor?</code></td><td><code>OverlayColor</code></td><td>Disc fill color; null keeps the default.</td></tr>
-<tr><td><code>showAccuracyRing?</code></td><td><code>boolean</code></td><td>Accuracy ring drawn around the disc (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
+<tr><td><code>radiusPixels?</code></td><td><code>number</code></td><td>Accent-core radius in screen pixels; the ring and halo are added outside it; null keeps the default.</td></tr>
+<tr><td><code>rgbaColor?</code></td><td><code>OverlayColor</code></td><td>Accent fill color of the core disc and navigation dart; null keeps the default.</td></tr>
+<tr><td><code>ringRgbaColor?</code></td><td><code>OverlayColor</code></td><td>Ring color: the ring around the puck and the navigation dart’s outline; null keeps the default white.</td></tr>
+<tr><td><code>haloRgbaColor?</code></td><td><code>OverlayColor</code></td><td>Halo color drawn under the puck; null keeps the default.</td></tr>
+<tr><td><code>showAccuracyRing?</code></td><td><code>boolean</code></td><td>Accuracy ring drawn around the puck (shown only when a fix carries a reported accuracy); null keeps the default (shown whenever the fix reports an accuracy that reaches the minimum draw size).</td></tr>
 </tbody>
 </table>
 </div>
@@ -13090,8 +13458,8 @@ offline graph.</li>
 <tr><th>Variant</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>TrackingDot</code></td><td>Plain disc (tracking mode: no course known or no route).</td></tr>
-<tr><td><code>GuidedCourseArrow</code></td><td>Disc plus course-directed heading wedge (navigation follow mode).</td></tr>
+<tr><td><code>TrackingDot</code></td><td>The soft tracking dot (no course known or no route): accent core, white ring and dark halo.</td></tr>
+<tr><td><code>GuidedCourseArrow</code></td><td>The course-directed navigation dart inside the same ring and halo (navigation follow mode); degrades to the tracking dot without a course.</td></tr>
 </tbody>
 </table>
 </div>
@@ -13193,7 +13561,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=630731ea9360e20c8ee7e5ff9a0e1cb21d2ebd62:sha256:3432b38fe2a02ccf3bd11b2b369d6b3ec2cc06489f1487e00f985acd3a5bf89b -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -13270,7 +13638,7 @@ offline graph.</li>
 </thead>
 <tbody>
 <tr><td><code>initialize</code></td><td><code>async initialize(): Promise&lt;string&gt;</code></td><td>Asynchronous. Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Acquires the adapter and device, picks the pass-through surface format, and builds the tile pipeline. Resolves to the adapter description (graphics backend and adapter name) for the page’s status line, or fails when no WebGPU adapter supports this canvas — the page then degrades to the 2D tile grid overlay. Never callable twice on the same canvas.</td></tr>
-<tr><td><code>renderFrame</code></td><td><code>async renderFrame(camera: MapCamera, fieldOfViewDegrees: number): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Renders one map frame for the camera pose into the canvas, resolving freshly visible tiles from the same-origin <code>/tiles</code> route first. Resolves to a statistics object the page’s readout consumes: <code>requestedTiles</code> (tiles the camera listed at the fetch zoom), <code>drawnTiles</code> (tiles with pooled imagery over their span this frame), <code>drawnFragments</code> (draw quads after world-copy fragment splitting), <code>missingTiles</code> (requested tiles with no pooled imagery this frame), <code>tileZoomLevel</code> (the fetch zoom, clamped to the recorded fixtures), <code>tileResolution</code> (the resolution the frame’s fixtures were fetched and sampled at) and <code>overlayTriangles</code> (triangles in the cached world-space overlay layer drawn over the tiles this frame; zero without overlays; the GPU clips copies and near-plane fragments). With the raster tile layer hidden through [<code>MapView::set_tile_layer_visible</code>] the frame skips the whole tile pipeline and reports <code>requestedTiles</code>, <code>drawnTiles</code>, <code>drawnFragments</code> and <code>missingTiles</code> as zero while still presenting the overlay and indicator layers. The camera binding is consumed by value (the <code>wasm-bindgen</code> class parameter semantics); the page builds a fresh camera per changed pose, exactly as it already does. Two overlapping calls are a construction-time borrow violation — the page serializes its frames behind a busy flag and never overlaps.</td></tr>
+<tr><td><code>renderFrame</code></td><td><code>async renderFrame(camera: MapCamera, fieldOfViewDegrees: number): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Renders one map frame for the camera pose into the canvas, resolving freshly visible tiles from the same-origin <code>/tiles</code> route first. Resolves to a statistics object the page’s readout consumes: <code>requestedTiles</code> (tiles the camera listed at the fetch zoom), <code>drawnTiles</code> (tiles with pooled imagery over their span this frame), <code>drawnFragments</code> (draw quads after world-copy fragment splitting), <code>missingTiles</code> (requested tiles with no pooled imagery this frame), <code>zoomTransitionRunning</code> (whether a tile zoom-level cross-fade still owes frames, so the page keeps drawing at the animation cadence), <code>retainedTiles</code> (retired-level tiles drawn over the new level for that cross-fade), <code>tileZoomLevel</code> (the fetch zoom, clamped to the recorded fixtures), <code>tileResolution</code> (the resolution the frame’s fixtures were fetched and sampled at) and <code>overlayTriangles</code> (triangles in the cached world-space overlay layer drawn over the tiles this frame; zero without overlays; the GPU clips copies and near-plane fragments). With the raster tile layer hidden through [<code>MapView::set_tile_layer_visible</code>] the frame skips the whole tile pipeline and reports <code>requestedTiles</code>, <code>drawnTiles</code>, <code>drawnFragments</code> and <code>missingTiles</code> as zero while still presenting the overlay and indicator layers. The camera binding is consumed by value (the <code>wasm-bindgen</code> class parameter semantics); the page builds a fresh camera per changed pose, exactly as it already does. Two overlapping calls are a construction-time borrow violation — the page serializes its frames behind a busy flag and never overlaps.</td></tr>
 <tr><td><code>stageParentTile</code></td><td><code>async stageParentTile(fallbackTileX: number, fallbackTileY: number, fallbackZoomLevel: number, parentTileX: number, parentTileY: number, parentZoomLevel: number): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws the verbatim failure message as a string.</td><td>Stages a deliberate parent-fallback for one requested tile, mirroring the native golden-image tests: the fallback tile is evicted from the pool and marked unavailable forever, and its coarser parent’s recorded fixture is pooled instead, so the scheduler resolves the fallback tile as <code>FallsBackTo { parent }</code> every frame and the frame samples the parent texture. The committed golden frames were produced with the last visible scene tile resolved exactly this way, so a browser page that compares against them calls this before rendering a golden scene to reproduce the reference imagery byte-for-byte. Fetches the parent fixture from the same-origin <code>/tiles</code> route. A missing or undecodable parent fixture is an error, not a silent skip: the caller wants the fallback imagery or nothing. The parent coordinates must describe the fallback tile’s direct parent. The draw state is borrowed only to read the tile resolution and again after the fetch; the parent fetch itself runs outside any borrow, so a concurrent frame can draw while the payload is in flight.</td></tr>
 <tr><td><code>setOverlays</code></td><td><code>setOverlays(overlays: any[]): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the overlay list drawn over the tiles in every following [<code>MapView::render_frame</code>], replacing any earlier list in order (later list entries draw over earlier ones); an empty array clears. Each entry is a plain JavaScript object describing one overlay shape, selected by its <code>kind</code> field: * <code>{kind: "routePolyline", coordinates: [{latitude, longitude}...], color?, widthPixels?}</code> — a routed path drawn as a thick line, * <code>{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...], color?}</code> — an ear-clip triangulated ring fill, * <code>{kind: "pointMarkers", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — screen-facing octagon markers, * <code>{kind: "pointPins", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — teardrop pins anchored at their tip with a hollow head center, * <code>{kind: "trafficFlow", segments: [{shapeCoordinates: [{latitude, longitude}...], congestionLevel: CanvasTrafficFlowCongestionLevel}...], widthPixels?}</code> — congestion-colored traffic lines. An absent <code>color</code>/<code>widthPixels</code>/<code>radiusPixels</code> override keeps the documented rustic-maps-rendering default style; the fields exist exactly where the native overlay structs have them. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; widths and radii are positive finite screen pixel values. Every invalid descriptor (wrong shape, missing or wrong-typed field, out-of-range coordinate or channel, unknown <code>kind</code> or congestion value) rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous list in force; nothing panics.</td></tr>
 <tr><td><code>addOverlay</code></td><td><code>addOverlay(overlay: any): string</code></td><td>Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Adds one overlay descriptor to the drawn list and answers the generated opaque identifier addressing it (<code>overlay-1</code>, <code>overlay-2</code>, …; monotonic per view, never reused). Validation is exactly <code>set_overlays</code>’ single-descriptor rule: a refused descriptor throws and adds nothing. The new overlay draws last, over the entries already in the list.</td></tr>
@@ -13282,7 +13650,8 @@ offline graph.</li>
 <tr><td><code>setGlyphRange</code></td><td><code>setGlyphRange(glyphRangeBytes: Uint8Array): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Decodes one Mapbox glyph-protocol range and packs it into the <code>R8Unorm</code> atlas the label layer draws with. Answers the decoded font stack name, glyph count and page dimensions for the page’s status readout. A malformed payload or an un-packable range is a coded <code>responseParsingFailure</code> rejection and keeps the previous font in force.</td></tr>
 <tr><td><code>setLocationIndicator</code></td><td><code>setLocationIndicator(stateValue: any, styleValue: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the location-indicator layer drawn over the overlays in every following [<code>MapView::render_frame</code>] (the native surface’s top layer), replacing any earlier layer. The state descriptor is <code>{coordinate: {latitude, longitude}, courseHeadingDegrees?, horizontalAccuracyMeters?}</code>; the style descriptor is <code>{visualKind: "trackingDot" \| "guidedCourseArrow", radiusPixels?, rgbaColor?, showAccuracyRing?}</code>, where every omitted style field keeps the documented rustic-maps-rendering default. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; the radius is a positive finite screen-pixel value. The optional scalars pass through verbatim (the native indicator state’s rule) while the style’s own range rules mirror the native record conversion. Every invalid descriptor rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous layer in force; nothing panics.</td></tr>
 <tr><td><code>clearLocationIndicator</code></td><td><code>clearLocationIndicator(): void</code></td><td>—</td><td>Clears the location-indicator layer; following frames draw no indicator until [<code>MapView::set_location_indicator</code>] supplies a new one.</td></tr>
-<tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Installs a styled vector base map (the UDL <code>MapView.set_vector_tile_source</code> contract member). The descriptor is one plain JavaScript object carrying the UDL <code>UrlTemplateVectorTileSource</code> fields in lower camel case: <code>{urlTemplate, sourceName, attributionText, styleId, minimumZoomLevel, maximumZoomLevel}</code>. The template must be an absolute <code>http</code>/<code>https</code> URL carrying <code>{z}</code>, <code>{x}</code> and <code>{y}</code>; the style id must name one of the committed style artifacts (<code>bright-light</code>, <code>fiord-dark</code>, …). The whole source builds before this view changes, so a refused call (a malformed template, an empty name, an inverted zoom range or an unknown style id) throws a coded failure and leaves the previous base in force. While a source is installed the canvas hides the raster base and paints the style’s own background, exactly like the native surface; the source’s overlays and place names draw beneath every overlay the page supplies. An install that lands while a frame resolves is deferred to that frame’s end and the last request wins, so a style switch never has to be retried.</td></tr>
+<tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Installs a styled vector base map (the UDL <code>MapView.set_vector_tile_source</code> contract member). The descriptor is one plain JavaScript object carrying the UDL <code>UrlTemplateVectorTileSource</code> fields in lower camel case: <code>{urlTemplate, sourceName, attributionText, styleId, minimumZoomLevel, maximumZoomLevel}</code>, plus the optional <code>tokenBucketCapacityTokens</code> and <code>refillTokensPerSecond</code> pacing rates (absent fields keep the SDK’s documented bucket). The template must be an absolute <code>http</code>/<code>https</code> URL carrying <code>{z}</code>, <code>{x}</code> and <code>{y}</code>; the style id must name one of the committed style artifacts (<code>bright-light</code>, <code>fiord-dark</code>, …). The whole source builds before this view changes, so a refused call (a malformed template, an empty name, an inverted zoom range, an unusable pacing rate or an unknown style id) throws a coded failure and leaves the previous base in force. While a source is installed the canvas hides the raster base and paints the style’s own background, exactly like the native surface; the source’s overlays and place names draw beneath every overlay the page supplies. An install that lands while a frame resolves is deferred to that frame’s end and the last request wins, so a style switch never has to be retried.</td></tr>
+<tr><td><code>reloadTileSource</code></td><td><code>reloadTileSource(): void</code></td><td>—</td><td>Drops the canvas’ pooled raster state and re-plans the next frame’s fetches from the current raster sources (the UDL <code>MapView.reload_tile_source</code> contract member, served on the canvas). The scheduler, its payload pool, the staging provider’s staged and decoded payloads, the uploaded textures and the retained cross-fade level are replaced or cleared, so a source change reaches the next frame without constructing a new canvas and no payload fetched from the previous source draws again. Overlays, labels, the vector base and the location layer survive the reload; fixtures and the registered live sources are consulted afresh on the next tile pass. A call made while a frame owns the draw state is applied before the next frame’s tile pass. A call before initialization is a no-op.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Removes the vector base map (the UDL <code>MapView.clear_vector_tile_source</code> contract member): following frames draw raster tiles and overlays alone. A clear that lands while a frame resolves is deferred to that frame’s end, like installing, and it cancels an install that was waiting.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>vectorTileSourceStatus(): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Reads the vector base source’s status (the UDL <code>MapView.vector_tile_source_status</code> contract member): the configured source’s style, name, attribution and zoom ceiling plus the last resolved frame’s drawn and failed tile counts. While a source is configured, the object additionally carries the frame diagnostics — payload-cache hits and misses, in-flight fetches and the first-drawn-tile latency — as additive fields. A pure query — it never fetches or draws — and it answers an honest not-configured status with no source installed.</td></tr>
 <tr><td><code>setBaseMapVisible</code></td><td><code>setBaseMapVisible(visible: boolean): void</code></td><td>—</td><td>Shows or hides the raster tile base layer in every following [<code>MapView::render_frame</code>]. Hidden frames still clear the surface and draw the overlay and location-indicator layers, so the page can paint a vector base map through [<code>MapView::set_overlays</code>] while this raster layer is hidden. A hidden frame skips the tile listing, same-origin fetches, scheduler warm/resolve, texture uploads and tile draws, and reports <code>requestedTiles: 0</code>, <code>drawnTiles: 0</code> and <code>missingTiles: 0</code> while keeping the current <code>tileZoomLevel</code>, <code>tileResolution</code> and <code>overlayTriangles</code> statistics. Showing the layer again resolves tiles normally on the next frame (the texture cache survives hidden frames).</td></tr>
@@ -13632,7 +14001,7 @@ offline graph.</li>
 <tr><td><code>fetchTrafficIncidents</code></td><td><code>async fetchTrafficIncidents(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Fetches traffic disruptions intersecting the bounding box — the contract’s <code>MapSdk::fetchTrafficIncidents</code> on the wasm seam. The row shape is the contract’s <code>TrafficIncident</code> with lower-camel field names and enum names as text (<code>incidentType</code>, <code>severity</code>).</td></tr>
 <tr><td><code>fetchTrafficFlow</code></td><td><code>async fetchTrafficFlow(southWestLatitude: number, southWestLongitude: number, northEastLatitude: number, northEastLongitude: number): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Fetches per-segment traffic flow inside the bounding box — the contract’s <code>MapSdk::fetchTrafficFlow</code> on the wasm seam. The row shape is the contract’s <code>TrafficFlowData</code> with lower-camel field names, speed values or null, and the congestion level’s enum name as text.</td></tr>
 <tr><td><code>fetchElevationPoints</code></td><td><code>async fetchElevationPoints(pointCoordinates: number[]): Promise&lt;any[]&gt;</code></td><td>Asynchronous. Returns <code>any[]</code>. Throws the verbatim failure message as a string.</td><td>Fetches elevation samples through the installed elevation provider — the contract’s <code>MapSdk::fetchElevationPoints</code> on the wasm seam. Coordinates arrive as a flat <code>[latitude, longitude, …]</code> array; the answer rows carry <code>latitude</code>, <code>longitude</code> and <code>elevationMeters</code>. The provider set this build carries serves no elevation, so the call answers <code>ProviderNotConfigured</code> until a page configures one; the refusal names the contract, exactly as the native bindings’ does.</td></tr>
-<tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>registerUrlTemplateRasterTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Registers a <code>{z}/{x}/{y}</code> raster tileset as the serving raster-tile provider — the contract’s <code>MapSdk::registerUrlTemplateRasterTileSource</code>. The declaration arrives as one plain object with the contract’s <code>UrlTemplateRasterTileSource</code> fields, lower-camel-cased: <code>urlTemplate</code>, <code>sourceName</code>, <code>minimumZoomLevel</code>, <code>maximumZoomLevel</code>, <code>imageFormat</code> (<code>Png</code> or <code>Jpeg</code>), <code>tileResolution</code> (<code>Standard</code> or <code>Retina</code>) and <code>userAgent</code>. Zoom levels and texts fall back to the documented defaults; the format defaults to <code>Png</code> and the resolution to <code>Standard</code>. A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving. The canvas’ live raster fallback fetches through the registered source at the zoom ceiling it declares.</td></tr>
+<tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>registerUrlTemplateRasterTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Registers a <code>{z}/{x}/{y}</code> raster tileset as the serving raster-tile provider — the contract’s <code>MapSdk::registerUrlTemplateRasterTileSource</code>. The declaration arrives as one plain object with the contract’s <code>UrlTemplateRasterTileSource</code> fields, lower-camel-cased: <code>urlTemplate</code>, <code>sourceName</code>, <code>minimumZoomLevel</code>, <code>maximumZoomLevel</code>, <code>imageFormat</code> (<code>Png</code> or <code>Jpeg</code>), <code>tileResolution</code> (<code>Standard</code> or <code>Retina</code>), <code>userAgent</code>, and the optional <code>tokenBucketCapacityTokens</code> / <code>refillTokensPerSecond</code> pacing rates. Zoom levels and texts fall back to the documented defaults; the format defaults to <code>Png</code>, the resolution to <code>Standard</code>, and absent pacing fields to the SDK’s documented bucket. A malformed template, a blank source name, an inverted zoom range or an unusable pacing rate throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving. The canvas’ live raster fallback fetches through the registered source at the zoom ceiling it declares.</td></tr>
 <tr><td><code>clearUrlTemplateRasterTileSource</code></td><td><code>clearUrlTemplateRasterTileSource(): void</code></td><td>—</td><td>Removes the page-registered URL-template raster source. A configured raster provider is untouched; with none, the canvas falls back to its recorded fixtures.</td></tr>
 <tr><td><code>fetchRasterTile</code></td><td><code>async fetchRasterTile(zoomLevel: number, tileX: number, tileY: number): Promise&lt;Uint8Array&gt;</code></td><td>Asynchronous. Returns <code>Uint8Array</code>. Throws the verbatim failure message as a string.</td><td>Fetches one raster tile through the installed raster-tile provider, answering the PNG bytes as a <code>Uint8Array</code>. The request is the standard-resolution PNG form of the provider’s documented tile path. Failures throw an error carrying the verbatim detail and a stable code: no registration, a zoom or tile address outside the provider’s documented bounds, or the provider’s own refusal.</td></tr>
 </tbody>
@@ -14013,6 +14382,8 @@ offline graph.</li>
 <tr><td><code>styleId</code></td><td><code>string</code></td><td>/** The committed style id the base paints with. */</td></tr>
 <tr><td><code>minimumZoomLevel</code></td><td><code>number</code></td><td>/** Lowest zoom level the tileset serves. */</td></tr>
 <tr><td><code>maximumZoomLevel</code></td><td><code>number</code></td><td>/** Highest zoom level the tileset serves. */</td></tr>
+<tr><td><code>tokenBucketCapacityTokens</code></td><td><code>number \| null</code></td><td>Immediate tile requests the source admits before pacing starts, or <code>null</code> for the SDK’s default of eight. A tileset with a stricter published budget lowers the value; it must be finite and at least one.</td></tr>
+<tr><td><code>refillTokensPerSecond</code></td><td><code>number \| null</code></td><td>Sustained tile request rate in tokens per second, or <code>null</code> for the SDK’s default of eight per second. A tileset with a stricter published budget lowers the value; it must be finite and strictly positive.</td></tr>
 </tbody>
 </table>
 </div>
@@ -14465,7 +14836,7 @@ interface GeocodingProvider {
 <p>Read a member’s name twice: the UDL spelling is what the Rust implementation
 uses, and the camelCase spelling is what you type in Kotlin, Swift, React
 Native or the browser. A member without <code>[Async]</code> returns its value directly.</p>
-<h2 id="where-to-go-next-9"><a class="header" href="#where-to-go-next-9">Where to go next</a></h2>
+<h2 id="where-to-go-next-10"><a class="header" href="#where-to-go-next-10">Where to go next</a></h2>
 <ul>
 <li><a href="#api-reference">API reference</a> — the generated documentation for every
 module in the current release.</li>

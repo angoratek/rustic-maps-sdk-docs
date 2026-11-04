@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-13f974d5.js";
+            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e43faa06.js"></script>
+        <script src="toc-18302c03.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -249,34 +249,126 @@ capability in a stable order.</p>
 // VectorTiles: OpenStreetMap US
 // OfflineRouting: not configured
 </code></pre>
-<h2 id="keyless-providers"><a class="header" href="#keyless-providers">Keyless providers</a></h2>
-<p>A self-hosted routing engine has no credential. Pass an empty string, or pass
-the deployment’s base URL, which the provider reads as its address:</p>
+<h2 id="what-the-readback-reports"><a class="header" href="#what-the-readback-reports">What the readback reports</a></h2>
+<p><code>providerRegistrations()</code> returns one entry per capability, every time,
+including capabilities with no provider. The order is stable:
+Geocoding, Routing, Distance Matrix, Place Search, Traffic Incidents, Traffic
+Flow, Elevation, Raster Tiles, Vector Tiles, Offline Routing.</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Provider</th><th>Credential field</th></tr>
+<tr><th>Field</th><th>Meaning</th></tr>
 </thead>
 <tbody>
-<tr><td>OSRM</td><td>Base URL of the deployment; empty for a local server on port 5000</td></tr>
-<tr><td>Valhalla</td><td>Base URL of the deployment; empty for a local server on port 8002</td></tr>
+<tr><td><code>contract</code></td><td>The capability the entry describes</td></tr>
+<tr><td><code>provider_key</code></td><td>The serving provider’s stable key, empty when none is installed</td></tr>
+<tr><td><code>display_name</code></td><td>The provider’s name from the shared registry, empty when none is installed</td></tr>
+<tr><td><code>registered</code></td><td>Whether a provider is installed for the capability</td></tr>
 </tbody>
 </table>
 </div>
-<p>A provider that declares a credential refuses a blank one and keeps the
-previous provider serving.</p>
-<h2 id="what-the-reference-apps-show"><a class="header" href="#what-the-reference-apps-show">What the reference apps show</a></h2>
-<p>Every reference app renders one settings row per capability, in the order the
-readback returns. Each row shows the serving provider’s display name and a
-picker limited to the providers that declare that capability. The choice is
-remembered across launches with the app’s other remembered choices; a
-capability with no provider reads “Not configured”.</p>
+<p>Binding surfaces spell the fields in their own style; the Kotlin example
+above reads <code>displayName</code>. Read the list after a selection and once at
+startup. The readback never changes a provider.</p>
+<h2 id="keyless-and-keyed-providers"><a class="header" href="#keyless-and-keyed-providers">Keyless and keyed providers</a></h2>
+<p>A provider’s descriptor declares whether it needs a credential. The two paths
+differ only in the value passed to <code>configureProvider</code>.</p>
+<p><strong>Keyed.</strong> Apply the credential through the settings surface, then select the
+provider for a capability:</p>
+<ol>
+<li>Apply the provider’s key. <code>setProviderCredential(key)</code> fills every
+capability that vendor serves. MapQuest fills geocoding, routing, the
+distance matrix, place search, traffic incidents, traffic flow and raster
+tiles.</li>
+<li>Replace any capability that should use another provider with
+<code>configureProvider</code>. The other capabilities keep serving.</li>
+<li>A provider that declares a credential refuses a blank one. The refusal
+leaves the previous provider serving and states the reason in the row.</li>
+</ol>
+<p><strong>Keyless.</strong> A self-hosted routing engine or a public instance has no key:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Credential value</th></tr>
+</thead>
+<tbody>
+<tr><td>OSRM</td><td>The deployment’s base URL; an empty value means <code>http://localhost:5000</code></td></tr>
+<tr><td>Valhalla</td><td>The deployment’s base URL; an empty value means <code>http://localhost:8002</code></td></tr>
+<tr><td>Photon</td><td>The deployment’s base URL; an empty value means the public instance at <code>https://photon.komoot.io</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>For OSRM and Valhalla, pass the public demo address when you want the shared
+server. An empty value points at the local deployment instead. The reference
+applications pass the registry descriptor’s public address for a keyless
+pick, so a selection never silently points at a local deployment.</p>
+<h2 id="public-demo-endpoints-and-their-limits"><a class="header" href="#public-demo-endpoints-and-their-limits">Public demo endpoints and their limits</a></h2>
+<p>These services are shared, and each one states what it accepts. They are for
+evaluation and reference applications, not production traffic.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Capabilities</th><th>Public endpoint</th><th>Limit</th></tr>
+</thead>
+<tbody>
+<tr><td>OSRM</td><td>Routing</td><td><code>https://router.project-osrm.org</code></td><td>One request per second; reasonable non-commercial use; no uptime, latency or data-update guarantee</td></tr>
+<tr><td>Valhalla</td><td>Routing</td><td><code>https://valhalla1.openstreetmap.de</code></td><td>One request per second; an identifying User-Agent; OpenStreetMap attribution; no high-traffic or production use</td></tr>
+<tr><td>Photon</td><td>Geocoding, place search</td><td><code>https://photon.komoot.io</code></td><td>Reasonable non-commercial use; best effort; no uptime or latency guarantee</td></tr>
+</tbody>
+</table>
+</div>
+<p>The tile services carry their own limits:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Provider</th><th>Capabilities</th><th>Endpoint</th><th>Limit</th></tr>
+</thead>
+<tbody>
+<tr><td>OpenStreetMap Standard</td><td>Raster tiles</td><td><code>https://tile.openstreetmap.org/{z}/{x}/{y}.png</code></td><td>Low-volume use only, with attribution</td></tr>
+<tr><td>OpenFreeMap</td><td>Vector tiles</td><td><code>https://tiles.openfreemap.org/planet/latest/{z}/{x}/{y}.pbf</code></td><td>Free public use with attribution; bulk downloads limited to 3,000 tiles or 50 MB per download</td></tr>
+<tr><td>OpenStreetMap US</td><td>Vector tiles</td><td><code>https://tiles.openstreetmap.us/vector/sourdough/{z}/{x}/{y}.mvt</code></td><td>Free for low-volume, non-commercial use with attribution</td></tr>
+<tr><td>MapQuest</td><td>Geocoding, routing, distance matrix, place search, traffic, raster tiles</td><td>Keyed service</td><td>Rate limits apply; raster tiles carry a 30-day caching ceiling</td></tr>
+</tbody>
+</table>
+</div>
+<p>Run a deployment of your own when your volume exceeds a shared service’s
+limit. The terms note on each provider’s settings row repeats the limit that
+applies.</p>
+<h2 id="what-the-settings-surface-shows"><a class="header" href="#what-the-settings-surface-shows">What the settings surface shows</a></h2>
+<p>The settings surface renders one row per capability in the readback’s order.
+Each row composes the serving provider and its state in one line, such as
+<code>MapQuest · Ready</code>, <code>OSRM · Ready</code> or <code>MapQuest · Needs API key</code>. A picker
+offers the providers that declare that capability on the platform; a
+capability with no provider reads <code>Not configured</code>.</p>
+<p>The choice is remembered with the app’s other remembered choices and
+re-applied at startup, after the session’s credentials. A refused
+re-application reports in its row and leaves the previous provider serving.
+Raster tiles and vector tiles are read-only in settings because the map’s
+layer control owns the base map; their rows point to the control.</p>
+<h2 id="failure-and-next-step"><a class="header" href="#failure-and-next-step">Failure and next step</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Situation</th><th>What you see</th></tr>
+</thead>
+<tbody>
+<tr><td>A capability has no provider</td><td><code>Not configured</code> on its row; a call fails with <code>ProviderNotConfigured</code> naming the capability</td></tr>
+<tr><td>A provider declares a credential the session lacks</td><td><code>{display name} · Needs API key</code>; the picker entry is disabled</td></tr>
+<tr><td>A selection is refused</td><td>The provider’s reason in the row; the previous provider keeps serving</td></tr>
+<tr><td>A keyless routing provider is selected</td><td><code>Demo server: {url}</code> under the row, with the descriptor’s limit note</td></tr>
+<tr><td>A public demo routing server does not answer</td><td><code>The demo server did not answer. Retry, or enter your own deployment address.</code></td></tr>
+<tr><td>A keyless demo has no recorded result</td><td><code>No demo place matches the {field}; apply a provider key in Settings for live search.</code> or <code>No recorded demo route from {origin} to {destination}; apply a provider key for live routing.</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>A failure never swaps in a different provider. The row states the reason and
+the previous choice keeps serving until you choose again.</p>
 <h2 id="rules-to-keep"><a class="header" href="#rules-to-keep">Rules to keep</a></h2>
 <ul>
 <li>A provider’s name belongs in its crate, its sample-data directory, the
 shared registry descriptor and the catalog row. Nothing else names it.</li>
-<li>Sample responses are committed fixtures served under
-<code>/providers/{provider_key}/…</code>; tests never reach the network.</li>
+<li>Sample responses are recorded data served from the demo’s own origin;
+tests never reach the network.</li>
 <li>Changing a capability never silently changes another. If a call would
 replace more than the capability it names, it is not this API.</li>
 </ul>
@@ -286,6 +378,8 @@ replace more than the capability it names, it is not this API.</li>
 catalog row.</li>
 <li><a href="search-and-routing.html">Search and routing</a> covers the calls the
 capabilities serve.</li>
+<li><a href="map-layers-and-traffic.html">Map layers and traffic</a> covers the on-map
+control that owns the base map and the traffic layer.</li>
 <li><a href="provider-capabilities-rust.html">Provider capabilities in Rust</a> lists the
 traits each capability maps to.</li>
 </ul>

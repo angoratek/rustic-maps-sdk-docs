@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_REFILL_TOKENS_PER_SECOND","DEFAULT_TOKEN_BUCKET_CAPACITY_TOKENS"],"struct":["TileSourcePacing"]};

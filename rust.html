@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-13f974d5.js";
+            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e43faa06.js"></script>
+        <script src="toc-18302c03.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -201,6 +201,37 @@ Rust and have no platform dependency.</p>
 </div>
 <p>The crates are consumed from the SDK source today; a registry package follows
 the first Rust release.</p>
+<h2 id="install-from-the-source-archive"><a class="header" href="#install-from-the-source-archive">Install from the source archive</a></h2>
+<p>The Rust artifact is <code>rustic-maps-sdk-rust-v0.1.0.tar.gz</code>: the tracked source
+tree at the release commit, under one <code>rustic-maps-sdk-rust-v0.1.0/</code>
+directory. It contains the workspace manifest and lock file, every workspace
+crate, the provider crates and their committed sample responses, the platform
+package sources and build scripts, the documentation sources, and both license
+files (MIT and Apache-2.0).</p>
+<ol>
+<li>Download the archive and its <code>.sha256</code> sidecar from
+<a href="downloads.html">Downloads</a>.</li>
+<li>Verify the checksum against the sidecar.</li>
+<li>Unpack the archive.</li>
+<li>Point a path dependency at the crate you use, as the
+<a href="downloads.html#rust">Downloads</a> page shows.</li>
+</ol>
+<p>The archive contains source only. Cargo builds the crates your application
+uses from that source, including their tests. The workspace lock file pins
+dependency versions; Cargo downloads those dependencies from their own
+sources unless your environment already provides them. Rust 1.87 or newer is
+required, and the workspace uses the 2024 edition.</p>
+<p>The archive does not ship:</p>
+<ul>
+<li>compiled libraries, an AAR, an XCFramework, a wasm module, or npm tarballs;
+the platform artifacts are separate downloads;</li>
+<li>generated Kotlin, Swift or TypeScript bindings; the build scripts generate
+them from the contract;</li>
+<li>a provider credential, a local configuration file, or an environment file;</li>
+<li>the release’s Sigstore signature bundles; they attach to each published
+artifact on the release record;</li>
+<li>the Git history; the archive is the release commit’s snapshot.</li>
+</ul>
 <h2 id="camera-and-projection-without-a-gpu"><a class="header" href="#camera-and-projection-without-a-gpu">Camera and projection without a GPU</a></h2>
 <p>Camera math and projection are pure Rust and run anywhere:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
