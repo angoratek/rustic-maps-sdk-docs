@@ -1303,8 +1303,9 @@ interface MapSdk {
         RasterTileResolution tile_resolution
     );
 
-    /// Registers the built-in MapQuest provider set from one consumer key, with
-    /// the SDK defaults for base URL, rate limiting and retries.
+    /// Registers the build's full-service credentialed provider set from one
+    /// credential, with the SDK defaults for base URL, rate limiting and
+    /// retries.
     ///
     /// The call installs geocoding, routing, distance matrix, place search,
     /// traffic incidents, traffic flow and raster tiles, so one call and one
@@ -1313,7 +1314,7 @@ interface MapSdk {
     /// `ProviderNotConfigured`.
     ///
     /// # Parameters
-    /// - `credential` — the provider consumer key.
+    /// - `credential` — the provider credential.
     ///
     /// # Errors
     /// Throws `SdkError` when the credential is empty or the registration is
@@ -1321,32 +1322,41 @@ interface MapSdk {
     [Throws=SdkError]
     void set_provider_credential(string credential);
 
-    /// Registers the built-in MapQuest provider set from one consumer key,
-    /// exactly like `set_provider_credential`, and wraps the raster-tile
+    /// Registers the provider named by `provider_key` from one credential,
+    /// exactly like `set_provider_credential`, and wraps its raster-tile
     /// provider in a disk response cache.
     ///
-    /// The cache is a SQLite database opened (or created) at
+    /// The key names a credentialed provider that serves raster tiles and
+    /// declares raster-tile caching terms. The registration installs every
+    /// capability that provider serves, so one call and one credential enable
+    /// the whole set. The cache is a SQLite database opened (or created) at
     /// `tile_cache_database_path` and bounded by
     /// `tile_cache_absolute_maximum_bytes`. Cached tile responses follow the
-    /// tiles category's time-to-live (thirty days by default, the imagery
-    /// provider's terms ceiling); a cache miss goes to the network and
-    /// back-fills the cache, so pre-warmed tiles keep rendering when the
+    /// tiles category's time-to-live (thirty days by default, clamped to the
+    /// provider's declared terms ceiling); a cache miss goes to the network
+    /// and back-fills the cache, so pre-warmed tiles keep rendering when the
     /// network is unavailable. Re-registration replaces the providers,
     /// including the cached raster-tile provider.
     ///
     /// # Parameters
-    /// - `mapquest_api_key` — the provider consumer key.
+    /// - `provider_key` — the stable key of a credentialed provider built into
+    ///   this SDK that serves raster tiles and declares caching terms.
+    /// - `credential` — the provider credential.
     /// - `tile_cache_database_path` — non-empty absolute path of the cache
     ///   database.
     /// - `tile_cache_absolute_maximum_bytes` — positive byte budget of the
     ///   cache.
     ///
     /// # Errors
-    /// Throws `SdkError` when the path is empty, the byte budget is not
-    /// positive, or the cache cannot be opened or refuses the quota; the detail
-    /// names the reason verbatim.
+    /// Throws `ProviderNotConfigured` when the key is unknown to this build,
+    /// and `ProviderRequestRejected` when the provider serves no raster tiles,
+    /// declares no raster-tile caching terms, or requires a credential and the
+    /// supplied one is blank. Throws `InvalidCoordinateInput` when the path is
+    /// empty or the byte budget is not positive, and `CacheOperationFailure`
+    /// when the cache cannot be opened or refuses the quota; the detail names
+    /// the reason verbatim.
     [Throws=SdkError]
-    void set_provider_credential_with_tile_cache(string mapquest_api_key, string tile_cache_database_path, u64 tile_cache_absolute_maximum_bytes);
+    void set_provider_credential_with_tile_cache(string provider_key, string credential, string tile_cache_database_path, u64 tile_cache_absolute_maximum_bytes);
 
     /// Registers a provider-neutral raster base map: any web-mercator XYZ
     /// tileset that publishes a `{z}/{x}/{y}` URL template.
@@ -1495,12 +1505,126 @@ dictionary TileCacheTerms {
     u64 effective_time_to_live_seconds;
     /// The installed provider's declared caching-terms ceiling in seconds, or
     /// null when the provider declares no ceiling; the requested time-to-live
-    /// then applies verbatim. For the MapQuest raster tiles this is thirty
-    /// calendar days.
+    /// then applies verbatim.
     u64? provider_terms_ceiling_seconds;
     /// The cache category's default time-to-live for raster tiles, in seconds
     /// (thirty days); the value a freshly registered cache starts at.
     u64 default_time_to_live_seconds;
+};
+
+// ---------------------------------------------------------------------------
+// Offline tile packs: region definitions, stored regions, download progress
+// and explicit deletion.
+// ---------------------------------------------------------------------------
+
+/// One offline region selection: the identity the region is stored and managed
+/// under, the area it covers, the zoom range and tile form the stored tiles
+/// carry, and the retention the application requests.
+dictionary RegionDefinition {
+    /// Stable identifier the region is stored and managed under; downloading
+    /// the same identifier again is idempotent, and a redefined shape replaces
+    /// the stored region.
+    string region_id;
+    /// Human-readable name for region-listing surfaces.
+    string display_name;
+    /// The region's bounding box; boxes never span the antimeridian.
+    BoundingBox bounding_box;
+    /// Lowest zoom level downloaded; ranges download coarse-first.
+    u8 minimum_zoom_level;
+    /// Highest zoom level downloaded.
+    u8 maximum_zoom_level;
+    /// Encoded format the stored tile payloads carry.
+    RasterImageFormat image_format;
+    /// Pixel resolution the stored tile payloads carry.
+    RasterTileResolution tile_resolution;
+    /// Requested retention in seconds; null takes the raster-tiles category
+    /// default, clamped to the provider's declared ceiling. Zero is refused.
+    u64? time_to_live_seconds;
+};
+
+/// One offline region as it stands on disk: the stored shape, the effective
+/// retention and the live tiles among its members.
+dictionary RegionRecord {
+    /// The region's identifier.
+    string region_id;
+    /// The region's display name.
+    string display_name;
+    /// The recorded area the region covers.
+    BoundingBox bounding_box;
+    /// The recorded lowest zoom level.
+    u8 minimum_zoom_level;
+    /// The recorded highest zoom level.
+    u8 maximum_zoom_level;
+    /// The recorded encoded format.
+    RasterImageFormat image_format;
+    /// The recorded pixel resolution.
+    RasterTileResolution tile_resolution;
+    /// The retention the region's entries carry, in seconds: the requested
+    /// value or the category default, clamped to the provider's ceiling.
+    u64 effective_time_to_live_seconds;
+    /// Tile fingerprints the region claims membership for.
+    u64 member_tile_count;
+    /// Members whose entries are live on disk right now.
+    u64 present_tile_count;
+    /// Payload bytes of the live members.
+    u64 present_payload_bytes;
+};
+
+/// The phase of one region download.
+enum RegionDownloadPhase {
+    /// The download is running; progress reports carry the counts so far.
+    "Downloading",
+    /// The download finished with every member tile present.
+    "Completed",
+    /// The application cancelled the download; the partial region is kept and
+    /// resumable.
+    "Cancelled",
+    /// The download stopped on a failure after keeping the partial region.
+    "Failed",
+};
+
+/// One progress report of a region download.
+dictionary RegionDownloadProgress {
+    /// The region this report belongs to.
+    string region_id;
+    /// Tiles the region enumerates.
+    u64 total_tile_count;
+    /// Tiles downloaded and refreshed so far.
+    u64 completed_tile_count;
+    /// Completed tiles the provider had to fetch.
+    u64 network_fetched_tile_count;
+    /// Completed tiles the store already held.
+    u64 disk_served_tile_count;
+    /// The phase this report describes.
+    RegionDownloadPhase phase;
+};
+
+/// What a region's explicit deletion removed.
+dictionary RegionRemovalReport {
+    /// Tile entries deleted; never a tile another live region still claims.
+    u64 removed_entry_count;
+    /// Payload bytes those entries carried.
+    u64 removed_payload_bytes;
+};
+
+/// Offline region download progress listener. Implement this interface and
+/// pass it to `OfflineManager::download_region`.
+///
+/// # Progress
+/// The listener receives one `Downloading` report with zero completions before
+/// the first tile, one `Downloading` report per completed tile, and exactly
+/// one terminal report: `Completed`, `Cancelled` or `Failed`. The counts are
+/// the download's own honest totals, distinguishing tiles fetched from the
+/// provider from tiles the store already held.
+///
+/// # Threading
+/// Callbacks run on an SDK worker thread, never on the caller's thread. They
+/// must not block and must not call back into the same `OfflineManager`; a
+/// platform surface marshals to its UI thread.
+[Trait, WithForeign]
+interface RegionDownloadProgressListener {
+    /// Receives one progress report.
+    void on_region_download_progress(RegionDownloadProgress progress);
 };
 
 // ---------------------------------------------------------------------------
@@ -2155,6 +2279,16 @@ dictionary SurfaceHandle {
 /// Draws on one view are serialized: a draw holding the view's render state
 /// reports a concurrent `draw` or `resize` with `RenderingSurfaceUnavailable`,
 /// and the platform cadence retries on the next frame.
+///
+/// # Targets
+///
+/// This interface describes the native surface view and generates the Kotlin,
+/// Swift and React Native bindings. The WebAssembly build has no native
+/// surface: the browser serves the same contract through the canvas `MapView`
+/// in the web package, which owns the WebGPU surface, the tile scheduler and
+/// the overlay pipeline. The generated wasm module therefore carries no
+/// surface view, and browser applications use the canvas class rather than
+/// this interface.
 interface MapView {
     /// Builds the view over the SDK state it draws from.
     constructor(MapSdk map_sdk);
@@ -2708,6 +2842,108 @@ interface OfflineManager {
     /// `InvalidCoordinateInput` for a zero time-to-live.
     [Throws=SdkError]
     void set_tile_time_to_live(u64 time_to_live_seconds);
+
+    /// Answers how many tiles the region enumerates, so a settings surface can
+    /// warn about a large download before starting it. The call only validates
+    /// the definition and enumerates tiles; nothing is written.
+    ///
+    /// # Parameters
+    /// - `region` — the region to size.
+    ///
+    /// # Returns
+    /// The number of tiles the region's zoom range and bounding box enumerate.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed, and `InvalidCoordinateInput` when the bounding box is not
+    /// canonical, the zoom range is inverted, the maximum zoom level exceeds
+    /// the installed provider's declared maximum, the requested retention is
+    /// zero, or the region enumerates more than the supported tile cap.
+    [Throws=SdkError]
+    u64 region_tile_count(RegionDefinition region);
+
+    /// Downloads the region's tiles into the installed cache and answers the
+    /// region's record as it stands on disk afterwards. The download reports
+    /// progress to `progress_listener` and is resumable: a failure or a
+    /// cancellation keeps the tiles that did arrive and the membership that
+    /// names the missing ones, so the next call fetches only those.
+    ///
+    /// A region already downloading is refused; a different region downloads
+    /// concurrently.
+    ///
+    /// # Parameters
+    /// - `region` — the region to download.
+    /// - `progress_listener` — receives the download's progress reports.
+    ///
+    /// # Returns
+    /// The region's record after the download. A cancelled download answers
+    /// the partial record with a terminal `Cancelled` report, not an error.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed; `InvalidCoordinateInput` for an invalid definition or a
+    /// region above the provider's declared maximum zoom level; the
+    /// provider's typed failure when a tile cannot be fetched; and
+    /// `CacheOperationFailure` when the region is already downloading or the
+    /// store refuses a write.
+    [Async, Throws=SdkError]
+    RegionRecord download_region(
+        RegionDefinition region,
+        RegionDownloadProgressListener progress_listener
+    );
+
+    /// Cancels the region's in-flight download if one exists. Cancellation is
+    /// idempotent and a successful partial result: the partial region is kept
+    /// and resumable. A no-op for an unknown, finished or already cancelled
+    /// region.
+    ///
+    /// # Parameters
+    /// - `region_id` — the region whose download is cancelled.
+    void cancel_region_download(string region_id);
+
+    /// Lists every region stored on disk, in the store's listing order.
+    ///
+    /// # Returns
+    /// The stored regions' records.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed, and `CacheOperationFailure` when a stored record is
+    /// corrupted.
+    [Async, Throws=SdkError]
+    sequence<RegionRecord> region_records();
+
+    /// Reads one stored region's record.
+    ///
+    /// # Parameters
+    /// - `region_id` — the region to read.
+    ///
+    /// # Returns
+    /// The region's record, or null when no region is stored under the
+    /// identifier.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed, and `CacheOperationFailure` when the stored record is
+    /// corrupted.
+    [Async, Throws=SdkError]
+    RegionRecord? region_record(string region_id);
+
+    /// Deletes the region's stored tiles and its membership, and answers what
+    /// was removed. A tile another live region still claims is kept.
+    ///
+    /// # Parameters
+    /// - `region_id` — the region to delete.
+    ///
+    /// # Returns
+    /// The removed entry count and payload bytes.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed and `InvalidCoordinateInput` naming the identifier when no
+    /// region is stored under it.
+    [Async, Throws=SdkError]
+    RegionRemovalReport delete_region(string region_id);
 };
 
 /// Diagnostics facade over a `MapSdk`'s structured log events and buffers. The

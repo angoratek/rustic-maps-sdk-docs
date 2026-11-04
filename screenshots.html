@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-685d49e1.js";
+            window.path_to_searchindex_js = "searchindex-96577402.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -176,25 +176,49 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="screenshots"><a class="header" href="#screenshots">Screenshots</a></h1>
-<p>Each capture below comes from the reference application for that platform,
-on the same recorded Capitol Park ⇔ Tower Bridge trip, in the same state:
-the turn-by-turn banner with the next maneuver, the planned route polyline
-with its A and B pins, the ETA-distance line, the playback-speed controls
-and the exit control. All four were taken from one revision of the SDK
-without a provider credential stored in the build.</p>
-<h2 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-reference-app.png" alt="The Android reference application during a simulated trip through downtown Sacramento: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"><span class="img-wrapper"><img src="img/android-reference-app.png" alt="The Android reference application during a simulated trip through downtown Sacramento: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"></span></label></p>
-<h2 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"><span class="img-wrapper"><img src="img/ios-reference-app.png" alt="The iOS reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"></span></label></p>
-<h2 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-reference-app.png" alt="The React Native reference application in the same simulated trip inside the shared TypeScript shell: the maneuver banner and then-line, the planned route polyline with its destination pin, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"><span class="img-wrapper"><img src="img/react-native-reference-app.png" alt="The React Native reference application in the same simulated trip inside the shared TypeScript shell: the maneuver banner and then-line, the planned route polyline with its destination pin, the map control cluster with the N compass, the scale bar, and the navigation drawer with the ETA-distance line, the phase, the speed chips, voice guidance, pause and exit"></span></label></p>
-<h2 id="webassembly--the-browser-build"><a class="header" href="#webassembly--the-browser-build">WebAssembly — the browser build</a></h2>
-<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, the trip card with the ETA-distance line and the speed chips, and the exit control"><span class="img-wrapper"><img src="img/wasm-reference-app.png" alt="The WebAssembly reference application in the same simulated trip: the maneuver banner and then-line at the top of the map, the planned route polyline, the map control cluster with the N compass, the scale bar, the trip card with the ETA-distance line and the speed chips, and the exit control"></span></label></p>
-<p>The browser build runs the SDK’s own WebAssembly module and draws through
-WebGPU, so it is the same core rather than a simulation. The capture shows
-its consumer surface: the trip planner with both endpoints chosen, the route
-summary, and the live guidance on the map. It is served keyless at
-<a href="live-demo.html">the live demo</a>.</p>
+<p>Every capture below comes from the reference application for that platform,
+on one revision of the SDK, on the same recorded Capitol Park ⇔ Tower Bridge
+trip, with no provider credential stored in the build. Each platform shows
+the same three moments of the same flow: the plan sheet with both endpoints
+chosen, the provider section with every row’s display name and credential
+state, and the simulated trip.</p>
+<h2 id="the-plan-sheet"><a class="header" href="#the-plan-sheet">The plan sheet</a></h2>
+<p>The labelled Origin and Destination fields with their A/B markers, each
+field’s own Search action, a My location chip, and the swap action. The route
+card states distance, duration, mode and strategy.</p>
+<h3 id="android--kotlin-and-jetpack-compose"><a class="header" href="#android--kotlin-and-jetpack-compose">Android — Kotlin and Jetpack Compose</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-plan-sheet.png" alt="The Android plan sheet: A Origin holding Capitol Park and B Destination holding Tower Bridge, each with a Search action and a My location chip, the Swap origin and destination action, Done, the Directions mode and strategy chips, and the Plan route action, over the Bright vector base and the recorded route"><span class="img-wrapper"><img src="img/android-plan-sheet.png" alt="The Android plan sheet: A Origin holding Capitol Park and B Destination holding Tower Bridge, each with a Search action and a My location chip, the Swap origin and destination action, Done, the Directions mode and strategy chips, and the Plan route action, over the Bright vector base and the recorded route"></span></label></p>
+<h3 id="ios--swift-and-swiftui"><a class="header" href="#ios--swift-and-swiftui">iOS — Swift and SwiftUI</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-plan-sheet.png" alt="The iOS plan sheet: the same A and B endpoint fields with their Search actions and My location chips, the swap action, Done, the assignment hint, the Directions controls and Plan route, over the Bright vector base"><span class="img-wrapper"><img src="img/ios-plan-sheet.png" alt="The iOS plan sheet: the same A and B endpoint fields with their Search actions and My location chips, the swap action, Done, the assignment hint, the Directions controls and Plan route, over the Bright vector base"></span></label></p>
+<h3 id="react-native--one-typescript-surface-two-native-shells"><a class="header" href="#react-native--one-typescript-surface-two-native-shells">React Native — one TypeScript surface, two native shells</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-plan-sheet.png" alt="The React Native plan sheet: the same A and B endpoint fields, Search actions, My location chips, swap action and Plan route, over the Bright vector base"><span class="img-wrapper"><img src="img/react-native-plan-sheet.png" alt="The React Native plan sheet: the same A and B endpoint fields, Search actions, My location chips, swap action and Plan route, over the Bright vector base"></span></label></p>
+<h3 id="webassembly--the-browser-build"><a class="header" href="#webassembly--the-browser-build">WebAssembly — the browser build</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-plan-sheet.png" alt="The browser plan sheet: the A and B endpoint fields with Search actions, My location chips, the swap action, the demo-place list and the recorded route card, over the Bright vector base"><span class="img-wrapper"><img src="img/wasm-plan-sheet.png" alt="The browser plan sheet: the A and B endpoint fields with Search actions, My location chips, the swap action, the demo-place list and the recorded route card, over the Bright vector base"></span></label></p>
+<h2 id="providers-and-credentials"><a class="header" href="#providers-and-credentials">Providers and credentials</a></h2>
+<p>Each capability row names the serving provider and its credential state in
+one line, such as <code>MapQuest · Needs API key</code> or <code>OSRM · Ready</code>. A keyless
+routing provider states its public demo server and the terms that server
+carries.</p>
+<h3 id="android"><a class="header" href="#android">Android</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-provider-section.png" alt="The Android settings sheet at Providers by capability: Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, and the Distance Matrix, Place Search and Traffic Incidents rows"><span class="img-wrapper"><img src="img/android-provider-section.png" alt="The Android settings sheet at Providers by capability: Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, and the Distance Matrix, Place Search and Traffic Incidents rows"></span></label></p>
+<h3 id="ios"><a class="header" href="#ios">iOS</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: Base map OpenFreeMap · Bright, Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, Distance matrix and Place search"><span class="img-wrapper"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: Base map OpenFreeMap · Bright, Geocoding Not configured, Routing OSRM · Ready with its demo server address and terms, Distance matrix and Place search"></span></label></p>
+<h3 id="react-native"><a class="header" href="#react-native">React Native</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding with MapQuest · Needs API key; Routing with MapQuest · Needs API key, OSRM · Ready and Valhalla · Ready; Distance matrix, Place search and Traffic incidents"><span class="img-wrapper"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding with MapQuest · Needs API key; Routing with MapQuest · Needs API key, OSRM · Ready and Valhalla · Ready; Distance matrix, Place search and Traffic incidents"></span></label></p>
+<h3 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row, the live connection check, and Providers by capability with Geocoding, Routing OSRM · Ready and its demo server, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles"><span class="img-wrapper"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row, the live connection check, and Providers by capability with Geocoding, Routing OSRM · Ready and its demo server, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles"></span></label></p>
+<h2 id="simulated-navigation"><a class="header" href="#simulated-navigation">Simulated navigation</a></h2>
+<p>The reference scenario: the turn-by-turn banner with the next maneuver, the
+planned route polyline with its endpoints, the ETA-distance line, and the
+playback-speed controls with voice guidance, pause and exit.</p>
+<h3 id="android-1"><a class="header" href="#android-1">Android</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-navigation.png" alt="The Android simulated trip: the 50 m turn banner with the then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"><span class="img-wrapper"><img src="img/android-navigation.png" alt="The Android simulated trip: the 50 m turn banner with the then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"></span></label></p>
+<h3 id="ios-1"><a class="header" href="#ios-1">iOS</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-navigation.png" alt="The iOS simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Seek, Pause and Exit"><span class="img-wrapper"><img src="img/ios-navigation.png" alt="The iOS simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Seek, Pause and Exit"></span></label></p>
+<h3 id="react-native-1"><a class="header" href="#react-native-1">React Native</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-navigation.png" alt="The React Native simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"><span class="img-wrapper"><img src="img/react-native-navigation.png" alt="The React Native simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, the ETA-distance line, the speed chips, voice guidance, Pause and Exit"></span></label></p>
+<h3 id="webassembly-1"><a class="header" href="#webassembly-1">WebAssembly</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-navigation.png" alt="The browser simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, and the trip drawer with the ETA-distance line, the speed chips and Exit"><span class="img-wrapper"><img src="img/wasm-navigation.png" alt="The browser simulated trip: the turn banner and then line, the route polyline, the compass, the scale bar, and the trip drawer with the ETA-distance line, the speed chips and Exit"></span></label></p>
 <h2 id="vector-base-with-place-labels"><a class="header" href="#vector-base-with-place-labels">Vector base with place labels</a></h2>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"><span class="img-wrapper"><img src="img/vector-labels.png" alt="The browser demo drawing the OpenFreeMap Bright vector base: streets named along their own lines — Capital City Freeway, H Street, J Street, Broadway, El Dorado Freeway — and places named above them, Sacramento, Downtown, Midtown, East Sacramento, all drawn from the glyph atlas with halos over the styled roads and parks"></span></label></p>
 <p>Labels are renderer output, not page markup: the decoder hands the renderer
@@ -205,15 +229,16 @@ the text would not fit; place names sit above them, and a collision pass
 keeps one from covering another. They arrive with the vector base; a raster
 base carries its imagery’s own labels instead. Every surface draws them.</p>
 <h2 id="reading-the-screenshots"><a class="header" href="#reading-the-screenshots">Reading the screenshots</a></h2>
-<p>The captures share one design language and show the same moment of the same
-flow: readiness, search, a planned route, and the simulated trip. They also
-share one vocabulary: <em>maneuver banner</em>, <em>then line</em>, <em>route polyline</em>,
-<em>map control cluster</em>, <em>compass</em>, <em>scale bar</em>, <em>navigation drawer</em>, and the
-browser’s <em>trip card</em>. Differences are the platform’s own chrome:
-Compose’s Material surface on Android, SwiftUI’s safe-area handling on iOS,
-the React Native host view, and the browser’s WebGPU canvas. The map
-content, the guidance, the control cluster and the scale ladder are the
-same.</p>
+<p>The twelve captures share one design language and show the same three
+moments of the same flow. They also share one vocabulary: <em>plan sheet</em>,
+<em>Origin</em> and <em>Destination</em>, <em>Search</em>, <em>My location</em>, <em>swap</em>, <em>route card</em>,
+<em>provider section</em>, <em>maneuver banner</em>, <em>then line</em>, <em>route polyline</em>,
+<em>map control cluster</em>, <em>compass</em>, <em>scale bar</em>, <em>ETA-distance line</em>,
+<em>speed chips</em>, and the browser’s <em>trip drawer</em>. Differences are the
+platform’s own chrome: Compose’s Material surface on Android, SwiftUI’s
+safe-area handling on iOS, the React Native host view, and the browser’s
+WebGPU canvas. The map content, the guidance, the control cluster and the
+scale ladder are the same.</p>
 
                     </main>
 

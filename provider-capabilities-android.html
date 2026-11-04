@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-685d49e1.js";
+            window.path_to_searchindex_js = "searchindex-96577402.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -320,17 +320,21 @@ mapSdk.setProviderCredential(providerApiKey)
 <p>A refused key throws <code>SdkException</code> with the provider’s verbatim detail.
 Apply the credential through your settings surface or a launch-time
 automation seam; never compile it into the app.</p>
-<p>To keep registration generic over provider keys, the shipped facade
-dispatches the key to the matching SDK call. The facade’s <code>nativeSdk</code> is the
-one object the map view and every provider call use.</p>
+<p>To keep registration generic over provider keys, the shipped facade takes the
+shared registry’s provider descriptors and registers every capability a
+descriptor declares. The facade’s <code>nativeSdk</code> is the one object the map view
+and every provider call use.</p>
 <pre><code class="language-kotlin">import com.rusticmaps.sdk.MapsSdkFacade
+import com.rusticmaps.sdk.demo.ProviderRegistryLoader
 
-val facade = MapsSdkFacade()
+val providerRegistry = ProviderRegistryLoader.load(assets)
+val facade = MapsSdkFacade(providerRegistry.providers)
 facade.applyProviderCredential("mapquest", providerApiKey)
 val mapSdk = facade.nativeSdk
 </code></pre>
-<p>A provider key with no dispatch arm is refused by name rather than pretending
-to work. Adding an arm is covered in <a href="adding-a-provider.html">Add a provider</a>.</p>
+<p>A provider key the registry does not declare, or one this platform cannot
+register, is refused by name rather than pretending to work. Adding a
+provider is covered in <a href="adding-a-provider.html">Add a provider</a>.</p>
 <h2 id="what-you-should-see"><a class="header" href="#what-you-should-see">What you should see</a></h2>
 <p>After the vector install, <code>vectorTileSourceStatus()</code> reports
 <code>isConfigured = true</code>, the <code>bright-light</code> style id, and the OpenFreeMap

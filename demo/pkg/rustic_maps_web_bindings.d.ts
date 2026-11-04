@@ -2,6 +2,106 @@
 /* eslint-disable */
 
 /**
+ * A fixed-window circular median over recent course-over-ground samples.
+ */
+export class CourseMedianSmoother {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Adds one fix's course-over-ground, dropping the oldest sample.
+     */
+    add(course_degrees: number): void;
+    /**
+     * The circular median, or `null` while the window holds no sample.
+     */
+    median(): any;
+    /**
+     * Creates a smoother over `window_fix_count` recent samples.
+     */
+    constructor(window_fix_count: number);
+    /**
+     * Empties the window.
+     */
+    reset(): void;
+}
+
+/**
+ * An exponential chase toward a moving target.
+ */
+export class ExponentialValueChase {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Advances the chase toward `target`, returning the next current value.
+     */
+    advance(current: number, target: number, now_milliseconds: number): number;
+    /**
+     * Creates a chase with the given time constant in milliseconds.
+     */
+    constructor(time_constant_milliseconds: number);
+    /**
+     * Clears the frame clock so the next call is treated as a first frame.
+     */
+    reset(): void;
+}
+
+/**
+ * The navigation follow-camera state machine and its targets.
+ */
+export class FollowCamera {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * A user gesture (drag, pinch or rotate) breaks follow immediately.
+     */
+    breakOnGesture(): void;
+    /**
+     * Applies the trip's follow camera and captures the pre-trip pose.
+     */
+    engageTrip(current_center_latitude_degrees: number, current_center_longitude_degrees: number, current_zoom_level: number, current_bearing_degrees: number, current_pitch_degrees: number): void;
+    /**
+     * Creates a disengaged camera with the default course-smoothing window.
+     */
+    constructor();
+    /**
+     * Applies one location fix of the active trip.
+     */
+    onFix(latitude_degrees: number, longitude_degrees: number, course_heading_degrees: number | null | undefined, remaining_distance_fraction: number): void;
+    /**
+     * The my-location control's explicit re-engage.
+     */
+    reengage(): void;
+    /**
+     * Ends the trip, returning the captured pre-trip camera or `null`.
+     */
+    restorePreTripCamera(): any;
+    /**
+     * The current follow phase.
+     */
+    readonly phase: string;
+    /**
+     * The captured pre-trip camera, or `null` outside a trip.
+     */
+    readonly preTripCamera: any;
+    /**
+     * The target bearing in degrees, or `null` until a fix reports a course.
+     */
+    readonly targetBearingDegrees: any;
+    /**
+     * The target centre latitude in degrees.
+     */
+    readonly targetCenterLatitudeDegrees: number;
+    /**
+     * The target centre longitude in degrees.
+     */
+    readonly targetCenterLongitudeDegrees: number;
+    /**
+     * The target zoom level.
+     */
+    readonly targetZoomLevel: number;
+}
+
+/**
  * Anchored map camera (geographic center, zoom, bearing, pitch) mirroring
  * the native [`rustic_maps_rendering::MapCamera`]. The ground point under the
  * center always sits at the viewport center.
@@ -328,6 +428,10 @@ export class MapView {
      * missing or undecodable parent fixture is an error, not a silent skip:
      * the caller wants the fallback imagery or nothing. The parent coordinates
      * must describe the fallback tile's direct parent.
+     *
+     * The draw state is borrowed only to read the tile resolution and again
+     * after the fetch; the parent fetch itself runs outside any borrow, so a
+     * concurrent frame can draw while the payload is in flight.
      */
     stageParentTile(fallback_tile_x: number, fallback_tile_y: number, fallback_zoom_level: number, parent_tile_x: number, parent_tile_y: number, parent_zoom_level: number): Promise<void>;
     /**
@@ -567,6 +671,41 @@ export enum SdkLogSeverity {
 }
 
 /**
+ * A linear-in-time, smoothstep-eased value move.
+ */
+export class SmoothstepTimedEase {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Advances the ease at `now_milliseconds`.
+     *
+     * Returns `[value, finished]`: the current eased value and whether the
+     * move just finished on this call.
+     */
+    advance(now_milliseconds: number): Array<any>;
+    /**
+     * Begins, or restarts, an ease from one value to another.
+     */
+    begin(start_milliseconds: number, from_value: number, to_value: number, duration_milliseconds: number): void;
+    /**
+     * Creates an idle ease with no target.
+     */
+    constructor();
+    /**
+     * Stops an in-flight ease without applying anything.
+     */
+    reset(): void;
+    /**
+     * Whether an ease is in flight.
+     */
+    readonly is_running: boolean;
+    /**
+     * The ease's target value.
+     */
+    readonly target_value: number;
+}
+
+/**
  * Tile pixel resolution the GPU canvas fetches and samples, mirroring
  * [`geospatial_types::RasterTileResolution`] at the JavaScript seam: the
  * shared record type cannot itself carry `wasm-bindgen` attributes, so the
@@ -581,6 +720,51 @@ export enum TileResolution {
      * Twice the texels per logical tile pixel (the recorded `@2x` fixtures).
      */
     Retina = 1,
+}
+
+/**
+ * A forward-only cursor over a recorded trace's samples.
+ */
+export class TraceCursor {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Consumes and returns the next sample's index, or `null` at the end.
+     */
+    advance(): any;
+    /**
+     * Whether every sample was delivered.
+     */
+    isFinished(): boolean;
+    /**
+     * Creates a cursor at the first sample of a trace with `sample_count`
+     * samples.
+     */
+    constructor(sample_count: number);
+    /**
+     * The next sample's index, or `null` when every sample was delivered.
+     */
+    nextSampleIndex(): any;
+    /**
+     * The next sample's index without consuming it.
+     */
+    peek(): any;
+    /**
+     * The number of samples not yet delivered.
+     */
+    remainingSampleCount(): number;
+    /**
+     * Rewinds the cursor to the first sample.
+     */
+    reset(): void;
+    /**
+     * Moves the cursor to `sample_index`, clamped to the trace's bounds.
+     */
+    seekToSampleIndex(sample_index: number): void;
+    /**
+     * The trace's sample count.
+     */
+    readonly sampleCount: number;
 }
 
 /**
@@ -608,6 +792,11 @@ export enum TrafficFlowCongestionLevel {
      */
     Blocked = 3,
 }
+
+/**
+ * The camera bearing's smallest off-north angular distance, in degrees.
+ */
+export function bearingOffNorthDegrees(bearing_degrees: number): number;
 
 /**
  * Calculates a travel-time matrix through the installed distance-matrix
@@ -744,6 +933,11 @@ export function fetchTrafficIncidents(south_west_latitude: number, south_west_lo
 export function flushRecentDiagnosticEvents(minimum_severity: SdkLogSeverity, maximum_count: number): Array<any>;
 
 /**
+ * The follow camera's zoom toward trip end.
+ */
+export function followZoomTowardTripEnd(remaining_distance_fraction: number): number;
+
+/**
  * Forward-geocodes through the installed geocoding provider, answering the
  * same row shape the native reference applications consume. Fails with a
  * message when no provider is registered or the provider refuses the query.
@@ -848,6 +1042,11 @@ export function rotateCameraByDegreesAroundScreenPoint(camera: MapCamera, delta_
 export function routeCapabilities(): object;
 
 /**
+ * The selected ladder distance's metric label.
+ */
+export function scaleBarDistanceLabelText(distance_meters: number): string;
+
+/**
  * Returns full search results for a settled query through the installed
  * search-place provider — the same rows the native reference apps consume
  * from `MapSdk::search`.
@@ -859,6 +1058,20 @@ export function searchPlaces(query_text: string): Promise<Array<any>>;
  * `MapSdk::search` boundary argument).
  */
 export function searchPlacesInBoundary(query_text: string, south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number): Promise<Array<any>>;
+
+/**
+ * Selects the scale-bar ladder distance using the design language's token
+ * width range.
+ *
+ * Returns a `{ distanceMeters, widthPixels }` object, or `null` when the
+ * ground answer is not usable.
+ */
+export function selectScaleBarScale(ground_meters_per_screen_pixel: number): any;
+
+/**
+ * Selects the scale-bar ladder distance that fits an explicit width range.
+ */
+export function selectScaleBarScaleWithWidthRange(ground_meters_per_screen_pixel: number, minimum_width_pixels: number, maximum_width_pixels: number): any;
 
 /**
  * Points a provider key's requests at a base URL instead of its public
@@ -878,6 +1091,16 @@ export function setProviderBaseUrl(provider_key: string, base_url: string): void
  * [`configure_provider`] to mix providers across capabilities.
  */
 export function setProviderCredential(credential: string): void;
+
+/**
+ * The shortest signed angular difference `to − from`, in degrees.
+ */
+export function signedAngularDifferenceDegrees(to_degrees: number, from_degrees: number): number;
+
+/**
+ * Smoothstep easing (`3t² − 2t³`), clamped into `[0, 1]`.
+ */
+export function smoothstepEasedProgress(linear_progress: number): number;
 
 /**
  * Lowers the recording gate to the requested severity: from that moment on,
@@ -917,6 +1140,11 @@ export function tileKeyForCoordinate(latitude: number, longitude: number, zoom_l
  * the native `tiles_covering`.
  */
 export function tilesCovering(south_west_latitude: number, south_west_longitude: number, north_east_latitude: number, north_east_longitude: number, zoom_level: number): Array<any>;
+
+/**
+ * The replay dispatch interval for a recorded trace, in milliseconds.
+ */
+export function traceDispatchIntervalMilliseconds(recorded_sample_interval_seconds: number, playback_acceleration_factor: number): number;
 
 /**
  * Reads the serving traffic-flow cache's counters: `{hitCount, missCount,
@@ -1000,12 +1228,18 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __wbg_coursemediansmoother_free: (a: number, b: number) => void;
+    readonly __wbg_exponentialvaluechase_free: (a: number, b: number) => void;
+    readonly __wbg_followcamera_free: (a: number, b: number) => void;
     readonly __wbg_mapcamera_free: (a: number, b: number) => void;
     readonly __wbg_mapssdk_free: (a: number, b: number) => void;
     readonly __wbg_mapview_free: (a: number, b: number) => void;
     readonly __wbg_navigator_free: (a: number, b: number) => void;
     readonly __wbg_positioncontroller_free: (a: number, b: number) => void;
     readonly __wbg_routesimulator_free: (a: number, b: number) => void;
+    readonly __wbg_smoothsteptimedease_free: (a: number, b: number) => void;
+    readonly __wbg_tracecursor_free: (a: number, b: number) => void;
+    readonly bearingOffNorthDegrees: (a: number) => number;
     readonly calculateDistanceMatrix: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly calculateRoute: (a: number, b: number, c: number, d: number) => number;
     readonly calculateRouteWithOptions: (a: number, b: number, c: number, d: number, e: number) => number;
@@ -1013,12 +1247,32 @@ export interface InitOutput {
     readonly clearUrlTemplateRasterTileSource: () => void;
     readonly configureProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly coordinateToNormalizedWorld: (a: number, b: number, c: number) => void;
+    readonly coursemediansmoother_add: (a: number, b: number) => void;
+    readonly coursemediansmoother_median: (a: number) => number;
+    readonly coursemediansmoother_new: (a: number) => number;
+    readonly coursemediansmoother_reset: (a: number) => void;
     readonly devicePixelRatioThreshold: () => number;
+    readonly exponentialvaluechase_advance: (a: number, b: number, c: number, d: number) => number;
+    readonly exponentialvaluechase_new: (a: number) => number;
+    readonly exponentialvaluechase_reset: (a: number) => void;
     readonly fetchElevationPoints: (a: number, b: number) => number;
     readonly fetchRasterTile: (a: number, b: number, c: number) => number;
     readonly fetchTrafficFlow: (a: number, b: number, c: number, d: number) => number;
     readonly fetchTrafficIncidents: (a: number, b: number, c: number, d: number) => number;
     readonly flushRecentDiagnosticEvents: (a: number, b: number) => number;
+    readonly followZoomTowardTripEnd: (a: number) => number;
+    readonly followcamera_breakOnGesture: (a: number) => void;
+    readonly followcamera_engageTrip: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly followcamera_new: () => number;
+    readonly followcamera_onFix: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly followcamera_phase: (a: number, b: number) => void;
+    readonly followcamera_preTripCamera: (a: number, b: number) => void;
+    readonly followcamera_reengage: (a: number) => void;
+    readonly followcamera_restorePreTripCamera: (a: number, b: number) => void;
+    readonly followcamera_targetBearingDegrees: (a: number) => number;
+    readonly followcamera_targetCenterLatitudeDegrees: (a: number) => number;
+    readonly followcamera_targetCenterLongitudeDegrees: (a: number) => number;
+    readonly followcamera_targetZoomLevel: (a: number) => number;
     readonly forwardGeocode: (a: number, b: number) => number;
     readonly getSdkCompiledVersion: (a: number) => void;
     readonly initializeSdk: () => number;
@@ -1086,15 +1340,36 @@ export interface InitOutput {
     readonly routesimulator_new: (a: number, b: number, c: number) => void;
     readonly routesimulator_totalDistanceMeters: (a: number) => number;
     readonly routesimulator_totalDurationSeconds: (a: number) => number;
+    readonly scaleBarDistanceLabelText: (a: number, b: number) => void;
     readonly searchPlaces: (a: number, b: number) => number;
     readonly searchPlacesInBoundary: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
+    readonly selectScaleBarScale: (a: number, b: number) => void;
+    readonly selectScaleBarScaleWithWidthRange: (a: number, b: number, c: number, d: number) => void;
     readonly setProviderBaseUrl: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly setProviderCredential: (a: number, b: number, c: number) => void;
+    readonly signedAngularDifferenceDegrees: (a: number, b: number) => number;
+    readonly smoothstepEasedProgress: (a: number) => number;
+    readonly smoothsteptimedease_advance: (a: number, b: number) => number;
+    readonly smoothsteptimedease_begin: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly smoothsteptimedease_is_running: (a: number) => number;
+    readonly smoothsteptimedease_new: () => number;
+    readonly smoothsteptimedease_reset: (a: number) => void;
+    readonly smoothsteptimedease_target_value: (a: number) => number;
     readonly subscribeToDiagnosticEvents: (a: number) => void;
     readonly suggestPlaces: (a: number, b: number) => number;
     readonly suggestPlacesInBoundary: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly tileKeyForCoordinate: (a: number, b: number, c: number, d: number) => void;
     readonly tilesCovering: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly traceDispatchIntervalMilliseconds: (a: number, b: number) => number;
+    readonly tracecursor_advance: (a: number) => number;
+    readonly tracecursor_isFinished: (a: number) => number;
+    readonly tracecursor_new: (a: number) => number;
+    readonly tracecursor_nextSampleIndex: (a: number) => number;
+    readonly tracecursor_peek: (a: number) => number;
+    readonly tracecursor_remainingSampleCount: (a: number) => number;
+    readonly tracecursor_reset: (a: number) => void;
+    readonly tracecursor_sampleCount: (a: number) => number;
+    readonly tracecursor_seekToSampleIndex: (a: number, b: number) => void;
     readonly trafficFlowCacheStatistics: (a: number) => void;
     readonly vectorTileGeographicBounds: (a: number, b: number, c: number, d: number) => void;
     readonly vectorTileLabelDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
@@ -1102,14 +1377,14 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1669: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1669_101: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1669_102: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8504: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8525: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1673: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_1673_100: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_6395: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1902: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1902_143: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1902_144: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8760: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8781: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1906: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_1906_142: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_6628: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

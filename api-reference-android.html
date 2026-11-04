@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-685d49e1.js";
+            window.path_to_searchindex_js = "searchindex-96577402.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=e2546a5ec8c516be3f9cc076338cadc47ef8f1c0:sha256:4c5bb1889b79190345e0f497a533696ddcdfc9e80e3c27b3f03773864fd2972e -->
+                        <!-- generated-api-reference-provenance: revision=084355352f089d864cee65f968ab8589ec753bf6:sha256:4258b73a7d949a3ab4652bd9bb0dd7fb5f7ad92b266a6f2721048079bfd330a5 -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -405,8 +405,8 @@
 <tr><td><code>fetchTrafficFlow</code></td><td><code>suspend fun fetchTrafficFlow(boundingBox: BoundingBox): List&lt;TrafficFlowData&gt;</code></td><td>Asynchronous. Returns <code>List&lt;TrafficFlowData&gt;</code>. Throws <code>SdkException</code>.</td><td>Returns per-segment flow observations inside the bounding box. # Parameters - <code>bounding_box</code> — area to query. # Errors Throws <code>ProviderNotConfigured</code> without a traffic-flow provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>fetchElevationPoints</code></td><td><code>suspend fun fetchElevationPoints(points: List&lt;GeographicCoordinate&gt;): List&lt;ElevationPoint&gt;</code></td><td>Asynchronous. Returns <code>List&lt;ElevationPoint&gt;</code>. Throws <code>SdkException</code>.</td><td>Fetches elevation samples for ordered points. # Parameters - <code>points</code> — the coordinates to sample, in order. # Returns One sample per requested point, in the same order. # Errors Throws <code>ProviderNotConfigured</code> without an elevation provider, <code>InvalidCoordinateInput</code> for an invalid point, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
 <tr><td><code>fetchRasterTile</code></td><td><code>suspend fun fetchRasterTile(tileX: UInt, tileY: UInt, zoomLevel: UByte, imageFormat: RasterImageFormat, tileResolution: RasterTileResolution): RasterTileData</code></td><td>Asynchronous. Returns <code>RasterTileData</code>. Throws <code>SdkException</code>.</td><td>Fetches one web-mercator XYZ raster tile at the requested resolution. # Parameters - <code>tile_x</code> — tile column. - <code>tile_y</code> — tile row, counted from the north. - <code>zoom_level</code> — zoom level of the tile. - <code>image_format</code> — requested image encoding. - <code>tile_resolution</code> — requested pixel resolution. # Errors Throws <code>ProviderNotConfigured</code> without a raster-tile provider, or the provider’s own typed failure. # Async Runs asynchronously; the call does not block the calling thread.</td></tr>
-<tr><td><code>setProviderCredential</code></td><td><code>fun setProviderCredential(credential: String): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider consumer key. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
-<tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>fun setProviderCredentialWithTileCache(mapquestApiKey: String, tileCacheDatabasePath: String, tileCacheAbsoluteMaximumBytes: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the built-in MapQuest provider set from one consumer key, exactly like <code>set_provider_credential</code>, and wraps the raster-tile provider in a disk response cache. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, the imagery provider’s terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>mapquest_api_key</code> — the provider consumer key. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>SdkError</code> when the path is empty, the byte budget is not positive, or the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
+<tr><td><code>setProviderCredential</code></td><td><code>fun setProviderCredential(credential: String): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the build’s full-service credentialed provider set from one credential, with the SDK defaults for base URL, rate limiting and retries. The call installs geocoding, routing, distance matrix, place search, traffic incidents, traffic flow and raster tiles, so one call and one key enable the whole provider set. Re-registration replaces every provider. Elevation has no provider and keeps throwing <code>ProviderNotConfigured</code>. # Parameters - <code>credential</code> — the provider credential. # Errors Throws <code>SdkError</code> when the credential is empty or the registration is refused.</td></tr>
+<tr><td><code>setProviderCredentialWithTileCache</code></td><td><code>fun setProviderCredentialWithTileCache(providerKey: String, credential: String, tileCacheDatabasePath: String, tileCacheAbsoluteMaximumBytes: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers the provider named by <code>provider_key</code> from one credential, exactly like <code>set_provider_credential</code>, and wraps its raster-tile provider in a disk response cache. The key names a credentialed provider that serves raster tiles and declares raster-tile caching terms. The registration installs every capability that provider serves, so one call and one credential enable the whole set. The cache is a SQLite database opened (or created) at <code>tile_cache_database_path</code> and bounded by <code>tile_cache_absolute_maximum_bytes</code>. Cached tile responses follow the tiles category’s time-to-live (thirty days by default, clamped to the provider’s declared terms ceiling); a cache miss goes to the network and back-fills the cache, so pre-warmed tiles keep rendering when the network is unavailable. Re-registration replaces the providers, including the cached raster-tile provider. # Parameters - <code>provider_key</code> — the stable key of a credentialed provider built into this SDK that serves raster tiles and declares caching terms. - <code>credential</code> — the provider credential. - <code>tile_cache_database_path</code> — non-empty absolute path of the cache database. - <code>tile_cache_absolute_maximum_bytes</code> — positive byte budget of the cache. # Errors Throws <code>ProviderNotConfigured</code> when the key is unknown to this build, and <code>ProviderRequestRejected</code> when the provider serves no raster tiles, declares no raster-tile caching terms, or requires a credential and the supplied one is blank. Throws <code>InvalidCoordinateInput</code> when the path is empty or the byte budget is not positive, and <code>CacheOperationFailure</code> when the cache cannot be opened or refuses the quota; the detail names the reason verbatim.</td></tr>
 <tr><td><code>registerUrlTemplateRasterTileSource</code></td><td><code>fun registerUrlTemplateRasterTileSource(source: UrlTemplateRasterTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Registers a provider-neutral raster base map: any web-mercator XYZ tileset that publishes a <code>{z}/{x}/{y}</code> URL template. The registration replaces the raster-tile contract only; every other provider keeps serving. It also drops any installed tile cache, because the cache’s terms belong to the provider that installed it; a later <code>raster_tile_cache_terms</code> then throws the not-configured error rather than reporting another provider’s ceiling. Re-registering replaces the source. # Parameters - <code>source</code> — the tile source and its terms. # Errors A malformed template, a blank source name or an inverted zoom range throws <code>InvalidCoordinateInput</code> with a precise detail, and the previous source keeps serving.</td></tr>
 <tr><td><code>configureProvider</code></td><td><code>fun configureProvider(contract: ProviderContract, providerKey: String, credential: String): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Chooses the provider that serves one capability, leaving every other capability untouched. The SDK builds provider implementations into the binary under stable keys; this call is how an application selects one. A key may serve several capabilities, so an application that wants one vendor everywhere configures each capability in turn, or calls <code>set_provider_credential</code> for the all-in-one convenience. # Parameters - <code>contract</code> — the capability whose provider is being chosen. - <code>provider_key</code> — the stable key of a provider built into this SDK build. - <code>credential</code> — the provider’s credential; an empty string is accepted only for a provider that needs none. # Errors Throws <code>ProviderNotConfigured</code> when the key is unknown to this build or serves no implementation of <code>contract</code>, <code>ProviderRequestRejected</code> when the provider declares a credential and the supplied one is blank, and the provider’s own failure when its construction fails. A refused call leaves the previously serving provider in place.</td></tr>
 <tr><td><code>providerRegistrations</code></td><td><code>fun providerRegistrations(): List&lt;ProviderRegistration&gt;</code></td><td>Returns <code>List&lt;ProviderRegistration&gt;</code>.</td><td>Reports which provider serves each capability, in a stable order, for a settings surface or a startup check. Every capability the SDK defines appears in the answer, including the ones with no provider installed; those carry an empty key and name and <code>registered</code> false. The readback never mutates the registry.</td></tr>
@@ -415,6 +415,22 @@
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>fun subscribeToDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity): Unit</code></td><td>—</td><td>Subscribes <code>listener</code> to the SDK’s structured log events. Only events at <code>minimum_severity</code> or above are delivered. Coordinates inside event messages are rounded before delivery, and API keys are never included. Listener callbacks run on the threads that produce the events and must not block. Subscribing an already subscribed listener replaces its severity threshold. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered.</td></tr>
 <tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>fun flushRecentDiagnosticEvents(listener: SdkDiagnosticEventListener, minimumSeverity: SdkLogSeverity, maximumCount: UInt): UInt</code></td><td>Returns <code>UInt</code>.</td><td>Delivers up to <code>maximum_count</code> of the most recent buffered events at <code>minimum_severity</code> or above to the listener, oldest first, and returns how many were delivered. The flush does not remove events, so a later flush can deliver them again. The flush is bounded and synchronous; the listener must not block. # Parameters - <code>listener</code> — the diagnostics listener. - <code>minimum_severity</code> — lowest severity delivered. - <code>maximum_count</code> — upper bound on delivered events. # Returns The number of events delivered.</td></tr>
 <tr><td><code>latestProviderFailureDiagnostics</code></td><td><code>fun latestProviderFailureDiagnostics(): List&lt;ProviderFailureDiagnostic&gt;</code></td><td>Returns <code>List&lt;ProviderFailureDiagnostic&gt;</code>.</td><td>Returns the retained diagnostics of failed provider calls made by foreign provider implementations, oldest first. A failure is recorded whether the implementation threw one of the contract’s <code>SdkError</code> variants or failed without a mapped error. The buffer keeps a bounded number of the most recent failures and drops older ones. Reading is non-destructive: the call neither records nor clears entries. The typed error still surfaces at the failing call; this readback lets a failure be classified after the fact. See <code>ProviderFailureDiagnostic</code> for the fields of an entry. # Returns The retained entries, oldest first.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="regiondownloadprogresslistener"><a class="header" href="#regiondownloadprogresslistener">RegionDownloadProgressListener</a></h3>
+<p>Offline region download progress listener. Implement this interface and pass it to <code>OfflineManager::download_region</code>.</p>
+<h1 id="progress-the-listener-receives-one-downloading-report-with-zero-completions-before-the-first-tile-one-downloading-report-per-completed-tile-and-exactly-one-terminal-report-completed-cancelled-or-failed-the-counts-are-the-downloads-own-honest-totals-distinguishing-tiles-fetched-from-the-provider-from-tiles-the-store-already-held"><a class="header" href="#progress-the-listener-receives-one-downloading-report-with-zero-completions-before-the-first-tile-one-downloading-report-per-completed-tile-and-exactly-one-terminal-report-completed-cancelled-or-failed-the-counts-are-the-downloads-own-honest-totals-distinguishing-tiles-fetched-from-the-provider-from-tiles-the-store-already-held">Progress The listener receives one <code>Downloading</code> report with zero completions before the first tile, one <code>Downloading</code> report per completed tile, and exactly one terminal report: <code>Completed</code>, <code>Cancelled</code> or <code>Failed</code>. The counts are the download’s own honest totals, distinguishing tiles fetched from the provider from tiles the store already held.</a></h1>
+<h1 id="threading-callbacks-run-on-an-sdk-worker-thread-never-on-the-callers-thread-they-must-not-block-and-must-not-call-back-into-the-same-offlinemanager-a-platform-surface-marshals-to-its-ui-thread"><a class="header" href="#threading-callbacks-run-on-an-sdk-worker-thread-never-on-the-callers-thread-they-must-not-block-and-must-not-call-back-into-the-same-offlinemanager-a-platform-surface-marshals-to-its-ui-thread">Threading Callbacks run on an SDK worker thread, never on the caller’s thread. They must not block and must not call back into the same <code>OfflineManager</code>; a platform surface marshals to its UI thread.</a></h1>
+<p>Implement this interface in Kotlin; the SDK invokes it through the matching registration or subscription method.</p>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>onRegionDownloadProgress</code></td><td><code>fun onRegionDownloadProgress(progress: RegionDownloadProgress): Unit</code></td><td>—</td><td>Receives one progress report.</td></tr>
 </tbody>
 </table>
 </div>
@@ -522,6 +538,8 @@
 <h1 id="draw-model"><a class="header" href="#draw-model">Draw model</a></h1>
 <p>Frames are explicit: the platform view calls <code>draw</code> once per rendered frame from its own cadence (a display link, a choreographer, or a resize-then-once pattern) with the current <code>MapCamera</code>. The SDK runs no internal render thread and no continuous redraw loop. Each draw lists the camera’s visible tiles, fetches pooled misses from the surface-attached provider within a per-frame budget, and renders tiles then overlays alpha-blended, presenting to the surface. A failed frame throws and leaves the previous frame on screen.</p>
 <p>Draws on one view are serialized: a draw holding the view’s render state reports a concurrent <code>draw</code> or <code>resize</code> with <code>RenderingSurfaceUnavailable</code>, and the platform cadence retries on the next frame.</p>
+<h1 id="targets"><a class="header" href="#targets">Targets</a></h1>
+<p>This interface describes the native surface view and generates the Kotlin, Swift and React Native bindings. The WebAssembly build has no native surface: the browser serves the same contract through the canvas <code>MapView</code> in the web package, which owns the WebGPU surface, the tile scheduler and the overlay pipeline. The generated wasm module therefore carries no surface view, and browser applications use the canvas class rather than this interface.</p>
 <p><strong>Construction</strong></p>
 <div class="table-wrapper">
 <table>
@@ -647,6 +665,12 @@
 <tbody>
 <tr><td><code>tileCacheTerms</code></td><td><code>fun tileCacheTerms(): TileCacheTerms</code></td><td>Returns <code>TileCacheTerms</code>. Throws <code>SdkException</code>.</td><td>Reads the effective raster-tile caching terms of the installed cache. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed.</td></tr>
 <tr><td><code>setTileTimeToLive</code></td><td><code>fun setTileTimeToLive(timeToLiveSeconds: ULong): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Overrides the installed raster-tile cache’s time-to-live in seconds; the provider’s declared terms ceiling still clamps what the cache stores, and <code>tile_cache_terms</code> reports the effective value. # Parameters - <code>time_to_live_seconds</code> — requested time-to-live. # Errors Throws <code>ProviderNotConfigured</code> when no tile cache is installed and <code>InvalidCoordinateInput</code> for a zero time-to-live.</td></tr>
+<tr><td><code>regionTileCount</code></td><td><code>fun regionTileCount(region: RegionDefinition): ULong</code></td><td>Returns <code>ULong</code>. Throws <code>SdkException</code>.</td><td>Answers how many tiles the region enumerates, so a settings surface can warn about a large download before starting it. The call only validates the definition and enumerates tiles; nothing is written. # Parameters - <code>region</code> — the region to size. # Returns The number of tiles the region’s zoom range and bounding box enumerate. # Errors Throws <code>ProviderNotConfigured</code> naming <code>TileCache</code> when no tile cache is installed, and <code>InvalidCoordinateInput</code> when the bounding box is not canonical, the zoom range is inverted, the maximum zoom level exceeds the installed provider’s declared maximum, the requested retention is zero, or the region enumerates more than the supported tile cap.</td></tr>
+<tr><td><code>downloadRegion</code></td><td><code>suspend fun downloadRegion(region: RegionDefinition, progressListener: RegionDownloadProgressListener): RegionRecord</code></td><td>Asynchronous. Returns <code>RegionRecord</code>. Throws <code>SdkException</code>.</td><td>Downloads the region’s tiles into the installed cache and answers the region’s record as it stands on disk afterwards. The download reports progress to <code>progress_listener</code> and is resumable: a failure or a cancellation keeps the tiles that did arrive and the membership that names the missing ones, so the next call fetches only those. A region already downloading is refused; a different region downloads concurrently. # Parameters - <code>region</code> — the region to download. - <code>progress_listener</code> — receives the download’s progress reports. # Returns The region’s record after the download. A cancelled download answers the partial record with a terminal <code>Cancelled</code> report, not an error. # Errors Throws <code>ProviderNotConfigured</code> naming <code>TileCache</code> when no tile cache is installed; <code>InvalidCoordinateInput</code> for an invalid definition or a region above the provider’s declared maximum zoom level; the provider’s typed failure when a tile cannot be fetched; and <code>CacheOperationFailure</code> when the region is already downloading or the store refuses a write.</td></tr>
+<tr><td><code>cancelRegionDownload</code></td><td><code>fun cancelRegionDownload(regionId: String): Unit</code></td><td>—</td><td>Cancels the region’s in-flight download if one exists. Cancellation is idempotent and a successful partial result: the partial region is kept and resumable. A no-op for an unknown, finished or already cancelled region. # Parameters - <code>region_id</code> — the region whose download is cancelled.</td></tr>
+<tr><td><code>regionRecords</code></td><td><code>suspend fun regionRecords(): List&lt;RegionRecord&gt;</code></td><td>Asynchronous. Returns <code>List&lt;RegionRecord&gt;</code>. Throws <code>SdkException</code>.</td><td>Lists every region stored on disk, in the store’s listing order. # Returns The stored regions’ records. # Errors Throws <code>ProviderNotConfigured</code> naming <code>TileCache</code> when no tile cache is installed, and <code>CacheOperationFailure</code> when a stored record is corrupted.</td></tr>
+<tr><td><code>regionRecord</code></td><td><code>suspend fun regionRecord(regionId: String): RegionRecord?</code></td><td>Asynchronous. Returns <code>RegionRecord?</code>. Throws <code>SdkException</code>.</td><td>Reads one stored region’s record. # Parameters - <code>region_id</code> — the region to read. # Returns The region’s record, or null when no region is stored under the identifier. # Errors Throws <code>ProviderNotConfigured</code> naming <code>TileCache</code> when no tile cache is installed, and <code>CacheOperationFailure</code> when the stored record is corrupted.</td></tr>
+<tr><td><code>deleteRegion</code></td><td><code>suspend fun deleteRegion(regionId: String): RegionRemovalReport</code></td><td>Asynchronous. Returns <code>RegionRemovalReport</code>. Throws <code>SdkException</code>.</td><td>Deletes the region’s stored tiles and its membership, and answers what was removed. A tile another live region still claims is kept. # Parameters - <code>region_id</code> — the region to delete. # Returns The removed entry count and payload bytes. # Errors Throws <code>ProviderNotConfigured</code> naming <code>TileCache</code> when no tile cache is installed and <code>InvalidCoordinateInput</code> naming the identifier when no region is stored under it.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1106,8 +1130,79 @@
 </thead>
 <tbody>
 <tr><td><code>effectiveTimeToLiveSeconds</code></td><td><code>ULong</code></td><td>Time-to-live currently in force on the installed cache, in seconds: the category default, or the last accepted override (clamped to the ceiling when the override exceeded it).</td></tr>
-<tr><td><code>providerTermsCeilingSeconds</code></td><td><code>ULong?</code></td><td>The installed provider’s declared caching-terms ceiling in seconds, or null when the provider declares no ceiling; the requested time-to-live then applies verbatim. For the MapQuest raster tiles this is thirty calendar days.</td></tr>
+<tr><td><code>providerTermsCeilingSeconds</code></td><td><code>ULong?</code></td><td>The installed provider’s declared caching-terms ceiling in seconds, or null when the provider declares no ceiling; the requested time-to-live then applies verbatim.</td></tr>
 <tr><td><code>defaultTimeToLiveSeconds</code></td><td><code>ULong</code></td><td>The cache category’s default time-to-live for raster tiles, in seconds (thirty days); the value a freshly registered cache starts at.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="regiondefinition"><a class="header" href="#regiondefinition">RegionDefinition</a></h3>
+<p>One offline region selection: the identity the region is stored and managed under, the area it covers, the zoom range and tile form the stored tiles carry, and the retention the application requests.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>regionId</code></td><td><code>String</code></td><td>Stable identifier the region is stored and managed under; downloading the same identifier again is idempotent, and a redefined shape replaces the stored region.</td></tr>
+<tr><td><code>displayName</code></td><td><code>String</code></td><td>Human-readable name for region-listing surfaces.</td></tr>
+<tr><td><code>boundingBox</code></td><td><code>BoundingBox</code></td><td>The region’s bounding box; boxes never span the antimeridian.</td></tr>
+<tr><td><code>minimumZoomLevel</code></td><td><code>UByte</code></td><td>Lowest zoom level downloaded; ranges download coarse-first.</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>UByte</code></td><td>Highest zoom level downloaded.</td></tr>
+<tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>Encoded format the stored tile payloads carry.</td></tr>
+<tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>Pixel resolution the stored tile payloads carry.</td></tr>
+<tr><td><code>timeToLiveSeconds</code></td><td><code>ULong?</code></td><td>Requested retention in seconds; null takes the raster-tiles category default, clamped to the provider’s declared ceiling. Zero is refused.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="regionrecord"><a class="header" href="#regionrecord">RegionRecord</a></h3>
+<p>One offline region as it stands on disk: the stored shape, the effective retention and the live tiles among its members.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>regionId</code></td><td><code>String</code></td><td>The region’s identifier.</td></tr>
+<tr><td><code>displayName</code></td><td><code>String</code></td><td>The region’s display name.</td></tr>
+<tr><td><code>boundingBox</code></td><td><code>BoundingBox</code></td><td>The recorded area the region covers.</td></tr>
+<tr><td><code>minimumZoomLevel</code></td><td><code>UByte</code></td><td>The recorded lowest zoom level.</td></tr>
+<tr><td><code>maximumZoomLevel</code></td><td><code>UByte</code></td><td>The recorded highest zoom level.</td></tr>
+<tr><td><code>imageFormat</code></td><td><code>RasterImageFormat</code></td><td>The recorded encoded format.</td></tr>
+<tr><td><code>tileResolution</code></td><td><code>RasterTileResolution</code></td><td>The recorded pixel resolution.</td></tr>
+<tr><td><code>effectiveTimeToLiveSeconds</code></td><td><code>ULong</code></td><td>The retention the region’s entries carry, in seconds: the requested value or the category default, clamped to the provider’s ceiling.</td></tr>
+<tr><td><code>memberTileCount</code></td><td><code>ULong</code></td><td>Tile fingerprints the region claims membership for.</td></tr>
+<tr><td><code>presentTileCount</code></td><td><code>ULong</code></td><td>Members whose entries are live on disk right now.</td></tr>
+<tr><td><code>presentPayloadBytes</code></td><td><code>ULong</code></td><td>Payload bytes of the live members.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="regiondownloadprogress"><a class="header" href="#regiondownloadprogress">RegionDownloadProgress</a></h3>
+<p>One progress report of a region download.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>regionId</code></td><td><code>String</code></td><td>The region this report belongs to.</td></tr>
+<tr><td><code>totalTileCount</code></td><td><code>ULong</code></td><td>Tiles the region enumerates.</td></tr>
+<tr><td><code>completedTileCount</code></td><td><code>ULong</code></td><td>Tiles downloaded and refreshed so far.</td></tr>
+<tr><td><code>networkFetchedTileCount</code></td><td><code>ULong</code></td><td>Completed tiles the provider had to fetch.</td></tr>
+<tr><td><code>diskServedTileCount</code></td><td><code>ULong</code></td><td>Completed tiles the store already held.</td></tr>
+<tr><td><code>phase</code></td><td><code>RegionDownloadPhase</code></td><td>The phase this report describes.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="regionremovalreport"><a class="header" href="#regionremovalreport">RegionRemovalReport</a></h3>
+<p>What a region’s explicit deletion removed.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>removedEntryCount</code></td><td><code>ULong</code></td><td>Tile entries deleted; never a tile another live region still claims.</td></tr>
+<tr><td><code>removedPayloadBytes</code></td><td><code>ULong</code></td><td>Payload bytes those entries carried.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1620,6 +1715,21 @@
 </tbody>
 </table>
 </div>
+<h3 id="regiondownloadphase"><a class="header" href="#regiondownloadphase">RegionDownloadPhase</a></h3>
+<p>The phase of one region download.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variant</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DOWNLOADING</code></td><td>The download is running; progress reports carry the counts so far.</td></tr>
+<tr><td><code>COMPLETED</code></td><td>The download finished with every member tile present.</td></tr>
+<tr><td><code>CANCELLED</code></td><td>The application cancelled the download; the partial region is kept and resumable.</td></tr>
+<tr><td><code>FAILED</code></td><td>The download stopped on a failure after keeping the partial region.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="navigationphase"><a class="header" href="#navigationphase">NavigationPhase</a></h3>
 <p>High-level phase of a trip that has already been started. Rerouting is not a phase of its own: the controller moves Navigating to OffRoute and back within a trip, and Navigating to Arrived at its end.</p>
 <div class="table-wrapper">
@@ -1856,7 +1966,7 @@
 </table>
 </div>
 <h2 id="async-and-threading"><a class="header" href="#async-and-threading">Async and threading</a></h2>
-<p>These calls are asynchronous on Kotlin: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>.</p>
+<p>These calls are asynchronous on Kotlin: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
 <p>Asynchronous calls are <code>suspend</code> functions and do not block the calling thread. The shipped map view members expect the main thread.</p>
 <ul>
 <li><code>MapView.draw</code> is frame-driven: call it from the platform display callback. A concurrent draw or resize reports <code>RenderingSurfaceUnavailable</code>; retry the next frame.</li>

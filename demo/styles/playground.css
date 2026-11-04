@@ -909,6 +909,57 @@
         border: 1px solid var(--surface-border-color);
         border-radius: var(--radius-control);
       }
+      /* Provider capability rows: the serving line and the picker entry share
+         one "{provider} · {state}" composition, so a name and a state never
+         split across controls. Everything wraps inside the settings sheet. */
+      .capability-provider-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: var(--stack-tight) 0;
+        border-top: 1px solid var(--surface-border-color);
+      }
+      .capability-provider-row:first-child { border-top: 0; padding-top: 0; }
+      .capability-provider-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+        flex-wrap: wrap;
+      }
+      .capability-provider-title {
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        color: var(--text-primary-color);
+      }
+      .capability-provider-serving {
+        font-size: var(--type-caption-size);
+        text-align: end;
+        color: var(--text-secondary-color);
+        overflow-wrap: anywhere;
+      }
+      .capability-provider-select {
+        width: 100%;
+        min-height: var(--control-height);
+        padding: 4px 8px;
+        font: inherit;
+        font-size: var(--type-caption-size);
+        color: var(--text-primary-color);
+        background: var(--field-fill-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-control);
+      }
+      .capability-provider-endpoint,
+      .capability-provider-next-step {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        line-height: 1.4;
+        color: var(--text-secondary-color);
+        overflow-wrap: anywhere;
+      }
+      .capability-provider-next-step { color: var(--warning-color); }
+      .capability-provider-endpoint[hidden],
+      .capability-provider-next-step[hidden] { display: none; }
 
       /* Simulated navigation card set (docs/ReferenceAppUX.md §7),
          spec-driven layout preview until the wasm contract wave. */
@@ -963,6 +1014,51 @@
         margin: calc(-1 * var(--stack-group) + 6px) 0 0;
         font-size: var(--type-caption-size);
         line-height: 1.4;
+        color: var(--text-secondary-color);
+      }
+      /* The two endpoint fields' visible labels and the compact swap action
+         (docs/design/ReferenceApplicationBehavior.md §Home and search): the
+         label row keeps the swap one tap away without costing a whole row on a
+         phone sheet. */
+      .trip-field-label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+        margin-top: calc(-1 * var(--stack-tight));
+      }
+      .trip-field-label {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 6px;
+        margin: 0;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+        line-height: 1.2;
+        color: var(--text-secondary-color);
+      }
+      /* The A/B endpoint markers every surface's plan sheet carries; the
+         marker is decorative, so assistive technology reads only the label. */
+      .trip-field-marker {
+        font-weight: var(--type-body-strong-weight);
+        color: var(--accent-text-color);
+      }
+      .trip-swap-control {
+        min-height: 24px;
+        padding: 0 8px;
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+        background: transparent;
+        border-color: transparent;
+        border-radius: var(--radius-inline);
+      }
+      .trip-swap-control:hover {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+      }
+      .trip-suggestions-heading {
+        margin: calc(-1 * var(--stack-tight)) 0 0;
+        font-size: var(--type-caption-size);
         color: var(--text-secondary-color);
       }
       .trip-search { position: relative; display: flex; align-items: center; }
@@ -1153,6 +1249,27 @@
         border-radius: var(--radius-inline);
       }
       .trip-route-result[hidden] { display: none; }
+      /* The route card's lines: destination title, numeric readout, mode ·
+         strategy caption, ETA and the optional maneuver/note. */
+      .trip-route-result p { margin: 0; }
+      .trip-route-result p + p { margin-top: 2px; }
+      .trip-route-title {
+        font-size: var(--type-title-size);
+        font-weight: var(--type-body-strong-weight);
+        line-height: 1.3;
+      }
+      .trip-route-facts {
+        font-family: var(--font-numeric-readout);
+        font-weight: var(--type-body-strong-weight);
+      }
+      .trip-route-directions,
+      .trip-route-eta,
+      .trip-route-maneuver,
+      .trip-route-note {
+        font-size: var(--type-caption-size);
+        color: var(--text-secondary-color);
+      }
+      .trip-route-result p[hidden] { display: none; }
       /* Directions (docs/design/DirectionsModesAndStrategy.md): mode and strategy
          sit beside the plan action as the page's pressed-choice groups. The
          strategy row is hidden while the plan walks, so the two rows stay one
@@ -1405,6 +1522,18 @@
       /* The follow demo's live line and the 3D-plane badge of the cluster. */
       #follow-demo-live-line { margin: var(--stack-tight) 0 0; color: var(--text-secondary-color); font-size: var(--type-caption-size); }
 
+      /* The diagnostics pane's opt-in row: the explicit debug switch, Clear and
+         the manual refresh stay one wrapping row on a phone sheet. */
+      .diagnostics-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--stack-tight);
+        margin-top: var(--stack-tight);
+      }
+      .diagnostics-actions .toggle-row { margin: 0; }
+      .diagnostics-actions button { min-height: 30px; }
+
       /* The diagnostics readout (§4.1's diagnostics sheet, round-10 shape on
          the web surface): bounded monospace lines, SDK jargon verbatim. */
       #diagnostics-facts-lines,
@@ -1470,9 +1599,18 @@
         .trip-footnote { display: none; }
         /* Two search fields instead of one: the field height and the card's
            spacing tighten so Plan route and Start simulated navigation stay inside
-           the sheet at 390x844 without scrolling. */
+           the sheet at 390x844 without scrolling. The visible field labels and
+           the demo-places heading keep their own line but cost no extra gap. */
+        #trip-planner { gap: 6px; }
+        .trip-field-label-row { margin-top: 0; }
+        .trip-field-label { line-height: 1.1; }
+        .trip-swap-control { min-height: 20px; padding: 0 6px; }
+        .trip-my-location-chip { height: 20px; min-height: 20px; margin-bottom: 0; }
         .trip-search input { height: 38px; }
         .trip-suggestions { margin-top: 0; }
+        /* The demo-place chips below carry the same heading's meaning; on the
+           phone sheet the heading's line is height the card cannot spare. */
+        .trip-suggestions-heading { display: none; }
         /* A representative error fits inside the space the sheet leaves. */
         #error-report { max-height: 20vh; }
         #controls-header {
