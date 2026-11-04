@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cache_policy","offline_routing","offline_routing_benchmark","registry","routing_fallback","traffic_flow_cache"]};
+window.SIDEBAR_ITEMS = {"mod":["blocking_work","cache_policy","offline_routing","offline_routing_benchmark","registry","routing_fallback","traffic_flow_cache"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAPQUEST_RASTER_TILE_CACHE_CEILING_SECONDS"],"struct":["MapQuestRasterTileProvider"]};
+window.SIDEBAR_ITEMS = {"constant":["MAPQUEST_RASTER_TILE_CACHE_CEILING_SECONDS","MAPQUEST_RASTER_TILE_MAXIMUM_ZOOM_LEVEL"],"struct":["MapQuestRasterTileProvider"]};

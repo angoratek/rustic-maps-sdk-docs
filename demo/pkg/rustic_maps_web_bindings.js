@@ -1,6 +1,247 @@
 /* @ts-self-types="./rustic_maps_web_bindings.d.ts" */
 
 /**
+ * A fixed-window circular median over recent course-over-ground samples.
+ */
+export class CourseMedianSmoother {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        CourseMedianSmootherFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_coursemediansmoother_free(ptr, 0);
+    }
+    /**
+     * Adds one fix's course-over-ground, dropping the oldest sample.
+     * @param {number} course_degrees
+     */
+    add(course_degrees) {
+        wasm.coursemediansmoother_add(this.__wbg_ptr, course_degrees);
+    }
+    /**
+     * The circular median, or `null` while the window holds no sample.
+     * @returns {any}
+     */
+    median() {
+        const ret = wasm.coursemediansmoother_median(this.__wbg_ptr);
+        return takeObject(ret);
+    }
+    /**
+     * Creates a smoother over `window_fix_count` recent samples.
+     * @param {number} window_fix_count
+     */
+    constructor(window_fix_count) {
+        const ret = wasm.coursemediansmoother_new(window_fix_count);
+        this.__wbg_ptr = ret;
+        CourseMedianSmootherFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Empties the window.
+     */
+    reset() {
+        wasm.coursemediansmoother_reset(this.__wbg_ptr);
+    }
+}
+if (Symbol.dispose) CourseMedianSmoother.prototype[Symbol.dispose] = CourseMedianSmoother.prototype.free;
+
+/**
+ * An exponential chase toward a moving target.
+ */
+export class ExponentialValueChase {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        ExponentialValueChaseFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_exponentialvaluechase_free(ptr, 0);
+    }
+    /**
+     * Advances the chase toward `target`, returning the next current value.
+     * @param {number} current
+     * @param {number} target
+     * @param {number} now_milliseconds
+     * @returns {number}
+     */
+    advance(current, target, now_milliseconds) {
+        const ret = wasm.exponentialvaluechase_advance(this.__wbg_ptr, current, target, now_milliseconds);
+        return ret;
+    }
+    /**
+     * Creates a chase with the given time constant in milliseconds.
+     * @param {number} time_constant_milliseconds
+     */
+    constructor(time_constant_milliseconds) {
+        const ret = wasm.exponentialvaluechase_new(time_constant_milliseconds);
+        this.__wbg_ptr = ret;
+        ExponentialValueChaseFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Clears the frame clock so the next call is treated as a first frame.
+     */
+    reset() {
+        wasm.exponentialvaluechase_reset(this.__wbg_ptr);
+    }
+}
+if (Symbol.dispose) ExponentialValueChase.prototype[Symbol.dispose] = ExponentialValueChase.prototype.free;
+
+/**
+ * The navigation follow-camera state machine and its targets.
+ */
+export class FollowCamera {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        FollowCameraFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_followcamera_free(ptr, 0);
+    }
+    /**
+     * A user gesture (drag, pinch or rotate) breaks follow immediately.
+     */
+    breakOnGesture() {
+        wasm.followcamera_breakOnGesture(this.__wbg_ptr);
+    }
+    /**
+     * Applies the trip's follow camera and captures the pre-trip pose.
+     * @param {number} current_center_latitude_degrees
+     * @param {number} current_center_longitude_degrees
+     * @param {number} current_zoom_level
+     * @param {number} current_bearing_degrees
+     * @param {number} current_pitch_degrees
+     */
+    engageTrip(current_center_latitude_degrees, current_center_longitude_degrees, current_zoom_level, current_bearing_degrees, current_pitch_degrees) {
+        wasm.followcamera_engageTrip(this.__wbg_ptr, current_center_latitude_degrees, current_center_longitude_degrees, current_zoom_level, current_bearing_degrees, current_pitch_degrees);
+    }
+    /**
+     * Creates a disengaged camera with the default course-smoothing window.
+     */
+    constructor() {
+        const ret = wasm.followcamera_new();
+        this.__wbg_ptr = ret;
+        FollowCameraFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Applies one location fix of the active trip.
+     * @param {number} latitude_degrees
+     * @param {number} longitude_degrees
+     * @param {number | null | undefined} course_heading_degrees
+     * @param {number} remaining_distance_fraction
+     */
+    onFix(latitude_degrees, longitude_degrees, course_heading_degrees, remaining_distance_fraction) {
+        wasm.followcamera_onFix(this.__wbg_ptr, latitude_degrees, longitude_degrees, !isLikeNone(course_heading_degrees), isLikeNone(course_heading_degrees) ? 0 : course_heading_degrees, remaining_distance_fraction);
+    }
+    /**
+     * The current follow phase.
+     * @returns {string}
+     */
+    get phase() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.followcamera_phase(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            deferred1_0 = r0;
+            deferred1_1 = r1;
+            return getStringFromWasm0(r0, r1);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_export4(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * The captured pre-trip camera, or `null` outside a trip.
+     * @returns {any}
+     */
+    get preTripCamera() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.followcamera_preTripCamera(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * The my-location control's explicit re-engage.
+     */
+    reengage() {
+        wasm.followcamera_reengage(this.__wbg_ptr);
+    }
+    /**
+     * Ends the trip, returning the captured pre-trip camera or `null`.
+     * @returns {any}
+     */
+    restorePreTripCamera() {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.followcamera_restorePreTripCamera(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            if (r2) {
+                throw takeObject(r1);
+            }
+            return takeObject(r0);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
+     * The target bearing in degrees, or `null` until a fix reports a course.
+     * @returns {any}
+     */
+    get targetBearingDegrees() {
+        const ret = wasm.followcamera_targetBearingDegrees(this.__wbg_ptr);
+        return takeObject(ret);
+    }
+    /**
+     * The target centre latitude in degrees.
+     * @returns {number}
+     */
+    get targetCenterLatitudeDegrees() {
+        const ret = wasm.followcamera_targetCenterLatitudeDegrees(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * The target centre longitude in degrees.
+     * @returns {number}
+     */
+    get targetCenterLongitudeDegrees() {
+        const ret = wasm.followcamera_targetCenterLongitudeDegrees(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * The target zoom level.
+     * @returns {number}
+     */
+    get targetZoomLevel() {
+        const ret = wasm.followcamera_targetZoomLevel(this.__wbg_ptr);
+        return ret;
+    }
+}
+if (Symbol.dispose) FollowCamera.prototype[Symbol.dispose] = FollowCamera.prototype.free;
+
+/**
  * Anchored map camera (geographic center, zoom, bearing, pitch) mirroring
  * the native [`rustic_maps_rendering::MapCamera`]. The ground point under the
  * center always sits at the viewport center.
@@ -766,6 +1007,10 @@ export class MapView {
      * missing or undecodable parent fixture is an error, not a silent skip:
      * the caller wants the fallback imagery or nothing. The parent coordinates
      * must describe the fallback tile's direct parent.
+     *
+     * The draw state is borrowed only to read the tile resolution and again
+     * after the fetch; the parent fetch itself runs outside any borrow, so a
+     * concurrent frame can draw while the payload is in flight.
      * @param {number} fallback_tile_x
      * @param {number} fallback_tile_y
      * @param {number} fallback_zoom_level
@@ -1328,6 +1573,76 @@ export const SdkLogSeverity = Object.freeze({
 });
 
 /**
+ * A linear-in-time, smoothstep-eased value move.
+ */
+export class SmoothstepTimedEase {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        SmoothstepTimedEaseFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_smoothsteptimedease_free(ptr, 0);
+    }
+    /**
+     * Advances the ease at `now_milliseconds`.
+     *
+     * Returns `[value, finished]`: the current eased value and whether the
+     * move just finished on this call.
+     * @param {number} now_milliseconds
+     * @returns {Array<any>}
+     */
+    advance(now_milliseconds) {
+        const ret = wasm.smoothsteptimedease_advance(this.__wbg_ptr, now_milliseconds);
+        return takeObject(ret);
+    }
+    /**
+     * Begins, or restarts, an ease from one value to another.
+     * @param {number} start_milliseconds
+     * @param {number} from_value
+     * @param {number} to_value
+     * @param {number} duration_milliseconds
+     */
+    begin(start_milliseconds, from_value, to_value, duration_milliseconds) {
+        wasm.smoothsteptimedease_begin(this.__wbg_ptr, start_milliseconds, from_value, to_value, duration_milliseconds);
+    }
+    /**
+     * Whether an ease is in flight.
+     * @returns {boolean}
+     */
+    get is_running() {
+        const ret = wasm.smoothsteptimedease_is_running(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * Creates an idle ease with no target.
+     */
+    constructor() {
+        const ret = wasm.smoothsteptimedease_new();
+        this.__wbg_ptr = ret;
+        SmoothstepTimedEaseFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Stops an in-flight ease without applying anything.
+     */
+    reset() {
+        wasm.smoothsteptimedease_reset(this.__wbg_ptr);
+    }
+    /**
+     * The ease's target value.
+     * @returns {number}
+     */
+    get target_value() {
+        const ret = wasm.smoothsteptimedease_target_value(this.__wbg_ptr);
+        return ret;
+    }
+}
+if (Symbol.dispose) SmoothstepTimedEase.prototype[Symbol.dispose] = SmoothstepTimedEase.prototype.free;
+
+/**
  * Tile pixel resolution the GPU canvas fetches and samples, mirroring
  * [`geospatial_types::RasterTileResolution`] at the JavaScript seam: the
  * shared record type cannot itself carry `wasm-bindgen` attributes, so the
@@ -1344,6 +1659,95 @@ export const TileResolution = Object.freeze({
      */
     Retina: 1, "1": "Retina",
 });
+
+/**
+ * A forward-only cursor over a recorded trace's samples.
+ */
+export class TraceCursor {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        TraceCursorFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_tracecursor_free(ptr, 0);
+    }
+    /**
+     * Consumes and returns the next sample's index, or `null` at the end.
+     * @returns {any}
+     */
+    advance() {
+        const ret = wasm.tracecursor_advance(this.__wbg_ptr);
+        return takeObject(ret);
+    }
+    /**
+     * Whether every sample was delivered.
+     * @returns {boolean}
+     */
+    isFinished() {
+        const ret = wasm.tracecursor_isFinished(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * Creates a cursor at the first sample of a trace with `sample_count`
+     * samples.
+     * @param {number} sample_count
+     */
+    constructor(sample_count) {
+        const ret = wasm.tracecursor_new(sample_count);
+        this.__wbg_ptr = ret;
+        TraceCursorFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * The next sample's index, or `null` when every sample was delivered.
+     * @returns {any}
+     */
+    nextSampleIndex() {
+        const ret = wasm.tracecursor_nextSampleIndex(this.__wbg_ptr);
+        return takeObject(ret);
+    }
+    /**
+     * The next sample's index without consuming it.
+     * @returns {any}
+     */
+    peek() {
+        const ret = wasm.tracecursor_peek(this.__wbg_ptr);
+        return takeObject(ret);
+    }
+    /**
+     * The number of samples not yet delivered.
+     * @returns {number}
+     */
+    remainingSampleCount() {
+        const ret = wasm.tracecursor_remainingSampleCount(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * Rewinds the cursor to the first sample.
+     */
+    reset() {
+        wasm.tracecursor_reset(this.__wbg_ptr);
+    }
+    /**
+     * The trace's sample count.
+     * @returns {number}
+     */
+    get sampleCount() {
+        const ret = wasm.tracecursor_sampleCount(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * Moves the cursor to `sample_index`, clamped to the trace's bounds.
+     * @param {number} sample_index
+     */
+    seekToSampleIndex(sample_index) {
+        wasm.tracecursor_seekToSampleIndex(this.__wbg_ptr, sample_index);
+    }
+}
+if (Symbol.dispose) TraceCursor.prototype[Symbol.dispose] = TraceCursor.prototype.free;
 
 /**
  * Congestion classification a traffic-flow segment paints with, mirroring
@@ -1371,6 +1775,16 @@ export const TrafficFlowCongestionLevel = Object.freeze({
      */
     Blocked: 3, "3": "Blocked",
 });
+
+/**
+ * The camera bearing's smallest off-north angular distance, in degrees.
+ * @param {number} bearing_degrees
+ * @returns {number}
+ */
+export function bearingOffNorthDegrees(bearing_degrees) {
+    const ret = wasm.bearingOffNorthDegrees(bearing_degrees);
+    return ret;
+}
 
 /**
  * Calculates a travel-time matrix through the installed distance-matrix
@@ -1619,6 +2033,16 @@ export function flushRecentDiagnosticEvents(minimum_severity, maximum_count) {
 }
 
 /**
+ * The follow camera's zoom toward trip end.
+ * @param {number} remaining_distance_fraction
+ * @returns {number}
+ */
+export function followZoomTowardTripEnd(remaining_distance_fraction) {
+    const ret = wasm.followZoomTowardTripEnd(remaining_distance_fraction);
+    return ret;
+}
+
+/**
  * Forward-geocodes through the installed geocoding provider, answering the
  * same row shape the native reference applications consume. Fails with a
  * message when no provider is registered or the provider refuses the query.
@@ -1864,6 +2288,28 @@ export function routeCapabilities() {
 }
 
 /**
+ * The selected ladder distance's metric label.
+ * @param {number} distance_meters
+ * @returns {string}
+ */
+export function scaleBarDistanceLabelText(distance_meters) {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.scaleBarDistanceLabelText(retptr, distance_meters);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        deferred1_0 = r0;
+        deferred1_1 = r1;
+        return getStringFromWasm0(r0, r1);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+        wasm.__wbindgen_export4(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
  * Returns full search results for a settled query through the installed
  * search-place provider — the same rows the native reference apps consume
  * from `MapSdk::search`.
@@ -1892,6 +2338,54 @@ export function searchPlacesInBoundary(query_text, south_west_latitude, south_we
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.searchPlacesInBoundary(ptr0, len0, south_west_latitude, south_west_longitude, north_east_latitude, north_east_longitude);
     return takeObject(ret);
+}
+
+/**
+ * Selects the scale-bar ladder distance using the design language's token
+ * width range.
+ *
+ * Returns a `{ distanceMeters, widthPixels }` object, or `null` when the
+ * ground answer is not usable.
+ * @param {number} ground_meters_per_screen_pixel
+ * @returns {any}
+ */
+export function selectScaleBarScale(ground_meters_per_screen_pixel) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.selectScaleBarScale(retptr, ground_meters_per_screen_pixel);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Selects the scale-bar ladder distance that fits an explicit width range.
+ * @param {number} ground_meters_per_screen_pixel
+ * @param {number} minimum_width_pixels
+ * @param {number} maximum_width_pixels
+ * @returns {any}
+ */
+export function selectScaleBarScaleWithWidthRange(ground_meters_per_screen_pixel, minimum_width_pixels, maximum_width_pixels) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.selectScaleBarScaleWithWidthRange(retptr, ground_meters_per_screen_pixel, minimum_width_pixels, maximum_width_pixels);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
 }
 
 /**
@@ -1944,6 +2438,27 @@ export function setProviderCredential(credential) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
+}
+
+/**
+ * The shortest signed angular difference `to − from`, in degrees.
+ * @param {number} to_degrees
+ * @param {number} from_degrees
+ * @returns {number}
+ */
+export function signedAngularDifferenceDegrees(to_degrees, from_degrees) {
+    const ret = wasm.signedAngularDifferenceDegrees(to_degrees, from_degrees);
+    return ret;
+}
+
+/**
+ * Smoothstep easing (`3t² − 2t³`), clamped into `[0, 1]`.
+ * @param {number} linear_progress
+ * @returns {number}
+ */
+export function smoothstepEasedProgress(linear_progress) {
+    const ret = wasm.smoothstepEasedProgress(linear_progress);
+    return ret;
 }
 
 /**
@@ -2042,6 +2557,17 @@ export function tilesCovering(south_west_latitude, south_west_longitude, north_e
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
+}
+
+/**
+ * The replay dispatch interval for a recorded trace, in milliseconds.
+ * @param {number} recorded_sample_interval_seconds
+ * @param {number} playback_acceleration_factor
+ * @returns {number}
+ */
+export function traceDispatchIntervalMilliseconds(recorded_sample_interval_seconds, playback_acceleration_factor) {
+    const ret = wasm.traceDispatchIntervalMilliseconds(recorded_sample_interval_seconds, playback_acceleration_factor);
+    return ret;
 }
 
 /**
@@ -3393,7 +3919,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_8525(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_8781(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -4444,38 +4970,38 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2650, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8504);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2695, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_8760);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 380, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1669);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 425, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1902);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 384, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1673);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 429, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1906);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 384, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1673_100);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 429, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1906_142);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 380, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1669_101);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 425, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1902_143);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 380, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1669_102);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 425, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_1902_144);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000007: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2474, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6395);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 2519, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_6628);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000008: function(arg0) {
@@ -4549,26 +5075,26 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_6395(arg0, arg1) {
-    wasm.__wasm_bindgen_func_elem_6395(arg0, arg1);
+function __wasm_bindgen_func_elem_6628(arg0, arg1) {
+    wasm.__wasm_bindgen_func_elem_6628(arg0, arg1);
 }
 
-function __wasm_bindgen_func_elem_1673(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_1673(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_1906(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_1906(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_1673_100(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_1673_100(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_1906_142(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_1906_142(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_8525(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_8525(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_8781(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_8781(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_8504(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_8760(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_8504(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_8760(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4579,10 +5105,10 @@ function __wasm_bindgen_func_elem_8504(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1669(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1902(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1669(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1902(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4593,10 +5119,10 @@ function __wasm_bindgen_func_elem_1669(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1669_101(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1902_143(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1669_101(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1902_143(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4607,10 +5133,10 @@ function __wasm_bindgen_func_elem_1669_101(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_1669_102(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_1902_144(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_1669_102(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_1902_144(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -4707,6 +5233,15 @@ const __wbindgen_enum_GpuVertexFormat = ["uint8", "uint8x2", "uint8x4", "sint8",
 
 
 const __wbindgen_enum_GpuVertexStepMode = ["vertex", "instance"];
+const CourseMedianSmootherFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_coursemediansmoother_free(ptr, 1));
+const ExponentialValueChaseFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_exponentialvaluechase_free(ptr, 1));
+const FollowCameraFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_followcamera_free(ptr, 1));
 const MapCameraFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_mapcamera_free(ptr, 1));
@@ -4725,6 +5260,12 @@ const PositionControllerFinalization = (typeof FinalizationRegistry === 'undefin
 const RouteSimulatorFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_routesimulator_free(ptr, 1));
+const SmoothstepTimedEaseFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_smoothsteptimedease_free(ptr, 1));
+const TraceCursorFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_tracecursor_free(ptr, 1));
 
 function addHeapObject(obj) {
     if (heap_next === heap.length) heap.push(heap.length + 1);

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["course","easing","flow","follow_camera","scale_bar","trace"]};

@@ -54,21 +54,26 @@
       // (the Playwright specs import the same values, so page and tests
       // cannot drift).
       import {
+        DIAGNOSTICS_BACKLOG_FLUSH_LIMIT,
+        DIAGNOSTICS_DEBUG_SEVERITY_NAME,
+        DIAGNOSTICS_EVENT_WINDOW,
+        DIAGNOSTICS_MINIMUM_SEVERITY_NAME,
+        DIAGNOSTICS_REFRESH_CADENCE_MILLISECONDS,
         MAP_CONTROL_ZOOM_STEP,
         MAP_CONTROL_ZOOM_REPEAT_INTERVAL_MILLISECONDS,
         COMPASS_VISIBILITY_BEARING_THRESHOLD_DEGREES,
         EASED_CAMERA_MOVE_DURATION_MILLISECONDS,
         NAVIGATION_FOLLOW_PITCH_3D_DEGREES,
-        COURSE_SMOOTHING_WINDOW_FIXES,
         FOLLOW_BEARING_CHASE_TIME_CONSTANT_MILLISECONDS,
         FOLLOW_BEARING_SNAP_DISTANCE_DEGREES,
         FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR,
         FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS,
         FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS,
         FOLLOW_DEMO_SPEED_METERS_PER_SECOND,
-        CourseMedianSmoother,
         ExponentialValueChase,
+        FollowCamera,
         SmoothstepTimedEase,
+        TraceCursor,
         bearing_off_north_degrees,
         follow_zoom_toward_trip_end,
         initial_bearing_degrees,
@@ -77,6 +82,7 @@
         scale_bar_distance_label_text,
         select_scale_bar_scale,
         signed_angular_difference_degrees,
+        trace_dispatch_interval_milliseconds,
       } from './map_controls.mjs';
 
       // Consumer copy (M28): every user-visible label of the page comes from
@@ -189,6 +195,24 @@
       // Distance/duration formatting of the demo progress card.
       const METERS_PER_KILOMETER = 1000;
       const SECONDS_PER_MINUTE = 60;
+      // The route card's ETA is the local clock time the route completes at,
+      // from the shared millisecond conversion above.
+      // The route card's mode and strategy captions: the contract vocabulary
+      // the Directions control carries, spelled for the reader.
+      const ROUTE_CARD_MODE_TEXTS = Object.freeze({
+        automobile: 'Automobile',
+        pedestrian: 'Pedestrian',
+      });
+      const ROUTE_CARD_STRATEGY_TEXTS = Object.freeze({
+        fastest: 'Fastest',
+        shortest: 'Shortest',
+      });
+      // The recorded demo route carries its own profile; no Directions choice
+      // was sent for it, so the card names that profile instead of the control.
+      const RECORDED_ROUTE_CARD_MODE_TEXT = 'Pedestrian';
+      const RECORDED_ROUTE_CARD_STRATEGY_TEXT = 'Fastest';
+      const OFFLINE_ROUTE_CARD_MODE_TEXT = 'Recorded';
+      const OFFLINE_ROUTE_CARD_STRATEGY_TEXT = 'Fastest';
       // The flat-earth scale the traffic bounds fall back to at a steep pitch:
       // one degree of latitude, in meters.
       const METERS_PER_DEGREE_LATITUDE = 111_320;
@@ -248,23 +272,25 @@
       // page (the docs demo) enables it for every visitor.
       const LOCAL_DEMO_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
       const LIVE_TILES_OPT_IN_PARAMETER = 'liveTiles';
-      // Diagnostics readout (§4.1): the gate drops to Debug here because the
-      // wasm closure's own events (rustic-maps-rendering's tile-fetch tracing) are
-      // debug-severity; the native readouts subscribe at Info. The readout
-      // keeps a smaller display window than the ring (the §4.1 readout
-      // keeps its most recent lines only).
-      const DIAGNOSTICS_READOUT_MINIMUM_SEVERITY_NAME = 'Debug';
-      const DIAGNOSTICS_READOUT_EVENT_LIMIT = 20;
+      // Diagnostics are opt-in (docs/design/ReferenceApplicationBehavior.md
+      // §Diagnostics policy): the pane opens one bounded stream at Info and the
+      // explicit Show debug events switch lowers it to Debug. Nothing is
+      // subscribed before the visitor opens the pane, the window is the shared
+      // 100-event bound, and the choice is never persisted (per session).
+      // The pane's own displayed list resets when the visitor clears it; the
+      // SDK ring is never emptied (a later flush can redeliver older events).
+      let diagnostics_cleared_at_milliseconds = null;
       // The follow demo's fix cadence, derived from the artifact's
       // documented sample interval and the playback factor (5 s / 20 =
-      // 250 ms — mirroring the Android demo's dispatch interval).
-      const FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS =
-        1000 * (FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS / FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR);
-      // A recorded demo plan dispatches its own samples at the trace's
-      // recorded interval divided by the demo acceleration and the speed
-      // choice (the native SimulatedTripDriver's dispatchIntervalMillis). The
-      // floor keeps a fast multiplier from spinning the timer.
-      const DEMO_PLAN_MINIMUM_DISPATCH_INTERVAL_MILLISECONDS = 1;
+      // 250 ms — mirroring the Android demo's dispatch interval). The shared
+      // crate answers the interval; the timer asks for it after the wasm
+      // module is ready.
+      function follow_demo_fix_interval_milliseconds() {
+        return trace_dispatch_interval_milliseconds(
+          FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS,
+          FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR,
+        );
+      }
       // The playback paces a visitor may pick (M27), applied to the route's
       // own walk speed; the remembered speed must be one of these.
       const FOLLOW_DEMO_SPEED_MULTIPLIERS = [1, 2, 4, 8];
@@ -327,6 +353,36 @@
       const settings_control = document.getElementById('settings-control');
       const bottom_start_dock_element = document.getElementById('bottom-start-dock');
       const error_report_element = document.getElementById('error-report');
+      // Provider-echoing error report (docs/ReferenceAppUX.md §6.3): the origin
+      // label names the failing surface, the detail is echoed verbatim, never
+      // paraphrased or swallowed. Declared at module scope because both the
+      // provider-capability section and the trip planner report through it.
+      function show_error_report(origin_label, detail_text) {
+        error_report_element.hidden = false;
+        error_report_element.textContent = `${origin_label}: ${detail_text}`;
+      }
+      function clear_error_report() {
+        error_report_element.hidden = true;
+        error_report_element.textContent = '';
+      }
+      // Empties the structured route card without detaching its child nodes
+      // (the live renderers keep references to them). Used when a credential
+      // change invalidates every live result.
+      function clear_trip_route_card() {
+        for (const route_card_line of [
+          trip_route_title,
+          trip_route_facts,
+          trip_route_directions,
+          trip_route_eta,
+          trip_route_maneuver,
+          trip_route_note,
+        ]) {
+          route_card_line.textContent = '';
+        }
+        trip_route_maneuver.hidden = true;
+        trip_route_note.hidden = true;
+        trip_route_result.hidden = true;
+      }
       // The phone bottom sheet reserves the measured bottom dock height, so
       // the status line, scale bar and a live error strip never draw over it.
       // The dock grows and shrinks (the scale bar appears at readiness, an
@@ -478,9 +534,33 @@
         document.getElementById('trip-destination-search-control');
       const trip_search_results_element = document.getElementById('trip-search-results');
       const trip_suggestions_element = document.getElementById('trip-suggestions');
+      const trip_swap_control = document.getElementById('trip-swap-control');
+      const trip_source_line = document.getElementById('trip-source-line');
       const trip_plan_route_control = document.getElementById('trip-plan-route-control');
       const trip_plan_route_reason = document.getElementById('trip-plan-route-reason');
       const trip_route_result = document.getElementById('trip-route-result');
+      const trip_route_title = document.getElementById('trip-route-title');
+      const trip_route_facts = document.getElementById('trip-route-facts');
+      const trip_route_directions = document.getElementById('trip-route-directions');
+      const trip_route_eta = document.getElementById('trip-route-eta');
+      const trip_route_maneuver = document.getElementById('trip-route-maneuver');
+      const trip_route_note = document.getElementById('trip-route-note');
+      // The provider-capability settings section: one row per capability the
+      // registry offers on this platform, composed from the descriptors.
+      const capability_providers_panel =
+        document.getElementById('capability-providers-panel');
+      const capability_provider_rows =
+        document.getElementById('capability-provider-controls');
+      const capability_provider_status = document.getElementById('capability-provider-status');
+      // The diagnostics pane's opt-in controls (docs/design/ReferenceApplicationBehavior.md
+      // §Diagnostics policy).
+      const advanced_panel = document.getElementById('advanced-panel');
+      const diagnostics_debug_events_control =
+        document.getElementById('diagnostics-debug-toggle');
+      const diagnostics_debug_events_label =
+        document.getElementById('diagnostics-debug-events-label');
+      const diagnostics_clear_control = document.getElementById('diagnostics-clear-control');
+      const diagnostics_close_control = document.getElementById('diagnostics-close-control');
       const directions_mode_car_control = document.getElementById('directions-mode-car');
       const directions_mode_walk_control = document.getElementById('directions-mode-walk');
       const directions_strategy_row = document.getElementById('directions-strategy-row');
@@ -524,6 +604,48 @@
       // The credential rows by provider key; declared here so the persistence
       // toggle's listener (below) can clear remembered keys.
       const provider_credential_controls_by_key = new Map();
+      // The session's applied credential values by provider key: the capability
+      // surface passes a credentialed provider's key to `configureProvider`, and
+      // the value never leaves this module's memory unless the visitor chose to
+      // remember it.
+      const provider_credentials_by_key = new Map();
+      // The capabilities a settings row can offer, in the contract's stable
+      // order, with the registry's snake-case served-contract spelling and the
+      // contract readback's camel-case spelling.
+      const CAPABILITY_CONTRACT_NAMES = Object.freeze({
+        geocoding: 'Geocoding',
+        routing: 'Routing',
+        distance_matrix: 'DistanceMatrix',
+        place_search: 'PlaceSearch',
+        traffic_incidents: 'TrafficIncidents',
+        traffic_flow: 'TrafficFlow',
+        elevation: 'Elevation',
+        raster_tiles: 'RasterTiles',
+        vector_tiles: 'VectorTiles',
+        offline_routing: 'OfflineRouting',
+      });
+      // The capability title each row shows. These are capability names, never
+      // provider names or raw contract spellings.
+      const CAPABILITY_DISPLAY_NAMES = Object.freeze({
+        geocoding: 'Geocoding',
+        routing: 'Routing',
+        distance_matrix: 'Distance matrix',
+        place_search: 'Place search',
+        traffic_incidents: 'Traffic incidents',
+        traffic_flow: 'Traffic flow',
+        elevation: 'Elevation',
+        raster_tiles: 'Raster tiles',
+      });
+      // The routing row's id suffix, shared by its endpoint and next-step lines.
+      const ROUTING_CAPABILITY_KEY = 'routing';
+      // The stable picker-entry id shape the shared flow schema names, for
+      // example `#capability-provider-choice-osrm`: one real option per
+      // registry descriptor, keyed by its provider key (no vendor branch).
+      const CAPABILITY_PROVIDER_CHOICE_IDENTIFIER_PREFIX = 'capability-provider-choice-';
+      // The failures the routing row names, keyed by capability: a failed
+      // selection and an unreachable route plan both point the visitor at the
+      // retry-or-own-deployment next step.
+      const capability_failure_text_by_key = new Map();
       const provider_keyless_status_text = ui_label_text('settings.keyless_status');
 
       /** The canonical applied sentence for one provider descriptor. */
@@ -794,8 +916,7 @@
       function clear_provider_probe_results() {
         trip_search_results_element.textContent = '';
         trip_search_results_element.hidden = true;
-        trip_route_result.textContent = '';
-        trip_route_result.hidden = true;
+        clear_trip_route_card();
         provider_tile_result.textContent = '';
         provider_tile_preview.hidden = true;
       }
@@ -917,6 +1038,294 @@
       }
       render_provider_credential_rows();
 
+      // --- Provider capabilities (docs/design/ReferenceApplicationBehavior.md
+      // §Provider selection, descriptors and endpoints) ---
+      // One row per capability the registry offers on this platform. The row
+      // and every picker entry compose "{display name} · {credential state}";
+      // no vendor name, key or URL is spelled here, and a keyless routing
+      // provider receives its descriptor's `demo_base_url` as the deployment
+      // address instead of an empty credential.
+
+      /** Whether a descriptor needs a runtime credential before it can serve. */
+      function capability_descriptor_requires_credential(provider_descriptor) {
+        return typeof provider_descriptor.credential_label === 'string'
+          && provider_descriptor.credential_label.trim() !== '';
+      }
+
+      /** The credential state one descriptor renders (never a bare state). */
+      function provider_capability_state_text(provider_descriptor) {
+        if (capability_descriptor_requires_credential(provider_descriptor)) {
+          return provider_credentials_by_key.has(provider_descriptor.provider_key)
+            ? ui_label_text('settings.provider_state_ready')
+            : ui_label_text_with_values(
+              'settings.provider_state_needs_credential',
+              { credential: provider_descriptor.credential_label },
+            );
+        }
+        return typeof provider_descriptor.demo_base_url === 'string'
+          && provider_descriptor.demo_base_url.trim() !== ''
+          ? ui_label_text('settings.provider_state_ready')
+          : ui_label_text('settings.provider_state_not_configured');
+      }
+
+      /** The one row composition the serving line and every picker entry use. */
+      function provider_capability_row_text(provider_descriptor) {
+        return ui_label_text_with_values('settings.provider_row', {
+          provider: provider_descriptor.display_name,
+          state: provider_capability_state_text(provider_descriptor),
+        });
+      }
+
+      /** The descriptors that declare one capability and can serve on wasm. */
+      function capability_provider_descriptors(capability_key) {
+        return providers_registry.providers.filter((provider_descriptor) =>
+          Array.isArray(provider_descriptor.served_contracts)
+          && provider_descriptor.served_contracts.includes(capability_key)
+          && provider_descriptor.registration_available?.wasm === true);
+      }
+
+      /** The capabilities this platform can offer a provider picker for. */
+      function offered_capability_keys() {
+        return Object.keys(CAPABILITY_CONTRACT_NAMES).filter(
+          (capability_key) => capability_provider_descriptors(capability_key).length > 0,
+        );
+      }
+
+      /** The provider registrations readback, or an empty list before ready. */
+      function current_provider_registrations() {
+        try {
+          return window.mapTest?.providerRegistrations?.() ?? [];
+        } catch {
+          return [];
+        }
+      }
+
+      /** The registration row for one capability, or null when unregistered. */
+      function provider_registration_for(capability_key) {
+        const contract_name = CAPABILITY_CONTRACT_NAMES[capability_key];
+        return Array.from(current_provider_registrations()).find(
+          (registration) => registration.contract === contract_name
+            && registration.registered,
+        ) ?? null;
+      }
+
+      /** True when a routing provider serves the plan call. */
+      function routing_provider_is_registered() {
+        return provider_registration_for(ROUTING_CAPABILITY_KEY) !== null;
+      }
+
+      /** Shows one capability-section status message, or hides it with null. */
+      function set_capability_provider_status(text) {
+        capability_provider_status.hidden = text === null;
+        capability_provider_status.textContent = text ?? '';
+      }
+
+      /** The verbatim failure detail of a thrown wasm value, without the
+       * JavaScript "Error:" decoration the SDK detail never carries. */
+      function provider_failure_text(error) {
+        return typeof error?.message === 'string' ? error.message : String(error);
+      }
+
+      /**
+       * Builds the capability rows once from the descriptor registry. A
+       * capability with no descriptor available on this platform gets no row.
+       */
+      function render_capability_provider_rows() {
+        capability_provider_rows.textContent = '';
+        const capability_keys = offered_capability_keys();
+        capability_providers_panel.hidden = capability_keys.length === 0;
+        for (const capability_key of capability_keys) {
+          const row_element = document.createElement('div');
+          row_element.className = 'capability-provider-row';
+          row_element.id = `capability-provider-row-${capability_key}`;
+          row_element.dataset.capability = capability_key;
+
+          const heading_element = document.createElement('div');
+          heading_element.className = 'capability-provider-heading';
+          const title_element = document.createElement('span');
+          title_element.className = 'capability-provider-title';
+          title_element.textContent = CAPABILITY_DISPLAY_NAMES[capability_key]
+            ?? capability_key;
+          const serving_element = document.createElement('span');
+          serving_element.className = 'capability-provider-serving';
+          serving_element.id = `capability-provider-serving-${capability_key}`;
+          heading_element.append(title_element, serving_element);
+
+          const picker_element = document.createElement('select');
+          picker_element.id = `capability-provider-select-${capability_key}`;
+          picker_element.className = 'capability-provider-select';
+          picker_element.setAttribute(
+            'aria-label', `${CAPABILITY_DISPLAY_NAMES[capability_key] ?? capability_key} provider`);
+          const unconfigured_option = document.createElement('option');
+          unconfigured_option.value = '';
+          unconfigured_option.textContent =
+            ui_label_text('settings.provider_state_not_configured');
+          picker_element.appendChild(unconfigured_option);
+          for (const provider_descriptor of
+               capability_provider_descriptors(capability_key)) {
+            const option_element = document.createElement('option');
+            option_element.value = provider_descriptor.provider_key;
+            option_element.id = CAPABILITY_PROVIDER_CHOICE_IDENTIFIER_PREFIX
+              + provider_descriptor.provider_key;
+            option_element.dataset.providerKey = provider_descriptor.provider_key;
+            option_element.dataset.providerRole =
+              capability_descriptor_requires_credential(provider_descriptor)
+                ? 'credentialed'
+                : 'keyless';
+            picker_element.appendChild(option_element);
+          }
+          picker_element.addEventListener('change', () => {
+            const chosen_descriptor = capability_provider_descriptors(capability_key)
+              .find((provider_descriptor) =>
+                provider_descriptor.provider_key === picker_element.value);
+            if (chosen_descriptor === undefined) {
+              refresh_capability_provider_rows();
+              return;
+            }
+            select_capability_provider(capability_key, chosen_descriptor);
+          });
+
+          const endpoint_element = document.createElement('p');
+          endpoint_element.className = 'capability-provider-endpoint';
+          endpoint_element.id = `capability-provider-endpoint-${capability_key}`;
+          endpoint_element.hidden = true;
+
+          const next_step_element = document.createElement('p');
+          next_step_element.className = 'capability-provider-next-step';
+          next_step_element.id = `capability-provider-next-step-${capability_key}`;
+          next_step_element.hidden = true;
+
+          row_element.append(
+            heading_element,
+            picker_element,
+            endpoint_element,
+            next_step_element,
+          );
+          capability_provider_rows.appendChild(row_element);
+        }
+      }
+
+      /**
+       * Reflects the serving provider, every picker entry's composed state and
+       * the routing row's endpoint/next-step lines. Runs on registration
+       * changes only; the rows themselves are built once.
+       */
+      function refresh_capability_provider_rows() {
+        for (const capability_key of offered_capability_keys()) {
+          const row_element =
+            document.getElementById(`capability-provider-row-${capability_key}`);
+          if (row_element === null) continue;
+          const serving_element =
+            document.getElementById(`capability-provider-serving-${capability_key}`);
+          const picker_element =
+            document.getElementById(`capability-provider-select-${capability_key}`);
+          const endpoint_element =
+            document.getElementById(`capability-provider-endpoint-${capability_key}`);
+          const next_step_element =
+            document.getElementById(`capability-provider-next-step-${capability_key}`);
+          const descriptors = capability_provider_descriptors(capability_key);
+          const registration = provider_registration_for(capability_key);
+          const serving_descriptor = registration === null
+            ? null
+            : descriptors.find((provider_descriptor) =>
+              provider_descriptor.provider_key === registration.providerKey) ?? null;
+
+          serving_element.textContent = serving_descriptor === null
+            ? ui_label_text('settings.provider_state_not_configured')
+            : provider_capability_row_text(serving_descriptor);
+          picker_element.value = serving_descriptor?.provider_key ?? '';
+          for (const option_element of picker_element.options) {
+            if (option_element.value === '') {
+              option_element.textContent =
+                ui_label_text('settings.provider_state_not_configured');
+              continue;
+            }
+            const option_descriptor = descriptors.find((provider_descriptor) =>
+              provider_descriptor.provider_key === option_element.value);
+            if (option_descriptor !== undefined) {
+              option_element.textContent = provider_capability_row_text(option_descriptor);
+            }
+          }
+
+          const demo_base_url = serving_descriptor?.demo_base_url;
+          const has_demo_base_url = typeof demo_base_url === 'string'
+            && demo_base_url.trim() !== '';
+          endpoint_element.hidden = !(
+            capability_key === ROUTING_CAPABILITY_KEY && has_demo_base_url);
+          endpoint_element.textContent = has_demo_base_url
+            ? ui_label_text_with_values(
+              'settings.routing_demo_endpoint', { url: demo_base_url })
+            : '';
+
+          const failure_text = capability_failure_text_by_key.get(capability_key);
+          next_step_element.hidden = failure_text === undefined;
+          next_step_element.textContent = failure_text === undefined
+            ? ''
+            : `${failure_text} ${ui_label_text('settings.routing_unreachable_next_step')}`;
+        }
+      }
+
+      /**
+       * Configures one capability from a chosen descriptor. A credentialed
+       * provider needs this session's key; a keyless routing provider receives
+       * its descriptor's demo address as the deployment address. Any refusal
+       * crosses verbatim, the previous provider keeps serving and nothing
+       * falls back.
+       */
+      function select_capability_provider(capability_key, provider_descriptor) {
+        const credential_value = capability_descriptor_requires_credential(
+          provider_descriptor)
+          ? provider_credentials_by_key.get(provider_descriptor.provider_key)
+          : provider_descriptor.demo_base_url;
+        if (capability_descriptor_requires_credential(provider_descriptor)
+          && credential_value === undefined) {
+          set_capability_provider_status(
+            ui_label_text_with_values('settings.provider_state_needs_credential', {
+              credential: provider_descriptor.credential_label,
+            }),
+          );
+          refresh_capability_provider_rows();
+          return;
+        }
+        if (!capability_descriptor_requires_credential(provider_descriptor)
+          && (typeof credential_value !== 'string'
+            || credential_value.trim() === '')) {
+          set_capability_provider_status(
+            'The descriptor declares no demo address, so there is nothing to select.',
+          );
+          refresh_capability_provider_rows();
+          return;
+        }
+        try {
+          if (use_provider_fixtures) {
+            // The harness override is a test seam only: the same-origin
+            // fixture routes stand in for the deployment the descriptor names.
+            window.mapTest.setProviderBaseUrl(
+              provider_descriptor.wasm_registration ?? provider_descriptor.provider_key,
+              `${window.location.origin}${providers_registry.fixture_base_path}`
+                + `/${provider_descriptor.provider_key}`,
+            );
+          }
+          window.mapTest.configureProvider(
+            CAPABILITY_CONTRACT_NAMES[capability_key],
+            provider_descriptor.provider_key,
+            credential_value,
+          );
+          capability_failure_text_by_key.delete(capability_key);
+          set_capability_provider_status(
+            provider_capability_row_text(provider_descriptor));
+          clear_error_report();
+        } catch (error) {
+          const failure_text = provider_failure_text(error);
+          capability_failure_text_by_key.set(capability_key, failure_text);
+          set_capability_provider_status(failure_text);
+          show_error_report('Provider selection', failure_text);
+        }
+        refresh_capability_provider_rows();
+      }
+
+      render_capability_provider_rows();
+
       /** Reflects the keyless/applied state on the trip card and the gear. */
       function refresh_credential_state() {
         const has_applied_key = applied_provider_keys.size > 0;
@@ -953,6 +1362,8 @@
           );
         }
         window.mapTest.setProviderCredential(credential_value);
+        provider_credentials_by_key.set(
+          provider_control.provider_descriptor.provider_key, credential_value);
         applied_provider_keys.add(provider_control.provider_descriptor.provider_key);
         if (persist) {
           write_local_storage(
@@ -1001,6 +1412,7 @@
               visibility_element.setAttribute('aria-label', 'Show key');
               visibility_element.setAttribute('aria-pressed', 'false');
               refresh_credential_state();
+              refresh_capability_provider_rows();
               refresh_map_layers_panel();
               maybe_restore_remembered_traffic_layer();
               set_provider_status(
@@ -1017,6 +1429,9 @@
           clear_element.addEventListener('click', () => {
             window.mapTest.clearProviderRegistrations();
             applied_provider_keys.clear();
+            provider_credentials_by_key.delete(provider_descriptor.provider_key);
+            capability_failure_text_by_key.clear();
+            refresh_capability_provider_rows();
             input_element.value = '';
             input_element.type = 'password';
             visibility_element.textContent = 'Show';
@@ -1040,6 +1455,7 @@
             apply_provider_credential(provider_control, remembered_value)
               .then(() => {
                 refresh_credential_state();
+                refresh_capability_provider_rows();
                 refresh_map_layers_panel();
                 maybe_restore_remembered_traffic_layer();
                 set_provider_status(
@@ -1108,9 +1524,15 @@
             (field_key) => trip_fields[field_key].input.value.trim() === '');
           trip_plan_route_control.disabled = missing_field_keys.length > 0;
           trip_plan_route_reason.hidden = missing_field_keys.length === 0;
-          trip_plan_route_reason.textContent = missing_field_keys.length === 0
-            ? ''
-            : `Enter ${missing_field_keys.map(trip_field_label).join(' and ')} to plan the route.`;
+          if (missing_field_keys.length === 0) {
+            trip_plan_route_reason.textContent = '';
+            return;
+          }
+          trip_plan_route_reason.textContent = missing_field_keys.length === 2
+            ? ui_label_text('plan.missing_both')
+            : missing_field_keys[0] === 'origin'
+              ? ui_label_text('plan.missing_origin')
+              : ui_label_text('plan.missing_destination');
         }
 
         function trip_place_from_demo_place(demo_place) {
@@ -1211,8 +1633,9 @@
                 'Select one to fill the field.');
             } else {
               set_provider_status(
-                `No demo place matches the ${field_label.toLowerCase()}; ` +
-                'apply a provider key in Settings for live search.',
+                ui_label_text_with_values('plan.demo_no_match_hint', {
+                  field: field_label.toLowerCase(),
+                }),
                 'warning',
               );
             }
@@ -1284,6 +1707,29 @@
             refresh_trip_plan_route_state();
           });
         }
+        // The swap action exchanges both fields and their resolved places, so
+        // an accidentally reversed pair is one tap to correct. The chips'
+        // filled marks travel with their fields.
+        trip_swap_control.addEventListener('click', () => {
+          const origin_field = trip_fields.origin;
+          const destination_field = trip_fields.destination;
+          [origin_field.input.value, destination_field.input.value] =
+            [destination_field.input.value, origin_field.input.value];
+          [origin_field.selected_place, destination_field.selected_place] =
+            [destination_field.selected_place, origin_field.selected_place];
+          const origin_chip = my_location_chip_controls.origin;
+          const destination_chip = my_location_chip_controls.destination;
+          if (origin_chip !== null && destination_chip !== null) {
+            const origin_filled = origin_chip.dataset.filled === 'true';
+            origin_chip.dataset.filled =
+              destination_chip.dataset.filled === 'true' ? 'true' : 'false';
+            destination_chip.dataset.filled = origin_filled ? 'true' : 'false';
+          }
+          persist_trip_field_texts();
+          refresh_trip_plan_route_state();
+          refresh_my_location_chip_states();
+          set_provider_status('Swapped the origin and destination.');
+        });
         refresh_device_location_status_row();
         render_trip_suggestions();
         // Restoring a remembered pair fills the fields only: the route is
@@ -1474,6 +1920,44 @@
           schedule_render();
         }
 
+        // The local clock time the route completes at, from now and the
+        // contract's duration: the route card's ETA line (24-hour `HH:MM`).
+        function clock_time_after_seconds(duration_seconds) {
+          const completion_time = new Date(
+            Date.now() + duration_seconds * MILLISECONDS_PER_SECOND);
+          const hours_text = String(completion_time.getHours()).padStart(2, '0');
+          const minutes_text = String(completion_time.getMinutes()).padStart(2, '0');
+          return `${hours_text}:${minutes_text}`;
+        }
+
+        /** Draws the route card: title, distance · duration, mode · strategy,
+         * ETA, maneuver and an optional honesty note. Every value comes from
+         * the route record or the active Directions choice; none is invented. */
+        function render_trip_route_card({
+          title_text,
+          distance_meters,
+          duration_seconds,
+          mode_text,
+          strategy_text,
+          maneuver_text,
+          note_text,
+        }) {
+          trip_route_title.textContent = title_text;
+          trip_route_facts.textContent =
+            `${format_distance_text(distance_meters)} · ` +
+            `${format_duration_text(duration_seconds)}`;
+          trip_route_directions.textContent =
+            `${mode_text} · ${strategy_text}`;
+          trip_route_eta.textContent =
+            `${ui_label_text('navigation.eta_prefix')} ` +
+            `${clock_time_after_seconds(duration_seconds)}`;
+          trip_route_maneuver.hidden = !maneuver_text;
+          trip_route_maneuver.textContent = maneuver_text ?? '';
+          trip_route_note.hidden = !note_text;
+          trip_route_note.textContent = note_text ?? '';
+          trip_route_result.hidden = false;
+        }
+
         /** Draws the planned route: the step-shape polyline plus the A/B
          * pins, framed with margin, and reports the summary honestly. */
         function show_trip_route(route, origin_endpoint, destination_endpoint, is_recorded) {
@@ -1514,13 +1998,24 @@
           const first_step = route.legs[0]?.steps[0];
           const first_maneuver_text =
             first_step?.instructionDisplayText ?? first_step?.instruction_display_text;
-          trip_route_result.hidden = false;
-          trip_route_result.textContent =
-            `${origin_endpoint.name} \u2192 ${destination_endpoint.name}: ` +
-            `${format_distance_text(distance_meters)} · ` +
-            `${format_duration_text(duration_seconds)} · ` +
-            (first_maneuver_text ?? 'no maneuvers') +
-            (is_recorded ? ' \u2014 recorded demo route, pedestrian, fastest.' : '');
+          render_trip_route_card({
+            title_text:
+              `${origin_endpoint.name} \u2192 ${destination_endpoint.name}`,
+            distance_meters,
+            duration_seconds,
+            mode_text: is_recorded
+              ? RECORDED_ROUTE_CARD_MODE_TEXT
+              : ROUTE_CARD_MODE_TEXTS[directions_transportation_mode]
+                ?? directions_transportation_mode,
+            strategy_text: is_recorded
+              ? RECORDED_ROUTE_CARD_STRATEGY_TEXT
+              : ROUTE_CARD_STRATEGY_TEXTS[directions_route_strategy]
+                ?? directions_route_strategy,
+            maneuver_text: first_maneuver_text ?? 'no maneuvers',
+            note_text: is_recorded
+              ? ui_label_text('plan.recorded_route_note')
+              : null,
+          });
           set_provider_status(
             is_recorded
               ? 'Recorded demo route ready \u2014 start the simulated trip.'
@@ -1572,6 +2067,8 @@
           mark_demo_plan_chip(null);
           demo_plan_description_element.textContent = '';
           demo_plan_description_element.hidden = true;
+          trip_source_line.hidden = true;
+          trip_source_line.textContent = '';
           set_demo_plan_status('');
           if (remember) {
             write_demo_preferences({ demoPlanScenario: null });
@@ -1618,7 +2115,7 @@
             // A running trip on the previous plan or route is replaced, not
             // left driving a route the map no longer shows. A restore never
             // interrupts a trip the visitor has already started.
-            if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+            if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) {
               if (!remember) return;
               end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
             }
@@ -1650,6 +2147,9 @@
             mark_demo_plan_chip(plan_chip);
             demo_plan_description_element.textContent = plan_definition.description;
             demo_plan_description_element.hidden = false;
+            trip_source_line.hidden = false;
+            trip_source_line.textContent = ui_label_text_with_values(
+              'plan.trip_source_demo_plan', { plan: plan_definition.label });
             render_navigation_idle(
               'Start the simulated trip to replay the selected plan\'s recorded trace.');
             set_demo_plan_status('Recorded demo plan ready.');
@@ -1668,7 +2168,7 @@
 
         demo_plan_clear_control.addEventListener('click', () => {
           if (selected_demo_plan_trace === null) return;
-          if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+          if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) {
             end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
           }
           clear_selected_demo_plan();
@@ -1682,7 +2182,7 @@
         // frames it, then an explicit remembered preset wins the final pose.
         restore_remembered_demo_content = async () => {
           // A trip the visitor already started wins over the restored plan.
-          if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+          if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) {
             return;
           }
           const remembered_scenario = initial_demo_preferences.demoPlanScenario;
@@ -1698,7 +2198,7 @@
           }
           // A trip may have started while the recorded trace loaded; the
           // visitor's live session keeps its own camera.
-          if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) return;
+          if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) return;
           apply_remembered_camera_preset();
         };
 
@@ -1724,19 +2224,21 @@
           try {
             const origin_endpoint = await resolve_trip_endpoint('origin');
             const destination_endpoint = await resolve_trip_endpoint('destination');
-            if (applied_provider_keys.size === 0) {
+            if (!routing_provider_is_registered()) {
               // No routing provider is registered, so the committed recorded
               // route is the honest answer; it carries its own
               // pedestrian/fastest profile and no Directions choice can be
-              // sent. The keyed branch below plans with the selected mode and
-              // strategy, and every navigation started from that plan follows
-              // the route it produced.
+              // sent. A registered routing provider — credentialed or keyless —
+              // always plans live, so an unreachable deployment is reported
+              // instead of silently replaced by this recorded route.
               const recorded_route =
                 recorded_demo_route(origin_endpoint.name, destination_endpoint.name);
               if (recorded_route === null) {
-                throw new Error(
-                  `no recorded route from ${origin_endpoint.name} to ` +
-                  `${destination_endpoint.name}; apply a provider key for live routing`);
+                throw new Error(ui_label_text_with_values(
+                  'plan.no_recorded_route_hint', {
+                    origin: origin_endpoint.name,
+                    destination: destination_endpoint.name,
+                  }));
               }
               show_trip_route(
                 recorded_route.route, origin_endpoint, destination_endpoint, true);
@@ -1751,9 +2253,15 @@
             );
             show_trip_route(live_route, origin_endpoint, destination_endpoint, false);
           } catch (error) {
-            trip_route_result.textContent = '';
+            // No fallback: the route card stays absent, the verbatim detail
+            // reaches the error strip, and the routing row names the next step.
             trip_route_result.hidden = true;
-            set_provider_status(`Refused: ${String(error)}`, 'warning');
+            const failure_text = provider_failure_text(error);
+            if (routing_provider_is_registered()) {
+              capability_failure_text_by_key.set(ROUTING_CAPABILITY_KEY, failure_text);
+              refresh_capability_provider_rows();
+            }
+            set_provider_status(`Refused: ${failure_text}`, 'warning');
           }
         });
         provider_tile_control.addEventListener('click', async () => {
@@ -1886,12 +2394,16 @@
               `${format_distance_text(distance_meters)} · ${duration_text}`;
             offline_route_result.hidden = false;
             // The route summary names the offline route and its honest note,
-            // the same pair the native route summaries show.
-            trip_route_result.hidden = false;
-            trip_route_result.textContent =
-              `${ui_label_text('offline.recorded_graph_route_title')}: ` +
-              `${format_distance_text(distance_meters)} · ${duration_text} — ` +
-              ui_label_text('offline.recorded_graph_note');
+            // the same card the native route summaries show.
+            render_trip_route_card({
+              title_text: ui_label_text('offline.recorded_graph_route_title'),
+              distance_meters,
+              duration_seconds,
+              mode_text: OFFLINE_ROUTE_CARD_MODE_TEXT,
+              strategy_text: OFFLINE_ROUTE_CARD_STRATEGY_TEXT,
+              maneuver_text: null,
+              note_text: ui_label_text('offline.recorded_graph_note'),
+            });
             clear_error_report();
           } catch (offline_failure) {
             offline_route_overlays = [];
@@ -1908,18 +2420,6 @@
           }
         });
       });
-
-      // Provider-echoing error report (docs/ReferenceAppUX.md §6.3): the
-      // origin label names the failing surface, the detail is echoed
-      // verbatim, never paraphrased or swallowed.
-      function show_error_report(origin_label, detail_text) {
-        error_report_element.hidden = false;
-        error_report_element.textContent = `${origin_label}: ${detail_text}`;
-      }
-      function clear_error_report() {
-        error_report_element.hidden = true;
-        error_report_element.textContent = '';
-      }
 
       // Theme (docs/ReferenceAppUX.md §3, ruled 2026-10-30): Light / Dark /
       // Auto with Auto the default. The resolved theme lands on the root
@@ -2707,7 +3207,11 @@
             (provider_descriptor.vector_styles ?? []).map((style_choice) => ({
               row_identifier:
                 `${MAP_LAYER_STYLE_ROW_IDENTIFIER_PREFIX}${style_choice.style_id}`,
-              label: style_choice.display_name,
+              // The one provider-row composition every surface renders:
+              // the descriptor's display name and the style name, never a
+              // bare style name.
+              label:
+                `${provider_descriptor.display_name} · ${style_choice.display_name}`,
               mode: TILE_LAYER_MODES.vector,
               provider_descriptor,
               style_id: style_choice.style_id,
@@ -3531,6 +4035,10 @@
       // rejected frame can be forced without touching production behaviour.
       window.mapGpuCanvas = () => gpu_map_canvas;
       window.mapLastFrameStats = () => last_frame_statistics;
+      // The completed-frame counter and the render seam the page-lifecycle
+      // test uses to ask for a frame while the tab reports itself hidden.
+      window.mapFramesDrawn = () => frame_draw_count;
+      window.mapRequestRenderForTest = () => schedule_render();
       // The live camera state, read by the UX tests (docs/ReferenceAppUX.md
       // §10.1) instead of parsing the readout's presentation text.
       window.mapCameraState = () => ({ ...camera_state, rendererMode: renderer_mode });
@@ -3740,19 +4248,19 @@
         planReplayEnded:
           'Replay ended — the record’s fixes ran out; the last guidance state stays until Stop.',
       };
+      // The follow camera's phases, pre-trip camera, retargeted centre and
+      // smoothed course are `map-refapp-core`'s state machine (M64): the page
+      // reads the crate's targets and keeps only its own demo presentation.
+      const follow_camera = new FollowCamera();
       const follow_demo = {
-        phase: FOLLOW_DEMO_PHASE_DISENGAGED,
-        pre_trip_camera: null,
         route_polyline: null,
         travelled_meters: 0,
         total_meters: 0,
         fix_interval_id: null,
-        target_bearing_degrees: null,
         // The recorded demo-plan trace replayed by the active trip, or null
         // while the trip walks a route polyline. Its presence switches the
         // fix source from the route walker to the trace's own samples.
         trace_playback: null,
-        sample_index: 0,
         has_issued_reroute: false,
         // The last off-route judgment the replay presented, and the alert copy
         // that was on the card at that fix (the suite's evidence that the card
@@ -3773,6 +4281,17 @@
         // when a gesture-broken follow is re-engaged (§5.3).
         latest_fix: null,
       };
+      // Device navigation reports its own course while the recorded trip's
+      // follow camera stays disengaged; the state hook reads both.
+      let live_target_bearing_degrees = null;
+      /** The active follow phase's page label (`map-refapp-core`'s answer). */
+      function follow_demo_phase() {
+        return follow_camera.phase;
+      }
+      /** The target course whichever guidance path last reported one. */
+      function follow_demo_target_bearing_degrees() {
+        return follow_camera.targetBearingDegrees ?? live_target_bearing_degrees;
+      }
       // The eased moves and the chase of the platform-pump-owned camera:
       // §5.3 eases bearing and pitch in the platform's frame pump; only
       // the center applies exactly.
@@ -3795,7 +4314,6 @@
       }
       const follow_bearing_chase = new ExponentialValueChase(
         FOLLOW_BEARING_CHASE_TIME_CONSTANT_MILLISECONDS);
-      const course_median_smoother = new CourseMedianSmoother(COURSE_SMOOTHING_WINDOW_FIXES);
 
       window.mapLocationIndicatorState = () =>
         current_location_indicator ? { ...current_location_indicator } : null;
@@ -3809,14 +4327,14 @@
             }
           : null;
       window.mapFollowDemoState = () => ({
-        phase: follow_demo.phase,
-        isFollowing: follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED,
+        phase: follow_demo_phase(),
+        isFollowing: follow_demo_phase() === FOLLOW_DEMO_PHASE_ENGAGED,
         travelledMeters: follow_demo.travelled_meters,
         totalMeters: follow_demo.total_meters,
         hasArrived: follow_demo.has_arrived,
         isPaused: follow_demo.is_paused,
         speedMultiplier: follow_demo.speed_multiplier,
-        targetBearingDegrees: follow_demo.target_bearing_degrees,
+        targetBearingDegrees: follow_demo_target_bearing_degrees(),
         cameraZoom: camera_state.zoom,
       });
       // The demo-plan picker's state, for the browser suite: which artifact
@@ -3829,10 +4347,13 @@
         overlayKinds: trip_route_overlays.map((overlay) => overlay.kind),
         routeDistanceMeters:
           selected_demo_plan_trace?.trace.route?.distance_meters ?? null,
-        sampleIndex: follow_demo.sample_index,
+        sampleIndex: follow_demo.trace_playback === null
+          ? 0
+          : follow_demo.trace_playback.cursor.nextSampleIndex()
+            ?? follow_demo.trace_playback.cursor.sampleCount,
         sampleCount: follow_demo.trace_playback?.samples.length ?? 0,
         isReplaying: follow_demo.trace_playback !== null
-          && follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED,
+          && follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED,
         isPaused: follow_demo.is_paused,
         rerouteApplied: follow_demo.has_issued_reroute,
         offRouteObserved: follow_demo.off_route_observed,
@@ -4002,6 +4523,15 @@
         // Every camera path funnels through here; the traffic layer restarts
         // its settle debounce when the pose it last asked about changed.
         note_camera_pose_for_traffic();
+        if (is_page_teardown_requested) {
+          return;
+        }
+        // A hidden tab keeps at most one frame queued; becoming visible
+        // schedules that frame again.
+        if (is_page_hidden) {
+          render_queued = true;
+          return;
+        }
         if (render_busy) {
           render_queued = true;
           return;
@@ -4072,6 +4602,10 @@
           }
         } finally {
           render_busy = false;
+        }
+        if (is_page_teardown_requested) {
+          release_page_renderer();
+          return;
         }
         if (render_queued) {
           render_queued = false;
@@ -4158,7 +4692,7 @@
       // takes the cluster's active look and names the act.
       function refresh_my_location_control() {
         const is_recentering =
-          follow_demo.phase === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
+          follow_demo_phase() === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
         my_location_control.classList.toggle('recentering', is_recentering);
         my_location_control.setAttribute(
           'aria-label',
@@ -4255,20 +4789,25 @@
        * start, and marks the field that already holds a fix. */
       function refresh_my_location_chip_states() {
         const refusal_reason = device_location_refusal_reason();
+        const my_location_text = ui_label_text('plan.my_location_action');
+        const unavailable_text = refusal_reason === null
+          ? null
+          : ui_label_text_with_values(
+            'plan.my_location_unavailable', { reason: refusal_reason });
         for (const [field_key, chip] of Object.entries(my_location_chip_controls)) {
           if (chip === null) continue;
           const is_filled = chip.dataset.filled === 'true';
           chip.disabled = refusal_reason !== null;
-          chip.title = refusal_reason ?? '';
+          chip.title = unavailable_text ?? '';
           chip.textContent = is_filled
-            ? `My location ${MY_LOCATION_CHIP_FILLED_MARK}`
-            : 'My location';
+            ? `${my_location_text} ${MY_LOCATION_CHIP_FILLED_MARK}`
+            : my_location_text;
           const accessible_label = my_location_chip_label(field_key);
           chip.setAttribute(
             'aria-label',
             refusal_reason === null
               ? accessible_label
-              : `${accessible_label} — ${refusal_reason}`,
+              : `${accessible_label} — ${unavailable_text}`,
           );
         }
       }
@@ -4330,7 +4869,7 @@
           set_device_location_status(DEVICE_NAVIGATION_PLAN_FIRST_TEXT);
           return;
         }
-        if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+        if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) {
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
         }
         device_navigation_started_location_watch =
@@ -4367,7 +4906,7 @@
         }
         is_device_navigation_active = false;
         stop_live_navigation();
-        follow_demo.target_bearing_degrees = null;
+        live_target_bearing_degrees = null;
         follow_bearing_chase.reset();
         refresh_device_navigation_control();
         if (device_navigation_started_location_watch) {
@@ -4456,7 +4995,7 @@
           if (is_device_navigation_active && is_three_dimensional_camera) {
             camera_state.pitch = NAVIGATION_FOLLOW_PITCH_3D_DEGREES;
             if (smoothed_course !== null) {
-              follow_demo.target_bearing_degrees = smoothed_course;
+              live_target_bearing_degrees = smoothed_course;
             }
           }
           controls.zoom.value = camera_state.zoom;
@@ -4513,7 +5052,7 @@
           is_device_navigation_active = false;
           device_navigation_started_location_watch = false;
           stop_live_navigation();
-          follow_demo.target_bearing_degrees = null;
+          live_target_bearing_degrees = null;
           follow_bearing_chase.reset();
           refresh_device_navigation_control();
         }
@@ -4688,15 +5227,16 @@
             pump_running = true;
           }
         }
-        if (follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED &&
-            follow_demo.target_bearing_degrees !== null) {
+        const follow_bearing_target = follow_camera.targetBearingDegrees;
+        if (follow_demo_phase() === FOLLOW_DEMO_PHASE_ENGAGED &&
+            follow_bearing_target !== null) {
           const chase_delta_degrees = signed_angular_difference_degrees(
-            follow_demo.target_bearing_degrees, camera_state.bearing);
+            follow_bearing_target, camera_state.bearing);
           if (Math.abs(chase_delta_degrees) <= FOLLOW_BEARING_SNAP_DISTANCE_DEGREES) {
-            camera_state.bearing = follow_demo.target_bearing_degrees;
+            camera_state.bearing = follow_bearing_target;
           } else {
             camera_state.bearing = follow_bearing_chase.advance(
-              camera_state.bearing, follow_demo.target_bearing_degrees, now_milliseconds);
+              camera_state.bearing, follow_bearing_target, now_milliseconds);
             pump_running = true;
           }
           controls.bearing.value = camera_state.bearing;
@@ -4752,7 +5292,7 @@
       // re-centers on the latest fix.
       my_location_control.addEventListener('click', () => {
         const is_trip_active =
-          follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED;
+          follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED;
         if (is_trip_active) {
           const latest_trip_fix = follow_demo.latest_fix;
           if (latest_trip_fix !== null) {
@@ -4768,8 +5308,8 @@
             },
             { visualKind: 'trackingDot' },
           );
-          if (follow_demo.phase === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
-            follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
+          if (follow_demo_phase() === FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
+            follow_camera.reengage();
             follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.engaged;
             follow_bearing_chase.reset();
             refresh_my_location_control();
@@ -4858,15 +5398,14 @@
        */
       function current_follow_demo_fix_interval_milliseconds() {
         const playback = follow_demo.trace_playback;
-        if (playback === null) return FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS;
+        if (playback === null) return follow_demo_fix_interval_milliseconds();
         const recorded_sample_interval_seconds = playback.sample_interval_seconds
           ?? FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS;
-        const simulated_seconds_per_tick = FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR
-          * follow_demo.speed_multiplier;
-        return Math.max(
-          DEMO_PLAN_MINIMUM_DISPATCH_INTERVAL_MILLISECONDS,
-          (recorded_sample_interval_seconds * MILLISECONDS_PER_SECOND)
-            / simulated_seconds_per_tick,
+        // The crate divides the recorded interval by the folded acceleration
+        // and floors the result at its documented minimum.
+        return trace_dispatch_interval_milliseconds(
+          recorded_sample_interval_seconds,
+          FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR * follow_demo.speed_multiplier,
         );
       }
 
@@ -4876,7 +5415,7 @@
           clearInterval(follow_demo.fix_interval_id);
           follow_demo.fix_interval_id = null;
         }
-        if (follow_demo.phase === FOLLOW_DEMO_PHASE_DISENGAGED
+        if (follow_demo_phase() === FOLLOW_DEMO_PHASE_DISENGAGED
             || follow_demo.is_paused) {
           return;
         }
@@ -4970,7 +5509,7 @@
        * position unless the seek lands on the destination.
        */
       function seek_follow_demo_trip(target_meters) {
-        if (follow_demo.phase === FOLLOW_DEMO_PHASE_DISENGAGED) {
+        if (follow_demo_phase() === FOLLOW_DEMO_PHASE_DISENGAGED) {
           return;
         }
         const should_run = !follow_demo.is_paused;
@@ -4992,7 +5531,7 @@
           : FOLLOW_DEMO_LIVE_LINE_TEXTS.paused;
         if (should_run) {
           follow_demo.fix_interval_id = setInterval(
-            on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
+            on_follow_demo_fix, follow_demo_fix_interval_milliseconds());
         }
       }
 
@@ -5002,23 +5541,20 @@
         stop_live_navigation();
         if (follow_demo.fix_interval_id !== null) clearInterval(follow_demo.fix_interval_id);
         follow_demo.fix_interval_id = null;
-        follow_demo.phase = FOLLOW_DEMO_PHASE_DISENGAGED;
-        follow_demo.target_bearing_degrees = null;
+        const pre_trip_camera = follow_camera.restorePreTripCamera();
+        live_target_bearing_degrees = null;
         follow_demo.latest_fix = null;
         follow_bearing_chase.reset();
-        course_median_smoother.reset();
         refresh_my_location_control();
-        const pre_trip_camera = follow_demo.pre_trip_camera;
-        follow_demo.pre_trip_camera = null;
         // §5.3: trip end returns the captured pre-trip camera; with it the
         // indicator clears (the follow visual is the in-trip state).
         apply_location_indicator(null, null);
         if (pre_trip_camera) {
-          camera_state.latitude = pre_trip_camera.latitude;
-          camera_state.longitude = pre_trip_camera.longitude;
-          camera_state.zoom = pre_trip_camera.zoom;
-          camera_state.bearing = pre_trip_camera.bearing;
-          camera_state.pitch = pre_trip_camera.pitch;
+          camera_state.latitude = pre_trip_camera.centerLatitudeDegrees;
+          camera_state.longitude = pre_trip_camera.centerLongitudeDegrees;
+          camera_state.zoom = pre_trip_camera.zoomLevel;
+          camera_state.bearing = pre_trip_camera.bearingDegrees;
+          camera_state.pitch = pre_trip_camera.pitchDegrees;
           controls.zoom.value = camera_state.zoom;
           controls.bearing.value = camera_state.bearing;
           controls.pitch.value = camera_state.pitch;
@@ -5032,7 +5568,6 @@
         // A recorded replay's bookkeeping resets with the trip, so the next
         // trip starts from the trace's first sample.
         follow_demo.trace_playback = null;
-        follow_demo.sample_index = 0;
         follow_demo.has_issued_reroute = false;
         follow_demo_pause_control.hidden = false;        refresh_follow_demo_playback_row(false);
         schedule_render();
@@ -5048,16 +5583,25 @@
        */
       function start_demo_plan_replay(selected_plan_trace) {
         const recorded_trace = selected_plan_trace.trace;
-        follow_demo.pre_trip_camera = { ...camera_state };
+        const recorded_samples = Array.isArray(recorded_trace.samples)
+          ? recorded_trace.samples
+          : [];
+        follow_camera.engageTrip(
+          camera_state.latitude,
+          camera_state.longitude,
+          camera_state.zoom,
+          camera_state.bearing,
+          camera_state.pitch,
+        );
         follow_demo.trace_playback = {
-          samples: Array.isArray(recorded_trace.samples)
-            ? recorded_trace.samples
-            : [],
+          samples: recorded_samples,
+          // The trace's own cursor owns which sample is next; the page's
+          // timer only asks for the next one at the recorded cadence.
+          cursor: new TraceCursor(recorded_samples.length),
           sample_interval_seconds: recorded_trace.metadata?.sample_interval_seconds
             ?? FOLLOW_DEMO_SAMPLE_INTERVAL_SECONDS,
           reroute_route: recorded_trace.reroute_route ?? null,
         };
-        follow_demo.sample_index = 0;
         follow_demo.has_issued_reroute = false;
         follow_demo.off_route_observed = false;
         follow_demo.off_route_alert_text = '';
@@ -5070,12 +5614,10 @@
         follow_demo.has_arrived = false;
         follow_demo.is_seeking = false;
         follow_bearing_chase.reset();
-        course_median_smoother.reset();
-        follow_demo.target_bearing_degrees = null;
+        live_target_bearing_degrees = null;
         follow_demo.latest_fix = null;
-        follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
         refresh_my_location_control();
-        camera_state.zoom = follow_zoom_toward_trip_end(1.0);
+        camera_state.zoom = follow_camera.targetZoomLevel;
         camera_state.pitch = is_three_dimensional_camera
           ? NAVIGATION_FOLLOW_PITCH_3D_DEGREES : 0;
         controls.zoom.value = camera_state.zoom;
@@ -5150,12 +5692,15 @@
       function on_demo_plan_replay_fix() {
         const playback = follow_demo.trace_playback;
         if (playback === null) return;
-        const sample = playback.samples[follow_demo.sample_index];
-        if (sample === undefined) {
+        const sample_index = playback.cursor.nextSampleIndex();
+        if (sample_index === null) {
           finish_demo_plan_replay(FOLLOW_DEMO_LIVE_LINE_TEXTS.planReplayEnded);
           return;
         }
-        const previous_sample = playback.samples[follow_demo.sample_index - 1];
+        const sample = playback.samples[sample_index];
+        const previous_sample = sample_index === 0
+          ? undefined
+          : playback.samples[sample_index - 1];
         const sample_course_heading_degrees = previous_sample === undefined
           ? null
           : initial_bearing_degrees(previous_sample, sample);
@@ -5189,16 +5734,20 @@
         }
         const remaining_fraction = playback.samples.length <= 1
           ? 0
-          : 1 - follow_demo.sample_index / (playback.samples.length - 1);
-        if (follow_demo.phase !== FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
-          camera_state.latitude = fix.latitude;
-          camera_state.longitude = fix.longitude;
-          camera_state.zoom = follow_zoom_toward_trip_end(remaining_fraction);
+          : 1 - sample_index / (playback.samples.length - 1);
+        // The crate's state machine retargets centre, ramped zoom and the
+        // median-smoothed course; a gesture-broken follow stays broken.
+        follow_camera.onFix(
+          fix.latitude,
+          fix.longitude,
+          sample_course_heading_degrees,
+          remaining_fraction,
+        );
+        if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
+          camera_state.latitude = follow_camera.targetCenterLatitudeDegrees;
+          camera_state.longitude = follow_camera.targetCenterLongitudeDegrees;
+          camera_state.zoom = follow_camera.targetZoomLevel;
           controls.zoom.value = camera_state.zoom;
-        }
-        if (sample_course_heading_degrees !== null) {
-          course_median_smoother.add(sample_course_heading_degrees);
-          follow_demo.target_bearing_degrees = course_median_smoother.median();
         }
         apply_location_indicator(
           {
@@ -5210,7 +5759,7 @@
           { visualKind: 'guidedCourseArrow' },
         );
         maybe_issue_demo_plan_reroute(playback);
-        follow_demo.sample_index += 1;
+        playback.cursor.advance();
         refresh_control_labels();
         refresh_compass_control();
         refresh_my_location_control();
@@ -5254,17 +5803,20 @@
         // §5.3: a fix retargets the smoothed course and the ramped zoom; the
         // camera follows only while engaged. A gesture keeps follow broken
         // until the my-location control re-engages it — a fix never silently
-        // snaps the user's panned view back.
-        const is_following = follow_demo.phase !== FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
-        if (is_following) {
-          follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
-          camera_state.latitude = fix.latitude;
-          camera_state.longitude = fix.longitude;
-          camera_state.zoom = follow_zoom_toward_trip_end(remaining_distance_fraction);
+        // snaps the user's panned view back. The crate's state machine owns
+        // that decision and the median-smoothed course.
+        follow_camera.onFix(
+          fix.latitude,
+          fix.longitude,
+          fix.courseHeadingDegrees,
+          remaining_distance_fraction,
+        );
+        if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE) {
+          camera_state.latitude = follow_camera.targetCenterLatitudeDegrees;
+          camera_state.longitude = follow_camera.targetCenterLongitudeDegrees;
+          camera_state.zoom = follow_camera.targetZoomLevel;
           controls.zoom.value = camera_state.zoom;
         }
-        course_median_smoother.add(fix.courseHeadingDegrees);
-        follow_demo.target_bearing_degrees = course_median_smoother.median();
         apply_location_indicator(
           {
             latitude: fix.latitude,
@@ -5278,7 +5830,7 @@
           follow_demo.travelled_meters = travelled_meters +
             FOLLOW_DEMO_SPEED_METERS_PER_SECOND *
             follow_demo.speed_multiplier *
-            (FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS / 1000);
+            (follow_demo_fix_interval_milliseconds() / 1000);
         }
         refresh_control_labels();
         refresh_compass_control();
@@ -5301,7 +5853,7 @@
       }
 
       follow_demo_pause_control.addEventListener('click', () => {
-        if (follow_demo.phase === FOLLOW_DEMO_PHASE_DISENGAGED) {
+        if (follow_demo_phase() === FOLLOW_DEMO_PHASE_DISENGAGED) {
           return;
         }
         if (follow_demo.is_paused) {
@@ -5335,7 +5887,7 @@
       });
 
       follow_demo_start_control.addEventListener('click', () => {
-        if (follow_demo.phase !== FOLLOW_DEMO_PHASE_DISENGAGED) {
+        if (follow_demo_phase() !== FOLLOW_DEMO_PHASE_DISENGAGED) {
           end_follow_demo_trip(FOLLOW_DEMO_LIVE_LINE_TEXTS.stopped);
           return;
         }
@@ -5352,7 +5904,13 @@
         // §5.3: trip start captures the pre-trip camera and applies the
         // fixed deep zoom and the plane's pitch; center and bearing hold
         // until the first fix retargets them.
-        follow_demo.pre_trip_camera = { ...camera_state };
+        follow_camera.engageTrip(
+          camera_state.latitude,
+          camera_state.longitude,
+          camera_state.zoom,
+          camera_state.bearing,
+          camera_state.pitch,
+        );
         // The trip walks the route the visitor planned; the artifact's own
         // scene polyline is only the fallback for the no-plan demo.
         const planned_route_polyline = trip_route_overlays
@@ -5366,12 +5924,10 @@
         follow_demo.is_seeking = false;
         follow_demo.total_meters = polyline_length_meters(trip_polyline);
         follow_bearing_chase.reset();
-        course_median_smoother.reset();
-        follow_demo.target_bearing_degrees = null;
+        live_target_bearing_degrees = null;
         follow_demo.latest_fix = null;
-        follow_demo.phase = FOLLOW_DEMO_PHASE_ENGAGED;
         refresh_my_location_control();
-        camera_state.zoom = follow_zoom_toward_trip_end(1.0);
+        camera_state.zoom = follow_camera.targetZoomLevel;
         camera_state.pitch = is_three_dimensional_camera
           ? NAVIGATION_FOLLOW_PITCH_3D_DEGREES : 0;
         controls.zoom.value = camera_state.zoom;
@@ -5383,7 +5939,7 @@
         // the banner already names the first maneuver when the trip begins.
         start_live_navigation();
         follow_demo.fix_interval_id = setInterval(
-          on_follow_demo_fix, FOLLOW_DEMO_FIX_INTERVAL_MILLISECONDS);
+          on_follow_demo_fix, follow_demo_fix_interval_milliseconds());
         on_follow_demo_fix();
       });
 
@@ -5391,17 +5947,23 @@
       // immediately; it stays broken until the my-location control
       // re-engages it (never the next fix).
       function follow_demo_note_camera_gesture() {
-        if (follow_demo.phase === FOLLOW_DEMO_PHASE_ENGAGED) {
-          follow_demo.phase = FOLLOW_DEMO_PHASE_BROKEN_BY_GESTURE;
+        if (follow_demo_phase() === FOLLOW_DEMO_PHASE_ENGAGED) {
+          follow_camera.breakOnGesture();
           follow_demo_live_line.textContent = FOLLOW_DEMO_LIVE_LINE_TEXTS.brokenByGesture;
           refresh_my_location_control();
         }
       }
 
       // The diagnostics readout (§4.1): the facts are the session's draw
-      // facts; the event lines flush the wasm ring (oldest first). The readout
-      // subscribes at its named gate severity once the wasm surface is up.
-      let diagnostics_minimum_severity_value = null;
+      // facts; the event lines flush the wasm ring (oldest first). Diagnostics
+      // are opt-in (docs/design/ReferenceApplicationBehavior.md §Diagnostics
+      // policy): nothing is subscribed until the Advanced pane opens, the
+      // stream is bounded to the shared window, Show debug events lowers the
+      // gate for this session only, and Clear resets the pane's displayed list.
+      let diagnostics_subscribed = false;
+      let diagnostics_debug_enabled = false;
+      let diagnostics_refresh_interval = null;
+      let diagnostics_displayed_event_count = 0;
       function diagnostics_facts_text() {
         const frame_statistics_lines = last_frame_statistics
           ? `tiles drawn ${last_frame_statistics.drawnTiles} / ` +
@@ -5434,19 +5996,109 @@
         ].join('\n');
       }
 
-      function refresh_diagnostics_event_lines() {
-        if (!diagnostics_minimum_severity_value) return;
-        const flushed_events = window.mapTest.flushRecentDiagnosticEvents(
-          diagnostics_minimum_severity_value, DIAGNOSTICS_READOUT_EVENT_LIMIT);
+      /** The severity the pane flushes at: Info by default, Debug on request. */
+      function diagnostics_display_severity_value() {
+        const severity_name = diagnostics_debug_enabled
+          ? DIAGNOSTICS_DEBUG_SEVERITY_NAME
+          : DIAGNOSTICS_MINIMUM_SEVERITY_NAME;
+        return window.mapTest.SdkLogSeverity[severity_name];
+      }
+
+      /** Re-reads the bounded ring and renders the pane's window. */
+      function refresh_diagnostics_event_lines(
+        maximum_count = DIAGNOSTICS_EVENT_WINDOW) {
+        if (!diagnostics_subscribed) return;
+        const flushed_events = Array.from(
+          window.mapTest.flushRecentDiagnosticEvents(
+            diagnostics_display_severity_value(), maximum_count),
+        ).filter((event_line) => diagnostics_cleared_at_milliseconds === null
+          || event_line.timestampMillisecondsSinceEpoch
+            > diagnostics_cleared_at_milliseconds);
+        diagnostics_displayed_event_count = flushed_events.length;
         diagnostics_event_lines.textContent = flushed_events.length === 0
-          ? 'no recent SDK events at this severity'
-          : Array.from(flushed_events)
+          ? ui_label_text('diagnostics.no_events')
+          : flushed_events
             .map((event_line) =>
               `${event_line.severity} ${event_line.subsystemTarget}: ${event_line.messageLine}`)
             .join('\n');
       }
+
+      /** Starts the one bounded stream the first time the pane opens. */
+      function open_diagnostics_stream() {
+        if (typeof window.mapTest?.subscribeToDiagnosticEvents !== 'function') return;
+        if (!diagnostics_subscribed) {
+          window.mapTest.subscribeToDiagnosticEvents(
+            window.mapTest.SdkLogSeverity[DIAGNOSTICS_MINIMUM_SEVERITY_NAME]);
+          diagnostics_subscribed = true;
+        }
+        if (diagnostics_refresh_interval === null) {
+          diagnostics_refresh_interval = setInterval(
+            refresh_diagnostics_event_lines,
+            DIAGNOSTICS_REFRESH_CADENCE_MILLISECONDS,
+          );
+        }
+        // The open flush is the pane's documented backlog: its own shared
+        // limit, then the steady-state window on the refresh cadence.
+        refresh_diagnostics_event_lines(DIAGNOSTICS_BACKLOG_FLUSH_LIMIT);
+      }
+
+      /** Stops the refresh cadence while the pane stays closed. */
+      function close_diagnostics_stream() {
+        if (diagnostics_refresh_interval === null) return;
+        clearInterval(diagnostics_refresh_interval);
+        diagnostics_refresh_interval = null;
+      }
+
+      /** Applies the explicit debug switch; the SDK gate never raises back. */
+      function set_diagnostics_debug_enabled(is_enabled) {
+        diagnostics_debug_enabled = is_enabled;
+        diagnostics_debug_events_control.checked = is_enabled;
+        diagnostics_debug_events_label.textContent = is_enabled
+          ? ui_label_text('diagnostics.hide_debug_events')
+          : ui_label_text('diagnostics.show_debug_events');
+        if (is_enabled && typeof window.mapTest?.subscribeToDiagnosticEvents === 'function') {
+          window.mapTest.subscribeToDiagnosticEvents(
+            window.mapTest.SdkLogSeverity[DIAGNOSTICS_DEBUG_SEVERITY_NAME]);
+        }
+        refresh_diagnostics_event_lines();
+      }
+
+      diagnostics_debug_events_control.addEventListener('change', () => {
+        set_diagnostics_debug_enabled(diagnostics_debug_events_control.checked);
+      });
+      diagnostics_clear_control.addEventListener('click', () => {
+        // The pane's own list resets; the SDK ring is never emptied, so a
+        // later event still reports and the clear is timestamp-scoped.
+        diagnostics_cleared_at_milliseconds = Date.now();
+        refresh_diagnostics_event_lines();
+      });
       diagnostics_refresh_control.addEventListener('click', () => {
         refresh_diagnostics_event_lines();
+      });
+      diagnostics_close_control.addEventListener('click', () => {
+        close_diagnostics_stream();
+        advanced_panel.open = false;
+      });
+      advanced_panel.addEventListener('toggle', () => {
+        if (advanced_panel.open) {
+          open_diagnostics_stream();
+        } else {
+          close_diagnostics_stream();
+        }
+      });
+      // The diagnostics opt-in's observable state, for the browser suite: no
+      // subscription before the pane opens, a bounded window and the explicit
+      // debug choice.
+      window.mapDiagnosticsState = () => ({
+        subscribed: diagnostics_subscribed,
+        debugEnabled: diagnostics_debug_enabled,
+        displaySeverity: diagnostics_debug_enabled
+          ? DIAGNOSTICS_DEBUG_SEVERITY_NAME
+          : DIAGNOSTICS_MINIMUM_SEVERITY_NAME,
+        displayedEventCount: diagnostics_displayed_event_count,
+        clearedAtMilliseconds: diagnostics_cleared_at_milliseconds,
+        eventWindow: DIAGNOSTICS_EVENT_WINDOW,
+        refreshCadenceMilliseconds: DIAGNOSTICS_REFRESH_CADENCE_MILLISECONDS,
       });
 
       // Pan tracking keeps the previous pointer position explicitly. The
@@ -5750,8 +6402,6 @@
         }
         if (handled) event.preventDefault();
       });
-      window.addEventListener('resize', () => { resize_canvases(); schedule_render(); });
-
       /**
        * Sizes both canvases in device pixels while the stylesheet keeps their
        * laid-out size in CSS pixels: on a 2× display the compositor then draws
@@ -5771,6 +6421,90 @@
         overlay_canvas.width = map_canvas.width;
         overlay_canvas.height = map_canvas.height;
       }
+
+      // --- Page lifecycle -------------------------------------------------
+      // The canvas follows its layout box (not only window resize events), a
+      // display-density change re-sizes the backing store, a hidden tab does
+      // not schedule frames, and leaving the page releases the GPU canvas.
+
+      /** Whether the tab is hidden; a hidden tab queues at most one render. */
+      let is_page_hidden = document.visibilityState === 'hidden';
+
+      /** Whether the page is being torn down; no frame may start after it. */
+      let is_page_teardown_requested = false;
+
+      /** The display-density media query that reports DPR changes. */
+      let device_pixel_ratio_media_query = null;
+
+      function handle_device_pixel_ratio_change() {
+        resize_canvases();
+        schedule_render();
+        watch_device_pixel_ratio_changes();
+      }
+
+      /**
+       * Watches the current display density. `matchMedia('(resolution: Ndppx)')`
+       * changes exactly when the ratio changes, so it catches a window dragged
+       * between displays and browser zoom, which never fire `resize`.
+       */
+      function watch_device_pixel_ratio_changes() {
+        device_pixel_ratio_media_query?.removeEventListener(
+          'change',
+          handle_device_pixel_ratio_change,
+        );
+        device_pixel_ratio_media_query = window.matchMedia(
+          `(resolution: ${canvas_device_pixel_ratio()}dppx)`,
+        );
+        device_pixel_ratio_media_query.addEventListener(
+          'change',
+          handle_device_pixel_ratio_change,
+        );
+      }
+
+      /**
+       * Releases the WebGPU canvas and the page listeners. The generated
+       * `free()` drops every Rust-owned surface, device and cached payload;
+       * a frame already in flight finishes first, because freeing the wasm
+       * object under a live frame would invalidate its borrow.
+       */
+      function release_page_renderer() {
+        canvas_size_observer?.disconnect();
+        device_pixel_ratio_media_query?.removeEventListener(
+          'change',
+          handle_device_pixel_ratio_change,
+        );
+        device_pixel_ratio_media_query = null;
+        if (gpu_map_canvas !== null) {
+          gpu_map_canvas.free();
+          gpu_map_canvas = null;
+        }
+      }
+
+      function handle_page_teardown() {
+        is_page_teardown_requested = true;
+        if (!render_busy) {
+          release_page_renderer();
+        }
+      }
+
+      const canvas_size_observer =
+        typeof ResizeObserver === 'function'
+          ? new ResizeObserver(() => {
+              resize_canvases();
+              schedule_render();
+            })
+          : null;
+      canvas_size_observer?.observe(document.documentElement);
+
+      document.addEventListener('visibilitychange', () => {
+        is_page_hidden = document.visibilityState === 'hidden';
+        if (!is_page_hidden) {
+          resize_canvases();
+          schedule_render();
+        }
+      });
+      window.addEventListener('pagehide', handle_page_teardown);
+      watch_device_pixel_ratio_changes();
 
       resize_canvases();
       controls.zoom.value = camera_state.zoom;
@@ -5876,14 +6610,17 @@
         status_line_element.textContent = renderer_mode === 'gpu'
           ? ui_label_text('readiness.chip_ready')
           : `${ui_label_text('readiness.chip_degraded_prefix')}2D grid`;
-        // The round-11 surface (§4.1/§4.2/§5.3): the diagnostics gate drops
-        // to the readout's named severity (it never raises back — the ring
-        // is bounded), the frame facts pre fills, and the follow demo is a
+        // The provider-capability rows need the wasm registration readback,
+        // which exists only after readiness.
+        refresh_capability_provider_rows();
+        // Diagnostics stay off unless the visitor already opened the Advanced
+        // pane (`?advanced` is that explicit opt-in for the browser suite).
+        // The facts pre fills without a subscription; the follow demo is a
         // GPU-only capability: on the 2D path its control stays disabled
         // with the reason (the §6.2 disabled-with-reason pattern).
-        diagnostics_minimum_severity_value = window.mapTest.SdkLogSeverity[
-          DIAGNOSTICS_READOUT_MINIMUM_SEVERITY_NAME];
-        window.mapTest.subscribeToDiagnosticEvents(diagnostics_minimum_severity_value);
+        if (advanced_panel.open) {
+          open_diagnostics_stream();
+        }
         follow_demo_start_control.disabled = renderer_mode !== 'gpu';
         if (renderer_mode !== 'gpu') {
           follow_demo_live_line.textContent =
@@ -5891,7 +6628,6 @@
             'the 2D fallback.';
         }
         diagnostics_facts_element.textContent = diagnostics_facts_text();
-        refresh_diagnostics_event_lines();
         refresh_control_labels();
         await run_render_step();
       }).catch((load_error) => {
@@ -5901,3 +6637,356 @@
         status_line_element.setAttribute('data-readiness', 'failed');
         show_error_report('Rustic Maps SDK start failed', String(load_error));
       });
+
+      // --- The reference-flow launch automation (docs/design/ReferenceApplicationBehavior.md
+      // §Launch automation) ---
+      // `window.runReferenceFlow(flowId)` drives the four named flows through the
+      // same user paths a visitor takes; it is a test seam, not a second
+      // implementation. When `platform/reference-flows.json` is served the
+      // runner executes its steps and web hooks; before that artifact exists the
+      // same four flows run from the fallback below.
+      const REFERENCE_FLOW_FIELD_INPUT_IDS = Object.freeze({
+        origin: 'trip-origin-input',
+        destination: 'trip-destination-input',
+      });
+      const REFERENCE_FLOW_FIELD_SEARCH_IDS = Object.freeze({
+        origin: 'trip-origin-search-control',
+        destination: 'trip-destination-search-control',
+      });
+      const REFERENCE_FLOW_FIELD_CHIP_IDS = Object.freeze({
+        origin: 'origin-my-location',
+        destination: 'destination-my-location',
+      });
+      const REFERENCE_FLOW_TARGET_SELECTORS = Object.freeze({
+        plan_route_action: '#trip-plan-route-control',
+        route_start_action: '#follow-demo-start-control',
+        swap_action: '#trip-swap-control',
+        settings_control: '#settings-control',
+        settings_close_control: '#settings-close-control',
+        diagnostics_door: '#diagnostics-controls',
+        debug_detail_switch: '#diagnostics-debug-toggle',
+        diagnostics_debug_events: '#diagnostics-debug-toggle',
+        diagnostics_clear: '#diagnostics-clear-control',
+        diagnostics_close_control: '#diagnostics-close-control',
+      });
+      const REFERENCE_FLOW_WAIT_TIMEOUT_MILLISECONDS = 10_000;
+      const REFERENCE_FLOW_STEP_INTERVAL_MILLISECONDS = 0;
+      const REFERENCE_FLOW_FALLBACK_STEPS = Object.freeze({
+        plan_and_navigate: Object.freeze([
+          { step_id: 'search_origin', action: { kind: 'type_and_search', field: 'origin', value: 'Capitol Park' } },
+          { step_id: 'assign_destination', action: { kind: 'assign_result', field: 'destination', value: 'Tower Bridge' } },
+          { step_id: 'plan', action: { kind: 'tap', target: 'plan_route_action' } },
+          { step_id: 'drive', action: { kind: 'tap', target: 'route_start_action' } },
+        ]),
+        my_location_field: Object.freeze([
+          { step_id: 'fill_origin', action: { kind: 'fill_my_location', field: 'origin' } },
+          { step_id: 'fill_destination', action: { kind: 'fill_my_location', field: 'destination' } },
+        ]),
+        routing_provider_switch: Object.freeze([
+          { step_id: 'open_settings', action: { kind: 'open_settings' } },
+          { step_id: 'select_routing_provider', action: { kind: 'select_provider', capability: 'routing', provider_role: 'keyless' } },
+          { step_id: 'close_settings', action: { kind: 'close_settings' } },
+          { step_id: 'search_origin', action: { kind: 'type_and_search', field: 'origin', value: 'Capitol Park' } },
+          { step_id: 'assign_destination', action: { kind: 'assign_result', field: 'destination', value: 'Tower Bridge' } },
+          { step_id: 'plan', action: { kind: 'tap', target: 'plan_route_action' } },
+        ]),
+        diagnostics_opt_in: Object.freeze([
+          { step_id: 'open_diagnostics', action: { kind: 'open_diagnostics' } },
+          { step_id: 'show_debug', action: { kind: 'toggle_debug_events' } },
+          { step_id: 'refresh', action: { kind: 'refresh_diagnostics' } },
+          { step_id: 'clear', action: { kind: 'clear_diagnostics' } },
+        ]),
+      });
+
+      /** Waits for one flow predicate, rejecting with a named timeout. */
+      function wait_for_reference_flow(predicate, description) {
+        return new Promise((resolve, reject) => {
+          const deadline_milliseconds = Date.now()
+            + REFERENCE_FLOW_WAIT_TIMEOUT_MILLISECONDS;
+          const poll = () => {
+            if (predicate()) {
+              resolve();
+              return;
+            }
+            if (Date.now() >= deadline_milliseconds) {
+              reject(new Error(`reference flow timed out waiting for ${description}`));
+              return;
+            }
+            setTimeout(poll, 50);
+          };
+          poll();
+        });
+      }
+
+      /** Fills one route field and runs its own Search action. */
+      async function reference_flow_search_field(field_key, value) {
+        const input_element = document.getElementById(
+          REFERENCE_FLOW_FIELD_INPUT_IDS[field_key] ?? '');
+        const search_element = document.getElementById(
+          REFERENCE_FLOW_FIELD_SEARCH_IDS[field_key] ?? '');
+        if (input_element === null || search_element === null) {
+          throw new Error(`reference flow has no ${field_key} field`);
+        }
+        input_element.value = value;
+        input_element.dispatchEvent(new Event('input', { bubbles: true }));
+        search_element.click();
+        await wait_for_reference_flow(
+          () => !document.getElementById('trip-search-results').hidden,
+          `${field_key} search results`,
+        );
+      }
+
+      /** Chooses one provider option through the capability picker. */
+      function reference_flow_select_provider(action) {
+        const capability_key = action.capability ?? ROUTING_CAPABILITY_KEY;
+        const select_element = document.getElementById(
+          `capability-provider-select-${capability_key}`);
+        if (select_element === null) {
+          throw new Error(`reference flow has no ${capability_key} provider picker`);
+        }
+        const options = Array.from(select_element.options).filter(
+          (option_element) => option_element.value !== '');
+        const chosen_option = options.find((option_element) =>
+          (typeof action.provider_key === 'string'
+            && option_element.value === action.provider_key)
+          || (typeof action.provider === 'string'
+            && option_element.textContent.includes(action.provider))
+          || (action.provider_role === 'keyless'
+            && option_element.dataset.providerRole === 'keyless'))
+          ?? options[0];
+        if (chosen_option === undefined) {
+          throw new Error(`reference flow found no selectable ${capability_key} provider`);
+        }
+        select_element.value = chosen_option.value;
+        select_element.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      /** Runs one flow step through the public page controls. */
+      async function perform_reference_flow_action(action, step) {
+        const web_hook_selector = step?.hooks?.web?.value;
+        const action_kind = action?.kind ?? action?.type ?? 'tap';
+        switch (action_kind) {
+          case 'launch':
+            return;
+          case 'type':
+          case 'type_and_search':
+          case 'search': {
+            const field_key = action.field ?? 'destination';
+            await reference_flow_search_field(field_key, action.value ?? '');
+            return;
+          }
+          case 'open_search': {
+            const field_input = document.getElementById(
+              REFERENCE_FLOW_FIELD_INPUT_IDS[action.field ?? 'destination'] ?? '');
+            field_input?.focus();
+            return;
+          }
+          case 'assign_result':
+          case 'assign': {
+            const field_key = action.field ?? 'destination';
+            await reference_flow_search_field(field_key, action.value ?? '');
+            const result_buttons = Array.from(
+              document.querySelectorAll('#trip-search-results button'));
+            const matching_button = result_buttons.find((result_button) =>
+              result_button.textContent.includes(action.value ?? ''))
+              ?? result_buttons[0];
+            if (matching_button === undefined) {
+              throw new Error(`reference flow found no ${field_key} result to assign`);
+            }
+            matching_button.click();
+            return;
+          }
+          case 'fill_my_location':
+          case 'my_location':
+          case 'my_location_requested': {
+            const field_key = action.field ?? 'origin';
+            const chip_element = document.getElementById(
+              REFERENCE_FLOW_FIELD_CHIP_IDS[field_key] ?? '');
+            if (chip_element === null) {
+              throw new Error(`reference flow has no ${field_key} my-location chip`);
+            }
+            chip_element.click();
+            await wait_for_reference_flow(
+              () => (document.getElementById(
+                REFERENCE_FLOW_FIELD_INPUT_IDS[field_key])?.value ?? '') !== '',
+              `${field_key} my-location fill`,
+            );
+            return;
+          }
+          case 'swap':
+          case 'swap_requested': {
+            document.getElementById('trip-swap-control')?.click();
+            return;
+          }
+          case 'open_settings': {
+            const settings_dialog_element = document.getElementById('settings-dialog');
+            if (!settings_dialog_element.open) {
+              document.getElementById('settings-control')?.click();
+            }
+            await wait_for_reference_flow(
+              () => settings_dialog_element.open, 'settings dialog');
+            return;
+          }
+          case 'close_settings': {
+            const settings_dialog_element = document.getElementById('settings-dialog');
+            if (settings_dialog_element.open) settings_dialog_element.close();
+            return;
+          }
+          case 'select_provider':
+          case 'provider_selected': {
+            reference_flow_select_provider(action);
+            return;
+          }
+          case 'open_diagnostics': {
+            const advanced_panel_element = document.getElementById('advanced-panel');
+            if (!advanced_panel_element.open) {
+              advanced_panel_element.open = true;
+              // The `toggle` event is the pane's opt-in door; dispatch it so the
+              // runner reaches the same handler a visitor's tap does.
+              advanced_panel_element.dispatchEvent(new Event('toggle'));
+            }
+            return;
+          }
+          case 'toggle_debug_events':
+          case 'debug_detail_toggled': {
+            const debug_control_element =
+              document.getElementById('diagnostics-debug-toggle');
+            debug_control_element.checked = true;
+            debug_control_element.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+          }
+          case 'clear_diagnostics':
+          case 'clear': {
+            document.getElementById('diagnostics-clear-control')?.click();
+            return;
+          }
+          case 'refresh_diagnostics': {
+            document.getElementById('diagnostics-refresh-control')?.click();
+            return;
+          }
+          case 'plan_route': {
+            document.getElementById('trip-plan-route-control')?.click();
+            await wait_for_reference_flow(
+              () => !trip_route_result.hidden, 'the planned route card');
+            return;
+          }
+          case 'wait_for_state': {
+            if (action.target === 'diagnostics') {
+              await wait_for_reference_flow(
+                () => window.mapDiagnosticsState?.().subscribed === true,
+                'the diagnostics stream');
+              return;
+            }
+            // The plan-search state is the fields' own state; the step only
+            // asserts no route was planned.
+            await wait_for_reference_flow(
+              () => trip_route_result.hidden, 'the unplanned plan-search state');
+            return;
+          }
+          case 'verify': {
+            // A verify step asserts a rendered row; the row is already in the
+            // DOM, so the step waits one task for the renderer to settle.
+            await new Promise((resolve) => { setTimeout(resolve, 0); });
+            return;
+          }
+          case 'tap':
+          default: {
+            const target_selector =
+              REFERENCE_FLOW_TARGET_SELECTORS[action?.target] ?? web_hook_selector;
+            if (action?.target === 'diagnostics_door'
+              || target_selector === '#diagnostics-controls') {
+              // The pane's door is the Advanced disclosure; opening it is the
+              // diagnostics opt-in.
+              const advanced_panel_element = document.getElementById('advanced-panel');
+              if (!advanced_panel_element.open) {
+                advanced_panel_element.open = true;
+                advanced_panel_element.dispatchEvent(new Event('toggle'));
+              }
+              return;
+            }
+            if (target_selector === '#diagnostics-debug-toggle') {
+              // The debug switch is a state control, so a flow step enables
+              // the detail whether or not it was already on.
+              const debug_toggle_element =
+                document.getElementById('diagnostics-debug-toggle');
+              debug_toggle_element.checked = true;
+              debug_toggle_element.dispatchEvent(
+                new Event('change', { bubbles: true }));
+              return;
+            }
+            const target_element = target_selector === undefined
+              ? null
+              : document.querySelector(target_selector);
+            if (target_element === null) {
+              if (action?.value !== undefined) {
+                await reference_flow_search_field(
+                  action.field ?? 'destination', action.value);
+                return;
+              }
+              throw new Error(
+                `reference flow cannot perform "${action_kind}" without a target`);
+            }
+            target_element.click();
+            if (target_selector === '#trip-plan-route-control'
+              || action?.target === 'plan_route_action') {
+              await wait_for_reference_flow(
+                () => !trip_route_result.hidden, 'the planned route card');
+            } else if (target_selector === '#follow-demo-start-control'
+              || action?.target === 'route_start_action') {
+              await wait_for_reference_flow(
+                () => window.mapFollowDemoState?.().phase === 'engaged',
+                'the simulated trip');
+            }
+            return;
+          }
+        }
+      }
+
+      /** The served flow schema, or null when the artifact is not present. */
+      async function read_reference_flow_schema() {
+        // The published demo sits under /demo/ beside the site's shared
+        // artifacts; the local harness serves the artifact at the web root.
+        const schema_url = window.location.pathname.includes('/demo/')
+          ? '../reference-flows.json'
+          : 'reference-flows.json';
+        try {
+          const response = await fetch(schema_url, { cache: 'no-store' });
+          return response.ok ? await response.json() : null;
+        } catch {
+          return null;
+        }
+      }
+
+      /**
+       * Runs one named reference flow through the same user-path controls a
+       * visitor uses and returns a small execution report. A flow the schema
+       * and the fallback both lack is refused by name.
+       */
+      async function run_reference_flow(flow_id) {
+        if (window.mapTestReady !== undefined) {
+          await window.mapTestReady;
+        }
+        const schema = await read_reference_flow_schema();
+        const schema_flow = schema?.flows?.find(
+          (flow_definition) => flow_definition.flow_id === flow_id) ?? null;
+        const fallback_steps = REFERENCE_FLOW_FALLBACK_STEPS[flow_id];
+        if (schema_flow === null && fallback_steps === undefined) {
+          throw new Error(`unknown reference flow: ${flow_id}`);
+        }
+        const steps = schema_flow?.steps ?? fallback_steps;
+        for (const step of steps) {
+          await perform_reference_flow_action(step.action ?? step, step);
+          if (REFERENCE_FLOW_STEP_INTERVAL_MILLISECONDS > 0) {
+            await new Promise((resolve) => {
+              setTimeout(resolve, REFERENCE_FLOW_STEP_INTERVAL_MILLISECONDS);
+            });
+          }
+        }
+        return {
+          flowId: flow_id,
+          source: schema_flow === null ? 'fallback' : 'schema',
+          stepCount: steps.length,
+        };
+      }
+      window.runReferenceFlow = run_reference_flow;
+      window.referenceFlowIds = () => Object.keys(REFERENCE_FLOW_FALLBACK_STEPS);

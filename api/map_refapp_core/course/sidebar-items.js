@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["COURSE_SMOOTHING_WINDOW_FIXES","FULL_CIRCLE_DEGREES","HALF_CIRCLE_DEGREES"],"fn":["angular_distance_degrees"],"struct":["CourseMedianSmoother"]};

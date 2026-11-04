@@ -73,6 +73,23 @@
             data-ui-label="plan.search_heading">Plan a route</h2>
         <p class="trip-subtitle">Enter an origin and a destination, plan the route,
           then start the trip simulation.</p>
+        <!-- The two labelled endpoint fields (docs/design/ReferenceApplicationBehavior.md
+             §Search, route card and navigation UX): a visible Origin/Destination
+             label, the field's own search action, and its My location chip. The
+             swap action beside the Origin label exchanges both the text and the
+             resolved place of the pair. -->
+        <div class="trip-field-label-row">
+          <label class="trip-field-label" for="trip-origin-input">
+            <span class="trip-field-marker" aria-hidden="true">A</span>
+            <span class="trip-field-label-text"
+                  data-ui-label="plan.origin_label">Origin</span>
+          </label>
+          <button id="trip-swap-control" type="button" class="trip-swap-control"
+                  aria-label="Swap origin and destination"
+                  data-ui-label="plan.swap_action"
+                  data-ui-label-attribute="aria-label"
+                  title="Swap origin and destination">&#8645; Swap</button>
+        </div>
         <div class="trip-search">
           <svg class="trip-search-icon" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -87,13 +104,19 @@
                  data-ui-label-attribute="placeholder"
                  data-ui-label-aria="plan.origin_hint" />
           <button id="trip-origin-search-control" type="button"
-                  aria-label="Search origin">Search</button>
+                  aria-label="Search origin"
+                  data-ui-label="plan.search_action">Search</button>
         </div>
         <!-- The field's "My location" chip: starts the device source when it
              is off and fills this field alone from the latest fix. -->
         <button id="origin-my-location" type="button"
                 class="trip-my-location-chip"
                 aria-label="Use my location as the origin">My location</button>
+        <label class="trip-field-label" for="trip-destination-input">
+          <span class="trip-field-marker" aria-hidden="true">B</span>
+          <span class="trip-field-label-text"
+                data-ui-label="plan.destination_label">Destination</span>
+        </label>
         <div class="trip-search">
           <svg class="trip-search-icon" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -108,13 +131,16 @@
                  data-ui-label-attribute="placeholder"
                  data-ui-label-aria="plan.destination_placeholder" />
           <button id="trip-destination-search-control" type="button"
-                  aria-label="Search destination">Search</button>
+                  aria-label="Search destination"
+                  data-ui-label="plan.search_action">Search</button>
         </div>
         <button id="destination-my-location" type="button"
                 class="trip-my-location-chip"
                 aria-label="Use my location as the destination">My location</button>
+        <p class="trip-suggestions-heading" id="trip-suggestions-heading"
+           data-ui-label="plan.demo_places_heading">Demo places</p>
         <div id="trip-suggestions" class="trip-suggestions" role="group"
-             aria-label="Demo places"></div>
+             aria-labelledby="trip-suggestions-heading"></div>
         <ul id="trip-search-results" hidden></ul>
         <div class="trip-credential">
           <p id="provider-credential-status" class="trip-status" role="status"
@@ -131,9 +157,24 @@
             <span class="credential-action-label">Add a provider key</span>
           </button>
         </div>
-        <p id="trip-plan-route-reason" class="reason-strip">Enter an origin and a
-          destination to plan the route.</p>
-        <p id="trip-route-result" class="trip-route-result" hidden></p>
+        <!-- The selected demo plan, named as the trip source (the same line the
+             native peeks carry), so Start never leaves its source implicit. -->
+        <p id="trip-source-line" class="trip-footnote" hidden></p>
+        <p id="trip-plan-route-reason" class="reason-strip"
+           data-ui-label="plan.missing_both">Enter an origin and a destination
+          to plan the route.</p>
+        <!-- The route card (docs/design/ReferenceApplicationBehavior.md §Route
+             card): destination title, distance · duration, the mode · strategy
+             caption, the ETA line and the maneuver note. The same card carries a
+             recorded demo route's honesty note. -->
+        <div id="trip-route-result" class="trip-route-result" hidden>
+          <p id="trip-route-title" class="trip-route-title"></p>
+          <p id="trip-route-facts" class="trip-route-facts"></p>
+          <p id="trip-route-directions" class="trip-route-directions"></p>
+          <p id="trip-route-eta" class="trip-route-eta"></p>
+          <p id="trip-route-maneuver" class="trip-route-maneuver"></p>
+          <p id="trip-route-note" class="trip-route-note"></p>
+        </div>
         <!-- The trip card's ETA-distance line while a trip runs: the same
              prefix and labelled remaining values the native drawers show. -->
         <p id="trip-navigation-eta-line" class="then-line" hidden></p>
@@ -278,10 +319,28 @@
 
 <section class="control-group" id="diagnostics-controls">
         <h2 class="group-label" data-ui-label="diagnostics.title">Diagnostics</h2>
+        <!-- Diagnostics are opt-in (docs/design/ReferenceApplicationBehavior.md
+             §Diagnostics policy): opening this pane starts the one bounded
+             stream at Info; Show debug events lowers it to Debug for the rest of
+             the session. Nothing is subscribed while the pane stays closed. -->
+        <p id="diagnostics-stream-note" class="trip-footnote"
+           data-ui-label="diagnostics.stream_scope_note">Debug detail stays on
+          until the app restarts.</p>
+        <div class="diagnostics-actions">
+          <label class="toggle-row" for="diagnostics-debug-toggle">
+            <input id="diagnostics-debug-toggle" type="checkbox" />
+            <span id="diagnostics-debug-events-label"
+                  data-ui-label="diagnostics.show_debug_events">Show debug events</span>
+          </label>
+          <button id="diagnostics-clear-control" type="button"
+                  data-ui-label="diagnostics.clear_action">Clear</button>
+          <button id="diagnostics-refresh-control" type="button">Refresh recent SDK events</button>
+          <button id="diagnostics-close-control" type="button">Close diagnostics</button>
+        </div>
         <p id="performance-strip" class="reason-strip" hidden></p>
-        <button id="diagnostics-refresh-control" type="button">Refresh recent SDK events</button>
         <pre id="diagnostics-facts-lines"></pre>
-        <pre id="diagnostics-event-lines" aria-live="off"></pre>
+        <pre id="diagnostics-event-lines" aria-live="off"
+             data-ui-label="diagnostics.no_events">No SDK events recorded yet.</pre>
       </section>
       <p id="control-hint">Drag to pan, scroll to zoom. Scenes and camera presets
         come from the shared demo content.</p>
@@ -321,6 +380,20 @@
               <canvas id="provider-tile-canvas" width="128" height="128" hidden
                       aria-label="Fetched tile preview"></canvas>
             </div>
+          </section>
+          <!-- Provider capabilities (docs/design/ReferenceApplicationBehavior.md
+               §Provider selection, descriptors and endpoints): one row per
+               capability the registry offers on this platform. The row and every
+               picker entry compose "{display name} · {credential state}", both
+               read from platform/providers.json, so no vendor is named here. -->
+          <section class="settings-section" id="capability-providers-panel"
+                   aria-labelledby="capability-providers-title"
+                   aria-describedby="capability-provider-status" hidden>
+            <h3 class="settings-section-title" id="capability-providers-title">Provider capabilities</h3>
+            <p class="settings-note">Each capability can be served by a different
+              provider. The row names the serving provider and its credential state.</p>
+            <div id="capability-provider-controls"></div>
+            <p id="capability-provider-status" class="reason-strip" role="status" hidden></p>
           </section>
           <!-- The base-map flow every platform serves from Settings
                (docs/ReferenceAppUX.md §4.1): the serving base row opens a

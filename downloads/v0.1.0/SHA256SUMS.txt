@@ -1,7 +1,7 @@
-4466053d305aec693d5e83cb400fdfe1c02e660371b9ec6a502d30be9a5179dc  downloads.json
-5d17bd63e42c4e9895a0615a13c53cf3b97beb0afb9b10e495fe9ee7f59106eb  rustic-maps-sdk-android-v0.1.0.aar
-ccd6e7ab01d7aec871b4821b9865a4ad349fdf01a75b5185c58422727897dc82  rustic-maps-sdk-ios-v0.1.0.xcframework.zip
+ffe39a64b38614e6729eda6d2c1e5906216d31088a5a7b04aebe0bd45118acb2  downloads.json
+afaa291ad9922a156d21abb2b02fd6742ab9ab88fc5aaf694285e4b55a0da9fb  rustic-maps-sdk-android-v0.1.0.aar
+e5b8e66906e72740a60adce88fcaa38b92c425af1361526db4a4303a40192381  rustic-maps-sdk-ios-v0.1.0.xcframework.zip
 babb4caff96b3727fadd1936064ca1c362ff373dd527c0e9cf83a4a62471ec39  rustic-maps-sdk-notices-v0.1.0.md
-f6c2b527689a0cf3c907ff2f4ddd1ea69211510ad5ea2bbf0a51e15b01e9ba99  rustic-maps-sdk-rn-v0.1.0.tgz
-2bafa0325aeb785ab1bab3f5b35a6453a5e05e96e434296187f775a575fdd77d  rustic-maps-sdk-rust-v0.1.0.tar.gz
-e03431a9a34b3ab734ab3e9846dcdb08479dc45c666560232875682ddd0ffa0f  rustic-maps-sdk-web-v0.1.0.tgz
+723451420cd0de6ef9ecd8883ba94602067d486501f7b6fe23e1791a749549b4  rustic-maps-sdk-rn-v0.1.0.tgz
+e7a87eb90347ec6e5e515fc302470403b8fbe79457f62884eaa2994addfdfe2e  rustic-maps-sdk-rust-v0.1.0.tar.gz
+c0df3a80bba5ef7dd04464c1f7fc42f36a0677d956e7dcaee0ff1b90563ea5d3  rustic-maps-sdk-web-v0.1.0.tgz

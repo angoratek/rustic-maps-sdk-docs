@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FlowEvent","FlowField","FlowOutcome","FlowState"],"fn":["advance_flow"],"struct":["FlowTransition"]};

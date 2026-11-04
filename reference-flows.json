@@ -1,0 +1,1200 @@
+{
+  "schema_version": 1,
+  "artifact": {
+    "name": "reference-flows",
+    "purpose": "The ordered reference-application flows every target must run, with the visible outcome, copy ID and automation hook of each step (docs/design/ReferenceApplicationBehavior.md)."
+  },
+  "schema_documentation": {
+    "flow": "flow_id, label, scenario, screenshot_step_id (a step ID, or null when the flow is not the screenshot scenario), preconditions, steps",
+    "step": "step_id, action, outcomes, hooks",
+    "action": "kind plus the fields that kind uses: field (origin|destination), value, target, provider_key",
+    "outcome": "kind (state|visible|condition|copy) and id; state IDs come from states, copy IDs from platform/reference-tokens.json ui_labels, visible and condition IDs from component_vocabulary",
+    "hook": "kind (test_tag|accessibility_identifier|test_id|css_selector|not_available), value, and an optional pending+reason pair while a platform slice has not added the stable identifier yet; not_available always carries a reason"
+  },
+  "states": [
+    {
+      "id": "home_peek",
+      "description": "the home sheet's peek"
+    },
+    {
+      "id": "plan_search",
+      "description": "the two-field search view"
+    },
+    {
+      "id": "planning",
+      "description": "a plan request is in flight"
+    },
+    {
+      "id": "route_planned",
+      "description": "a route is present and can start"
+    },
+    {
+      "id": "navigating",
+      "description": "a simulated or device-driven trip is running"
+    },
+    {
+      "id": "arrived",
+      "description": "the trip reached its end"
+    },
+    {
+      "id": "provider_settings",
+      "description": "the provider-settings overlay"
+    },
+    {
+      "id": "diagnostics",
+      "description": "the diagnostics overlay"
+    }
+  ],
+  "component_vocabulary": [
+    {
+      "id": "home_sheet_peek",
+      "description": "the home sheet in its peek state"
+    },
+    {
+      "id": "search_view",
+      "description": "the two-field search view"
+    },
+    {
+      "id": "origin_result_row",
+      "description": "a provider result row belonging to the origin field"
+    },
+    {
+      "id": "destination_result_row",
+      "description": "a provider result row belonging to the destination field"
+    },
+    {
+      "id": "route_card",
+      "description": "the route summary card with distance, duration, mode and strategy"
+    },
+    {
+      "id": "turn_banner",
+      "description": "the top-center turn banner"
+    },
+    {
+      "id": "route_polyline",
+      "description": "the planned route polyline on the map"
+    },
+    {
+      "id": "eta_line",
+      "description": "the navigation drawer's ETA-distance line"
+    },
+    {
+      "id": "speed_controls",
+      "description": "the playback speed chips"
+    },
+    {
+      "id": "provider_settings_sheet",
+      "description": "the provider-settings surface"
+    },
+    {
+      "id": "provider_routing_row",
+      "description": "the settings routing capability row"
+    },
+    {
+      "id": "diagnostics_pane",
+      "description": "the diagnostics surface"
+    },
+    {
+      "id": "diagnostics_event_list",
+      "description": "the diagnostics pane's bounded event list"
+    },
+    {
+      "id": "readiness_chip",
+      "description": "the readiness chip that opens diagnostics"
+    },
+    {
+      "id": "settings_close_control",
+      "description": "the settings surface's close control"
+    },
+    {
+      "id": "plan_route_action",
+      "description": "the explicit Plan route action"
+    },
+    {
+      "id": "plan_ready",
+      "description": "both plan fields hold text, so Plan route is enabled"
+    },
+    {
+      "id": "origin_field_filled",
+      "description": "my location filled the origin field"
+    },
+    {
+      "id": "destination_field_filled",
+      "description": "my location filled the destination field"
+    },
+    {
+      "id": "no_plan_triggered",
+      "description": "no route was planned or started"
+    },
+    {
+      "id": "diagnostics_inactive",
+      "description": "no diagnostics subscription exists before the pane opens"
+    },
+    {
+      "id": "diagnostics_bounded_window",
+      "description": "the pane shows the most recent bounded window"
+    },
+    {
+      "id": "debug_detail_enabled",
+      "description": "the explicit debug-detail switch is on"
+    },
+    {
+      "id": "diagnostics_list_cleared",
+      "description": "the diagnostics display list is empty"
+    },
+    {
+      "id": "provider_route_selected",
+      "description": "the selected provider serves the routing capability"
+    },
+    {
+      "id": "route_endpoint_reported",
+      "description": "the routing row reports the demo endpoint and ready state"
+    }
+  ],
+  "action_kinds": [
+    "launch",
+    "open_search",
+    "type_and_search",
+    "assign_result",
+    "my_location",
+    "plan_route",
+    "tap",
+    "open_settings",
+    "select_provider",
+    "wait_for_state",
+    "verify"
+  ],
+  "platforms": {
+    "android": {
+      "display_name": "Android",
+      "hook_kind": "test_tag",
+      "source_paths": [
+        "platform/android/reference-application/src/main"
+      ],
+      "build_input": {
+        "path": "platform/android/reference-application/build.gradle.kts",
+        "mechanism": "Gradle asset copy"
+      }
+    },
+    "ios": {
+      "display_name": "iOS",
+      "hook_kind": "accessibility_identifier",
+      "source_paths": [
+        "platform/ios/reference-application/Sources"
+      ],
+      "build_input": {
+        "path": "platform/ios/reference-application/project.yml",
+        "mechanism": "SwiftPM resource"
+      }
+    },
+    "react_native": {
+      "display_name": "React Native",
+      "hook_kind": "test_id",
+      "source_paths": [
+        "platform/rn/app-shell/App.tsx",
+        "platform/rn/app-shell/src"
+      ],
+      "build_input": {
+        "path": "platform/rn/app-shell/src/referenceFlows.ts",
+        "mechanism": "Metro require"
+      }
+    },
+    "web": {
+      "display_name": "WebAssembly",
+      "hook_kind": "css_selector",
+      "source_paths": [
+        "platform/web/index.html",
+        "platform/web/playground.mjs"
+      ],
+      "build_input": {
+        "path": "platform/web/serve.mjs",
+        "mechanism": "same-origin route"
+      }
+    }
+  },
+  "flows": [
+    {
+      "flow_id": "plan_and_navigate",
+      "label": "Search, plan and simulate",
+      "scenario": "reference",
+      "screenshot_step_id": "drive",
+      "preconditions": [
+        "keyless",
+        "shared artifacts loaded"
+      ],
+      "steps": [
+        {
+          "step_id": "open",
+          "action": {
+            "kind": "launch"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "home_peek"
+            },
+            {
+              "kind": "visible",
+              "id": "home_sheet_peek"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.destination_hint"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.origin_hint"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "home-sheet-peek-search"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "home-sheet-peek-search"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "peek-search-field"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-destination-input"
+            }
+          }
+        },
+        {
+          "step_id": "search_origin",
+          "action": {
+            "kind": "type_and_search",
+            "field": "origin",
+            "value": "Capitol Park"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "origin_result_row"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.demo_places_heading"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.search_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "search-view-origin-field"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "search-view-origin-field"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "origin-search-field"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-origin-input"
+            }
+          }
+        },
+        {
+          "step_id": "search_destination",
+          "action": {
+            "kind": "type_and_search",
+            "field": "destination",
+            "value": "Tower Bridge"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "destination_result_row"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.demo_places_heading"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.destination_label"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "search-view-destination-field"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "search-view-destination-field"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "destination-search-field"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-destination-input"
+            }
+          }
+        },
+        {
+          "step_id": "assign_destination",
+          "action": {
+            "kind": "assign_result",
+            "field": "destination",
+            "value": "Tower Bridge"
+          },
+          "outcomes": [
+            {
+              "kind": "condition",
+              "id": "plan_ready"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.plan_route_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "search-results-list"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "search-results-list"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "search-results-list"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-search-results"
+            }
+          }
+        },
+        {
+          "step_id": "plan",
+          "action": {
+            "kind": "plan_route"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "route_planned"
+            },
+            {
+              "kind": "visible",
+              "id": "route_card"
+            },
+            {
+              "kind": "copy",
+              "id": "route.start_action"
+            },
+            {
+              "kind": "copy",
+              "id": "route.edit_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "plan-route-button"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "plan-route-button"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "plan-route"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-plan-route-control"
+            }
+          }
+        },
+        {
+          "step_id": "drive",
+          "action": {
+            "kind": "tap",
+            "target": "route_start_action"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "navigating"
+            },
+            {
+              "kind": "visible",
+              "id": "turn_banner"
+            },
+            {
+              "kind": "visible",
+              "id": "route_polyline"
+            },
+            {
+              "kind": "visible",
+              "id": "eta_line"
+            },
+            {
+              "kind": "visible",
+              "id": "speed_controls"
+            },
+            {
+              "kind": "copy",
+              "id": "navigation.eta_prefix"
+            },
+            {
+              "kind": "copy",
+              "id": "navigation.speed_label"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "start-simulated-navigation"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "home-sheet-peek-start-navigation"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "start-simulated-navigation"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#follow-demo-start-control"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "flow_id": "my_location_field",
+      "label": "Fill the plan fields from my location",
+      "scenario": "my_location",
+      "screenshot_step_id": null,
+      "preconditions": [
+        "keyless",
+        "a device position source is available"
+      ],
+      "steps": [
+        {
+          "step_id": "open",
+          "action": {
+            "kind": "launch"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "home_peek"
+            },
+            {
+              "kind": "visible",
+              "id": "home_sheet_peek"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.destination_hint"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "home-sheet-peek-search"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "home-sheet-peek-search"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "peek-search-field"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-destination-input"
+            }
+          }
+        },
+        {
+          "step_id": "search_origin",
+          "action": {
+            "kind": "open_search",
+            "field": "origin"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "plan_search"
+            },
+            {
+              "kind": "visible",
+              "id": "search_view"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.search_heading"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.origin_label"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "search-view-origin-field"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "search-view-origin-field"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "origin-search-field"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-origin-input"
+            }
+          }
+        },
+        {
+          "step_id": "my_location_origin",
+          "action": {
+            "kind": "my_location",
+            "field": "origin"
+          },
+          "outcomes": [
+            {
+              "kind": "condition",
+              "id": "origin_field_filled"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.my_location_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "origin-my-location"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "origin-my-location"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "origin-my-location"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#origin-my-location"
+            }
+          }
+        },
+        {
+          "step_id": "my_location_destination",
+          "action": {
+            "kind": "my_location",
+            "field": "destination"
+          },
+          "outcomes": [
+            {
+              "kind": "condition",
+              "id": "destination_field_filled"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.my_location_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "destination-my-location"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "destination-my-location"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "destination-my-location"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#destination-my-location"
+            }
+          }
+        },
+        {
+          "step_id": "verify_unplanned",
+          "action": {
+            "kind": "wait_for_state",
+            "target": "plan_search"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "plan_search"
+            },
+            {
+              "kind": "condition",
+              "id": "no_plan_triggered"
+            },
+            {
+              "kind": "copy",
+              "id": "plan.plan_route_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "plan-route-button"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "plan-route-button"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "plan-route"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-plan-route-control"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "flow_id": "routing_provider_switch",
+      "label": "Switch the routing provider and plan",
+      "scenario": "provider_switch",
+      "screenshot_step_id": null,
+      "preconditions": [
+        "keyless",
+        "the registry declares a keyless routing descriptor with demo_base_url"
+      ],
+      "steps": [
+        {
+          "step_id": "open",
+          "action": {
+            "kind": "launch"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "home_peek"
+            },
+            {
+              "kind": "visible",
+              "id": "home_sheet_peek"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "home-sheet-peek-search"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "home-sheet-peek-search"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "peek-search-field"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-destination-input"
+            }
+          }
+        },
+        {
+          "step_id": "open_settings",
+          "action": {
+            "kind": "open_settings"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "provider_settings_sheet"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_row"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_state_needs_credential"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "open-settings"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "provider-settings-gear"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "open-settings"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#settings-control"
+            }
+          }
+        },
+        {
+          "step_id": "read_routing_row",
+          "action": {
+            "kind": "verify",
+            "target": "provider_routing_row"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "provider_routing_row"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_row"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_state_needs_credential"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "capability-provider-row-routing"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "capability-provider-row-"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "capability-provider-serving-"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#capability-provider-controls"
+            }
+          }
+        },
+        {
+          "step_id": "select_routing_provider",
+          "action": {
+            "kind": "select_provider",
+            "provider_key": "osrm"
+          },
+          "outcomes": [
+            {
+              "kind": "condition",
+              "id": "provider_route_selected"
+            },
+            {
+              "kind": "visible",
+              "id": "provider_routing_row"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_row"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_state_ready"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.routing_demo_endpoint"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "capability-provider-choice-osrm"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "capability-provider-picker-"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "capability-provider-"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#capability-provider-choice-osrm"
+            }
+          }
+        },
+        {
+          "step_id": "close_settings",
+          "action": {
+            "kind": "tap",
+            "target": "settings_close_control"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "home_peek"
+            },
+            {
+              "kind": "visible",
+              "id": "home_sheet_peek"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.close_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "settings-close"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "provider-settings-close"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "settings-done"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#settings-close-control"
+            }
+          }
+        },
+        {
+          "step_id": "plan",
+          "action": {
+            "kind": "plan_route"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "route_planned"
+            },
+            {
+              "kind": "visible",
+              "id": "route_card"
+            },
+            {
+              "kind": "copy",
+              "id": "route.start_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "plan-route-button"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "plan-route-button"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "plan-route"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#trip-plan-route-control"
+            }
+          }
+        },
+        {
+          "step_id": "see_routing_endpoint",
+          "action": {
+            "kind": "open_settings"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "provider_routing_row"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.routing_demo_endpoint"
+            },
+            {
+              "kind": "copy",
+              "id": "settings.provider_state_ready"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "open-settings"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "provider-settings-gear"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "open-settings"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#settings-control"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "flow_id": "diagnostics_opt_in",
+      "label": "Open diagnostics only when asked",
+      "scenario": "diagnostics",
+      "screenshot_step_id": null,
+      "preconditions": [
+        "a fresh launch",
+        "no prior diagnostics subscription"
+      ],
+      "steps": [
+        {
+          "step_id": "open",
+          "action": {
+            "kind": "launch"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "home_peek"
+            },
+            {
+              "kind": "condition",
+              "id": "diagnostics_inactive"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "readiness-chip"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "readiness-chip"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "readiness-chip"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#advanced-panel"
+            }
+          }
+        },
+        {
+          "step_id": "open_diagnostics",
+          "action": {
+            "kind": "tap",
+            "target": "diagnostics_door"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "diagnostics_pane"
+            },
+            {
+              "kind": "copy",
+              "id": "diagnostics.title"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "readiness-chip"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "readiness-chip"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "readiness-chip"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#diagnostics-controls"
+            }
+          }
+        },
+        {
+          "step_id": "read_stream",
+          "action": {
+            "kind": "wait_for_state",
+            "target": "diagnostics"
+          },
+          "outcomes": [
+            {
+              "kind": "visible",
+              "id": "diagnostics_event_list"
+            },
+            {
+              "kind": "condition",
+              "id": "diagnostics_bounded_window"
+            },
+            {
+              "kind": "copy",
+              "id": "diagnostics.stream_scope_note"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "diagnostics-sheet"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "diagnostics-sheet"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "diagnostics-sheet"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#diagnostics-event-lines"
+            }
+          }
+        },
+        {
+          "step_id": "toggle_debug_detail",
+          "action": {
+            "kind": "tap",
+            "target": "debug_detail_switch"
+          },
+          "outcomes": [
+            {
+              "kind": "condition",
+              "id": "debug_detail_enabled"
+            },
+            {
+              "kind": "copy",
+              "id": "diagnostics.show_debug_events"
+            },
+            {
+              "kind": "copy",
+              "id": "diagnostics.hide_debug_events"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "diagnostics-debug-toggle"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "diagnostics-debug-toggle"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "diagnostics-debug-toggle"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#diagnostics-debug-toggle"
+            }
+          }
+        },
+        {
+          "step_id": "clear",
+          "action": {
+            "kind": "tap",
+            "target": "diagnostics_clear"
+          },
+          "outcomes": [
+            {
+              "kind": "condition",
+              "id": "diagnostics_list_cleared"
+            },
+            {
+              "kind": "copy",
+              "id": "diagnostics.clear_action"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "diagnostics-clear"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "diagnostics-clear"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "diagnostics-clear"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#diagnostics-clear-control"
+            }
+          }
+        },
+        {
+          "step_id": "close",
+          "action": {
+            "kind": "tap",
+            "target": "diagnostics_close_control"
+          },
+          "outcomes": [
+            {
+              "kind": "state",
+              "id": "home_peek"
+            },
+            {
+              "kind": "visible",
+              "id": "home_sheet_peek"
+            }
+          ],
+          "hooks": {
+            "android": {
+              "kind": "test_tag",
+              "value": "diagnostics-close"
+            },
+            "ios": {
+              "kind": "accessibility_identifier",
+              "value": "diagnostics-close"
+            },
+            "react_native": {
+              "kind": "test_id",
+              "value": "diagnostics-close"
+            },
+            "web": {
+              "kind": "css_selector",
+              "value": "#diagnostics-close-control"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

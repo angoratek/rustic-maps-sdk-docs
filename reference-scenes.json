@@ -6113,5 +6113,27 @@
         ]
       }
     }
+  ],
+  "offline_regions": [
+    {
+      "region_id": "downtown-sacramento",
+      "display_name": "Downtown Sacramento",
+      "bounding_box": {
+        "south_west": {
+          "latitude": 38.566,
+          "longitude": -121.508
+        },
+        "north_east": {
+          "latitude": 38.582,
+          "longitude": -121.488
+        }
+      },
+      "minimum_zoom_level": 12,
+      "maximum_zoom_level": 16,
+      "image_format": "Png",
+      "tile_resolution": "Standard",
+      "time_to_live_seconds": 2592000,
+      "note": "The demo offline region over the recorded downtown scenes: one tile at the demo camera's zoom 14, 23 tiles across zooms 12 through 16. The deepest zoom stays below the credentialed provider's declared raster ceiling of 20, the format and resolution match the base map's raster request, and the 30-day retention equals the provider's caching ceiling."
+    }
   ]
 }

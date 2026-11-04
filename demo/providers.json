@@ -220,8 +220,10 @@
         "wasm": true
       },
       "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — routing by OSRM",
-      "terms_note": "A self-hosted OSRM deployment follows its operator's terms; public demo servers are rate-limited and not for production use.",
-      "settings_hint": "Enter the base URL of your OSRM deployment, or leave it blank for a local server on port 5000.",
+      "terms_note": "Project OSRM's public demo server is for reasonable, non-commercial use capped at one request per second, with no uptime, latency or data-update guarantee; a self-hosted OSRM deployment follows its operator's terms.",
+      "demo_base_url": "https://router.project-osrm.org",
+      "demo_base_url_note": "Public demo server, rate-limited and not for production use.",
+      "settings_hint": "Enter the base URL of your OSRM deployment, or use the public demo server declared by the registry.",
       "wasm_registration": null,
       "fixture_routes": [
         {
@@ -246,8 +248,10 @@
         "wasm": true
       },
       "attribution_text": "Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla",
-      "terms_note": "A self-hosted Valhalla deployment follows its operator's terms; public demo servers are rate-limited and not for production use.",
-      "settings_hint": "Enter the base URL of your Valhalla deployment, or leave it blank for a local server on port 8002.",
+      "terms_note": "FOSSGIS e.V. terms of use apply to the public demo server: one request per second, an identifying User-Agent, attribution to OpenStreetMap contributors, and no high-traffic or production use; a self-hosted Valhalla deployment follows its operator's terms.",
+      "demo_base_url": "https://valhalla1.openstreetmap.de",
+      "demo_base_url_note": "FOSSGIS public demo server, limited to one request per second and not for production use.",
+      "settings_hint": "Enter the base URL of your Valhalla deployment, or use the public demo server declared by the registry.",
       "wasm_registration": null,
       "fixture_routes": [
         {

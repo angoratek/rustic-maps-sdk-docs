@@ -1,25 +1,55 @@
-// Platform glue of the web playground's reference-app parity features
-// (round 11): pure values mirroring the design language's §2.4 token table
-// rows the round-10 reference apps consume, plus the pure helpers the
-// control cluster, the follow camera and the scale bar drive their behavior
-// with. The mirror mirrors the Android reference app's own files
-// (`FollowCamera.kt`, `CameraEasing.kt`, `ScaleBarModel.kt`) member by
-// member; values live behind named constants, never literals. Both the page
-// (index.html) and the Playwright specs import this module, so the demo
-// harness and the tests can never drift apart on the token values.
+// Platform glue of the web playground's reference-app parity features: the
+// pure values of the design language's §2.4 token table rows the reference
+// apps consume, plus the shared behavior math the controls, the follow camera
+// and the scale bar drive their behavior with.
 //
-// The WebGL-era §5.3 follow camera is *platform-pump owned*: the wasm seam
-// exposes no navigation object (docs/ReferenceAppUX.md §12), so this
-// platform glue drives the same eased state machine against the page's own
-// frame pump; the contract's camera surface stays untouched.
+// The follow-camera state machine, the circular course median, the smoothstep
+// and exponential easing, the scale-bar ladder and the trace cursor are the
+// `map-refapp-core` implementations, exported through the wasm package and
+// re-exported here under the names the page has always imported. Only the
+// platform-owned token rows and the route-polyline helpers (which the crate
+// does not carry) live in this module. Both the page (index.html) and the
+// Playwright specs import it, so the demo harness and the tests cannot drift
+// apart on the values.
+//
+// The wasm package is loaded here because the page and the Node-side specs
+// both need the crate's classes and functions. In a browser the page's own
+// `main.mjs` owns the single wasm instantiation; the classes the page
+// constructs before readiness (`SmoothstepTimedEase`, `ExponentialValueChase`
+// and `FollowCamera`) defer creating their Rust object until first use, so
+// this module never delays the page's module evaluation. In Node the generated
+// bindings are initialized synchronously from the package's bytes.
+
+import {
+  CourseMedianSmoother,
+  ExponentialValueChase as NativeExponentialValueChase,
+  FollowCamera as NativeFollowCamera,
+  SmoothstepTimedEase as NativeSmoothstepTimedEase,
+  TraceCursor,
+  bearingOffNorthDegrees,
+  followZoomTowardTripEnd,
+  initSync,
+  scaleBarDistanceLabelText,
+  selectScaleBarScale,
+  signedAngularDifferenceDegrees,
+  smoothstepEasedProgress,
+  traceDispatchIntervalMilliseconds,
+} from './pkg/rustic_maps_web_bindings.js';
+
+if (typeof window === 'undefined') {
+  const { readFileSync } = await import('node:fs');
+  initSync({
+    module: readFileSync(
+      new URL('./pkg/rustic_maps_web_bindings_bg.wasm', import.meta.url),
+    ),
+  });
+}
 
 /** Full circle in degrees (the bearing wraps' modulus). */
 const FULL_CIRCLE_DEGREES = 360.0;
-/** Half circle in degrees (the shortest-way wrap boundary). */
-const HALF_CIRCLE_DEGREES = 180.0;
 
-// --- The §2.4 token rows the round-11 controls mirror (token names
-// verbatim; the Android mirror's own constants spell them identically) ---
+// --- The §2.4 token rows the controls mirror (token names verbatim; the
+// Android mirror's own constants spell them identically) ---
 
 /** The zoom controls' step, one zoom level (`map-control-zoom-step`). */
 export const MAP_CONTROL_ZOOM_STEP = 1.0;
@@ -48,17 +78,6 @@ export const SCALE_BAR_WIDTH_MINIMUM_PIXELS = 50.0;
 /** The scale bar's width ceiling in pixels (`scale-bar-width-range` high). */
 export const SCALE_BAR_WIDTH_MAXIMUM_PIXELS = 120.0;
 
-/** The clean distance ladder's multipliers, per decade (§2.4). */
-export const SCALE_BAR_LADDER_MULTIPLIERS = [1, 2, 3, 5, 10];
-
-/**
- * The ladder's decade scan range around one meter: `10⁻² … 10⁹` m spans
- * every usable zoom the SDK camera clamps to (candidates can never fit
- * outside it; the scan stops once a candidate's width passes the maximum).
- */
-export const SCALE_BAR_LADDER_LOWER_DECADE_SCAN_RANGE = 2;
-export const SCALE_BAR_LADDER_DECADE_SCAN_RANGE = 9;
-
 // --- The follow camera's §5.3 token rows ---
 
 /** The follow camera's fixed deep zoom (`navigation-follow-zoom`). */
@@ -67,9 +86,6 @@ export const NAVIGATION_FOLLOW_ZOOM = 17.0;
 export const NAVIGATION_FOLLOW_ZOOM_MAXIMUM = 17.5;
 /** The follow camera's 3D pitch (`navigation-follow-pitch-3d`). */
 export const NAVIGATION_FOLLOW_PITCH_3D_DEGREES = 45.0;
-
-/** Median smoothing's fix window (§5.3's named constant window). */
-export const COURSE_SMOOTHING_WINDOW_FIXES = 5;
 
 /**
  * The follow camera's bearing chase time constant in milliseconds — the
@@ -83,15 +99,7 @@ export const FOLLOW_BEARING_CHASE_TIME_CONSTANT_MILLISECONDS = 150.0;
  */
 export const FOLLOW_BEARING_SNAP_DISTANCE_DEGREES = 0.05;
 
-/**
- * The first frame of a chase has one frame's worth of catching up: the
- * constant folds one 60 Hz frame's delta into the chase factor (structural,
- * mirroring the Android pump).
- */
-export const CHASE_FIRST_FRAME_DELTA_MILLISECONDS = 1000.0 / 60.0;
-
-// --- The follow demo's documented platform-glue constants (mirroring the
-// Android reference app's demo constants) ---
+// --- The follow demo's documented platform-glue constants ---
 
 /**
  * The demo playback acceleration factor: simulated time advances this many
@@ -124,290 +132,241 @@ export const FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS = 8.0;
 export const FOLLOW_DEMO_SPEED_METERS_PER_SECOND =
   1.4 * FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR;
 
-/** Earth's equatorial circumference the Web Mercator projection stretches
- * onto one world edge (haversine-free small-segment distance uses the
- * equirectangular approximation the demo's short walk spans comfortably;
- * named for documentation, consumed by `great_circle_distance_meters`). */
+// --- The diagnostics pane's shared bounds (docs/design/ReferenceApplicationBehavior.md
+// §The bounded stream): one display window and one flush limit per pane, with
+// the refresh cadence the page coalesces its ring reads to. The values land as
+// behavior tokens in platform/reference-tokens.json so the four mirrors cannot
+// drift. ---
+
+/** The most recent events the diagnostics pane displays. */
+export const DIAGNOSTICS_EVENT_WINDOW = 100;
+
+/** The backlog flush limit when the pane opens. */
+export const DIAGNOSTICS_BACKLOG_FLUSH_LIMIT = 100;
+
+/** The pane's refresh coalescing cadence in milliseconds. */
+export const DIAGNOSTICS_REFRESH_CADENCE_MILLISECONDS = 500;
+
+/** The SDK's per-subsystem diagnostics ring capacity, in events. */
+export const DIAGNOSTICS_RING_CAPACITY = 512;
+
+/** The pane's default (and idle SDK gate) severity name. */
+export const DIAGNOSTICS_MINIMUM_SEVERITY_NAME = 'Info';
+
+/** The explicit Show debug events severity name. */
+export const DIAGNOSTICS_DEBUG_SEVERITY_NAME = 'Debug';
+
+/** Earth's mean radius the haversine route helpers below use, in meters. */
 const EARTH_MEAN_RADIUS_METERS = 6371008.8;
 
-/**
- * Smoothstep easing (`3t²−2t³`): eased in, eased out, structural math.
- * @param {number} linear_progress
- * @returns {number}
- */
-export function smoothstep_eased_progress(linear_progress) {
-  const clamped_progress = Math.min(Math.max(linear_progress, 0), 1);
-  return clamped_progress * clamped_progress * (3 - 2 * clamped_progress);
-}
+// --- The shared `map-refapp-core` behavior math, re-exported under the names
+// the page and the specs import. The implementations live in Rust. The three
+// classes the page constructs before wasm readiness defer creating their Rust
+// object until first use; `CourseMedianSmoother` and `TraceCursor` are only
+// constructed after readiness and re-export the crate classes directly. ---
+
+export { CourseMedianSmoother, TraceCursor };
 
 /**
- * The camera bearing's smallest off-north angular distance in degrees (the
- * compass control's visibility-threshold input, §2.4): wrapped into the
- * shortest direction, always in [0, 180].
- * @param {number} bearing_degrees
- * @returns {number}
- */
-export function bearing_off_north_degrees(bearing_degrees) {
-  const normalized_degrees =
-    ((bearing_degrees % FULL_CIRCLE_DEGREES) + FULL_CIRCLE_DEGREES) % FULL_CIRCLE_DEGREES;
-  return normalized_degrees <= HALF_CIRCLE_DEGREES
-    ? normalized_degrees
-    : FULL_CIRCLE_DEGREES - normalized_degrees;
-}
-
-/**
- * The shortest signed angular difference `to − from` in degrees, wrapped to
- * (−180, 180].
- * @param {number} to_degrees
- * @param {number} from_degrees
- * @returns {number}
- */
-export function signed_angular_difference_degrees(to_degrees, from_degrees) {
-  let difference = (to_degrees - from_degrees) % FULL_CIRCLE_DEGREES;
-  if (difference > HALF_CIRCLE_DEGREES) difference -= FULL_CIRCLE_DEGREES;
-  if (difference < -HALF_CIRCLE_DEGREES) difference += FULL_CIRCLE_DEGREES;
-  return difference;
-}
-
-/**
- * A linear-in-time, smoothstep-eased value move begun with a frame-clock
- * timestamp: the compass's eased "north up" return and the 2D/3D pitch
- * toggle's swing both run as this timed ease over the one eased-camera-move
- * duration. The caller supplies all timestamps (the page's frame pump),
- * exactly like the Android mirror's platform-pump ease.
+ * A linear-in-time, smoothstep-eased value move (`map-refapp-core`'s
+ * `SmoothstepTimedEase`). The Rust object is created on first use so the page
+ * may declare eases before the wasm module finishes loading.
  */
 export class SmoothstepTimedEase {
   constructor() {
-    /** Start timestamp of the running ease, or null while idle. */
-    this.start_milliseconds = null;
-    /** Value the running ease moves from. */
-    this.from_value = 0.0;
-    /** Value the running ease moves to. */
-    this.to_value = 0.0;
-    /** Duration of the running ease, in milliseconds. */
-    this.duration_milliseconds = EASED_CAMERA_MOVE_DURATION_MILLISECONDS;
+    this.native_instance = null;
   }
 
-  /** Begins (or restarts) the ease from one value to another. */
+  /** The lazily created Rust object. */
+  native() {
+    if (this.native_instance === null) {
+      this.native_instance = new NativeSmoothstepTimedEase();
+    }
+    return this.native_instance;
+  }
+
   begin(start_milliseconds, from_value, to_value, duration_milliseconds) {
-    this.start_milliseconds = start_milliseconds;
-    this.from_value = from_value;
-    this.to_value = to_value;
-    this.duration_milliseconds = duration_milliseconds;
+    this.native().begin(start_milliseconds, from_value, to_value, duration_milliseconds);
   }
 
-  /** Stops an in-flight ease without applying anything. */
   reset() {
-    this.start_milliseconds = null;
+    this.native().reset();
   }
 
-  /** Whether an ease is in flight. */
   get is_running() {
-    return this.start_milliseconds !== null;
+    return this.native().is_running;
   }
 
-  /** The ease's target. */
   get target_value() {
-    return this.to_value;
+    return this.native().target_value;
   }
 
-  /**
-   * Advances the ease: the current eased value, then true when the move
-   * just finished this call (the caller then stops). An idle ease reports
-   * its target and finished.
-   * @returns {[number, boolean]}
-   */
   advance(now_milliseconds) {
-    if (this.start_milliseconds === null) {
-      return [this.to_value, true];
-    }
-    const elapsed_milliseconds = now_milliseconds - this.start_milliseconds;
-    if (elapsed_milliseconds >= this.duration_milliseconds) {
-      const final_value = this.to_value;
-      this.start_milliseconds = null;
-      return [final_value, true];
-    }
-    const eased_value =
-      this.from_value +
-      (this.to_value - this.from_value) *
-        smoothstep_eased_progress(elapsed_milliseconds / this.duration_milliseconds);
-    return [eased_value, false];
+    return this.native().advance(now_milliseconds);
   }
 }
 
 /**
- * An exponential chase toward a moving target (the follow camera's bearing
- * toward the median-smoothed course, §5.3): a time-constant chase settles on
- * its own when the target stops moving; the chase snaps when the remaining
- * distance falls under the snap distance. The caller supplies timestamps.
+ * An exponential chase toward a moving target (`map-refapp-core`'s
+ * `ExponentialValueChase`), created on first use.
  */
 export class ExponentialValueChase {
-  /** @param {number} time_constant_milliseconds */
   constructor(time_constant_milliseconds) {
     this.time_constant_milliseconds = time_constant_milliseconds;
-    this.last_frame_milliseconds = null;
+    this.native_instance = null;
   }
 
-  /**
-   * Advances the chase toward `target`: the next current value. The first
-   * call after a reset folds one display frame's worth of catching up;
-   * frames reporting a clock going backwards are treated as a first frame.
-   */
+  /** The lazily created Rust object. */
+  native() {
+    if (this.native_instance === null) {
+      this.native_instance = new NativeExponentialValueChase(
+        this.time_constant_milliseconds,
+      );
+    }
+    return this.native_instance;
+  }
+
   advance(current, target, now_milliseconds) {
-    const last_milliseconds = this.last_frame_milliseconds;
-    this.last_frame_milliseconds = now_milliseconds;
-    const delta_time_milliseconds =
-      last_milliseconds === null || now_milliseconds < last_milliseconds
-        ? CHASE_FIRST_FRAME_DELTA_MILLISECONDS
-        : now_milliseconds - last_milliseconds;
-    const delta_degrees = signed_angular_difference_degrees(target, current);
-    if (Math.abs(delta_degrees) <= FOLLOW_BEARING_SNAP_DISTANCE_DEGREES) {
-      return target;
-    }
-    const follow_factor = 1 - Math.exp(-delta_time_milliseconds / this.time_constant_milliseconds);
-    return current + delta_degrees * follow_factor;
+    return this.native().advance(current, target, now_milliseconds);
   }
 
   reset() {
-    this.last_frame_milliseconds = null;
+    this.native().reset();
   }
 }
 
 /**
- * The median-smoothed course-over-ground (§5.3): the circular median of the
- * named constant window of recent fixes — the windowed sample minimizing the
- * sum of angular distances to the rest of the window.
+ * The navigation follow-camera state machine and its targets
+ * (`map-refapp-core`'s `FollowCamera`), created on first use.
  */
-export class CourseMedianSmoother {
-  /** @param {number} window_fix_count */
-  constructor(window_fix_count) {
-    this.window_fix_count = window_fix_count;
-    /** @type {number[]} */
-    this.recent_course_degrees = [];
+export class FollowCamera {
+  constructor() {
+    this.native_instance = null;
   }
 
-  /** Adds one fix's course-over-ground, dropping the window's oldest. */
-  add(course_degree_value) {
-    this.recent_course_degrees.push(course_degree_value);
-    while (this.recent_course_degrees.length > this.window_fix_count) {
-      this.recent_course_degrees.shift();
+  /** The lazily created Rust object. */
+  native() {
+    if (this.native_instance === null) {
+      this.native_instance = new NativeFollowCamera();
     }
+    return this.native_instance;
   }
 
-  /** The circular median, or null with no windowed sample. */
-  median() {
-    if (this.recent_course_degrees.length === 0) {
-      return null;
-    }
-    const windowed_list = this.recent_course_degrees;
-    let best_median = null;
-    let best_distance_sum = Number.POSITIVE_INFINITY;
-    for (const candidate_degrees of windowed_list) {
-      let distance_sum = 0;
-      for (const other_degrees of windowed_list) {
-        distance_sum += angular_distance_degrees(candidate_degrees, other_degrees);
-      }
-      // Ties keep the earlier sample (the Android mirror's minBy semantics).
-      if (distance_sum < best_distance_sum) {
-        best_distance_sum = distance_sum;
-        best_median = candidate_degrees;
-      }
-    }
-    return best_median;
+  engageTrip(
+    current_center_latitude_degrees,
+    current_center_longitude_degrees,
+    current_zoom_level,
+    current_bearing_degrees,
+    current_pitch_degrees,
+  ) {
+    this.native().engageTrip(
+      current_center_latitude_degrees,
+      current_center_longitude_degrees,
+      current_zoom_level,
+      current_bearing_degrees,
+      current_pitch_degrees,
+    );
   }
 
-  reset() {
-    this.recent_course_degrees = [];
+  breakOnGesture() {
+    this.native().breakOnGesture();
+  }
+
+  onFix(
+    latitude_degrees,
+    longitude_degrees,
+    course_heading_degrees,
+    remaining_distance_fraction,
+  ) {
+    this.native().onFix(
+      latitude_degrees,
+      longitude_degrees,
+      course_heading_degrees,
+      remaining_distance_fraction,
+    );
+  }
+
+  reengage() {
+    this.native().reengage();
+  }
+
+  restorePreTripCamera() {
+    return this.native().restorePreTripCamera();
+  }
+
+  get phase() {
+    return this.native().phase;
+  }
+
+  get preTripCamera() {
+    return this.native().preTripCamera;
+  }
+
+  get targetCenterLatitudeDegrees() {
+    return this.native().targetCenterLatitudeDegrees;
+  }
+
+  get targetCenterLongitudeDegrees() {
+    return this.native().targetCenterLongitudeDegrees;
+  }
+
+  get targetZoomLevel() {
+    return this.native().targetZoomLevel;
+  }
+
+  get targetBearingDegrees() {
+    return this.native().targetBearingDegrees;
   }
 }
 
-/** The angular distance between two bearings, in degrees. */
-function angular_distance_degrees(first_degrees, second_degrees) {
-  const absolute_difference = Math.abs(first_degrees - second_degrees) % FULL_CIRCLE_DEGREES;
-  return absolute_difference > HALF_CIRCLE_DEGREES
-    ? FULL_CIRCLE_DEGREES - absolute_difference
-    : absolute_difference;
-}
+/** Smoothstep easing (`3t²−2t³`), clamped into `[0, 1]`. */
+export const smoothstep_eased_progress = smoothstepEasedProgress;
+
+/** The camera bearing's smallest off-north angular distance, in degrees. */
+export const bearing_off_north_degrees = bearingOffNorthDegrees;
+
+/** The shortest signed angular difference `to − from`, in degrees. */
+export const signed_angular_difference_degrees = signedAngularDifferenceDegrees;
 
 /**
- * The follow camera's zoom toward trip end (§5.3): the fixed deep zoom at
- * the trip's start, ramping linearly with the *travelled* fraction to the
- * maximum at arrival.
- * @param {number} remaining_distance_fraction
- * @returns {number}
+ * The follow camera's zoom toward trip end: the fixed deep zoom at the trip's
+ * start, ramping linearly with the travelled fraction to the maximum.
  */
-export function follow_zoom_toward_trip_end(remaining_distance_fraction) {
-  const clamped_remaining_fraction = Math.min(Math.max(remaining_distance_fraction, 0), 1);
-  const travelled_fraction = 1 - clamped_remaining_fraction;
-  return (
-    NAVIGATION_FOLLOW_ZOOM +
-    (NAVIGATION_FOLLOW_ZOOM_MAXIMUM - NAVIGATION_FOLLOW_ZOOM) * travelled_fraction
-  );
-}
+export const follow_zoom_toward_trip_end = followZoomTowardTripEnd;
 
 /**
- * One chosen scale-bar scale: the labeled distance and the bar's pixel
- * width, mirroring the Android `ScaleBarModel`'s record.
+ * The replay dispatch interval of a recorded trace, in milliseconds.
+ */
+export const trace_dispatch_interval_milliseconds =
+  traceDispatchIntervalMilliseconds;
+
+/**
+ * One chosen scale-bar scale: the labeled distance and the bar's pixel width.
  * @typedef {{distanceMeters: number, widthPixels: number}} SelectedScaleBarScale
  */
 
 /**
  * Selects the ladder distance fitting the token width range for one ground
- * meters-per-screen-pixel answer: the largest ladder distance whose bar
- * width does not exceed the maximum, when its width also reaches the
- * minimum (the ladder's consecutive ratios are tighter than the width
- * range's 120/50 ratio, so a fitting candidate exists for every positive
- * ground answer); a non-finite or non-positive ground answer selects
- * nothing (the scale bar then renders no bar rather than an invented
- * distance).
+ * meters-per-screen-pixel answer: the largest ladder distance whose bar width
+ * does not exceed the maximum, when its width also reaches the minimum. A
+ * null, non-finite or non-positive ground answer selects nothing (the scale
+ * bar then renders no bar rather than an invented distance).
  * @param {number | null | undefined} ground_meters_per_screen_pixel
  * @returns {SelectedScaleBarScale | null}
  */
 export function select_scale_bar_scale(ground_meters_per_screen_pixel) {
   if (
     ground_meters_per_screen_pixel === null ||
-    ground_meters_per_screen_pixel === undefined ||
-    !Number.isFinite(ground_meters_per_screen_pixel) ||
-    ground_meters_per_screen_pixel <= 0
+    ground_meters_per_screen_pixel === undefined
   ) {
     return null;
   }
-  const ascending_candidates = [];
-  for (
-    let decade_exponent = -SCALE_BAR_LADDER_LOWER_DECADE_SCAN_RANGE;
-    decade_exponent <= SCALE_BAR_LADDER_DECADE_SCAN_RANGE;
-    decade_exponent += 1
-  ) {
-    for (const multiplier of SCALE_BAR_LADDER_MULTIPLIERS) {
-      ascending_candidates.push(multiplier * 10 ** decade_exponent);
-    }
-  }
-  ascending_candidates.sort((first, second) => first - second);
-  let selected = null;
-  // Ascending scan; the last candidate under the maximum is the largest
-  // fitting one, kept as the selection when it also reaches the minimum
-  // width.
-  for (const candidate_distance_meters of ascending_candidates) {
-    const candidate_width_pixels =
-      candidate_distance_meters / ground_meters_per_screen_pixel;
-    if (candidate_width_pixels > SCALE_BAR_WIDTH_MAXIMUM_PIXELS) {
-      break;
-    }
-    selected = {
-      distanceMeters: candidate_distance_meters,
-      widthPixels: candidate_width_pixels,
-    };
-  }
-  if (selected !== null && selected.widthPixels < SCALE_BAR_WIDTH_MINIMUM_PIXELS) {
-    return null;
-  }
-  return selected;
+  return selectScaleBarScale(ground_meters_per_screen_pixel);
 }
 
 /**
- * The ladder distance's metric label (the scale bar's text): whole meters
- * under a kilometer, rounded kilometers otherwise (the Android mirror's
- * `distanceLabelText`).
+ * The ladder distance's metric label: whole meters under a kilometer, rounded
+ * kilometers otherwise.
  * @param {number | null | undefined} distance_meters
  * @returns {string | null} the label, or null when no bar is selected
  */
@@ -415,18 +374,11 @@ export function scale_bar_distance_label_text(distance_meters) {
   if (distance_meters === null || distance_meters === undefined) {
     return null;
   }
-  const METERS_PER_KILOMETER = 1000.0;
-  if (distance_meters < METERS_PER_KILOMETER) {
-    return `${Math.trunc(distance_meters)} m`;
-  }
-  return `${Math.round(distance_meters / METERS_PER_KILOMETER)} km`;
+  return scaleBarDistanceLabelText(distance_meters);
 }
 
 /**
- * The great-circle distance between two coordinates in meters
- * (equatorial-accurate enough for the demo's short segments; the
- * haversine form the typed core also carries, mirrored without an SDK
- * object on the wasm seam).
+ * The great-circle distance between two coordinates in meters.
  * @param {{latitude: number, longitude: number}} first
  * @param {{latitude: number, longitude: number}} second
  * @returns {number}
@@ -434,8 +386,8 @@ export function scale_bar_distance_label_text(distance_meters) {
 export function great_circle_distance_meters(first, second) {
   const first_latitude_radians = (first.latitude * Math.PI) / 180;
   const second_latitude_radians = (second.latitude * Math.PI) / 180;
-  const latitude_delta_radians = (second.latitude - first.latitude) * Math.PI / 180;
-  const longitude_delta_radians = (second.longitude - first.longitude) * Math.PI / 180;
+  const latitude_delta_radians = ((second.latitude - first.latitude) * Math.PI) / 180;
+  const longitude_delta_radians = ((second.longitude - first.longitude) * Math.PI) / 180;
   const haversine =
     Math.sin(latitude_delta_radians / 2) ** 2 +
     Math.cos(first_latitude_radians) *
