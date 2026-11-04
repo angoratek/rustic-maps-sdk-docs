@@ -296,8 +296,12 @@ export class MapView {
      * `drawnTiles` (tiles with pooled imagery over their span this frame),
      * `drawnFragments` (draw quads after world-copy fragment splitting),
      * `missingTiles` (requested tiles with no pooled imagery this frame),
-     * `zoomTransitionRunning` (whether a tile zoom-level cross-fade still
+     * `zoomTransitionRunning` (whether a tile zoom-level cross-fade or a
+     * declared style transition still
      * owes frames, so the page keeps drawing at the animation cadence),
+     * `motionGraded` (whether a camera gesture was active, so this frame
+     * reused settled geometry and skipped label assembly; the first frame
+     * after the gesture's end resolves both),
      * `retainedTiles` (retired-level tiles drawn over the new level for that
      * cross-fade),
      * `tileZoomLevel` (the fetch zoom, clamped to the recorded fixtures),
@@ -341,6 +345,22 @@ export class MapView {
      * normally on the next frame (the texture cache survives hidden frames).
      */
     setBaseMapVisible(visible: boolean): void;
+    /**
+     * Reports a camera gesture in progress on the page's own gesture surface:
+     * true from the pointer/wheel/key gesture's start until it ends.
+     *
+     * The page owns gesture recognition, so it is the only side that knows a
+     * gesture is active. While the flag is set, every frame resolves the
+     * vector base in motion-graded mode — cached geometry at the last settled
+     * style zoom and no label assembly — and reports `motionGraded` in its
+     * statistics. Calling it with false and scheduling one more frame draws
+     * the settle: the resolved style and labels at the final pose.
+     *
+     * This is a browser surface seam, not a contract member: the native
+     * surface reads the same signal from the camera pose each frame, where
+     * the platform's gesture recognizers already move it.
+     */
+    setCameraGestureActive(active: boolean): void;
     /**
      * Decodes one Mapbox glyph-protocol range and packs it into the
      * `R8Unorm` atlas the label layer draws with. Answers the decoded font
@@ -1331,6 +1351,7 @@ export interface InitOutput {
     readonly mapview_sdkCompiledVersion: (a: number, b: number) => void;
     readonly mapview_setBackgroundColor: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly mapview_setBaseMapVisible: (a: number, b: number) => void;
+    readonly mapview_setCameraGestureActive: (a: number, b: number) => void;
     readonly mapview_setGlyphRange: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setLabels: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
@@ -1404,14 +1425,14 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1982: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1982_144: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1982_145: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8858: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8879: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1986: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_1986_143: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_6710: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1983: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1983_145: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1983_146: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8882: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8903: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1987: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_1987_144: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_6711: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

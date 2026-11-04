@@ -135,6 +135,11 @@
       const DOUBLE_TAP_ZOOM_STEP = 1.0;
       const DOUBLE_TAP_INTERVAL_MILLISECONDS = 350;
       const DOUBLE_TAP_MAXIMUM_MOVEMENT_PIXELS = 24;
+      // How long after the last camera input the page reports the gesture
+      // ended to the surface and draws the settle frame. The delay covers a
+      // wheel's burst of ticks, one double-tap zoom and one keyboard step; a
+      // pointer pan ends on its own pointerup.
+      const CAMERA_GESTURE_SETTLE_DELAY_MILLISECONDS = 150;
       // The keyboard camera model (§4.2, accessibility): a focused map
       // answers the arrow keys with a pan, +/- with one zoom level,
       // Shift+arrows with rotation and tilt, and Home with a north-up 2D
@@ -711,6 +716,7 @@
           themeChoice: 'auto',
           baseMap: null,
           trafficLayerEnabled: false,
+          deviceLocationEnabled: false,
           directionsTransportationMode: DEFAULT_DIRECTIONS_TRANSPORTATION_MODE,
           directionsRouteStrategy: DEFAULT_DIRECTIONS_ROUTE_STRATEGY,
           demoPlanScenario: null,
@@ -801,6 +807,8 @@
         }
         preferences.baseMap = sanitized_base_map_preference(stored_record.baseMap);
         preferences.trafficLayerEnabled = stored_record.trafficLayerEnabled === true;
+        preferences.deviceLocationEnabled =
+          stored_record.deviceLocationEnabled === true;
         if (DIRECTIONS_TRANSPORTATION_MODES.includes(
           stored_record.directionsTransportationMode)) {
           preferences.directionsTransportationMode =
@@ -4141,6 +4149,10 @@
           renderMilliseconds: render_milliseconds,
           drawnTiles: frame_statistics?.drawnTiles ?? 0,
           missingTiles: frame_statistics?.missingTiles ?? 0,
+          // Whether the vector base drew this frame in motion-graded mode
+          // (M38). The frame-budget report states how much of the measured
+          // pan ran graded instead of leaving it to inference.
+          motionGraded: frame_statistics?.motionGraded ?? false,
           // The wasm frame's own stage spans (M23): the frame-budget harness
           // attributes a slow frame to geometry, encoding or submission from
           // these instead of inferring it from the total.
@@ -4194,6 +4206,12 @@
        */
       window.runFrameBudgetScenario = ({ panPixelsPerSecond, durationMilliseconds }) =>
         new Promise((resolve) => {
+          // The scenario is a camera gesture by construction: the surface
+          // grades every frame it draws until the pan ends, then the page
+          // draws the settle. The same scenario on a tree without the
+          // grading seam simply draws ungraded frames, which is the
+          // measurement's control.
+          set_camera_gesture_active(true);
           const animationFrameIntervalsMilliseconds = [];
           const scenario_start_milliseconds = performance.now();
           const scenario_half_duration_milliseconds = durationMilliseconds / 2;
@@ -4219,6 +4237,9 @@
               requestAnimationFrame(scenario_step);
               return;
             }
+            // End the gesture and draw the settle frame; the sample window
+            // closes after that frame has landed.
+            end_camera_gesture();
             setTimeout(() => resolve({
               // The page keeps a rolling window, so the samples are selected
               // by the scenario's own clock rather than by list position: a
@@ -5057,7 +5078,7 @@
         }
       }
 
-      function stop_device_location() {
+      function stop_device_location({ remember = true } = {}) {
         if (is_device_navigation_active) {
           is_device_navigation_active = false;
           device_navigation_started_location_watch = false;
@@ -5073,6 +5094,9 @@
         device_position_controller = null;
         device_location_center_on_next_fix = false;
         pending_my_location_field_key = null;
+        if (remember) {
+          write_demo_preferences({ deviceLocationEnabled: false });
+        }
         apply_location_indicator(null);
         set_device_location_status(null);
         set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.off);
@@ -5080,11 +5104,25 @@
       }
 
       /**
+       * Restores the remembered device-location choice once the page can
+       * serve a position: the source starts again and the camera centers on
+       * its first fix. A platform that refuses the source leaves the choice
+       * in the record for a later visit instead of pretending the layer is
+       * on.
+       */
+      function restore_remembered_device_location() {
+        if (!initial_demo_preferences.deviceLocationEnabled) return;
+        if (device_location_watch_identifier !== null) return;
+        if (device_location_refusal_reason() !== null) return;
+        start_device_location({ centerOnFirstFix: true, remember: false });
+      }
+
+      /**
        * Starts the browser's location source. The round control asks for the
        * first fix to center the map; the chips start the same source without
        * moving the camera.
        */
-      function start_device_location({ centerOnFirstFix = false } = {}) {
+      function start_device_location({ centerOnFirstFix = false, remember = true } = {}) {
         if (typeof navigator.geolocation?.watchPosition !== 'function') {
           set_device_location_status(DEVICE_LOCATION_UNAVAILABLE_SUPPORT_TEXT);
           set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.unavailable);
@@ -5124,6 +5162,9 @@
         );
         set_device_location_state(DEVICE_LOCATION_STATUS_NAMES.waiting);
         set_device_location_status('Waiting for a position…');
+        if (remember) {
+          write_demo_preferences({ deviceLocationEnabled: true });
+        }
       }
 
       // The panel's Stop action is the only way to stop the source; the
@@ -6153,6 +6194,40 @@
           )));
       }
 
+      // The camera-gesture seam (M38): the page owns gesture recognition, so
+      // it tells the wasm canvas when a gesture is in progress. Every frame
+      // drawn meanwhile draws the vector base from cached geometry with no
+      // label assembly; ending the gesture and drawing once more resolves both
+      // at the final pose. The native surfaces need no such call — their
+      // platform gesture recognizers move the camera, which is the signal the
+      // surface reads each frame.
+      let camera_gesture_settle_timer = null;
+      function set_camera_gesture_active(active) {
+        if (gpu_map_canvas && typeof gpu_map_canvas.setCameraGestureActive === 'function') {
+          gpu_map_canvas.setCameraGestureActive(active);
+        }
+      }
+      function end_camera_gesture() {
+        if (camera_gesture_settle_timer !== null) {
+          clearTimeout(camera_gesture_settle_timer);
+          camera_gesture_settle_timer = null;
+        }
+        set_camera_gesture_active(false);
+        schedule_render();
+      }
+      function note_camera_gesture_in_progress(
+        settleDelayMilliseconds = CAMERA_GESTURE_SETTLE_DELAY_MILLISECONDS,
+      ) {
+        set_camera_gesture_active(true);
+        if (camera_gesture_settle_timer !== null) {
+          clearTimeout(camera_gesture_settle_timer);
+        }
+        camera_gesture_settle_timer = setTimeout(
+          end_camera_gesture,
+          settleDelayMilliseconds,
+        );
+      }
+
       let panning = false;
       // The pointer kind of the gesture in progress: a touch double tap is
       // recognised from pointer events, and a browser-synthesized `dblclick`
@@ -6174,6 +6249,7 @@
       // double click / double tap, applied through the contract's focal zoom
       // member like the wheel and the cluster's zoom controls.
       function zoom_around_canvas_point(canvas_point) {
+        note_camera_gesture_in_progress();
         follow_demo_note_camera_gesture();
         const zoom_target = Math.min(
           MAXIMUM_ZOOM_LEVEL, camera_state.zoom + DOUBLE_TAP_ZOOM_STEP);
@@ -6191,6 +6267,7 @@
       overlay_canvas.addEventListener('pointerdown', (event) => {
         panning = true; overlay_canvas.classList.add('panning');
         last_pointer_kind = event.pointerType === 'touch' ? 'touch' : 'mouse';
+        set_camera_gesture_active(true);
         follow_demo_note_camera_gesture();
         overlay_canvas.setPointerCapture(event.pointerId);
         last_pointer_position = [event.clientX, event.clientY];
@@ -6216,6 +6293,7 @@
       });
       overlay_canvas.addEventListener('pointerup', (event) => {
         panning = false; overlay_canvas.classList.remove('panning');
+        end_camera_gesture();
         // A touch double tap zooms; pointer capture keeps the second tap on
         // the canvas, so the pair is recognised from pointer-ups alone.
         if (event.pointerType !== 'touch') return;
@@ -6236,6 +6314,10 @@
         last_touch_tap = null;
         zoom_around_canvas_point(tap_point);
       });
+      overlay_canvas.addEventListener('pointercancel', () => {
+        panning = false; overlay_canvas.classList.remove('panning');
+        end_camera_gesture();
+      });
       overlay_canvas.addEventListener('dblclick', (event) => {
         // A touch double tap already zoomed from its pointer pair.
         if (last_pointer_kind === 'touch') return;
@@ -6244,6 +6326,7 @@
       });
       overlay_canvas.addEventListener('wheel', (event) => {
         event.preventDefault();
+        note_camera_gesture_in_progress();
         follow_demo_note_camera_gesture();
         // The wheel zoom targets the documented fixture zoom range ([0, 20];
         // §5.1) before the delta crosses the seam — the camera's own [0, 24]
@@ -6304,6 +6387,7 @@
         };
       }
       function keyboard_pan_by_css_pixels(delta_x_css_pixels, delta_y_css_pixels) {
+        note_camera_gesture_in_progress();
         follow_demo_note_camera_gesture();
         const ratios = keyboard_canvas_ratios();
         move_center_by_ground_delta(
@@ -6313,6 +6397,7 @@
           + `${camera_state.longitude.toFixed(4)}.`);
       }
       function keyboard_zoom_by_levels(delta_zoom_levels) {
+        note_camera_gesture_in_progress();
         follow_demo_note_camera_gesture();
         const zoom_target = Math.min(MAXIMUM_ZOOM_LEVEL, Math.max(
           MINIMUM_ZOOM_LEVEL, camera_state.zoom + delta_zoom_levels));
@@ -6327,6 +6412,7 @@
         announce_map_status(`Zoom ${camera_state.zoom.toFixed(1)}.`);
       }
       function keyboard_rotate_by_degrees(delta_bearing_degrees) {
+        note_camera_gesture_in_progress();
         follow_demo_note_camera_gesture();
         const rotate_pose = resolved_or_null(() =>
           window.mapTest.rotateCameraByDegreesAroundScreenPoint(
@@ -6343,6 +6429,8 @@
         const pitch_target = Math.min(MAXIMUM_PITCH_DEGREES, Math.max(
           MINIMUM_PITCH_DEGREES, camera_state.pitch + delta_pitch_degrees));
         if (pitch_target === camera_state.pitch) return;
+        note_camera_gesture_in_progress(
+          eased_camera_move_duration_milliseconds() + CAMERA_GESTURE_SETTLE_DELAY_MILLISECONDS);
         follow_demo_note_camera_gesture();
         pitch_swing_ease.begin(
           performance.now(), camera_state.pitch, pitch_target,
@@ -6351,6 +6439,8 @@
         announce_map_status(`Pitch ${Math.round(pitch_target)} degrees.`);
       }
       function keyboard_reset_view() {
+        note_camera_gesture_in_progress(
+          eased_camera_move_duration_milliseconds() + CAMERA_GESTURE_SETTLE_DELAY_MILLISECONDS);
         follow_demo_note_camera_gesture();
         const duration_milliseconds = eased_camera_move_duration_milliseconds();
         pitch_swing_ease.begin(
@@ -6611,6 +6701,10 @@
         // the base-map switch waits until the renderer can serve it.
         await restore_remembered_demo_content();
         restore_remembered_base_map();
+        // The device-location choice restores last of the map-state choices:
+        // its first fix is what centers the camera, so a restored style or
+        // plan framing cannot override it.
+        restore_remembered_device_location();
         apply_overlays();
         // The first-run status is a plain human readiness state; the
         // renderer, adapter and version detail live in diagnostics (the
