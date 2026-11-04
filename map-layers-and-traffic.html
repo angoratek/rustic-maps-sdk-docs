@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-22837c1c.js";
+            window.path_to_searchindex_js = "searchindex-61b0e61b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -307,7 +307,10 @@ reads one of five states:</p>
 </tbody>
 </table>
 </div>
-<p>Select <strong>Stop</strong> while the source runs to turn it off.</p>
+<p>Select <strong>Stop</strong> while the source runs to turn it off. While the source is on,
+the app remembers the choice: the next launch starts the source again and
+centers on its first fix once the location permission is already granted.
+Stopping the source forgets the choice.</p>
 <p>The round <strong>My location</strong> control on the map starts the same source. It asks
 for permission when needed, centers on the first fix, and re-centers after you
 pan or zoom away. Each route field also carries a <strong>My location</strong> chip. The
@@ -346,8 +349,8 @@ uses the credential the settings surface already applied.</p>
 attribution line changes. With traffic on, the panel switch reads <strong>On</strong> and
 the flow lines draw until you turn it off. With the device location source
 active, the panel reads <strong>Active</strong> and the round control re-centers on your
-position. After a relaunch, the same base map, traffic state, overlays and
-remembered provider choices return.</p>
+position. After a relaunch, the same base map, traffic state, overlays, device
+location source and remembered provider choices return.</p>
 <h2 id="where-to-go-next"><a class="header" href="#where-to-go-next">Where to go next</a></h2>
 <ul>
 <li><a href="mix-providers-per-capability.html">Mix providers per capability</a> configures a
