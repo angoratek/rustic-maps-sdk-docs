@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PLACE_CONTRACT_NAME"],"mod":["client","search"]};

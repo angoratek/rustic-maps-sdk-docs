@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["CLEAR_COLOR_RGBA","VIEWPORT_NORMALIZED_DEVICE_BOUNDS"],"struct":["ClipSpaceTileVertex","Renderer","TextureWindow","TileQuad","TileWorldSpan"]};
+window.SIDEBAR_ITEMS = {"constant":["CLEAR_COLOR_RGBA","VIEWPORT_NORMALIZED_DEVICE_BOUNDS"],"struct":["ClipSpaceTileVertex","Renderer","RetainedTileLevel","TextureWindow","TileQuad","TileWorldSpan"]};

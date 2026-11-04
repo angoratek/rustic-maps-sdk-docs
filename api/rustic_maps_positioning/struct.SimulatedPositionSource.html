@@ -2,10 +2,10 @@
 source for demos, tests and desktop applications that do not consume an
 operating-system location source.</p>
 </div></details><h2 id="implementations" class="section-header">Implementations<a href="#implementations" class="anchor">§</a></h2><div id="implementations-list"><details class="toggle implementors-toggle" open><summary><section id="impl-SimulatedPositionSource" class="impl"><a class="src rightside" href="../src/rustic_maps_positioning/lib.rs.html#339-395">Source</a><a href="#impl-SimulatedPositionSource" class="anchor">§</a><h3 class="code-header">impl <a class="struct" href="struct.SimulatedPositionSource.html" title="struct rustic_maps_positioning::SimulatedPositionSource">SimulatedPositionSource</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.new" class="method"><a class="src rightside" href="../src/rustic_maps_positioning/lib.rs.html#353-366">Source</a><h4 class="code-header">pub fn <a href="#method.new" class="fn">new</a>(
-    route: &amp;RouteData,
-    pace: SimulatedTripPace,
+    route: &amp;<a class="struct" href="../geospatial_types/route/struct.RouteData.html" title="struct geospatial_types::route::RouteData">RouteData</a>,
+    pace: <a class="struct" href="../rustic_maps_navigation/route_walk/struct.SimulatedTripPace.html" title="struct rustic_maps_navigation::route_walk::SimulatedTripPace">SimulatedTripPace</a>,
     accuracy_meters: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Self, RouteWalkError&gt;</h4></section></summary><div class="docblock"><p>Builds the source over a route and pace.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Self, <a class="enum" href="../rustic_maps_navigation/route_walk/enum.RouteWalkError.html" title="enum rustic_maps_navigation::route_walk::RouteWalkError">RouteWalkError</a>&gt;</h4></section></summary><div class="docblock"><p>Builds the source over a route and pace.</p>
 <h5 id="parameters"><a class="doc-anchor" href="#parameters">§</a>Parameters</h5>
 <ul>
 <li><code>route</code> — the planned route to traverse.</li>
@@ -14,9 +14,9 @@ operating-system location source.</p>
 generated fix. A non-finite or negative value is replaced by zero.</li>
 </ul>
 <h5 id="errors"><a class="doc-anchor" href="#errors">§</a>Errors</h5>
-<p>Returns [<code>RouteWalkError::InvalidPace</code>] when the pace’s speed or
+<p>Returns <a href="../rustic_maps_navigation/route_walk/enum.RouteWalkError.html#variant.InvalidPace" title="variant rustic_maps_navigation::route_walk::RouteWalkError::InvalidPace"><code>RouteWalkError::InvalidPace</code></a> when the pace’s speed or
 multiplier is non-finite or not strictly positive, and
-[<code>RouteWalkError::NoUsableGeometry</code>] when the route carries no usable
+<a href="../rustic_maps_navigation/route_walk/enum.RouteWalkError.html#variant.NoUsableGeometry" title="variant rustic_maps_navigation::route_walk::RouteWalkError::NoUsableGeometry"><code>RouteWalkError::NoUsableGeometry</code></a> when the route carries no usable
 geometry to walk.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.fix_at_elapsed_seconds" class="method"><a class="src rightside" href="../src/rustic_maps_positioning/lib.rs.html#378-386">Source</a><h4 class="code-header">pub fn <a href="#method.fix_at_elapsed_seconds" class="fn">fix_at_elapsed_seconds</a>(&amp;self, elapsed_seconds: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>) -&gt; <a class="struct" href="struct.PositionFix.html" title="struct rustic_maps_positioning::PositionFix">PositionFix</a></h4></section></summary><div class="docblock"><p>The fix at an elapsed time of simulated travel.</p>
 <h5 id="parameters-1"><a class="doc-anchor" href="#parameters-1">§</a>Parameters</h5>

@@ -266,6 +266,23 @@ export class MapView {
      */
     constructor(canvas: HTMLCanvasElement, maps: MapsSdk, tile_resolution?: TileResolution | null);
     /**
+     * Drops the canvas' pooled raster state and re-plans the next frame's
+     * fetches from the current raster sources (the UDL
+     * `MapView.reload_tile_source` contract member, served on the canvas).
+     *
+     * The scheduler, its payload pool, the staging provider's staged and
+     * decoded payloads, the uploaded textures and the retained cross-fade
+     * level are replaced or cleared, so a source change reaches the next
+     * frame without constructing a new canvas and no payload fetched from
+     * the previous source draws again. Overlays, labels, the vector base and
+     * the location layer survive the reload; fixtures and the registered
+     * live sources are consulted afresh on the next tile pass.
+     *
+     * A call made while a frame owns the draw state is applied before the
+     * next frame's tile pass. A call before initialization is a no-op.
+     */
+    reloadTileSource(): void;
+    /**
      * Removes the overlay addressed by `identifier`; answers whether the
      * identifier was present (an unknown identifier is not an error).
      */
@@ -279,6 +296,10 @@ export class MapView {
      * `drawnTiles` (tiles with pooled imagery over their span this frame),
      * `drawnFragments` (draw quads after world-copy fragment splitting),
      * `missingTiles` (requested tiles with no pooled imagery this frame),
+     * `zoomTransitionRunning` (whether a tile zoom-level cross-fade still
+     * owes frames, so the page keeps drawing at the animation cadence),
+     * `retainedTiles` (retired-level tiles drawn over the new level for that
+     * cross-fade),
      * `tileZoomLevel` (the fetch zoom, clamped to the recorded fixtures),
      * `tileResolution` (the resolution the frame's fixtures were
      * fetched and sampled at) and `overlayTriangles` (triangles in the
@@ -397,13 +418,16 @@ export class MapView {
      * The descriptor is one plain JavaScript object carrying the UDL
      * `UrlTemplateVectorTileSource` fields in lower camel case:
      * `{urlTemplate, sourceName, attributionText, styleId,
-     * minimumZoomLevel, maximumZoomLevel}`. The template must be an absolute
-     * `http`/`https` URL carrying `{z}`, `{x}` and `{y}`; the style id must
-     * name one of the committed style artifacts (`bright-light`,
-     * `fiord-dark`, …). The whole source builds before this view changes, so
-     * a refused call (a malformed template, an empty name, an inverted zoom
-     * range or an unknown style id) throws a coded failure and leaves the
-     * previous base in force.
+     * minimumZoomLevel, maximumZoomLevel}`, plus the optional
+     * `tokenBucketCapacityTokens` and `refillTokensPerSecond` pacing rates
+     * (absent fields keep the SDK's documented bucket). The template must be
+     * an absolute `http`/`https` URL carrying `{z}`, `{x}` and `{y}`; the
+     * style id must name one of the committed style artifacts
+     * (`bright-light`, `fiord-dark`, …). The whole source builds before
+     * this view changes, so a refused call (a malformed template, an empty
+     * name, an inverted zoom range, an unusable pacing rate or an unknown
+     * style id) throws a coded failure and leaves the previous base in
+     * force.
      *
      * While a source is installed the canvas hides the raster base and paints
      * the style's own background, exactly like the native surface; the
@@ -1004,14 +1028,16 @@ export function providerRegistrations(): Array<any>;
  * The declaration arrives as one plain object with the contract's
  * `UrlTemplateRasterTileSource` fields, lower-camel-cased: `urlTemplate`,
  * `sourceName`, `minimumZoomLevel`, `maximumZoomLevel`, `imageFormat`
- * (`Png` or `Jpeg`), `tileResolution` (`Standard` or `Retina`) and
- * `userAgent`. Zoom levels and texts fall back to the documented defaults;
- * the format defaults to `Png` and the resolution to `Standard`.
+ * (`Png` or `Jpeg`), `tileResolution` (`Standard` or `Retina`), `userAgent`,
+ * and the optional `tokenBucketCapacityTokens` / `refillTokensPerSecond`
+ * pacing rates. Zoom levels and texts fall back to the documented defaults;
+ * the format defaults to `Png`, the resolution to `Standard`, and absent
+ * pacing fields to the SDK's documented bucket.
  *
- * A malformed template, a blank source name or an inverted zoom range throws
- * `InvalidCoordinateInput` with a precise detail, and the previous source
- * keeps serving. The canvas' live raster fallback fetches through the
- * registered source at the zoom ceiling it declares.
+ * A malformed template, a blank source name, an inverted zoom range or an
+ * unusable pacing rate throws `InvalidCoordinateInput` with a precise detail,
+ * and the previous source keeps serving. The canvas' live raster fallback
+ * fetches through the registered source at the zoom ceiling it declares.
  */
 export function registerUrlTemplateRasterTileSource(source: any): void;
 
@@ -1299,6 +1325,7 @@ export interface InitOutput {
     readonly mapview_clearVectorTileSource: (a: number, b: number) => void;
     readonly mapview_initialize: (a: number) => number;
     readonly mapview_new: (a: number, b: number, c: number, d: number) => void;
+    readonly mapview_reloadTileSource: (a: number) => void;
     readonly mapview_removeOverlay: (a: number, b: number, c: number) => number;
     readonly mapview_renderFrame: (a: number, b: number, c: number) => number;
     readonly mapview_sdkCompiledVersion: (a: number, b: number) => void;
@@ -1377,14 +1404,14 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1901: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1901_143: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1901_144: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8759: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8780: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1905: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_1905_142: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_6627: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_1980: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1980_144: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1980_145: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8849: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_8870: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_1984: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_1984_143: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_6708: (a: number, b: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
