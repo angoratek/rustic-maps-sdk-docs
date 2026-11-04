@@ -721,6 +721,10 @@
           destinationText: '',
           lastSearchFieldKey: null,
           lastSearchQueryText: '',
+          // One provider key per capability the visitor explicitly chose, so
+          // a reload re-applies the same serving provider (§Provider selection
+          // in the settings surface). Empty until the visitor picks one.
+          capabilityProviders: {},
         };
       }
 
@@ -751,6 +755,19 @@
           };
         }
         return null;
+      }
+
+      /** Keeps only well-formed per-capability provider choices. */
+      function sanitized_capability_providers_preference(value) {
+        if (!is_preference_object(value)) return {};
+        const sanitized_choices = {};
+        for (const capability_key of Object.keys(CAPABILITY_CONTRACT_NAMES)) {
+          const provider_key = value[capability_key];
+          if (typeof provider_key === 'string' && provider_key.trim() !== '') {
+            sanitized_choices[capability_key] = provider_key;
+          }
+        }
+        return sanitized_choices;
       }
 
       /**
@@ -819,6 +836,9 @@
         if (typeof stored_record.lastSearchQueryText === 'string') {
           preferences.lastSearchQueryText = stored_record.lastSearchQueryText;
         }
+        preferences.capabilityProviders =
+          sanitized_capability_providers_preference(
+            stored_record.capabilityProviders);
         return preferences;
       }
 
@@ -1276,31 +1296,37 @@
        * provider needs this session's key; a keyless routing provider receives
        * its descriptor's demo address as the deployment address. Any refusal
        * crosses verbatim, the previous provider keeps serving and nothing
-       * falls back.
+       * falls back. A user selection is remembered in the versioned record; a
+       * startup restore passes `remember: false` and stays quiet.
        */
-      function select_capability_provider(capability_key, provider_descriptor) {
+      function select_capability_provider(capability_key, provider_descriptor,
+        { remember = true, announce = true } = {}) {
         const credential_value = capability_descriptor_requires_credential(
           provider_descriptor)
           ? provider_credentials_by_key.get(provider_descriptor.provider_key)
           : provider_descriptor.demo_base_url;
         if (capability_descriptor_requires_credential(provider_descriptor)
           && credential_value === undefined) {
-          set_capability_provider_status(
-            ui_label_text_with_values('settings.provider_state_needs_credential', {
-              credential: provider_descriptor.credential_label,
-            }),
-          );
+          if (announce) {
+            set_capability_provider_status(
+              ui_label_text_with_values('settings.provider_state_needs_credential', {
+                credential: provider_descriptor.credential_label,
+              }),
+            );
+          }
           refresh_capability_provider_rows();
-          return;
+          return false;
         }
         if (!capability_descriptor_requires_credential(provider_descriptor)
           && (typeof credential_value !== 'string'
             || credential_value.trim() === '')) {
-          set_capability_provider_status(
-            'The descriptor declares no demo address, so there is nothing to select.',
-          );
+          if (announce) {
+            set_capability_provider_status(
+              'The descriptor declares no demo address, so there is nothing to select.',
+            );
+          }
           refresh_capability_provider_rows();
-          return;
+          return false;
         }
         try {
           if (use_provider_fixtures) {
@@ -1318,16 +1344,53 @@
             credential_value,
           );
           capability_failure_text_by_key.delete(capability_key);
-          set_capability_provider_status(
-            provider_capability_row_text(provider_descriptor));
+          if (announce) {
+            set_capability_provider_status(
+              provider_capability_row_text(provider_descriptor));
+          }
           clear_error_report();
+          if (remember) {
+            write_demo_preferences({
+              capabilityProviders: {
+                ...demo_preferences.capabilityProviders,
+                [capability_key]: provider_descriptor.provider_key,
+              },
+            });
+          }
         } catch (error) {
           const failure_text = provider_failure_text(error);
           capability_failure_text_by_key.set(capability_key, failure_text);
-          set_capability_provider_status(failure_text);
+          if (announce) {
+            set_capability_provider_status(failure_text);
+          }
           show_error_report('Provider selection', failure_text);
+          refresh_capability_provider_rows();
+          return false;
         }
         refresh_capability_provider_rows();
+        return true;
+      }
+
+      /**
+       * Re-applies the remembered per-capability choices once the SDK can
+       * accept them. A descriptor the registry no longer offers is skipped,
+       * never guessed, so the row keeps stating what actually serves.
+       */
+      function restore_remembered_capability_providers() {
+        const remembered_choices =
+          initial_demo_preferences.capabilityProviders ?? {};
+        for (const capability_key of offered_capability_keys()) {
+          const provider_key = remembered_choices[capability_key];
+          if (typeof provider_key !== 'string') continue;
+          const provider_descriptor = capability_provider_descriptors(
+            capability_key).find((candidate_descriptor) =>
+            candidate_descriptor.provider_key === provider_key);
+          if (provider_descriptor === undefined) continue;
+          select_capability_provider(capability_key, provider_descriptor, {
+            remember: false,
+            announce: false,
+          });
+        }
       }
 
       render_capability_provider_rows();
@@ -6558,7 +6621,9 @@
           ? ui_label_text('readiness.chip_ready')
           : `${ui_label_text('readiness.chip_degraded_prefix')}2D grid`;
         // The provider-capability rows need the wasm registration readback,
-        // which exists only after readiness.
+        // which exists only after readiness. A remembered per-capability
+        // choice re-applies first, so the rows report it serving.
+        restore_remembered_capability_providers();
         refresh_capability_provider_rows();
         // Diagnostics stay off unless the visitor already opened the Advanced
         // pane (`?advanced` is that explicit opt-in for the browser suite).

@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2f1d07f2.js";
+            window.path_to_searchindex_js = "searchindex-22837c1c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -3307,10 +3307,25 @@ map. It selects the base map or vector style, turns the traffic layer on and
 off, toggles demo overlays, and reports the device location source. This page
 shows the control in every reference application, what each section does, and
 where the settings surface stops.</p>
-<!-- Screenshot placeholders for the keyed capture set, one revision, phone width:
-     img/android-layers-panel.png, img/ios-layers-panel.png,
-     img/react-native-layers-panel.png, img/wasm-layers-panel.png.
-     Add the image links when the set is captured, with the panel closed and open. -->
+<h2 id="the-control-on-every-platform"><a class="header" href="#the-control-on-every-platform">The control on every platform</a></h2>
+<p>The round <strong>Map layers</strong> control sits directly above the attribution control
+on the map’s end edge. Each pair below shows the same map with the panel
+closed, then open on the same camera pose. MapQuest serves the raster base.
+The panel scrolls when it is taller than the phone, so the open frames show
+its lower rows: the last base-map rows, <strong>Traffic</strong>, <strong>Overlays</strong> with its
+<strong>Clear overlays</strong> action, and <strong>Device location</strong>.</p>
+<h3 id="android-2"><a class="header" href="#android-2">Android</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-layers-closed.png" alt="The Android map with the layers control closed over MapQuest’s raster base: the Ready chip, the applied-key line, the round layers control with its active dot, and the attribution control above the peek plan sheet"><span class="img-wrapper"><img src="img/android-layers-closed.png" alt="The Android map with the layers control closed over MapQuest’s raster base: the Ready chip, the applied-key line, the round layers control with its active dot, and the attribution control above the peek plan sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-layers-open.png" alt="The Android layers panel open over the same map: the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/android-layers-open.png" alt="The Android layers panel open over the same map: the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
+<h3 id="ios-2"><a class="header" href="#ios-2">iOS</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-layers-closed.png" alt="The iOS map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, the scale bar, and the attribution control above the peek plan sheet"><span class="img-wrapper"><img src="img/ios-layers-closed.png" alt="The iOS map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, the scale bar, and the attribution control above the peek plan sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-layers-open.png" alt="The iOS layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/ios-layers-open.png" alt="The iOS layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
+<h3 id="react-native-2"><a class="header" href="#react-native-2">React Native</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-layers-closed.png" alt="The React Native map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, and the attribution control above the peek plan sheet"><span class="img-wrapper"><img src="img/react-native-layers-closed.png" alt="The React Native map with the layers control closed over MapQuest’s raster base: the Ready chip, the round layers control with its active dot, and the attribution control above the peek plan sheet"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-layers-open.png" alt="The React Native layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/react-native-layers-open.png" alt="The React Native layers panel open over the same map: the panel’s title and Close action, the last base-map rows, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
+<h3 id="webassembly-2"><a class="header" href="#webassembly-2">WebAssembly</a></h3>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-layers-closed.png" alt="The browser map with the layers control closed over MapQuest’s raster base: the zoom and 2D controls at the top end, the readiness chip and scale bar at the bottom start, and the round layers control above the attribution control"><span class="img-wrapper"><img src="img/wasm-layers-closed.png" alt="The browser map with the layers control closed over MapQuest’s raster base: the zoom and 2D controls at the top end, the readiness chip and scale bar at the bottom start, and the round layers control above the attribution control"></span></label></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-layers-open.png" alt="The browser layers panel open over the same map: Base map with the MapQuest Raster row serving, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/wasm-layers-open.png" alt="The browser layers panel open over the same map: Base map with the MapQuest Raster row serving, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
 <h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What you get</a></h2>
 <ul>
 <li>One round control on the map that switches the base map or vector style,
@@ -5174,13 +5189,13 @@ applied-key line show that the session’s provider credential is serving.</p>
 one line, such as <code>MapQuest · Ready</code> or <code>OSRM · Ready</code>. A keyless routing
 provider states its public demo server and the terms that server carries. The
 applied provider’s own row states that its key is applied.</p>
-<h3 id="android-2"><a class="header" href="#android-2">Android</a></h3>
+<h3 id="android-3"><a class="header" href="#android-3">Android</a></h3>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/android-provider-section.png" alt="The Android settings sheet at Capabilities: Geocoding, Routing, Distance Matrix and Place Search each reading MapQuest · Ready with MapQuest’s terms note, scrolled below the applied key’s attribution, over the Bright vector base"><span class="img-wrapper"><img src="img/android-provider-section.png" alt="The Android settings sheet at Capabilities: Geocoding, Routing, Distance Matrix and Place Search each reading MapQuest · Ready with MapQuest’s terms note, scrolled below the applied key’s attribution, over the Bright vector base"></span></label></p>
-<h3 id="ios-2"><a class="header" href="#ios-2">iOS</a></h3>
+<h3 id="ios-3"><a class="header" href="#ios-3">iOS</a></h3>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: the Routing, Distance matrix, Place search, Traffic incidents and Traffic flow capability rows each reading MapQuest · Ready with MapQuest’s terms note, over the Bright vector base"><span class="img-wrapper"><img src="img/ios-provider-section.png" alt="The iOS settings sheet: the Routing, Distance matrix, Place search, Traffic incidents and Traffic flow capability rows each reading MapQuest · Ready with MapQuest’s terms note, over the Bright vector base"></span></label></p>
-<h3 id="react-native-2"><a class="header" href="#react-native-2">React Native</a></h3>
+<h3 id="react-native-3"><a class="header" href="#react-native-3">React Native</a></h3>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding, Routing, Distance matrix and Place search each reading MapQuest · Ready on their serving line and picker, over the Bright vector base"><span class="img-wrapper"><img src="img/react-native-provider-section.png" alt="The React Native settings sheet: Geocoding, Routing, Distance matrix and Place search each reading MapQuest · Ready on their serving line and picker, over the Bright vector base"></span></label></p>
-<h3 id="webassembly-2"><a class="header" href="#webassembly-2">WebAssembly</a></h3>
+<h3 id="webassembly-3"><a class="header" href="#webassembly-3">WebAssembly</a></h3>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row marked applied, the live connection check, and Providers by capability with Geocoding, Routing, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles all reading MapQuest · Ready"><span class="img-wrapper"><img src="img/wasm-provider-section.png" alt="The browser settings dialog: the MapQuest API key row marked applied, the live connection check, and Providers by capability with Geocoding, Routing, Distance matrix, Place search, Traffic incidents, Traffic flow and Raster tiles all reading MapQuest · Ready"></span></label></p>
 <h2 id="simulated-navigation"><a class="header" href="#simulated-navigation">Simulated navigation</a></h2>
 <p>The reference scenario at its first instruction: the turn-by-turn banner with
@@ -6742,7 +6757,7 @@ offline graph.</li>
 <li><a href="#react-native-api-reference">React Native API reference</a></li>
 <li><a href="#webassembly-api-reference">WebAssembly API reference</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=ebefaf5d1cc0ad6e52b9f737dae1d5e64d94c85f:sha256:6d0e69181eff2792b043f49e7fa9fcbc1ccf840a7617766bbfe99ba735c3a393 -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -7145,6 +7160,7 @@ offline graph.</li>
 <tr><td><code>projection</code></td><td>module</td><td><code>pub mod projection</code></td><td>—</td></tr>
 <tr><td><code>renderer</code></td><td>module</td><td><code>pub mod renderer</code></td><td>—</td></tr>
 <tr><td><code>source_binding</code></td><td>module</td><td><code>pub mod source_binding</code></td><td>—</td></tr>
+<tr><td><code>sprite</code></td><td>module</td><td><code>pub mod sprite</code></td><td>—</td></tr>
 <tr><td><code>surface</code></td><td>module</td><td><code>pub mod surface</code></td><td>—</td></tr>
 <tr><td><code>tile_key</code></td><td>module</td><td><code>pub mod tile_key</code></td><td>—</td></tr>
 <tr><td><code>tile_scheduler</code></td><td>module</td><td><code>pub mod tile_scheduler</code></td><td>—</td></tr>
@@ -7299,11 +7315,17 @@ offline graph.</li>
 <tr><td><code>LABEL_CLASS_ATTRIBUTE_NAME</code></td><td>const</td><td><code>pub const LABEL_CLASS_ATTRIBUTE_NAME: &amp;str</code></td><td>The feature attribute a symbol layer reads as its class (<code>shop</code>, <code>restaurant</code>, <code>city</code>, …), which a style can hold back until a closer zoom.</td></tr>
 <tr><td><code>MAXIMUM_LABELS_PER_FRAME</code></td><td>const</td><td><code>pub const MAXIMUM_LABELS_PER_FRAME: usize</code></td><td>The maximum number of labels one frame may place. The collision pass alone lets a dense downtown paint far more text than a reader can parse, so the frame stops at this budget after the priority sort: the most important names always win, and a busy tile can only spend the frame’s remaining room. Thirty-two labels is about one per 8,200 screen pixels at the 512- pixel label golden (whose filtered collision pass places ten), so it leaves a full-screen demo headroom while capping the nine-tile downtown demo.</td></tr>
 <tr><td><code>DEFAULT_LABEL_RANK</code></td><td>const</td><td><code>pub const DEFAULT_LABEL_RANK: u32</code></td><td>The rank an unranked label carries: the highest value, so it sorts after every ranked label of the same style layer.</td></tr>
+<tr><td><code>ICON_OFFSET_EM_PIXELS</code></td><td>const</td><td><code>pub const ICON_OFFSET_EM_PIXELS: f64</code></td><td>One CSS pixel per em in <code>icon-offset</code>, the unit the specification uses for a symbol’s offset. The spec expresses an icon offset relative to the symbol em (<code>text-size</code>’s own base of 16 pixels), not the icon’s sprite size, so a zoomed text layer does not move its icons.</td></tr>
+<tr><td><code>MINIMUM_ICON_SCALE</code></td><td>const</td><td><code>pub const MINIMUM_ICON_SCALE: f64</code></td><td>The smallest icon scale the geometry honours. A non-positive or degenerate <code>icon-size</code> is clamped here rather than producing a zero-area quad that would sample the whole atlas through a collapsed texture window.</td></tr>
+<tr><td><code>ICON_CORNERS_PER_QUAD</code></td><td>const</td><td><code>pub const ICON_CORNERS_PER_QUAD: usize</code></td><td>Corners one icon quad contributes.</td></tr>
+<tr><td><code>ICON_INDICES_PER_QUAD</code></td><td>const</td><td><code>pub const ICON_INDICES_PER_QUAD: usize</code></td><td>Indices consumed by one icon quad’s two triangles.</td></tr>
 <tr><td><code>LINE_LABEL_UPRIGHT_ROTATION_LIMIT_RADIANS</code></td><td>const</td><td><code>pub const LINE_LABEL_UPRIGHT_ROTATION_LIMIT_RADIANS: f64</code></td><td>The bearing limit within which a line-placed label reads upright. A segment whose direction would rotate the text past this angle is flipped to run the other way, so a street name never paints upside down: the label’s rotation always lies in <code>[-π/2, π/2]</code>.</td></tr>
 <tr><td><code>LINE_LABEL_STRAIGHT_RUN_ANGLE_TOLERANCE_RADIANS</code></td><td>const</td><td><code>pub const LINE_LABEL_STRAIGHT_RUN_ANGLE_TOLERANCE_RADIANS: f64</code></td><td>How far a segment’s bearing may turn from its run’s first segment and still belong to the same straight run, in radians (20 degrees, a ninth of a half turn). Map data splits a street into short blocks between intersections, so a label must run along the straight sequence of segments, not one block alone; the tolerance keeps a name off a road that bends away mid-run.</td></tr>
 <tr><td><code>LINE_LABEL_REPEAT_SPACING_PIXELS</code></td><td>const</td><td><code>pub const LINE_LABEL_REPEAT_SPACING_PIXELS: f64</code></td><td>The gap kept between two repeated names along one long road, in pixels. A street long enough to cross the frame is named more than once, as the reference engines do: a reader then finds the name wherever they look along the road instead of only at its midpoint. MapLibre’s <code>symbol-spacing</code> default is 250 pixels, but one frame here covers a single tile, where that gap would leave nearly every road named once and the repetition invisible; 90 pixels puts a name roughly every 120 pixels along a run, which is about what Google Maps and HERE carry at street zooms.</td></tr>
+<tr><td><code>MapIconCandidate</code></td><td>struct</td><td><code>pub struct MapIconCandidate</code></td><td>One icon candidate read from a symbol layer’s <code>icon-image</code> layout: the sprite sheet entry to draw and the geometry that positions it. An icon whose name the injected sprite atlas does not serve is simply not drawn.</td></tr>
 <tr><td><code>MapLabelCandidate</code></td><td>struct</td><td><code>pub struct MapLabelCandidate</code></td><td>One label candidate read from a decoded tile’s symbol layers, before the frame projects and places it.</td></tr>
 <tr><td><code>PlacedLabel</code></td><td>struct</td><td><code>pub struct PlacedLabel</code></td><td>One label that survived collision rejection, in draw order.</td></tr>
+<tr><td><code>PlacedIcon</code></td><td>struct</td><td><code>pub struct PlacedIcon</code></td><td>One sprite icon that survived collision rejection.</td></tr>
 <tr><td><code>LabelTextLine</code></td><td>struct</td><td><code>pub struct LabelTextLine</code></td><td>One line of a wrapped label’s text.</td></tr>
 <tr><td><code>LabelTextBlock</code></td><td>struct</td><td><code>pub struct LabelTextBlock</code></td><td>A label’s text block: its wrapped lines and the box they occupy.</td></tr>
 <tr><td><code>LabelTextMetrics</code></td><td>struct</td><td><code>pub struct LabelTextMetrics</code></td><td>The measured extent of one label’s text at one size.</td></tr>
@@ -7313,6 +7335,8 @@ offline graph.</li>
 <tr><td><code>LabelLayer</code></td><td>struct</td><td><code>pub struct LabelLayer</code></td><td>A label layer ready to draw: the placed labels and the font that measures and rasterizes them.</td></tr>
 <tr><td><code>ClipSpaceGlyphVertex</code></td><td>struct</td><td><code>pub struct ClipSpaceGlyphVertex</code></td><td>One glyph quad’s textured vertex, as the GPU pipeline consumes it: clip-space position, atlas texture coordinates, paint, and the signed-distance threshold the fragment stage compares against.</td></tr>
 <tr><td><code>LabelQuadVertices</code></td><td>struct</td><td><code>pub struct LabelQuadVertices</code></td><td>The two passes of one label layer: halo quads behind, text quads in front.</td></tr>
+<tr><td><code>ClipSpaceIconVertex</code></td><td>struct</td><td><code>pub struct ClipSpaceIconVertex</code></td><td>One icon quad’s textured vertex. The layout matches the renderer’s tile quad vertex (clip position, texture coordinates, opacity), so a backend draws icons through its existing textured-quad pipeline with the sprite atlas bound instead of a tile.</td></tr>
+<tr><td><code>IconQuadVertices</code></td><td>struct</td><td><code>pub struct IconQuadVertices</code></td><td>The icon pass of one label layer: one four-corner quad per placed icon.</td></tr>
 <tr><td><code>label_candidates_for_vector_tile</code></td><td>function</td><td><code>pub fn label_candidates_for_vector_tile( tile: &amp;VectorTile, tile_address: VectorTileAddress, style: &amp;CompiledStyle, style_zoom_level: f64, ) -&gt; Vec&lt;MapLabelCandidate&gt;</code></td><td>Reads the label candidates from one decoded tile under the style’s symbol layers, at an explicit style zoom level (the frame camera’s zoom, so size stops evaluate where the camera is rather than where the tile belongs). A feature becomes a candidate only when its <code>rank</code> passes the layer’s zoom-stepped rank ceiling and its <code>class</code> is visible at <code>style_zoom_level</code> under the layer’s per-class minimum zooms, so a busy poi layer draws its important places at a wide zoom and its shops only once the map is closer. A point-placed symbol layer then produces one candidate per feature point; a line-placed one produces one candidate carrying each feature’s line geometry, which the frame places along its longest projected segment. Features of a geometry kind the placement cannot use paint nothing for that symbol layer, exactly like the overlay conversion.</td></tr>
 <tr><td><code>label_candidates_for_compiled_layer_at_zoom</code></td><td>function</td><td><code>pub fn label_candidates_for_compiled_layer_at_zoom( tile: &amp;VectorTile, tile_address: VectorTileAddress, layer: &amp;rustic_maps_style::CompiledLayer, style_zoom_level: f64, ) -&gt; Vec&lt;MapLabelCandidate&gt;</code></td><td>Reads the label candidates one compiled symbol layer contributes from one decoded tile. A multi-source frame styles each source’s tiles independently and calls this per layer, so a symbol layer never reads geometry fetched for another source. A non-symbol layer, an invisible layer and a layer without text contribute nothing.</td></tr>
 </tbody>
@@ -7565,6 +7589,27 @@ offline graph.</li>
 <tr><td><code>raster_layer_requests</code></td><td>function</td><td><code>pub fn raster_layer_requests( bound: &amp;BoundStyleSources, visible_tile_keys: &amp;[TileKey], style_zoom_level: f64, ) -&gt; Vec&lt;RasterLayerRequest&gt;</code></td><td>Routes every visible <code>raster</code> style layer to its bound raster source. The returned groups are in compiled layer order. Each group’s [<code>RasterLayerRequest::tile_keys</code>] is what the host passes to a [<code>crate::tile_scheduler::TileScheduler</code>] constructed with the source’s [<code>BoundRasterSource</code>] as the provider, so a style raster layer composites through the existing raster scheduler and never the vector overlay pipeline. A layer whose source is unbound, not raster, outside its zoom span or off its bounds contributes no request.</td></tr>
 <tr><td><code>tile_geographic_bounds</code></td><td>function</td><td><code>pub fn tile_geographic_bounds(tile_key: TileKey) -&gt; [f64; 4]</code></td><td>The geographic bounds of one web-mercator tile as <code>[west, south, east, north]</code>.</td></tr>
 <tr><td><code>flipped_tile_row</code></td><td>function</td><td><code>pub fn flipped_tile_row(tile_y: u32, zoom_level: u8) -&gt; u32</code></td><td>Flips a row from the XYZ (north-origin) convention to TMS (south-origin).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-sprite"><a class="header" href="#module-sprite">Module <code>sprite</code></a></h3>
+<p>The sprite atlas: a style’s sprite index document and its sheet decoded into one texture the icon pass samples.</p>
+<p>A MapLibre style names a sprite base URL. The host resolves that URL through an injected [<code>SpriteSource</code>] and hands back a [<code>SpriteAtlas</code>]; the renderer never fetches, so a test binds the URL to committed fixtures and a product keeps the fetch in its own transport. The index follows the published sprite-index format: an object keyed by icon name whose members are the icon’s rectangle in the sheet (<code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>) and the pixel ratio it was authored at.</p>
+<p>A malformed index, a missing icon and an icon rectangle outside the sheet all degrade to “no icon” rather than failing a frame: an icon that cannot be sampled is not painted, and the rest of the map (and the layer’s text) still draws.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DEFAULT_SPRITE_PIXEL_RATIO</code></td><td>const</td><td><code>pub const DEFAULT_SPRITE_PIXEL_RATIO: f64</code></td><td>The pixel ratio a sprite-index entry uses when it omits one.</td></tr>
+<tr><td><code>SPRITE_ATLAS_PIXEL_BYTES</code></td><td>const</td><td><code>pub const SPRITE_ATLAS_PIXEL_BYTES: u32</code></td><td>Bytes in one RGBA8 sprite-sheet texel.</td></tr>
+<tr><td><code>SpriteIcon</code></td><td>struct</td><td><code>pub struct SpriteIcon</code></td><td>One icon’s rectangle inside the sprite sheet.</td></tr>
+<tr><td><code>SpriteIndex</code></td><td>struct</td><td><code>pub struct SpriteIndex</code></td><td>A parsed sprite index: every icon name and its rectangle.</td></tr>
+<tr><td><code>SpriteTextureRectangle</code></td><td>struct</td><td><code>pub struct SpriteTextureRectangle</code></td><td>One icon’s normalized texture window in the atlas, <code>[0, 1]</code> on each axis.</td></tr>
+<tr><td><code>SpriteAtlas</code></td><td>struct</td><td><code>pub struct SpriteAtlas</code></td><td>A sprite index paired with its decoded sheet: the RGBA8 pixels the icon pass samples and the atlas’ deterministic content revision.</td></tr>
+<tr><td><code>SpriteSource</code></td><td>trait</td><td><code>pub trait SpriteSource: Send + Sync</code></td><td>A host-supplied sprite loader: the style’s <code>sprite</code> URL in, the decoded atlas out. Injection keeps the renderer free of URLs and credentials: a test binds the URL to committed fixtures, an application to its own transport and cache.</td></tr>
+<tr><td><code>SpriteAtlasError</code></td><td>struct</td><td><code>pub struct SpriteAtlasError</code></td><td>Why a sprite index or sheet could not be loaded.</td></tr>
 </tbody>
 </table>
 </div>
@@ -8065,7 +8110,7 @@ offline graph.</li>
 <li><a href="#how-it-works">How it works</a> explains the rendering and navigation pipelines.</li>
 <li><a href="#performance-and-profiling">Performance and profiling</a> covers the frame budget.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=ebefaf5d1cc0ad6e52b9f737dae1d5e64d94c85f:sha256:6d0e69181eff2792b043f49e7fa9fcbc1ccf840a7617766bbfe99ba735c3a393 -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -9897,7 +9942,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=ebefaf5d1cc0ad6e52b9f737dae1d5e64d94c85f:sha256:6d0e69181eff2792b043f49e7fa9fcbc1ccf840a7617766bbfe99ba735c3a393 -->
 <h1 id="ios-api-reference"><a class="header" href="#ios-api-reference">iOS API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Swift bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -11729,7 +11774,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=ebefaf5d1cc0ad6e52b9f737dae1d5e64d94c85f:sha256:6d0e69181eff2792b043f49e7fa9fcbc1ccf840a7617766bbfe99ba735c3a393 -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -13561,7 +13606,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=28790c4bbdc73470887a5092914901b7b7c3ffa8:sha256:6da743375d3f3dc03fd66e3128f0ebf19fbe8bf326bc3240f8ba2f6d91d04fa0 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=ebefaf5d1cc0ad6e52b9f737dae1d5e64d94c85f:sha256:6d0e69181eff2792b043f49e7fa9fcbc1ccf840a7617766bbfe99ba735c3a393 -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
