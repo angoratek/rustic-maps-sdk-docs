@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-685d49e1.js";
+            window.path_to_searchindex_js = "searchindex-96577402.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e43faa06.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=e2546a5ec8c516be3f9cc076338cadc47ef8f1c0:sha256:4c5bb1889b79190345e0f497a533696ddcdfc9e80e3c27b3f03773864fd2972e -->
+                        <!-- generated-api-reference-provenance: revision=084355352f089d864cee65f968ab8589ec753bf6:sha256:4258b73a7d949a3ab4652bd9bb0dd7fb5f7ad92b266a6f2721048079bfd330a5 -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -253,7 +253,7 @@
 <tbody>
 <tr><td><code>initialize</code></td><td><code>async initialize(): Promise&lt;string&gt;</code></td><td>Asynchronous. Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Acquires the adapter and device, picks the pass-through surface format, and builds the tile pipeline. Resolves to the adapter description (graphics backend and adapter name) for the page’s status line, or fails when no WebGPU adapter supports this canvas — the page then degrades to the 2D tile grid overlay. Never callable twice on the same canvas.</td></tr>
 <tr><td><code>renderFrame</code></td><td><code>async renderFrame(camera: MapCamera, fieldOfViewDegrees: number): Promise&lt;object&gt;</code></td><td>Asynchronous. Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Renders one map frame for the camera pose into the canvas, resolving freshly visible tiles from the same-origin <code>/tiles</code> route first. Resolves to a statistics object the page’s readout consumes: <code>requestedTiles</code> (tiles the camera listed at the fetch zoom), <code>drawnTiles</code> (tiles with pooled imagery over their span this frame), <code>drawnFragments</code> (draw quads after world-copy fragment splitting), <code>missingTiles</code> (requested tiles with no pooled imagery this frame), <code>tileZoomLevel</code> (the fetch zoom, clamped to the recorded fixtures), <code>tileResolution</code> (the resolution the frame’s fixtures were fetched and sampled at) and <code>overlayTriangles</code> (triangles in the cached world-space overlay layer drawn over the tiles this frame; zero without overlays; the GPU clips copies and near-plane fragments). With the raster tile layer hidden through [<code>MapView::set_tile_layer_visible</code>] the frame skips the whole tile pipeline and reports <code>requestedTiles</code>, <code>drawnTiles</code>, <code>drawnFragments</code> and <code>missingTiles</code> as zero while still presenting the overlay and indicator layers. The camera binding is consumed by value (the <code>wasm-bindgen</code> class parameter semantics); the page builds a fresh camera per changed pose, exactly as it already does. Two overlapping calls are a construction-time borrow violation — the page serializes its frames behind a busy flag and never overlaps.</td></tr>
-<tr><td><code>stageParentTile</code></td><td><code>async stageParentTile(fallbackTileX: number, fallbackTileY: number, fallbackZoomLevel: number, parentTileX: number, parentTileY: number, parentZoomLevel: number): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws the verbatim failure message as a string.</td><td>Stages a deliberate parent-fallback for one requested tile, mirroring the native golden-image tests: the fallback tile is evicted from the pool and marked unavailable forever, and its coarser parent’s recorded fixture is pooled instead, so the scheduler resolves the fallback tile as <code>FallsBackTo { parent }</code> every frame and the frame samples the parent texture. The committed golden frames were produced with the last visible scene tile resolved exactly this way, so a browser page that compares against them calls this before rendering a golden scene to reproduce the reference imagery byte-for-byte. Fetches the parent fixture from the same-origin <code>/tiles</code> route. A missing or undecodable parent fixture is an error, not a silent skip: the caller wants the fallback imagery or nothing. The parent coordinates must describe the fallback tile’s direct parent.</td></tr>
+<tr><td><code>stageParentTile</code></td><td><code>async stageParentTile(fallbackTileX: number, fallbackTileY: number, fallbackZoomLevel: number, parentTileX: number, parentTileY: number, parentZoomLevel: number): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws the verbatim failure message as a string.</td><td>Stages a deliberate parent-fallback for one requested tile, mirroring the native golden-image tests: the fallback tile is evicted from the pool and marked unavailable forever, and its coarser parent’s recorded fixture is pooled instead, so the scheduler resolves the fallback tile as <code>FallsBackTo { parent }</code> every frame and the frame samples the parent texture. The committed golden frames were produced with the last visible scene tile resolved exactly this way, so a browser page that compares against them calls this before rendering a golden scene to reproduce the reference imagery byte-for-byte. Fetches the parent fixture from the same-origin <code>/tiles</code> route. A missing or undecodable parent fixture is an error, not a silent skip: the caller wants the fallback imagery or nothing. The parent coordinates must describe the fallback tile’s direct parent. The draw state is borrowed only to read the tile resolution and again after the fetch; the parent fetch itself runs outside any borrow, so a concurrent frame can draw while the payload is in flight.</td></tr>
 <tr><td><code>setOverlays</code></td><td><code>setOverlays(overlays: any[]): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Sets the overlay list drawn over the tiles in every following [<code>MapView::render_frame</code>], replacing any earlier list in order (later list entries draw over earlier ones); an empty array clears. Each entry is a plain JavaScript object describing one overlay shape, selected by its <code>kind</code> field: * <code>{kind: "routePolyline", coordinates: [{latitude, longitude}...], color?, widthPixels?}</code> — a routed path drawn as a thick line, * <code>{kind: "filledPolygon", ringCoordinates: [{latitude, longitude}...], color?}</code> — an ear-clip triangulated ring fill, * <code>{kind: "pointMarkers", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — screen-facing octagon markers, * <code>{kind: "pointPins", positions: [{latitude, longitude}...], color?, radiusPixels?}</code> — teardrop pins anchored at their tip with a hollow head center, * <code>{kind: "trafficFlow", segments: [{shapeCoordinates: [{latitude, longitude}...], congestionLevel: CanvasTrafficFlowCongestionLevel}...], widthPixels?}</code> — congestion-colored traffic lines. An absent <code>color</code>/<code>widthPixels</code>/<code>radiusPixels</code> override keeps the documented rustic-maps-rendering default style; the fields exist exactly where the native overlay structs have them. Colors are <code>{red, green, blue, alpha}</code> in <code>0.0..=1.0</code>; widths and radii are positive finite screen pixel values. Every invalid descriptor (wrong shape, missing or wrong-typed field, out-of-range coordinate or channel, unknown <code>kind</code> or congestion value) rejects the whole call with a coded <code>invalidRenderInput</code> failure and keeps the previous list in force; nothing panics.</td></tr>
 <tr><td><code>addOverlay</code></td><td><code>addOverlay(overlay: any): string</code></td><td>Returns <code>string</code>. Throws the verbatim failure message as a string.</td><td>Adds one overlay descriptor to the drawn list and answers the generated opaque identifier addressing it (<code>overlay-1</code>, <code>overlay-2</code>, …; monotonic per view, never reused). Validation is exactly <code>set_overlays</code>’ single-descriptor rule: a refused descriptor throws and adds nothing. The new overlay draws last, over the entries already in the list.</td></tr>
 <tr><td><code>updateOverlay</code></td><td><code>updateOverlay(identifier: string, overlay: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Replaces the overlay addressed by <code>identifier</code> in its draw position. An invalid descriptor throws and keeps the previous overlay; an unknown identifier throws an <code>invalidArgument</code> failure naming it.</td></tr>
@@ -398,6 +398,180 @@
 </tbody>
 </table>
 </div>
+<h2 id="followcamera"><a class="header" href="#followcamera">FollowCamera</a></h2>
+<p>The navigation follow-camera state machine and its targets.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor()</code></td><td>Creates a disengaged camera with the default course-smoothing window.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Property</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>phase</code></td><td><code>string</code></td><td>The current follow phase.</td></tr>
+<tr><td><code>preTripCamera</code></td><td><code>any</code></td><td>The captured pre-trip camera, or <code>null</code> outside a trip.</td></tr>
+<tr><td><code>targetCenterLatitudeDegrees</code></td><td><code>number</code></td><td>The target centre latitude in degrees.</td></tr>
+<tr><td><code>targetCenterLongitudeDegrees</code></td><td><code>number</code></td><td>The target centre longitude in degrees.</td></tr>
+<tr><td><code>targetZoomLevel</code></td><td><code>number</code></td><td>The target zoom level.</td></tr>
+<tr><td><code>targetBearingDegrees</code></td><td><code>any</code></td><td>The target bearing in degrees, or <code>null</code> until a fix reports a course.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>engageTrip</code></td><td><code>engageTrip(currentCenterLatitudeDegrees: number, currentCenterLongitudeDegrees: number, currentZoomLevel: number, currentBearingDegrees: number, currentPitchDegrees: number): void</code></td><td>—</td><td>Applies the trip’s follow camera and captures the pre-trip pose.</td></tr>
+<tr><td><code>breakOnGesture</code></td><td><code>breakOnGesture(): void</code></td><td>—</td><td>A user gesture (drag, pinch or rotate) breaks follow immediately.</td></tr>
+<tr><td><code>onFix</code></td><td><code>onFix(latitudeDegrees: number, longitudeDegrees: number, courseHeadingDegrees: number | null, remainingDistanceFraction: number): void</code></td><td>—</td><td>Applies one location fix of the active trip.</td></tr>
+<tr><td><code>reengage</code></td><td><code>reengage(): void</code></td><td>—</td><td>The my-location control’s explicit re-engage.</td></tr>
+<tr><td><code>restorePreTripCamera</code></td><td><code>restorePreTripCamera(): any</code></td><td>Returns <code>any</code>. Throws the verbatim failure message as a string.</td><td>Ends the trip, returning the captured pre-trip camera or <code>null</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="coursemediansmoother"><a class="header" href="#coursemediansmoother">CourseMedianSmoother</a></h2>
+<p>A fixed-window circular median over recent course-over-ground samples.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(windowFixCount: number)</code></td><td>Creates a smoother over <code>window_fix_count</code> recent samples.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>add</code></td><td><code>add(courseDegrees: number): void</code></td><td>—</td><td>Adds one fix’s course-over-ground, dropping the oldest sample.</td></tr>
+<tr><td><code>median</code></td><td><code>median(): any</code></td><td>Returns <code>any</code>.</td><td>The circular median, or <code>null</code> while the window holds no sample.</td></tr>
+<tr><td><code>reset</code></td><td><code>reset(): void</code></td><td>—</td><td>Empties the window.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="smoothsteptimedease"><a class="header" href="#smoothsteptimedease">SmoothstepTimedEase</a></h2>
+<p>A linear-in-time, smoothstep-eased value move.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor()</code></td><td>Creates an idle ease with no target.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Property</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>is_running</code></td><td><code>boolean</code></td><td>Whether an ease is in flight.</td></tr>
+<tr><td><code>target_value</code></td><td><code>number</code></td><td>The ease’s target value.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>begin</code></td><td><code>begin(startMilliseconds: number, fromValue: number, toValue: number, durationMilliseconds: number): void</code></td><td>—</td><td>Begins, or restarts, an ease from one value to another.</td></tr>
+<tr><td><code>reset</code></td><td><code>reset(): void</code></td><td>—</td><td>Stops an in-flight ease without applying anything.</td></tr>
+<tr><td><code>advance</code></td><td><code>advance(nowMilliseconds: number): any[]</code></td><td>Returns <code>any[]</code>.</td><td>Advances the ease at <code>now_milliseconds</code>. Returns <code>[value, finished]</code>: the current eased value and whether the move just finished on this call.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="exponentialvaluechase"><a class="header" href="#exponentialvaluechase">ExponentialValueChase</a></h2>
+<p>An exponential chase toward a moving target.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(timeConstantMilliseconds: number)</code></td><td>Creates a chase with the given time constant in milliseconds.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>advance</code></td><td><code>advance(current: number, target: number, nowMilliseconds: number): number</code></td><td>Returns <code>number</code>.</td><td>Advances the chase toward <code>target</code>, returning the next current value.</td></tr>
+<tr><td><code>reset</code></td><td><code>reset(): void</code></td><td>—</td><td>Clears the frame clock so the next call is treated as a first frame.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="tracecursor"><a class="header" href="#tracecursor">TraceCursor</a></h2>
+<p>A forward-only cursor over a recorded trace’s samples.</p>
+<p><strong>Construction</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Constructor</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>constructor</code></td><td><code>constructor(sampleCount: number)</code></td><td>Creates a cursor at the first sample of a trace with <code>sample_count</code> samples.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Property</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>sampleCount</code></td><td><code>number</code></td><td>The trace’s sample count.</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Members</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Member</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>nextSampleIndex</code></td><td><code>nextSampleIndex(): any</code></td><td>Returns <code>any</code>.</td><td>The next sample’s index, or <code>null</code> when every sample was delivered.</td></tr>
+<tr><td><code>peek</code></td><td><code>peek(): any</code></td><td>Returns <code>any</code>.</td><td>The next sample’s index without consuming it.</td></tr>
+<tr><td><code>advance</code></td><td><code>advance(): any</code></td><td>Returns <code>any</code>.</td><td>Consumes and returns the next sample’s index, or <code>null</code> at the end.</td></tr>
+<tr><td><code>isFinished</code></td><td><code>isFinished(): boolean</code></td><td>Returns <code>boolean</code>.</td><td>Whether every sample was delivered.</td></tr>
+<tr><td><code>remainingSampleCount</code></td><td><code>remainingSampleCount(): number</code></td><td>Returns <code>number</code>.</td><td>The number of samples not yet delivered.</td></tr>
+<tr><td><code>reset</code></td><td><code>reset(): void</code></td><td>—</td><td>Rewinds the cursor to the first sample.</td></tr>
+<tr><td><code>seekToSampleIndex</code></td><td><code>seekToSampleIndex(sampleIndex: number): void</code></td><td>—</td><td>Moves the cursor to <code>sample_index</code>, clamped to the trace’s bounds.</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="routes-geometry-and-version"><a class="header" href="#routes-geometry-and-version">Routes, geometry and version</a></h2>
 <div class="table-wrapper">
 <table>
@@ -494,6 +668,24 @@
 </thead>
 <tbody>
 <tr><td><code>devicePixelRatioThreshold</code></td><td><code>devicePixelRatioThreshold(): number</code></td><td>Returns <code>number</code>.</td><td>Reports the device-pixel ratio from which the page’s JavaScript chooses between [<code>CanvasTileResolution::Retina</code>] and [<code>CanvasTileResolution::Standard</code>]: at or above the threshold the page passes retina. The threshold lives in Rust so the seam stays one source of truth.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="refapprs"><a class="header" href="#refapprs">refapp.rs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Function</th><th>Signature</th><th>Returns / errors</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>smoothstepEasedProgress</code></td><td><code>smoothstepEasedProgress(linearProgress: number): number</code></td><td>Returns <code>number</code>.</td><td>Smoothstep easing (<code>3t² − 2t³</code>), clamped into <code>[0, 1]</code>.</td></tr>
+<tr><td><code>bearingOffNorthDegrees</code></td><td><code>bearingOffNorthDegrees(bearingDegrees: number): number</code></td><td>Returns <code>number</code>.</td><td>The camera bearing’s smallest off-north angular distance, in degrees.</td></tr>
+<tr><td><code>signedAngularDifferenceDegrees</code></td><td><code>signedAngularDifferenceDegrees(toDegrees: number, fromDegrees: number): number</code></td><td>Returns <code>number</code>.</td><td>The shortest signed angular difference <code>to − from</code>, in degrees.</td></tr>
+<tr><td><code>followZoomTowardTripEnd</code></td><td><code>followZoomTowardTripEnd(remainingDistanceFraction: number): number</code></td><td>Returns <code>number</code>.</td><td>The follow camera’s zoom toward trip end.</td></tr>
+<tr><td><code>selectScaleBarScale</code></td><td><code>selectScaleBarScale(groundMetersPerScreenPixel: number): any</code></td><td>Returns <code>any</code>. Throws the verbatim failure message as a string.</td><td>Selects the scale-bar ladder distance using the design language’s token width range. Returns a <code>{ distanceMeters, widthPixels }</code> object, or <code>null</code> when the ground answer is not usable.</td></tr>
+<tr><td><code>selectScaleBarScaleWithWidthRange</code></td><td><code>selectScaleBarScaleWithWidthRange(groundMetersPerScreenPixel: number, minimumWidthPixels: number, maximumWidthPixels: number): any</code></td><td>Returns <code>any</code>. Throws the verbatim failure message as a string.</td><td>Selects the scale-bar ladder distance that fits an explicit width range.</td></tr>
+<tr><td><code>scaleBarDistanceLabelText</code></td><td><code>scaleBarDistanceLabelText(distanceMeters: number): string</code></td><td>Returns <code>string</code>.</td><td>The selected ladder distance’s metric label.</td></tr>
+<tr><td><code>traceDispatchIntervalMilliseconds</code></td><td><code>traceDispatchIntervalMilliseconds(recordedSampleIntervalSeconds: number, playbackAccelerationFactor: number): number</code></td><td>Returns <code>number</code>.</td><td>The replay dispatch interval for a recorded trace, in milliseconds.</td></tr>
 </tbody>
 </table>
 </div>
@@ -815,9 +1007,9 @@
 </thead>
 <tbody>
 <tr><td><code>coordinate</code></td><td><code>GeographicCoordinate</code></td><td>/** The reported coordinate on the WGS 84 ellipsoid. */</td></tr>
-<tr><td><code>horizontalAccuracyMeters?</code></td><td><code>number \| null</code></td><td>/** Radius in meters of the 68% horizontal-accuracy envelope, or absent. */</td></tr>
-<tr><td><code>courseHeadingDegrees?</code></td><td><code>number \| null</code></td><td>/** Direction of travel in degrees clockwise from true north, or absent. */</td></tr>
-<tr><td><code>timestampSeconds?</code></td><td><code>number \| null</code></td><td>/** The fix instant in seconds since the Unix epoch, or absent. */</td></tr>
+<tr><td><code>horizontalAccuracyMeters</code></td><td><code>number \| null</code></td><td>/** Radius in meters of the 68% horizontal-accuracy envelope, or null. */</td></tr>
+<tr><td><code>courseHeadingDegrees</code></td><td><code>number \| null</code></td><td>/** Direction of travel in degrees clockwise from true north, or null. */</td></tr>
+<tr><td><code>timestampSeconds</code></td><td><code>number \| null</code></td><td>/** The fix instant in seconds since the Unix epoch, or null. */</td></tr>
 </tbody>
 </table>
 </div>
@@ -869,7 +1061,7 @@
 </thead>
 <tbody>
 <tr><td><code>kind</code></td><td><code>MapOverlayKind</code></td><td>/** Which overlay shape this descriptor configures. */</td></tr>
-<tr><td><code>coordinates?</code></td><td><code>readonly GeographicCoordinate[] /** Route polyline, filled polygon and point markers: color override, or * absent for the kind's documented default. */ readonly rgbaColor?: OverlayColor; /** Route polyline and traffic flow: line width in screen pixels * (positive and finite), or absent for the documented default. */ readonly widthPixels?: number; /** </code>FilledPolygon<code>: the outer ring without a repeated closing vertex. */ readonly ringCoordinates?: readonly GeographicCoordinate[]; /** </code>PointMarkers<code>and</code>PointPins<code>: the geographic anchor of every marker * (a pin's anchor is its tip). */ readonly pointMarkerPositions?: readonly GeographicCoordinate[]; /** Point markers and point pins: radius in screen pixels (positive and * finite); a pin's radius is its head radius. */ readonly pointMarkerRadiusPixels?: number; /** </code>TrafficFlow<code>: the flow observations to paint (see </code>TrafficFlowData<code>). */ readonly trafficFlowSegments?: readonly TrafficFlowData[]; }</code></td><td>/** <code>RoutePolyline</code>: the traversal-order polyline (required for the kind). */</td></tr>
+<tr><td><code>coordinates</code></td><td><code>readonly GeographicCoordinate[] \| null /** Route polyline, filled polygon and point markers: color override, or * null for the kind's documented default. */ readonly rgbaColor: OverlayColor \| null; /** Route polyline and traffic flow: line width in screen pixels * (positive and finite), or null for the documented default. */ readonly widthPixels: number \| null; /** </code>FilledPolygon<code>: the outer ring without a repeated closing vertex, or * null for the other kinds. */ readonly ringCoordinates: readonly GeographicCoordinate[] \| null; /** </code>PointMarkers<code>and</code>PointPins<code>: the geographic anchor of every marker * (a pin's anchor is its tip), or null for the other kinds. */ readonly pointMarkerPositions: readonly GeographicCoordinate[] \| null; /** Point markers and point pins: radius in screen pixels (positive and * finite); a pin's radius is its head radius. */ readonly pointMarkerRadiusPixels: number \| null; /** </code>TrafficFlow<code>: the flow observations to paint (see </code>TrafficFlowData<code>), * or null for the other kinds. */ readonly trafficFlowSegments: readonly TrafficFlowData[] \| null; }</code></td><td><code>RoutePolyline</code>: the traversal-order polyline (required for the kind), or null for the other kinds. */</td></tr>
 </tbody>
 </table>
 </div>
@@ -881,7 +1073,7 @@
 <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>shapeCoordinates</code></td><td><code>readonly GeographicCoordinate[] /** Currently observed speed in kilometers per hour, when reported. */ readonly currentSpeedKilometersPerHour?: number; /** Unconstrained (free-flow) speed, when reported. */ readonly freeFlowSpeedKilometersPerHour?: number; /** Congestion classification from the speed ratio or provider buckets. */ readonly congestionLevel: TrafficFlowCongestionLevel; }</code></td><td>/** Segment geometry, ordered along the road. */</td></tr>
+<tr><td><code>shapeCoordinates</code></td><td><code>readonly GeographicCoordinate[] /** Currently observed speed in kilometers per hour, or null when the * provider reports none. */ readonly currentSpeedKilometersPerHour: number \| null; /** Unconstrained (free-flow) speed in kilometers per hour, or null when * the provider reports none. */ readonly freeFlowSpeedKilometersPerHour: number \| null; /** Congestion classification from the speed ratio or provider buckets. */ readonly congestionLevel: TrafficFlowCongestionLevel; }</code></td><td>/** Segment geometry, ordered along the road. */</td></tr>
 </tbody>
 </table>
 </div>
@@ -893,9 +1085,9 @@
 <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
 </thead>
 <tbody>
-<tr><td><code>appkitViewPointer?</code></td><td><code>number \| null</code></td><td>/** macOS: pointer to the <code>NSView</code> the surface renders into. */</td></tr>
-<tr><td><code>iosViewPointer?</code></td><td><code>number \| null</code></td><td>/** iOS: pointer to the <code>UIView</code> the surface renders into. */</td></tr>
-<tr><td><code>androidNativeWindowPointer?</code></td><td><code>number \| null</code></td><td>/** Android: pointer to the <code>ANativeWindow</code> from the platform <code>Surface</code>. */</td></tr>
+<tr><td><code>appkitViewPointer</code></td><td><code>number \| null</code></td><td>/** macOS: pointer to the <code>NSView</code> the surface renders into, or null. */</td></tr>
+<tr><td><code>iosViewPointer</code></td><td><code>number \| null</code></td><td>/** iOS: pointer to the <code>UIView</code> the surface renders into, or null. */</td></tr>
+<tr><td><code>androidNativeWindowPointer</code></td><td><code>number \| null</code></td><td>Android: pointer to the <code>ANativeWindow</code> from the platform <code>Surface</code>, or null. */</td></tr>
 </tbody>
 </table>
 </div>

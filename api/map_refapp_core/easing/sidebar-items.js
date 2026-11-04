@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CHASE_FIRST_FRAME_DELTA_MILLISECONDS","FOLLOW_BEARING_CHASE_TIME_CONSTANT_MILLISECONDS","FOLLOW_BEARING_SNAP_DISTANCE_DEGREES"],"fn":["bearing_off_north_degrees","signed_angular_difference_degrees","smoothstep_eased_progress"],"struct":["ExponentialValueChase","SmoothstepTimedEase"]};
