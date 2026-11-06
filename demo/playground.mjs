@@ -1960,8 +1960,16 @@
               && demo_route.destination_name === destination_name) ?? null;
         }
 
-        /** Flattens a route's step shapes into one traversal-order polyline. */
+        /** Flattens a route's geometry into one traversal-order polyline. A
+         * provider that reports only step shapes falls back to those. */
         function route_polyline_coordinates(route) {
+          const geometry = Array.isArray(route.geometry) ? route.geometry : [];
+          if (geometry.length > 0) {
+            return geometry.map((route_coordinate) => ({
+              latitude: route_coordinate.latitude,
+              longitude: route_coordinate.longitude,
+            }));
+          }
           return (route.legs ?? []).flatMap((route_leg) =>
             (route_leg.steps ?? []).flatMap((route_step) =>
               (route_step.shape ?? []).map((route_coordinate) => ({
@@ -1973,7 +1981,7 @@
         /** The route's geographic bounds: the provider's own box when the
          * record carries one, otherwise the polyline's extent. */
         function route_bounding_box(route, polyline) {
-          const provided_box = route.bounding_box;
+          const provided_box = route.bounding_box ?? route.boundingBox;
           if (provided_box?.south_west?.latitude !== undefined
               && provided_box?.north_east?.latitude !== undefined) {
             return {
