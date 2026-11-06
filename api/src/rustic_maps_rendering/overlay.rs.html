@@ -5109,638 +5109,639 @@
 <a href=#5109 id=5109 data-nosnippet>5109</a>                south_west: coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>),
 <a href=#5110 id=5110 data-nosnippet>5110</a>                north_east: coordinate(<span class="number">1.0</span>, <span class="number">1.0</span>),
 <a href=#5111 id=5111 data-nosnippet>5111</a>            },
-<a href=#5112 id=5112 data-nosnippet>5112</a>            legs: <span class="macro">vec!</span>[RouteLeg {
-<a href=#5113 id=5113 data-nosnippet>5113</a>                distance_meters: <span class="number">1000.0</span>,
-<a href=#5114 id=5114 data-nosnippet>5114</a>                duration_seconds: <span class="number">60.0</span>,
-<a href=#5115 id=5115 data-nosnippet>5115</a>                steps: <span class="macro">vec!</span>[
-<a href=#5116 id=5116 data-nosnippet>5116</a>                    RouteStep {
-<a href=#5117 id=5117 data-nosnippet>5117</a>                        distance_meters: <span class="number">500.0</span>,
-<a href=#5118 id=5118 data-nosnippet>5118</a>                        duration_seconds: <span class="number">30.0</span>,
-<a href=#5119 id=5119 data-nosnippet>5119</a>                        maneuver_type: ManeuverType::Departure,
-<a href=#5120 id=5120 data-nosnippet>5120</a>                        instruction_display_text: String::new(),
-<a href=#5121 id=5121 data-nosnippet>5121</a>                        instruction_speech_text: String::new(),
-<a href=#5122 id=5122 data-nosnippet>5122</a>                        shape: <span class="macro">vec!</span>[coordinate(<span class="number">1.0</span>, <span class="number">1.0</span>), coordinate(<span class="number">2.0</span>, <span class="number">2.0</span>)],
-<a href=#5123 id=5123 data-nosnippet>5123</a>                        lane_guidances: Vec::new(),
-<a href=#5124 id=5124 data-nosnippet>5124</a>                    },
-<a href=#5125 id=5125 data-nosnippet>5125</a>                    RouteStep {
-<a href=#5126 id=5126 data-nosnippet>5126</a>                        distance_meters: <span class="number">500.0</span>,
-<a href=#5127 id=5127 data-nosnippet>5127</a>                        duration_seconds: <span class="number">30.0</span>,
-<a href=#5128 id=5128 data-nosnippet>5128</a>                        maneuver_type: ManeuverType::Arrival,
-<a href=#5129 id=5129 data-nosnippet>5129</a>                        instruction_display_text: String::new(),
-<a href=#5130 id=5130 data-nosnippet>5130</a>                        instruction_speech_text: String::new(),
-<a href=#5131 id=5131 data-nosnippet>5131</a>                        shape: <span class="macro">vec!</span>[coordinate(<span class="number">3.0</span>, <span class="number">3.0</span>)],
-<a href=#5132 id=5132 data-nosnippet>5132</a>                        lane_guidances: Vec::new(),
-<a href=#5133 id=5133 data-nosnippet>5133</a>                    },
-<a href=#5134 id=5134 data-nosnippet>5134</a>                ],
-<a href=#5135 id=5135 data-nosnippet>5135</a>            }],
-<a href=#5136 id=5136 data-nosnippet>5136</a>        };
-<a href=#5137 id=5137 data-nosnippet>5137</a>        <span class="kw">let </span>route_overlay = RoutePolylineOverlay::from_route_data(<span class="kw-2">&amp;</span>route_data);
-<a href=#5138 id=5138 data-nosnippet>5138</a>        <span class="kw">let </span>flattened_longitudes: Vec&lt;f64&gt; = route_overlay
-<a href=#5139 id=5139 data-nosnippet>5139</a>            .coordinates
-<a href=#5140 id=5140 data-nosnippet>5140</a>            .iter()
-<a href=#5141 id=5141 data-nosnippet>5141</a>            .map(|coordinate| coordinate.longitude)
-<a href=#5142 id=5142 data-nosnippet>5142</a>            .collect();
-<a href=#5143 id=5143 data-nosnippet>5143</a>        <span class="macro">assert_eq!</span>(flattened_longitudes, <span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>]);
-<a href=#5144 id=5144 data-nosnippet>5144</a>        <span class="macro">assert_eq!</span>(route_overlay.rgba_color, DEFAULT_ROUTE_LINE_RGBA);
-<a href=#5145 id=5145 data-nosnippet>5145</a>        <span class="macro">assert_eq!</span>(route_overlay.width_pixels, DEFAULT_ROUTE_LINE_WIDTH_PIXELS);
-<a href=#5146 id=5146 data-nosnippet>5146</a>    }
-<a href=#5147 id=5147 data-nosnippet>5147</a>
-<a href=#5148 id=5148 data-nosnippet>5148</a>    <span class="attr">#[test]
-<a href=#5149 id=5149 data-nosnippet>5149</a>    </span><span class="kw">fn </span>congestion_levels_map_to_named_traffic_colors() {
-<a href=#5150 id=5150 data-nosnippet>5150</a>        <span class="macro">assert_eq!</span>(
-<a href=#5151 id=5151 data-nosnippet>5151</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::FreeFlow),
-<a href=#5152 id=5152 data-nosnippet>5152</a>            <span class="kw">super</span>::TRAFFIC_FREE_FLOW_RGBA
-<a href=#5153 id=5153 data-nosnippet>5153</a>        );
-<a href=#5154 id=5154 data-nosnippet>5154</a>        <span class="macro">assert_eq!</span>(
-<a href=#5155 id=5155 data-nosnippet>5155</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::Slow),
-<a href=#5156 id=5156 data-nosnippet>5156</a>            <span class="kw">super</span>::TRAFFIC_SLOW_RGBA
-<a href=#5157 id=5157 data-nosnippet>5157</a>        );
-<a href=#5158 id=5158 data-nosnippet>5158</a>        <span class="macro">assert_eq!</span>(
-<a href=#5159 id=5159 data-nosnippet>5159</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::Congested),
-<a href=#5160 id=5160 data-nosnippet>5160</a>            <span class="kw">super</span>::TRAFFIC_CONGESTED_RGBA
-<a href=#5161 id=5161 data-nosnippet>5161</a>        );
-<a href=#5162 id=5162 data-nosnippet>5162</a>        <span class="macro">assert_eq!</span>(
-<a href=#5163 id=5163 data-nosnippet>5163</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::Blocked),
-<a href=#5164 id=5164 data-nosnippet>5164</a>            <span class="kw">super</span>::TRAFFIC_BLOCKED_RGBA
-<a href=#5165 id=5165 data-nosnippet>5165</a>        );
-<a href=#5166 id=5166 data-nosnippet>5166</a>    }
-<a href=#5167 id=5167 data-nosnippet>5167</a>
-<a href=#5168 id=5168 data-nosnippet>5168</a>    <span class="attr">#[test]
-<a href=#5169 id=5169 data-nosnippet>5169</a>    </span><span class="kw">fn </span>a_traffic_flow_draws_one_thickened_quad_per_segment_in_its_congestion_color() {
-<a href=#5170 id=5170 data-nosnippet>5170</a>        <span class="kw">let </span>viewport = square_viewport();
-<a href=#5171 id=5171 data-nosnippet>5171</a>        <span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">10.0</span>);
-<a href=#5172 id=5172 data-nosnippet>5172</a>        <span class="kw">let </span>flow_shape = <span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.02</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.02</span>)];
-<a href=#5173 id=5173 data-nosnippet>5173</a>        <span class="kw">let </span>vertices = overlay_triangle_vertices(
-<a href=#5174 id=5174 data-nosnippet>5174</a>            <span class="kw-2">&amp;</span>camera,
-<a href=#5175 id=5175 data-nosnippet>5175</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#5176 id=5176 data-nosnippet>5176</a>            <span class="kw">crate</span>::camera::DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#5177 id=5177 data-nosnippet>5177</a>            <span class="kw-2">&amp;</span>[MapOverlay::TrafficFlow(TrafficFlowOverlay::new(<span class="macro">vec!</span>[
-<a href=#5178 id=5178 data-nosnippet>5178</a>                geospatial_types::TrafficFlowData::from_congestion_level(
-<a href=#5179 id=5179 data-nosnippet>5179</a>                    flow_shape,
-<a href=#5180 id=5180 data-nosnippet>5180</a>                    TrafficFlowCongestionLevel::Congested,
-<a href=#5181 id=5181 data-nosnippet>5181</a>                ),
-<a href=#5182 id=5182 data-nosnippet>5182</a>            ]))],
-<a href=#5183 id=5183 data-nosnippet>5183</a>        );
-<a href=#5184 id=5184 data-nosnippet>5184</a>        <span class="macro">assert_eq!</span>(vertices.len(), <span class="number">6</span>, <span class="string">"one flow segment draws one quad"</span>);
-<a href=#5185 id=5185 data-nosnippet>5185</a>        <span class="kw">for </span>vertex <span class="kw">in </span><span class="kw-2">&amp;</span>vertices {
-<a href=#5186 id=5186 data-nosnippet>5186</a>            <span class="macro">assert_eq!</span>(
-<a href=#5187 id=5187 data-nosnippet>5187</a>                vertex.rgba_color,
-<a href=#5188 id=5188 data-nosnippet>5188</a>                <span class="kw">super</span>::TRAFFIC_CONGESTED_RGBA,
-<a href=#5189 id=5189 data-nosnippet>5189</a>                <span class="string">"the segment paints its congestion level"
-<a href=#5190 id=5190 data-nosnippet>5190</a>            </span>);
-<a href=#5191 id=5191 data-nosnippet>5191</a>        }
-<a href=#5192 id=5192 data-nosnippet>5192</a>    }
-<a href=#5193 id=5193 data-nosnippet>5193</a>
-<a href=#5194 id=5194 data-nosnippet>5194</a>    <span class="attr">#[test]
-<a href=#5195 id=5195 data-nosnippet>5195</a>    </span><span class="kw">fn </span>a_point_pin_anchors_its_tip_and_keeps_its_head_center_hollow() {
-<a href=#5196 id=5196 data-nosnippet>5196</a>        <span class="kw">let </span>viewport = square_viewport();
-<a href=#5197 id=5197 data-nosnippet>5197</a>        <span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">10.0</span>);
-<a href=#5198 id=5198 data-nosnippet>5198</a>        <span class="kw">let </span>anchor = coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>);
-<a href=#5199 id=5199 data-nosnippet>5199</a>        <span class="kw">let </span>vertices = overlay_triangle_vertices(
-<a href=#5200 id=5200 data-nosnippet>5200</a>            <span class="kw-2">&amp;</span>camera,
-<a href=#5201 id=5201 data-nosnippet>5201</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#5202 id=5202 data-nosnippet>5202</a>            <span class="kw">crate</span>::camera::DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#5203 id=5203 data-nosnippet>5203</a>            <span class="kw-2">&amp;</span>[MapOverlay::PointPins(PointPinsOverlay::new(<span class="macro">vec!</span>[anchor]))],
-<a href=#5204 id=5204 data-nosnippet>5204</a>        );
-<a href=#5205 id=5205 data-nosnippet>5205</a>        <span class="macro">assert_eq!</span>(
-<a href=#5206 id=5206 data-nosnippet>5206</a>            vertices.len(),
-<a href=#5207 id=5207 data-nosnippet>5207</a>            <span class="kw">super</span>::POINT_PIN_RING_SIDES * <span class="number">6</span>,
-<a href=#5208 id=5208 data-nosnippet>5208</a>            <span class="string">"one pin draws two triangles per ring side"
-<a href=#5209 id=5209 data-nosnippet>5209</a>        </span>);
-<a href=#5210 id=5210 data-nosnippet>5210</a>        <span class="kw">let </span>anchor_screen = camera
-<a href=#5211 id=5211 data-nosnippet>5211</a>            .project_to_screen(<span class="kw-2">&amp;</span>anchor, <span class="kw-2">&amp;</span>viewport, <span class="number">60.0</span>)
-<a href=#5212 id=5212 data-nosnippet>5212</a>            .expect(<span class="string">"the camera projects its own scene point"</span>);
-<a href=#5213 id=5213 data-nosnippet>5213</a>        <span class="kw">let </span>head_center_screen = [
-<a href=#5214 id=5214 data-nosnippet>5214</a>            anchor_screen[<span class="number">0</span>],
-<a href=#5215 id=5215 data-nosnippet>5215</a>            anchor_screen[<span class="number">1</span>]
-<a href=#5216 id=5216 data-nosnippet>5216</a>                - DEFAULT_POINT_PIN_RADIUS_PIXELS * <span class="kw">super</span>::POINT_PIN_HEIGHT_RADIUS_FACTOR,
-<a href=#5217 id=5217 data-nosnippet>5217</a>        ];
-<a href=#5218 id=5218 data-nosnippet>5218</a>        <span class="kw">let </span>hollow_radius_pixels =
-<a href=#5219 id=5219 data-nosnippet>5219</a>            DEFAULT_POINT_PIN_RADIUS_PIXELS * <span class="kw">super</span>::POINT_PIN_HOLLOW_RADIUS_RATIO;
-<a href=#5220 id=5220 data-nosnippet>5220</a>        <span class="comment">// The tip is an outline vertex: the ring samples the downward angle.
-<a href=#5221 id=5221 data-nosnippet>5221</a>        </span><span class="kw">let </span>tip_appearances = vertices
-<a href=#5222 id=5222 data-nosnippet>5222</a>            .iter()
-<a href=#5223 id=5223 data-nosnippet>5223</a>            .filter(|vertex| {
-<a href=#5224 id=5224 data-nosnippet>5224</a>                <span class="kw">let </span>screen_pixels = vertex_screen_pixels(vertex, <span class="kw-2">&amp;</span>viewport);
-<a href=#5225 id=5225 data-nosnippet>5225</a>                (screen_pixels[<span class="number">0</span>] - anchor_screen[<span class="number">0</span>]).abs() &lt; SCREEN_PIXEL_TOLERANCE
-<a href=#5226 id=5226 data-nosnippet>5226</a>                    &amp;&amp; (screen_pixels[<span class="number">1</span>] - anchor_screen[<span class="number">1</span>]).abs() &lt; SCREEN_PIXEL_TOLERANCE
-<a href=#5227 id=5227 data-nosnippet>5227</a>            })
-<a href=#5228 id=5228 data-nosnippet>5228</a>            .count();
-<a href=#5229 id=5229 data-nosnippet>5229</a>        <span class="macro">assert!</span>(
-<a href=#5230 id=5230 data-nosnippet>5230</a>            tip_appearances &gt;= <span class="number">2</span>,
-<a href=#5231 id=5231 data-nosnippet>5231</a>            <span class="string">"the tip vertex joins both triangles of its ring side: {vertices:?}"
-<a href=#5232 id=5232 data-nosnippet>5232</a>        </span>);
-<a href=#5233 id=5233 data-nosnippet>5233</a>        <span class="kw">let </span>covered = |screen_point: [f64; <span class="number">2</span>]| {
-<a href=#5234 id=5234 data-nosnippet>5234</a>            vertices.chunks_exact(<span class="number">3</span>).any(|triangle| {
-<a href=#5235 id=5235 data-nosnippet>5235</a>                <span class="kw">let </span>corners =
-<a href=#5236 id=5236 data-nosnippet>5236</a>                    [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>].map(|corner| vertex_screen_pixels(<span class="kw-2">&amp;</span>triangle[corner], <span class="kw-2">&amp;</span>viewport));
-<a href=#5237 id=5237 data-nosnippet>5237</a>                screen_point_in_triangle(screen_point, corners)
-<a href=#5238 id=5238 data-nosnippet>5238</a>            })
-<a href=#5239 id=5239 data-nosnippet>5239</a>        };
-<a href=#5240 id=5240 data-nosnippet>5240</a>        <span class="macro">assert!</span>(
-<a href=#5241 id=5241 data-nosnippet>5241</a>            !covered(head_center_screen),
-<a href=#5242 id=5242 data-nosnippet>5242</a>            <span class="string">"the head center stays unpainted (the hollow)"
-<a href=#5243 id=5243 data-nosnippet>5243</a>        </span>);
-<a href=#5244 id=5244 data-nosnippet>5244</a>        <span class="macro">assert!</span>(
-<a href=#5245 id=5245 data-nosnippet>5245</a>            !covered([
-<a href=#5246 id=5246 data-nosnippet>5246</a>                head_center_screen[<span class="number">0</span>] + hollow_radius_pixels * <span class="number">0.5</span>,
-<a href=#5247 id=5247 data-nosnippet>5247</a>                head_center_screen[<span class="number">1</span>]
-<a href=#5248 id=5248 data-nosnippet>5248</a>            ]),
-<a href=#5249 id=5249 data-nosnippet>5249</a>            <span class="string">"a point inside the hollow radius stays unpainted"
-<a href=#5250 id=5250 data-nosnippet>5250</a>        </span>);
-<a href=#5251 id=5251 data-nosnippet>5251</a>        <span class="macro">assert!</span>(
-<a href=#5252 id=5252 data-nosnippet>5252</a>            covered([
-<a href=#5253 id=5253 data-nosnippet>5253</a>                head_center_screen[<span class="number">0</span>] + hollow_radius_pixels * <span class="number">1.8</span>,
-<a href=#5254 id=5254 data-nosnippet>5254</a>                head_center_screen[<span class="number">1</span>]
-<a href=#5255 id=5255 data-nosnippet>5255</a>            ]),
-<a href=#5256 id=5256 data-nosnippet>5256</a>            <span class="string">"a point between the hollow and the head outline paints"
-<a href=#5257 id=5257 data-nosnippet>5257</a>        </span>);
-<a href=#5258 id=5258 data-nosnippet>5258</a>        <span class="macro">assert!</span>(
-<a href=#5259 id=5259 data-nosnippet>5259</a>            !covered([
-<a href=#5260 id=5260 data-nosnippet>5260</a>                head_center_screen[<span class="number">0</span>] + DEFAULT_POINT_PIN_RADIUS_PIXELS * <span class="number">1.25</span>,
-<a href=#5261 id=5261 data-nosnippet>5261</a>                head_center_screen[<span class="number">1</span>]
-<a href=#5262 id=5262 data-nosnippet>5262</a>            ]),
-<a href=#5263 id=5263 data-nosnippet>5263</a>            <span class="string">"a point beyond the head outline stays unpainted"
-<a href=#5264 id=5264 data-nosnippet>5264</a>        </span>);
-<a href=#5265 id=5265 data-nosnippet>5265</a>    }
-<a href=#5266 id=5266 data-nosnippet>5266</a>
-<a href=#5267 id=5267 data-nosnippet>5267</a>    <span class="doccomment">/// Point-in-triangle test on the display's pixel axes; orientation does
-<a href=#5268 id=5268 data-nosnippet>5268</a>    /// not matter because the barycentric signs are compared as a set.
-<a href=#5269 id=5269 data-nosnippet>5269</a>    </span><span class="kw">fn </span>screen_point_in_triangle(screen_point: [f64; <span class="number">2</span>], corners: [[f64; <span class="number">2</span>]; <span class="number">3</span>]) -&gt; bool {
-<a href=#5270 id=5270 data-nosnippet>5270</a>        <span class="kw">let </span>edge_signs: Vec&lt;f64&gt; = (<span class="number">0</span>..<span class="number">3</span>)
-<a href=#5271 id=5271 data-nosnippet>5271</a>            .map(|edge_index| {
-<a href=#5272 id=5272 data-nosnippet>5272</a>                <span class="kw">let </span>start = corners[edge_index];
-<a href=#5273 id=5273 data-nosnippet>5273</a>                <span class="kw">let </span>end = corners[(edge_index + <span class="number">1</span>) % <span class="number">3</span>];
-<a href=#5274 id=5274 data-nosnippet>5274</a>                (end[<span class="number">0</span>] - start[<span class="number">0</span>]) * (screen_point[<span class="number">1</span>] - start[<span class="number">1</span>])
-<a href=#5275 id=5275 data-nosnippet>5275</a>                    - (end[<span class="number">1</span>] - start[<span class="number">1</span>]) * (screen_point[<span class="number">0</span>] - start[<span class="number">0</span>])
-<a href=#5276 id=5276 data-nosnippet>5276</a>            })
-<a href=#5277 id=5277 data-nosnippet>5277</a>            .collect();
-<a href=#5278 id=5278 data-nosnippet>5278</a>        <span class="kw">let </span>has_negative = edge_signs
-<a href=#5279 id=5279 data-nosnippet>5279</a>            .iter()
-<a href=#5280 id=5280 data-nosnippet>5280</a>            .any(|sign| <span class="kw-2">*</span>sign &lt; -SCREEN_PIXEL_TOLERANCE);
-<a href=#5281 id=5281 data-nosnippet>5281</a>        <span class="kw">let </span>has_positive = edge_signs.iter().any(|sign| <span class="kw-2">*</span>sign &gt; SCREEN_PIXEL_TOLERANCE);
-<a href=#5282 id=5282 data-nosnippet>5282</a>        !(has_negative &amp;&amp; has_positive)
-<a href=#5283 id=5283 data-nosnippet>5283</a>    }
-<a href=#5284 id=5284 data-nosnippet>5284</a>
-<a href=#5285 id=5285 data-nosnippet>5285</a>    <span class="attr">#[test]
-<a href=#5286 id=5286 data-nosnippet>5286</a>    </span><span class="kw">fn </span>the_screen_pixel_scale_matches_the_zoom() {
-<a href=#5287 id=5287 data-nosnippet>5287</a>        <span class="comment">// A guard on the frame projection sharing the camera's own scale
-<a href=#5288 id=5288 data-nosnippet>5288</a>        // definition: no overlay-specific conversion may drift.
-<a href=#5289 id=5289 data-nosnippet>5289</a>        </span><span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">10.0</span>);
-<a href=#5290 id=5290 data-nosnippet>5290</a>        <span class="kw">let </span>viewport = square_viewport();
-<a href=#5291 id=5291 data-nosnippet>5291</a>        <span class="kw">let </span>frame_projection = OverlayFrameProjection::for_frame(<span class="kw-2">&amp;</span>camera, <span class="kw-2">&amp;</span>viewport, <span class="number">60.0</span>);
-<a href=#5292 id=5292 data-nosnippet>5292</a>        <span class="macro">assert_eq!</span>(frame_projection.zoom_scale_pixels, zoom_scale_pixels(<span class="number">10.0</span>));
-<a href=#5293 id=5293 data-nosnippet>5293</a>        <span class="kw">let </span>wrapped = frame_projection.wrapped_x(<span class="number">0.9</span>);
-<a href=#5294 id=5294 data-nosnippet>5294</a>        <span class="macro">assert!</span>(
-<a href=#5295 id=5295 data-nosnippet>5295</a>            (wrapped - <span class="number">0.9</span>).abs() &lt;= <span class="number">0.5</span>,
-<a href=#5296 id=5296 data-nosnippet>5296</a>            <span class="string">"wrapped x stays within half a world of the camera center"
-<a href=#5297 id=5297 data-nosnippet>5297</a>        </span>);
-<a href=#5298 id=5298 data-nosnippet>5298</a>    }
-<a href=#5299 id=5299 data-nosnippet>5299</a>
-<a href=#5300 id=5300 data-nosnippet>5300</a>    <span class="doccomment">/// Screen-pixel tolerance of the world-space parity assertions: the frame
-<a href=#5301 id=5301 data-nosnippet>5301</a>    /// uniform crosses to the GPU as `f32`, while the CPU assembly keeps
-<a href=#5302 id=5302 data-nosnippet>5302</a>    /// `f64` through its projection, so a sub-hundredth of a pixel is expected
-<a href=#5303 id=5303 data-nosnippet>5303</a>    /// and a whole pixel would be a real drift.
-<a href=#5304 id=5304 data-nosnippet>5304</a>    </span><span class="kw">const </span>WORLD_SPACE_SCREEN_TOLERANCE_PIXELS: f64 = <span class="number">0.05</span>;
-<a href=#5305 id=5305 data-nosnippet>5305</a>
-<a href=#5306 id=5306 data-nosnippet>5306</a>    <span class="doccomment">/// Reimplements the world-space overlay vertex shader in `f64` for the
-<a href=#5307 id=5307 data-nosnippet>5307</a>    /// parity tests: the same mode dispatch and world-copy window discard,
-<a href=#5308 id=5308 data-nosnippet>5308</a>    /// evaluated against the same frame uniform the GPU receives. Returns the
-<a href=#5309 id=5309 data-nosnippet>5309</a>    /// final screen position, or `None` when the vertex's world copy is not
-<a href=#5310 id=5310 data-nosnippet>5310</a>    /// the camera's own (the shader's fragment discard).
-<a href=#5311 id=5311 data-nosnippet>5311</a>    </span><span class="kw">fn </span>world_space_vertex_screen(
-<a href=#5312 id=5312 data-nosnippet>5312</a>        uniforms: <span class="kw-2">&amp;</span>WorldSpaceOverlayFrameUniforms,
-<a href=#5313 id=5313 data-nosnippet>5313</a>        vertex: <span class="kw-2">&amp;</span>WorldSpaceOverlayVertex,
-<a href=#5314 id=5314 data-nosnippet>5314</a>        copy_offset: f64,
-<a href=#5315 id=5315 data-nosnippet>5315</a>    ) -&gt; <span class="prelude-ty">Option</span>&lt;[f64; <span class="number">2</span>]&gt; {
-<a href=#5316 id=5316 data-nosnippet>5316</a>        <span class="kw">let </span>origin_relative = [
-<a href=#5317 id=5317 data-nosnippet>5317</a>            f64::from(uniforms.origin_relative_normalized[<span class="number">0</span>]),
-<a href=#5318 id=5318 data-nosnippet>5318</a>            f64::from(uniforms.origin_relative_normalized[<span class="number">1</span>]),
-<a href=#5319 id=5319 data-nosnippet>5319</a>        ];
-<a href=#5320 id=5320 data-nosnippet>5320</a>        <span class="kw">let </span>window_relative_x =
-<a href=#5321 id=5321 data-nosnippet>5321</a>            origin_relative[<span class="number">0</span>] + f64::from(vertex.world_position[<span class="number">0</span>]) - copy_offset;
-<a href=#5322 id=5322 data-nosnippet>5322</a>        <span class="kw">if </span>!(-<span class="number">0.5</span>..<span class="number">0.5</span>).contains(<span class="kw-2">&amp;</span>window_relative_x) {
-<a href=#5323 id=5323 data-nosnippet>5323</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#5324 id=5324 data-nosnippet>5324</a>        }
-<a href=#5325 id=5325 data-nosnippet>5325</a>        <span class="kw">let </span>world_to_clip = |position: [f32; <span class="number">2</span>]| {
-<a href=#5326 id=5326 data-nosnippet>5326</a>            <span class="kw">let </span>relative = [
-<a href=#5327 id=5327 data-nosnippet>5327</a>                origin_relative[<span class="number">0</span>] + f64::from(position[<span class="number">0</span>]) - copy_offset,
-<a href=#5328 id=5328 data-nosnippet>5328</a>                origin_relative[<span class="number">1</span>] - f64::from(position[<span class="number">1</span>]),
-<a href=#5329 id=5329 data-nosnippet>5329</a>            ];
-<a href=#5330 id=5330 data-nosnippet>5330</a>            <span class="kw">let </span><span class="kw-2">mut </span>clip_position = [<span class="number">0.0_f64</span>; <span class="number">4</span>];
-<a href=#5331 id=5331 data-nosnippet>5331</a>            <span class="kw">for </span>(row, component) <span class="kw">in </span>clip_position.iter_mut().enumerate() {
-<a href=#5332 id=5332 data-nosnippet>5332</a>                <span class="kw-2">*</span>component = f64::from(uniforms.anchor_clip_position[row])
-<a href=#5333 id=5333 data-nosnippet>5333</a>                    + f64::from(uniforms.relative_view_projection[<span class="number">0</span>][row]) * relative[<span class="number">0</span>]
-<a href=#5334 id=5334 data-nosnippet>5334</a>                    + f64::from(uniforms.relative_view_projection[<span class="number">1</span>][row]) * relative[<span class="number">1</span>];
-<a href=#5335 id=5335 data-nosnippet>5335</a>            }
-<a href=#5336 id=5336 data-nosnippet>5336</a>            clip_position
-<a href=#5337 id=5337 data-nosnippet>5337</a>        };
-<a href=#5338 id=5338 data-nosnippet>5338</a>        <span class="kw">let </span>clip_to_screen = |clip_position: [f64; <span class="number">4</span>]| {
-<a href=#5339 id=5339 data-nosnippet>5339</a>            <span class="kw">let </span>normalized_device = [
-<a href=#5340 id=5340 data-nosnippet>5340</a>                clip_position[<span class="number">0</span>] / clip_position[<span class="number">3</span>],
-<a href=#5341 id=5341 data-nosnippet>5341</a>                clip_position[<span class="number">1</span>] / clip_position[<span class="number">3</span>],
-<a href=#5342 id=5342 data-nosnippet>5342</a>            ];
-<a href=#5343 id=5343 data-nosnippet>5343</a>            [
-<a href=#5344 id=5344 data-nosnippet>5344</a>                (normalized_device[<span class="number">0</span>] + <span class="number">1.0</span>) * <span class="number">0.5 </span>* f64::from(uniforms.viewport_size_pixels[<span class="number">0</span>]),
-<a href=#5345 id=5345 data-nosnippet>5345</a>                (<span class="number">1.0 </span>- (normalized_device[<span class="number">1</span>] + <span class="number">1.0</span>) * <span class="number">0.5</span>)
-<a href=#5346 id=5346 data-nosnippet>5346</a>                    * f64::from(uniforms.viewport_size_pixels[<span class="number">1</span>]),
-<a href=#5347 id=5347 data-nosnippet>5347</a>            ]
-<a href=#5348 id=5348 data-nosnippet>5348</a>        };
-<a href=#5349 id=5349 data-nosnippet>5349</a>        <span class="kw">match </span>vertex.shape_kind {
-<a href=#5350 id=5350 data-nosnippet>5350</a>            <span class="number">0 </span>=&gt; <span class="prelude-val">Some</span>(clip_to_screen(world_to_clip(vertex.world_position))),
-<a href=#5351 id=5351 data-nosnippet>5351</a>            <span class="number">1 </span>=&gt; {
-<a href=#5352 id=5352 data-nosnippet>5352</a>                <span class="kw">let </span>anchor_clip_position = world_to_clip(vertex.world_position);
-<a href=#5353 id=5353 data-nosnippet>5353</a>                <span class="kw">if </span>anchor_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0 </span>{
-<a href=#5354 id=5354 data-nosnippet>5354</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#5355 id=5355 data-nosnippet>5355</a>                }
-<a href=#5356 id=5356 data-nosnippet>5356</a>                <span class="kw">let </span>anchor_screen = clip_to_screen(anchor_clip_position);
-<a href=#5357 id=5357 data-nosnippet>5357</a>                <span class="prelude-val">Some</span>([
-<a href=#5358 id=5358 data-nosnippet>5358</a>                    anchor_screen[<span class="number">0</span>] + f64::from(vertex.shape_parameters[<span class="number">0</span>]),
-<a href=#5359 id=5359 data-nosnippet>5359</a>                    anchor_screen[<span class="number">1</span>] + f64::from(vertex.shape_parameters[<span class="number">1</span>]),
-<a href=#5360 id=5360 data-nosnippet>5360</a>                ])
-<a href=#5361 id=5361 data-nosnippet>5361</a>            }
-<a href=#5362 id=5362 data-nosnippet>5362</a>            <span class="number">2 </span>=&gt; {
-<a href=#5363 id=5363 data-nosnippet>5363</a>                <span class="kw">let </span>self_clip_position = world_to_clip(vertex.world_position);
-<a href=#5364 id=5364 data-nosnippet>5364</a>                <span class="kw">let </span>other_clip_position = world_to_clip(vertex.reference_position);
-<a href=#5365 id=5365 data-nosnippet>5365</a>                <span class="kw">if </span>self_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0 </span>|| other_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0 </span>{
-<a href=#5366 id=5366 data-nosnippet>5366</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#5367 id=5367 data-nosnippet>5367</a>                }
-<a href=#5368 id=5368 data-nosnippet>5368</a>                <span class="kw">let </span>self_screen = clip_to_screen(self_clip_position);
-<a href=#5369 id=5369 data-nosnippet>5369</a>                <span class="kw">let </span>other_screen = clip_to_screen(other_clip_position);
-<a href=#5370 id=5370 data-nosnippet>5370</a>                <span class="kw">let </span>direction = [
-<a href=#5371 id=5371 data-nosnippet>5371</a>                    (other_screen[<span class="number">0</span>] - self_screen[<span class="number">0</span>]) * f64::from(vertex.shape_parameters[<span class="number">0</span>]),
-<a href=#5372 id=5372 data-nosnippet>5372</a>                    (other_screen[<span class="number">1</span>] - self_screen[<span class="number">1</span>]) * f64::from(vertex.shape_parameters[<span class="number">0</span>]),
-<a href=#5373 id=5373 data-nosnippet>5373</a>                ];
-<a href=#5374 id=5374 data-nosnippet>5374</a>                <span class="kw">let </span>direction_length = direction[<span class="number">0</span>].hypot(direction[<span class="number">1</span>]);
-<a href=#5375 id=5375 data-nosnippet>5375</a>                <span class="kw">if </span>direction_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS {
-<a href=#5376 id=5376 data-nosnippet>5376</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#5377 id=5377 data-nosnippet>5377</a>                }
-<a href=#5378 id=5378 data-nosnippet>5378</a>                <span class="kw">let </span>perpendicular = [
-<a href=#5379 id=5379 data-nosnippet>5379</a>                    -direction[<span class="number">1</span>] / direction_length,
-<a href=#5380 id=5380 data-nosnippet>5380</a>                    direction[<span class="number">0</span>] / direction_length,
-<a href=#5381 id=5381 data-nosnippet>5381</a>                ];
-<a href=#5382 id=5382 data-nosnippet>5382</a>                <span class="prelude-val">Some</span>([
-<a href=#5383 id=5383 data-nosnippet>5383</a>                    self_screen[<span class="number">0</span>] + perpendicular[<span class="number">0</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
-<a href=#5384 id=5384 data-nosnippet>5384</a>                    self_screen[<span class="number">1</span>] + perpendicular[<span class="number">1</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
-<a href=#5385 id=5385 data-nosnippet>5385</a>                ])
-<a href=#5386 id=5386 data-nosnippet>5386</a>            }
-<a href=#5387 id=5387 data-nosnippet>5387</a>            <span class="number">3 </span>=&gt; {
-<a href=#5388 id=5388 data-nosnippet>5388</a>                <span class="kw">let </span>previous_clip_position = world_to_clip(vertex.reference_position);
-<a href=#5389 id=5389 data-nosnippet>5389</a>                <span class="kw">let </span>vertex_clip_position = world_to_clip(vertex.world_position);
-<a href=#5390 id=5390 data-nosnippet>5390</a>                <span class="kw">let </span>next_clip_position = world_to_clip(vertex.next_position);
-<a href=#5391 id=5391 data-nosnippet>5391</a>                <span class="kw">if </span>previous_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0
-<a href=#5392 id=5392 data-nosnippet>5392</a>                    </span>|| vertex_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0
-<a href=#5393 id=5393 data-nosnippet>5393</a>                    </span>|| next_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0
-<a href=#5394 id=5394 data-nosnippet>5394</a>                </span>{
-<a href=#5395 id=5395 data-nosnippet>5395</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#5396 id=5396 data-nosnippet>5396</a>                }
-<a href=#5397 id=5397 data-nosnippet>5397</a>                <span class="kw">let </span>previous_screen = clip_to_screen(previous_clip_position);
-<a href=#5398 id=5398 data-nosnippet>5398</a>                <span class="kw">let </span>vertex_screen = clip_to_screen(vertex_clip_position);
-<a href=#5399 id=5399 data-nosnippet>5399</a>                <span class="kw">let </span>next_screen = clip_to_screen(next_clip_position);
-<a href=#5400 id=5400 data-nosnippet>5400</a>                <span class="kw">let </span>incoming = [
-<a href=#5401 id=5401 data-nosnippet>5401</a>                    vertex_screen[<span class="number">0</span>] - previous_screen[<span class="number">0</span>],
-<a href=#5402 id=5402 data-nosnippet>5402</a>                    vertex_screen[<span class="number">1</span>] - previous_screen[<span class="number">1</span>],
-<a href=#5403 id=5403 data-nosnippet>5403</a>                ];
-<a href=#5404 id=5404 data-nosnippet>5404</a>                <span class="kw">let </span>outgoing = [
-<a href=#5405 id=5405 data-nosnippet>5405</a>                    next_screen[<span class="number">0</span>] - vertex_screen[<span class="number">0</span>],
-<a href=#5406 id=5406 data-nosnippet>5406</a>                    next_screen[<span class="number">1</span>] - vertex_screen[<span class="number">1</span>],
-<a href=#5407 id=5407 data-nosnippet>5407</a>                ];
-<a href=#5408 id=5408 data-nosnippet>5408</a>                <span class="kw">let </span>incoming_length = incoming[<span class="number">0</span>].hypot(incoming[<span class="number">1</span>]);
-<a href=#5409 id=5409 data-nosnippet>5409</a>                <span class="kw">let </span>outgoing_length = outgoing[<span class="number">0</span>].hypot(outgoing[<span class="number">1</span>]);
-<a href=#5410 id=5410 data-nosnippet>5410</a>                <span class="kw">if </span>incoming_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS
-<a href=#5411 id=5411 data-nosnippet>5411</a>                    || outgoing_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS
-<a href=#5412 id=5412 data-nosnippet>5412</a>                {
-<a href=#5413 id=5413 data-nosnippet>5413</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#5414 id=5414 data-nosnippet>5414</a>                }
-<a href=#5415 id=5415 data-nosnippet>5415</a>                <span class="kw">let </span>incoming_unit = [incoming[<span class="number">0</span>] / incoming_length, incoming[<span class="number">1</span>] / incoming_length];
-<a href=#5416 id=5416 data-nosnippet>5416</a>                <span class="kw">let </span>outgoing_unit = [outgoing[<span class="number">0</span>] / outgoing_length, outgoing[<span class="number">1</span>] / outgoing_length];
-<a href=#5417 id=5417 data-nosnippet>5417</a>                <span class="kw">let </span>direction_sum = [
-<a href=#5418 id=5418 data-nosnippet>5418</a>                    incoming_unit[<span class="number">0</span>] + outgoing_unit[<span class="number">0</span>],
-<a href=#5419 id=5419 data-nosnippet>5419</a>                    incoming_unit[<span class="number">1</span>] + outgoing_unit[<span class="number">1</span>],
-<a href=#5420 id=5420 data-nosnippet>5420</a>                ];
-<a href=#5421 id=5421 data-nosnippet>5421</a>                <span class="kw">let </span>direction_sum_length = direction_sum[<span class="number">0</span>].hypot(direction_sum[<span class="number">1</span>]);
-<a href=#5422 id=5422 data-nosnippet>5422</a>                <span class="kw">let </span>bisector =
-<a href=#5423 id=5423 data-nosnippet>5423</a>                    <span class="kw">if </span>direction_sum_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS {
-<a href=#5424 id=5424 data-nosnippet>5424</a>                        [-incoming_unit[<span class="number">1</span>], incoming_unit[<span class="number">0</span>]]
-<a href=#5425 id=5425 data-nosnippet>5425</a>                    } <span class="kw">else </span>{
-<a href=#5426 id=5426 data-nosnippet>5426</a>                        [
-<a href=#5427 id=5427 data-nosnippet>5427</a>                            direction_sum[<span class="number">0</span>] / direction_sum_length,
-<a href=#5428 id=5428 data-nosnippet>5428</a>                            direction_sum[<span class="number">1</span>] / direction_sum_length,
-<a href=#5429 id=5429 data-nosnippet>5429</a>                        ]
-<a href=#5430 id=5430 data-nosnippet>5430</a>                    };
-<a href=#5431 id=5431 data-nosnippet>5431</a>                <span class="kw">let </span>perpendicular = [-bisector[<span class="number">1</span>], bisector[<span class="number">0</span>]];
-<a href=#5432 id=5432 data-nosnippet>5432</a>                <span class="prelude-val">Some</span>([
-<a href=#5433 id=5433 data-nosnippet>5433</a>                    vertex_screen[<span class="number">0</span>]
-<a href=#5434 id=5434 data-nosnippet>5434</a>                        + bisector[<span class="number">0</span>] * f64::from(vertex.shape_parameters[<span class="number">0</span>])
-<a href=#5435 id=5435 data-nosnippet>5435</a>                        + perpendicular[<span class="number">0</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
-<a href=#5436 id=5436 data-nosnippet>5436</a>                    vertex_screen[<span class="number">1</span>]
-<a href=#5437 id=5437 data-nosnippet>5437</a>                        + bisector[<span class="number">1</span>] * f64::from(vertex.shape_parameters[<span class="number">0</span>])
-<a href=#5438 id=5438 data-nosnippet>5438</a>                        + perpendicular[<span class="number">1</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
-<a href=#5439 id=5439 data-nosnippet>5439</a>                ])
-<a href=#5440 id=5440 data-nosnippet>5440</a>            }
-<a href=#5441 id=5441 data-nosnippet>5441</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#5442 id=5442 data-nosnippet>5442</a>        }
-<a href=#5443 id=5443 data-nosnippet>5443</a>    }
-<a href=#5444 id=5444 data-nosnippet>5444</a>
-<a href=#5445 id=5445 data-nosnippet>5445</a>    <span class="doccomment">/// Asserts the cached world-space layer reproduces the clip-space
-<a href=#5446 id=5446 data-nosnippet>5446</a>    /// assembly's screen geometry vertex by vertex (the shape kinds emit their
-<a href=#5447 id=5447 data-nosnippet>5447</a>    /// triangles in the same order for a scene away from the antimeridian).
-<a href=#5448 id=5448 data-nosnippet>5448</a>    </span><span class="kw">fn </span>assert_world_space_matches_clip_space(
-<a href=#5449 id=5449 data-nosnippet>5449</a>        camera: <span class="kw-2">&amp;</span>MapCamera,
-<a href=#5450 id=5450 data-nosnippet>5450</a>        viewport: <span class="kw-2">&amp;</span>ViewportPixels,
-<a href=#5451 id=5451 data-nosnippet>5451</a>        overlays: <span class="kw-2">&amp;</span>[MapOverlay],
-<a href=#5452 id=5452 data-nosnippet>5452</a>    ) {
-<a href=#5453 id=5453 data-nosnippet>5453</a>        <span class="kw">let </span>geometry = WorldSpaceOverlayGeometry::tessellate(overlays);
-<a href=#5454 id=5454 data-nosnippet>5454</a>        <span class="kw">let </span>clip_space_vertices =
-<a href=#5455 id=5455 data-nosnippet>5455</a>            overlay_triangle_vertices(camera, viewport, DEFAULT_FIELD_OF_VIEW_DEGREES, overlays);
-<a href=#5456 id=5456 data-nosnippet>5456</a>        <span class="macro">assert_eq!</span>(
-<a href=#5457 id=5457 data-nosnippet>5457</a>            geometry.vertex_count(),
-<a href=#5458 id=5458 data-nosnippet>5458</a>            clip_space_vertices.len(),
-<a href=#5459 id=5459 data-nosnippet>5459</a>            <span class="string">"the world-space layer must emit the same vertex count"
-<a href=#5460 id=5460 data-nosnippet>5460</a>        </span>);
-<a href=#5461 id=5461 data-nosnippet>5461</a>        <span class="kw">let </span>uniforms = WorldSpaceOverlayFrameUniforms::for_frame(
-<a href=#5462 id=5462 data-nosnippet>5462</a>            camera,
-<a href=#5463 id=5463 data-nosnippet>5463</a>            viewport,
-<a href=#5464 id=5464 data-nosnippet>5464</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#5465 id=5465 data-nosnippet>5465</a>            geometry.origin_normalized_world(),
-<a href=#5466 id=5466 data-nosnippet>5466</a>        );
-<a href=#5467 id=5467 data-nosnippet>5467</a>        <span class="kw">for </span>(vertex_index, (world_vertex, clip_space_vertex)) <span class="kw">in </span>geometry
-<a href=#5468 id=5468 data-nosnippet>5468</a>            .vertices()
-<a href=#5469 id=5469 data-nosnippet>5469</a>            .iter()
-<a href=#5470 id=5470 data-nosnippet>5470</a>            .zip(clip_space_vertices.iter())
-<a href=#5471 id=5471 data-nosnippet>5471</a>            .enumerate()
-<a href=#5472 id=5472 data-nosnippet>5472</a>        {
-<a href=#5473 id=5473 data-nosnippet>5473</a>            <span class="kw">let </span>expected_screen = vertex_screen_pixels(clip_space_vertex, viewport);
-<a href=#5474 id=5474 data-nosnippet>5474</a>            <span class="kw">let </span>world_screen = WORLD_SPACE_OVERLAY_WORLD_COPY_OFFSETS
-<a href=#5475 id=5475 data-nosnippet>5475</a>                .iter()
-<a href=#5476 id=5476 data-nosnippet>5476</a>                .find_map(|copy_offset| {
-<a href=#5477 id=5477 data-nosnippet>5477</a>                    world_space_vertex_screen(<span class="kw-2">&amp;</span>uniforms, world_vertex, f64::from(<span class="kw-2">*</span>copy_offset))
-<a href=#5478 id=5478 data-nosnippet>5478</a>                })
-<a href=#5479 id=5479 data-nosnippet>5479</a>                .unwrap_or_else(|| {
-<a href=#5480 id=5480 data-nosnippet>5480</a>                    <span class="macro">panic!</span>(<span class="string">"world-space vertex {vertex_index} has no drawable world copy"</span>)
-<a href=#5481 id=5481 data-nosnippet>5481</a>                });
-<a href=#5482 id=5482 data-nosnippet>5482</a>            <span class="kw">let </span>drift =
-<a href=#5483 id=5483 data-nosnippet>5483</a>                (world_screen[<span class="number">0</span>] - expected_screen[<span class="number">0</span>]).hypot(world_screen[<span class="number">1</span>] - expected_screen[<span class="number">1</span>]);
-<a href=#5484 id=5484 data-nosnippet>5484</a>            <span class="macro">assert!</span>(
-<a href=#5485 id=5485 data-nosnippet>5485</a>                drift &lt;= WORLD_SPACE_SCREEN_TOLERANCE_PIXELS,
-<a href=#5486 id=5486 data-nosnippet>5486</a>                <span class="string">"world-space vertex {vertex_index} drifts {drift} px from the clip-space \
-<a href=#5487 id=5487 data-nosnippet>5487</a>                 assembly: {world_screen:?} vs {expected_screen:?}"
-<a href=#5488 id=5488 data-nosnippet>5488</a>            </span>);
-<a href=#5489 id=5489 data-nosnippet>5489</a>        }
-<a href=#5490 id=5490 data-nosnippet>5490</a>    }
-<a href=#5491 id=5491 data-nosnippet>5491</a>
-<a href=#5492 id=5492 data-nosnippet>5492</a>    <span class="kw">fn </span>sacramento_camera() -&gt; MapCamera {
-<a href=#5493 id=5493 data-nosnippet>5493</a>        MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>)
-<a href=#5494 id=5494 data-nosnippet>5494</a>    }
-<a href=#5495 id=5495 data-nosnippet>5495</a>
-<a href=#5496 id=5496 data-nosnippet>5496</a>    <span class="attr">#[test]
-<a href=#5497 id=5497 data-nosnippet>5497</a>    </span><span class="kw">fn </span>world_space_route_matches_the_clip_space_assembly() {
-<a href=#5498 id=5498 data-nosnippet>5498</a>        <span class="kw">let </span>route = RoutePolylineOverlay::new(<span class="macro">vec!</span>[
-<a href=#5499 id=5499 data-nosnippet>5499</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.5023</span>),
-<a href=#5500 id=5500 data-nosnippet>5500</a>            coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>),
-<a href=#5501 id=5501 data-nosnippet>5501</a>            coordinate(<span class="number">38.580987</span>, -<span class="number">121.4858</span>),
-<a href=#5502 id=5502 data-nosnippet>5502</a>        ]);
-<a href=#5503 id=5503 data-nosnippet>5503</a>        assert_world_space_matches_clip_space(
-<a href=#5504 id=5504 data-nosnippet>5504</a>            <span class="kw-2">&amp;</span>sacramento_camera(),
-<a href=#5505 id=5505 data-nosnippet>5505</a>            <span class="kw-2">&amp;</span>square_viewport(),
-<a href=#5506 id=5506 data-nosnippet>5506</a>            <span class="kw-2">&amp;</span>[MapOverlay::RoutePolyline(route)],
-<a href=#5507 id=5507 data-nosnippet>5507</a>        );
-<a href=#5508 id=5508 data-nosnippet>5508</a>    }
-<a href=#5509 id=5509 data-nosnippet>5509</a>
-<a href=#5510 id=5510 data-nosnippet>5510</a>    <span class="attr">#[test]
-<a href=#5511 id=5511 data-nosnippet>5511</a>    </span><span class="kw">fn </span>world_space_markers_match_the_clip_space_assembly() {
-<a href=#5512 id=5512 data-nosnippet>5512</a>        <span class="kw">let </span>markers = PointMarkersOverlay::new(<span class="macro">vec!</span>[
-<a href=#5513 id=5513 data-nosnippet>5513</a>            coordinate(<span class="number">38.574984</span>, -<span class="number">121.4971</span>),
-<a href=#5514 id=5514 data-nosnippet>5514</a>            coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>),
-<a href=#5515 id=5515 data-nosnippet>5515</a>            coordinate(<span class="number">38.578216</span>, -<span class="number">121.4917</span>),
-<a href=#5516 id=5516 data-nosnippet>5516</a>        ]);
-<a href=#5517 id=5517 data-nosnippet>5517</a>        assert_world_space_matches_clip_space(
-<a href=#5518 id=5518 data-nosnippet>5518</a>            <span class="kw-2">&amp;</span>sacramento_camera(),
-<a href=#5519 id=5519 data-nosnippet>5519</a>            <span class="kw-2">&amp;</span>square_viewport(),
-<a href=#5520 id=5520 data-nosnippet>5520</a>            <span class="kw-2">&amp;</span>[MapOverlay::PointMarkers(markers)],
-<a href=#5521 id=5521 data-nosnippet>5521</a>        );
-<a href=#5522 id=5522 data-nosnippet>5522</a>    }
-<a href=#5523 id=5523 data-nosnippet>5523</a>
-<a href=#5524 id=5524 data-nosnippet>5524</a>    <span class="attr">#[test]
-<a href=#5525 id=5525 data-nosnippet>5525</a>    </span><span class="kw">fn </span>world_space_filled_polygon_matches_the_clip_space_assembly() {
-<a href=#5526 id=5526 data-nosnippet>5526</a>        <span class="kw">let </span>polygon = FilledPolygonOverlay::new(<span class="macro">vec!</span>[
-<a href=#5527 id=5527 data-nosnippet>5527</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.4987</span>),
-<a href=#5528 id=5528 data-nosnippet>5528</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.4901</span>),
-<a href=#5529 id=5529 data-nosnippet>5529</a>            coordinate(<span class="number">38.579717</span>, -<span class="number">121.4901</span>),
-<a href=#5530 id=5530 data-nosnippet>5530</a>            coordinate(<span class="number">38.579717</span>, -<span class="number">121.4987</span>),
-<a href=#5531 id=5531 data-nosnippet>5531</a>        ]);
-<a href=#5532 id=5532 data-nosnippet>5532</a>        assert_world_space_matches_clip_space(
-<a href=#5533 id=5533 data-nosnippet>5533</a>            <span class="kw-2">&amp;</span>sacramento_camera(),
-<a href=#5534 id=5534 data-nosnippet>5534</a>            <span class="kw-2">&amp;</span>square_viewport(),
-<a href=#5535 id=5535 data-nosnippet>5535</a>            <span class="kw-2">&amp;</span>[MapOverlay::FilledPolygon(polygon)],
-<a href=#5536 id=5536 data-nosnippet>5536</a>        );
-<a href=#5537 id=5537 data-nosnippet>5537</a>    }
-<a href=#5538 id=5538 data-nosnippet>5538</a>
-<a href=#5539 id=5539 data-nosnippet>5539</a>    <span class="attr">#[test]
-<a href=#5540 id=5540 data-nosnippet>5540</a>    </span><span class="kw">fn </span>world_space_geometry_is_independent_of_the_camera_pose() {
-<a href=#5541 id=5541 data-nosnippet>5541</a>        <span class="comment">// The cached layer takes no camera and stores content-defined offsets;
-<a href=#5542 id=5542 data-nosnippet>5542</a>        // two tessellations of the same list are identical, and the origin is
-<a href=#5543 id=5543 data-nosnippet>5543</a>        // the first coordinate's normalized world position.
-<a href=#5544 id=5544 data-nosnippet>5544</a>        </span><span class="kw">let </span>route = RoutePolylineOverlay::new(<span class="macro">vec!</span>[
-<a href=#5545 id=5545 data-nosnippet>5545</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.5023</span>),
-<a href=#5546 id=5546 data-nosnippet>5546</a>            coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>),
-<a href=#5547 id=5547 data-nosnippet>5547</a>        ]);
-<a href=#5548 id=5548 data-nosnippet>5548</a>        <span class="kw">let </span>overlays = [MapOverlay::RoutePolyline(route)];
-<a href=#5549 id=5549 data-nosnippet>5549</a>        <span class="kw">let </span>first = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>overlays);
-<a href=#5550 id=5550 data-nosnippet>5550</a>        <span class="kw">let </span>second = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>overlays);
-<a href=#5551 id=5551 data-nosnippet>5551</a>        <span class="macro">assert_eq!</span>(first, second);
-<a href=#5552 id=5552 data-nosnippet>5552</a>        <span class="kw">let </span>expected_origin =
-<a href=#5553 id=5553 data-nosnippet>5553</a>            <span class="kw">crate</span>::projection::coordinate_to_normalized_world(<span class="kw-2">&amp;</span>coordinate(<span class="number">38.573483</span>, -<span class="number">121.5023</span>));
-<a href=#5554 id=5554 data-nosnippet>5554</a>        <span class="macro">assert_eq!</span>(first.origin_normalized_world(), expected_origin);
-<a href=#5555 id=5555 data-nosnippet>5555</a>        <span class="macro">assert_eq!</span>(first.triangle_count(), <span class="number">2</span>);
-<a href=#5556 id=5556 data-nosnippet>5556</a>    }
-<a href=#5557 id=5557 data-nosnippet>5557</a>
-<a href=#5558 id=5558 data-nosnippet>5558</a>    <span class="attr">#[test]
-<a href=#5559 id=5559 data-nosnippet>5559</a>    </span><span class="kw">fn </span>world_space_antimeridian_route_draws_both_world_copies() {
-<a href=#5560 id=5560 data-nosnippet>5560</a>        <span class="comment">// The seam-crossing route unwrapped from longitude 100 east past 180
-<a href=#5561 id=5561 data-nosnippet>5561</a>        // to -160 must appear at both screen edges, exactly as the CPU
-<a href=#5562 id=5562 data-nosnippet>5562</a>        // assembly's window split places it. The cached layer stores the
-<a href=#5563 id=5563 data-nosnippet>5563</a>        // continuous chain once; the frame's world-copy instances and the
-<a href=#5564 id=5564 data-nosnippet>5564</a>        // shader's window discard supply the two recentered pieces.
-<a href=#5565 id=5565 data-nosnippet>5565</a>        </span><span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">0.0</span>);
-<a href=#5566 id=5566 data-nosnippet>5566</a>        <span class="kw">let </span>viewport = square_viewport();
-<a href=#5567 id=5567 data-nosnippet>5567</a>        <span class="kw">let </span>route = RoutePolylineOverlay::new(<span class="macro">vec!</span>[
-<a href=#5568 id=5568 data-nosnippet>5568</a>            coordinate(<span class="number">20.0</span>, <span class="number">100.0</span>),
-<a href=#5569 id=5569 data-nosnippet>5569</a>            coordinate(<span class="number">20.0</span>, <span class="number">170.0</span>),
-<a href=#5570 id=5570 data-nosnippet>5570</a>            coordinate(<span class="number">20.0</span>, -<span class="number">160.0</span>),
-<a href=#5571 id=5571 data-nosnippet>5571</a>        ]);
-<a href=#5572 id=5572 data-nosnippet>5572</a>        <span class="kw">let </span>overlays = [MapOverlay::RoutePolyline(route)];
-<a href=#5573 id=5573 data-nosnippet>5573</a>        <span class="kw">let </span>geometry = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>overlays);
-<a href=#5574 id=5574 data-nosnippet>5574</a>        <span class="kw">let </span>clip_space_vertices =
-<a href=#5575 id=5575 data-nosnippet>5575</a>            overlay_triangle_vertices(<span class="kw-2">&amp;</span>camera, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES, <span class="kw-2">&amp;</span>overlays);
-<a href=#5576 id=5576 data-nosnippet>5576</a>        <span class="macro">assert_eq!</span>(
-<a href=#5577 id=5577 data-nosnippet>5577</a>            geometry.triangle_count(),
-<a href=#5578 id=5578 data-nosnippet>5578</a>            <span class="number">6</span>,
-<a href=#5579 id=5579 data-nosnippet>5579</a>            <span class="string">"the cached layer holds two segment quads and one square join"
-<a href=#5580 id=5580 data-nosnippet>5580</a>        </span>);
-<a href=#5581 id=5581 data-nosnippet>5581</a>        <span class="macro">assert!</span>(
-<a href=#5582 id=5582 data-nosnippet>5582</a>            clip_space_vertices.len() &gt; geometry.vertex_count(),
-<a href=#5583 id=5583 data-nosnippet>5583</a>            <span class="string">"the CPU assembly additionally split the seam-crossing segment"
-<a href=#5584 id=5584 data-nosnippet>5584</a>        </span>);
-<a href=#5585 id=5585 data-nosnippet>5585</a>        <span class="kw">let </span>uniforms = WorldSpaceOverlayFrameUniforms::for_frame(
-<a href=#5586 id=5586 data-nosnippet>5586</a>            <span class="kw-2">&amp;</span>camera,
-<a href=#5587 id=5587 data-nosnippet>5587</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#5588 id=5588 data-nosnippet>5588</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#5589 id=5589 data-nosnippet>5589</a>            geometry.origin_normalized_world(),
-<a href=#5590 id=5590 data-nosnippet>5590</a>        );
-<a href=#5591 id=5591 data-nosnippet>5591</a>        <span class="kw">let </span><span class="kw-2">mut </span>left_edge_drawn = <span class="bool-val">false</span>;
-<a href=#5592 id=5592 data-nosnippet>5592</a>        <span class="kw">let </span><span class="kw-2">mut </span>right_edge_drawn = <span class="bool-val">false</span>;
-<a href=#5593 id=5593 data-nosnippet>5593</a>        <span class="kw">let </span><span class="kw-2">mut </span>selected_copies = Vec::new();
-<a href=#5594 id=5594 data-nosnippet>5594</a>        <span class="kw">for </span>copy_offset <span class="kw">in </span>WORLD_SPACE_OVERLAY_WORLD_COPY_OFFSETS {
-<a href=#5595 id=5595 data-nosnippet>5595</a>            <span class="kw">let </span><span class="kw-2">mut </span>copy_drew = <span class="bool-val">false</span>;
-<a href=#5596 id=5596 data-nosnippet>5596</a>            <span class="kw">for </span>world_vertex <span class="kw">in </span>geometry.vertices() {
-<a href=#5597 id=5597 data-nosnippet>5597</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(screen) =
-<a href=#5598 id=5598 data-nosnippet>5598</a>                    world_space_vertex_screen(<span class="kw-2">&amp;</span>uniforms, world_vertex, f64::from(copy_offset))
-<a href=#5599 id=5599 data-nosnippet>5599</a>                {
-<a href=#5600 id=5600 data-nosnippet>5600</a>                    copy_drew = <span class="bool-val">true</span>;
-<a href=#5601 id=5601 data-nosnippet>5601</a>                    left_edge_drawn |= screen[<span class="number">0</span>] &lt; viewport.width_pixels * <span class="number">0.1</span>;
-<a href=#5602 id=5602 data-nosnippet>5602</a>                    right_edge_drawn |= screen[<span class="number">0</span>] &gt; viewport.width_pixels * <span class="number">0.9</span>;
-<a href=#5603 id=5603 data-nosnippet>5603</a>                }
-<a href=#5604 id=5604 data-nosnippet>5604</a>            }
-<a href=#5605 id=5605 data-nosnippet>5605</a>            <span class="kw">if </span>copy_drew {
-<a href=#5606 id=5606 data-nosnippet>5606</a>                selected_copies.push(copy_offset);
-<a href=#5607 id=5607 data-nosnippet>5607</a>            }
-<a href=#5608 id=5608 data-nosnippet>5608</a>        }
-<a href=#5609 id=5609 data-nosnippet>5609</a>        <span class="macro">assert_eq!</span>(
-<a href=#5610 id=5610 data-nosnippet>5610</a>            selected_copies,
-<a href=#5611 id=5611 data-nosnippet>5611</a>            <span class="macro">vec!</span>[<span class="number">0.0</span>, <span class="number">1.0</span>],
-<a href=#5612 id=5612 data-nosnippet>5612</a>            <span class="string">"the route's nearest world copy spans both sides of the seam"
-<a href=#5613 id=5613 data-nosnippet>5613</a>        </span>);
-<a href=#5614 id=5614 data-nosnippet>5614</a>        <span class="macro">assert!</span>(
-<a href=#5615 id=5615 data-nosnippet>5615</a>            left_edge_drawn &amp;&amp; right_edge_drawn,
-<a href=#5616 id=5616 data-nosnippet>5616</a>            <span class="string">"the antimeridian route must reach both screen edges"
-<a href=#5617 id=5617 data-nosnippet>5617</a>        </span>);
-<a href=#5618 id=5618 data-nosnippet>5618</a>    }
-<a href=#5619 id=5619 data-nosnippet>5619</a>
-<a href=#5620 id=5620 data-nosnippet>5620</a>    <span class="attr">#[test]
-<a href=#5621 id=5621 data-nosnippet>5621</a>    </span><span class="kw">fn </span>an_empty_world_space_layer_draws_nothing() {
-<a href=#5622 id=5622 data-nosnippet>5622</a>        <span class="kw">let </span>geometry = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>[]);
-<a href=#5623 id=5623 data-nosnippet>5623</a>        <span class="macro">assert!</span>(geometry.is_empty());
-<a href=#5624 id=5624 data-nosnippet>5624</a>        <span class="macro">assert_eq!</span>(geometry.triangle_count(), <span class="number">0</span>);
-<a href=#5625 id=5625 data-nosnippet>5625</a>        <span class="macro">assert_eq!</span>(geometry.origin_normalized_world(), [<span class="number">0.0</span>, <span class="number">0.0</span>]);
-<a href=#5626 id=5626 data-nosnippet>5626</a>    }
-<a href=#5627 id=5627 data-nosnippet>5627</a>
-<a href=#5628 id=5628 data-nosnippet>5628</a>    <span class="attr">#[test]
-<a href=#5629 id=5629 data-nosnippet>5629</a>    </span><span class="kw">fn </span>scaling_to_a_device_pixel_ratio_multiplies_the_screen_space_sizes() {
-<a href=#5630 id=5630 data-nosnippet>5630</a>        <span class="kw">let </span>device_pixel_ratio = <span class="number">3.0</span>;
-<a href=#5631 id=5631 data-nosnippet>5631</a>        <span class="kw">let </span>route = MapOverlay::route_polyline(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)]);
-<a href=#5632 id=5632 data-nosnippet>5632</a>        <span class="kw">let </span>markers = MapOverlay::point_markers(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]);
-<a href=#5633 id=5633 data-nosnippet>5633</a>        <span class="kw">let </span>pins = MapOverlay::point_pins(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]);
-<a href=#5634 id=5634 data-nosnippet>5634</a>        <span class="kw">let </span>traffic = MapOverlay::traffic_flow(<span class="macro">vec!</span>[TrafficFlowData::from_congestion_level(
-<a href=#5635 id=5635 data-nosnippet>5635</a>            <span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)],
-<a href=#5636 id=5636 data-nosnippet>5636</a>            TrafficFlowCongestionLevel::FreeFlow,
-<a href=#5637 id=5637 data-nosnippet>5637</a>        )]);
-<a href=#5638 id=5638 data-nosnippet>5638</a>        <span class="kw">let </span>polygon = MapOverlay::filled_polygon(<span class="macro">vec!</span>[
-<a href=#5639 id=5639 data-nosnippet>5639</a>            coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>),
-<a href=#5640 id=5640 data-nosnippet>5640</a>            coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>),
-<a href=#5641 id=5641 data-nosnippet>5641</a>            coordinate(<span class="number">0.01</span>, <span class="number">0.0</span>),
-<a href=#5642 id=5642 data-nosnippet>5642</a>        ]);
-<a href=#5643 id=5643 data-nosnippet>5643</a>
-<a href=#5644 id=5644 data-nosnippet>5644</a>        <span class="kw">let </span>scaled_route = route.scaled_to_device_pixel_ratio(device_pixel_ratio);
-<a href=#5645 id=5645 data-nosnippet>5645</a>        <span class="kw">let </span>scaled_markers = markers.scaled_to_device_pixel_ratio(device_pixel_ratio);
-<a href=#5646 id=5646 data-nosnippet>5646</a>        <span class="kw">let </span>scaled_pins = pins.scaled_to_device_pixel_ratio(device_pixel_ratio);
-<a href=#5647 id=5647 data-nosnippet>5647</a>        <span class="kw">let </span>scaled_traffic = traffic.scaled_to_device_pixel_ratio(device_pixel_ratio);
-<a href=#5648 id=5648 data-nosnippet>5648</a>        <span class="kw">let </span>scaled_polygon = polygon.scaled_to_device_pixel_ratio(device_pixel_ratio);
-<a href=#5649 id=5649 data-nosnippet>5649</a>
-<a href=#5650 id=5650 data-nosnippet>5650</a>        <span class="kw">match </span>scaled_route {
-<a href=#5651 id=5651 data-nosnippet>5651</a>            MapOverlay::RoutePolyline(route_polyline) =&gt; <span class="macro">assert_eq!</span>(
-<a href=#5652 id=5652 data-nosnippet>5652</a>                route_polyline.width_pixels,
-<a href=#5653 id=5653 data-nosnippet>5653</a>                DEFAULT_ROUTE_LINE_WIDTH_PIXELS * device_pixel_ratio
-<a href=#5654 id=5654 data-nosnippet>5654</a>            ),
-<a href=#5655 id=5655 data-nosnippet>5655</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled route kept its kind, was {other:?}"</span>),
-<a href=#5656 id=5656 data-nosnippet>5656</a>        }
-<a href=#5657 id=5657 data-nosnippet>5657</a>        <span class="kw">match </span>scaled_markers {
-<a href=#5658 id=5658 data-nosnippet>5658</a>            MapOverlay::PointMarkers(markers) =&gt; <span class="macro">assert_eq!</span>(
-<a href=#5659 id=5659 data-nosnippet>5659</a>                markers.radius_pixels,
-<a href=#5660 id=5660 data-nosnippet>5660</a>                DEFAULT_POINT_MARKER_RADIUS_PIXELS * device_pixel_ratio
-<a href=#5661 id=5661 data-nosnippet>5661</a>            ),
-<a href=#5662 id=5662 data-nosnippet>5662</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled markers kept their kind, was {other:?}"</span>),
-<a href=#5663 id=5663 data-nosnippet>5663</a>        }
-<a href=#5664 id=5664 data-nosnippet>5664</a>        <span class="kw">match </span>scaled_pins {
-<a href=#5665 id=5665 data-nosnippet>5665</a>            MapOverlay::PointPins(pins) =&gt; <span class="macro">assert_eq!</span>(
-<a href=#5666 id=5666 data-nosnippet>5666</a>                pins.radius_pixels,
-<a href=#5667 id=5667 data-nosnippet>5667</a>                DEFAULT_POINT_PIN_RADIUS_PIXELS * device_pixel_ratio
-<a href=#5668 id=5668 data-nosnippet>5668</a>            ),
-<a href=#5669 id=5669 data-nosnippet>5669</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled pins kept their kind, was {other:?}"</span>),
-<a href=#5670 id=5670 data-nosnippet>5670</a>        }
-<a href=#5671 id=5671 data-nosnippet>5671</a>        <span class="kw">match </span>scaled_traffic {
-<a href=#5672 id=5672 data-nosnippet>5672</a>            MapOverlay::TrafficFlow(traffic_flow) =&gt; <span class="macro">assert_eq!</span>(
-<a href=#5673 id=5673 data-nosnippet>5673</a>                traffic_flow.width_pixels,
-<a href=#5674 id=5674 data-nosnippet>5674</a>                DEFAULT_TRAFFIC_LINE_WIDTH_PIXELS * device_pixel_ratio
-<a href=#5675 id=5675 data-nosnippet>5675</a>            ),
-<a href=#5676 id=5676 data-nosnippet>5676</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled traffic layer kept its kind, was {other:?}"</span>),
-<a href=#5677 id=5677 data-nosnippet>5677</a>        }
-<a href=#5678 id=5678 data-nosnippet>5678</a>        <span class="macro">assert_eq!</span>(
-<a href=#5679 id=5679 data-nosnippet>5679</a>            scaled_polygon, polygon,
-<a href=#5680 id=5680 data-nosnippet>5680</a>            <span class="string">"a filled polygon has no screen-space size to scale"
-<a href=#5681 id=5681 data-nosnippet>5681</a>        </span>);
-<a href=#5682 id=5682 data-nosnippet>5682</a>        <span class="macro">assert_eq!</span>(
-<a href=#5683 id=5683 data-nosnippet>5683</a>            route.scaled_to_device_pixel_ratio(<span class="number">1.0</span>),
-<a href=#5684 id=5684 data-nosnippet>5684</a>            route,
-<a href=#5685 id=5685 data-nosnippet>5685</a>            <span class="string">"the identity ratio leaves the overlay unchanged"
-<a href=#5686 id=5686 data-nosnippet>5686</a>        </span>);
-<a href=#5687 id=5687 data-nosnippet>5687</a>    }
-<a href=#5688 id=5688 data-nosnippet>5688</a>
-<a href=#5689 id=5689 data-nosnippet>5689</a>    <span class="attr">#[test]
-<a href=#5690 id=5690 data-nosnippet>5690</a>    </span><span class="kw">fn </span>emission_scales_screen_sizes_without_a_pre_scaled_copy() {
-<a href=#5691 id=5691 data-nosnippet>5691</a>        <span class="comment">// Scaling during assembly must match scaling a copy first, so a frame
-<a href=#5692 id=5692 data-nosnippet>5692</a>        // with a device-pixel-ratio surface never needs a pre-scaled list. The
-<a href=#5693 id=5693 data-nosnippet>5693</a>        // styled route exercises the stroke's offset, casing gap and blur too.
-<a href=#5694 id=5694 data-nosnippet>5694</a>        </span><span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">12.0</span>);
-<a href=#5695 id=5695 data-nosnippet>5695</a>        <span class="kw">let </span>viewport = square_viewport();
-<a href=#5696 id=5696 data-nosnippet>5696</a>        <span class="kw">let </span><span class="kw-2">mut </span>styled_route =
-<a href=#5697 id=5697 data-nosnippet>5697</a>            RoutePolylineOverlay::new(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)]);
-<a href=#5698 id=5698 data-nosnippet>5698</a>        styled_route.stroke = <span class="prelude-val">Some</span>(PolylineStroke {
-<a href=#5699 id=5699 data-nosnippet>5699</a>            cap: LineCap::Round,
-<a href=#5700 id=5700 data-nosnippet>5700</a>            join: LineJoin::Miter,
-<a href=#5701 id=5701 data-nosnippet>5701</a>            dash_array: <span class="macro">vec!</span>[<span class="number">2.0</span>, <span class="number">1.0</span>],
-<a href=#5702 id=5702 data-nosnippet>5702</a>            offset_pixels: <span class="number">3.0</span>,
-<a href=#5703 id=5703 data-nosnippet>5703</a>            gap_width_pixels: <span class="number">4.0</span>,
-<a href=#5704 id=5704 data-nosnippet>5704</a>            blur_pixels: <span class="number">1.5</span>,
-<a href=#5705 id=5705 data-nosnippet>5705</a>        });
-<a href=#5706 id=5706 data-nosnippet>5706</a>        <span class="kw">let </span>overlays = <span class="macro">vec!</span>[
-<a href=#5707 id=5707 data-nosnippet>5707</a>            MapOverlay::route_polyline(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)]),
-<a href=#5708 id=5708 data-nosnippet>5708</a>            MapOverlay::RoutePolyline(styled_route),
-<a href=#5709 id=5709 data-nosnippet>5709</a>            MapOverlay::point_markers(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]),
-<a href=#5710 id=5710 data-nosnippet>5710</a>            MapOverlay::point_pins(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]),
-<a href=#5711 id=5711 data-nosnippet>5711</a>            MapOverlay::traffic_flow(<span class="macro">vec!</span>[TrafficFlowData::from_congestion_level(
-<a href=#5712 id=5712 data-nosnippet>5712</a>                <span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)],
-<a href=#5713 id=5713 data-nosnippet>5713</a>                TrafficFlowCongestionLevel::Slow,
-<a href=#5714 id=5714 data-nosnippet>5714</a>            )]),
-<a href=#5715 id=5715 data-nosnippet>5715</a>        ];
-<a href=#5716 id=5716 data-nosnippet>5716</a>        <span class="kw">let </span>device_pixel_ratio = <span class="number">2.0</span>;
-<a href=#5717 id=5717 data-nosnippet>5717</a>        <span class="kw">let </span>emitted = overlay_triangle_vertices_for_layers(
-<a href=#5718 id=5718 data-nosnippet>5718</a>            <span class="kw-2">&amp;</span>camera,
-<a href=#5719 id=5719 data-nosnippet>5719</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#5720 id=5720 data-nosnippet>5720</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#5721 id=5721 data-nosnippet>5721</a>            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>overlays],
-<a href=#5722 id=5722 data-nosnippet>5722</a>            device_pixel_ratio,
-<a href=#5723 id=5723 data-nosnippet>5723</a>        );
-<a href=#5724 id=5724 data-nosnippet>5724</a>        <span class="kw">let </span>pre_scaled: Vec&lt;MapOverlay&gt; = overlays
-<a href=#5725 id=5725 data-nosnippet>5725</a>            .iter()
-<a href=#5726 id=5726 data-nosnippet>5726</a>            .map(|overlay| overlay.scaled_to_device_pixel_ratio(device_pixel_ratio))
-<a href=#5727 id=5727 data-nosnippet>5727</a>            .collect();
-<a href=#5728 id=5728 data-nosnippet>5728</a>        <span class="kw">let </span>expected = overlay_triangle_vertices(
-<a href=#5729 id=5729 data-nosnippet>5729</a>            <span class="kw-2">&amp;</span>camera,
-<a href=#5730 id=5730 data-nosnippet>5730</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#5731 id=5731 data-nosnippet>5731</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#5732 id=5732 data-nosnippet>5732</a>            <span class="kw-2">&amp;</span>pre_scaled,
-<a href=#5733 id=5733 data-nosnippet>5733</a>        );
-<a href=#5734 id=5734 data-nosnippet>5734</a>        <span class="macro">assert!</span>(!emitted.is_empty(), <span class="string">"the scene draws triangles"</span>);
-<a href=#5735 id=5735 data-nosnippet>5735</a>        <span class="macro">assert_eq!</span>(
-<a href=#5736 id=5736 data-nosnippet>5736</a>            emitted.len(),
-<a href=#5737 id=5737 data-nosnippet>5737</a>            expected.len(),
-<a href=#5738 id=5738 data-nosnippet>5738</a>            <span class="string">"emission scaling emits the pre-scaled list's vertices"
-<a href=#5739 id=5739 data-nosnippet>5739</a>        </span>);
-<a href=#5740 id=5740 data-nosnippet>5740</a>        <span class="kw">for </span>(emitted_vertex, expected_vertex) <span class="kw">in </span>emitted.iter().zip(<span class="kw-2">&amp;</span>expected) {
-<a href=#5741 id=5741 data-nosnippet>5741</a>            <span class="macro">assert_eq!</span>(emitted_vertex.clip_position, expected_vertex.clip_position);
-<a href=#5742 id=5742 data-nosnippet>5742</a>            <span class="macro">assert_eq!</span>(emitted_vertex.rgba_color, expected_vertex.rgba_color);
-<a href=#5743 id=5743 data-nosnippet>5743</a>        }
-<a href=#5744 id=5744 data-nosnippet>5744</a>    }
-<a href=#5745 id=5745 data-nosnippet>5745</a>}
+<a href=#5112 id=5112 data-nosnippet>5112</a>            geometry: Vec::new(),
+<a href=#5113 id=5113 data-nosnippet>5113</a>            legs: <span class="macro">vec!</span>[RouteLeg {
+<a href=#5114 id=5114 data-nosnippet>5114</a>                distance_meters: <span class="number">1000.0</span>,
+<a href=#5115 id=5115 data-nosnippet>5115</a>                duration_seconds: <span class="number">60.0</span>,
+<a href=#5116 id=5116 data-nosnippet>5116</a>                steps: <span class="macro">vec!</span>[
+<a href=#5117 id=5117 data-nosnippet>5117</a>                    RouteStep {
+<a href=#5118 id=5118 data-nosnippet>5118</a>                        distance_meters: <span class="number">500.0</span>,
+<a href=#5119 id=5119 data-nosnippet>5119</a>                        duration_seconds: <span class="number">30.0</span>,
+<a href=#5120 id=5120 data-nosnippet>5120</a>                        maneuver_type: ManeuverType::Departure,
+<a href=#5121 id=5121 data-nosnippet>5121</a>                        instruction_display_text: String::new(),
+<a href=#5122 id=5122 data-nosnippet>5122</a>                        instruction_speech_text: String::new(),
+<a href=#5123 id=5123 data-nosnippet>5123</a>                        shape: <span class="macro">vec!</span>[coordinate(<span class="number">1.0</span>, <span class="number">1.0</span>), coordinate(<span class="number">2.0</span>, <span class="number">2.0</span>)],
+<a href=#5124 id=5124 data-nosnippet>5124</a>                        lane_guidances: Vec::new(),
+<a href=#5125 id=5125 data-nosnippet>5125</a>                    },
+<a href=#5126 id=5126 data-nosnippet>5126</a>                    RouteStep {
+<a href=#5127 id=5127 data-nosnippet>5127</a>                        distance_meters: <span class="number">500.0</span>,
+<a href=#5128 id=5128 data-nosnippet>5128</a>                        duration_seconds: <span class="number">30.0</span>,
+<a href=#5129 id=5129 data-nosnippet>5129</a>                        maneuver_type: ManeuverType::Arrival,
+<a href=#5130 id=5130 data-nosnippet>5130</a>                        instruction_display_text: String::new(),
+<a href=#5131 id=5131 data-nosnippet>5131</a>                        instruction_speech_text: String::new(),
+<a href=#5132 id=5132 data-nosnippet>5132</a>                        shape: <span class="macro">vec!</span>[coordinate(<span class="number">3.0</span>, <span class="number">3.0</span>)],
+<a href=#5133 id=5133 data-nosnippet>5133</a>                        lane_guidances: Vec::new(),
+<a href=#5134 id=5134 data-nosnippet>5134</a>                    },
+<a href=#5135 id=5135 data-nosnippet>5135</a>                ],
+<a href=#5136 id=5136 data-nosnippet>5136</a>            }],
+<a href=#5137 id=5137 data-nosnippet>5137</a>        };
+<a href=#5138 id=5138 data-nosnippet>5138</a>        <span class="kw">let </span>route_overlay = RoutePolylineOverlay::from_route_data(<span class="kw-2">&amp;</span>route_data);
+<a href=#5139 id=5139 data-nosnippet>5139</a>        <span class="kw">let </span>flattened_longitudes: Vec&lt;f64&gt; = route_overlay
+<a href=#5140 id=5140 data-nosnippet>5140</a>            .coordinates
+<a href=#5141 id=5141 data-nosnippet>5141</a>            .iter()
+<a href=#5142 id=5142 data-nosnippet>5142</a>            .map(|coordinate| coordinate.longitude)
+<a href=#5143 id=5143 data-nosnippet>5143</a>            .collect();
+<a href=#5144 id=5144 data-nosnippet>5144</a>        <span class="macro">assert_eq!</span>(flattened_longitudes, <span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>]);
+<a href=#5145 id=5145 data-nosnippet>5145</a>        <span class="macro">assert_eq!</span>(route_overlay.rgba_color, DEFAULT_ROUTE_LINE_RGBA);
+<a href=#5146 id=5146 data-nosnippet>5146</a>        <span class="macro">assert_eq!</span>(route_overlay.width_pixels, DEFAULT_ROUTE_LINE_WIDTH_PIXELS);
+<a href=#5147 id=5147 data-nosnippet>5147</a>    }
+<a href=#5148 id=5148 data-nosnippet>5148</a>
+<a href=#5149 id=5149 data-nosnippet>5149</a>    <span class="attr">#[test]
+<a href=#5150 id=5150 data-nosnippet>5150</a>    </span><span class="kw">fn </span>congestion_levels_map_to_named_traffic_colors() {
+<a href=#5151 id=5151 data-nosnippet>5151</a>        <span class="macro">assert_eq!</span>(
+<a href=#5152 id=5152 data-nosnippet>5152</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::FreeFlow),
+<a href=#5153 id=5153 data-nosnippet>5153</a>            <span class="kw">super</span>::TRAFFIC_FREE_FLOW_RGBA
+<a href=#5154 id=5154 data-nosnippet>5154</a>        );
+<a href=#5155 id=5155 data-nosnippet>5155</a>        <span class="macro">assert_eq!</span>(
+<a href=#5156 id=5156 data-nosnippet>5156</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::Slow),
+<a href=#5157 id=5157 data-nosnippet>5157</a>            <span class="kw">super</span>::TRAFFIC_SLOW_RGBA
+<a href=#5158 id=5158 data-nosnippet>5158</a>        );
+<a href=#5159 id=5159 data-nosnippet>5159</a>        <span class="macro">assert_eq!</span>(
+<a href=#5160 id=5160 data-nosnippet>5160</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::Congested),
+<a href=#5161 id=5161 data-nosnippet>5161</a>            <span class="kw">super</span>::TRAFFIC_CONGESTED_RGBA
+<a href=#5162 id=5162 data-nosnippet>5162</a>        );
+<a href=#5163 id=5163 data-nosnippet>5163</a>        <span class="macro">assert_eq!</span>(
+<a href=#5164 id=5164 data-nosnippet>5164</a>            traffic_congestion_rgba(TrafficFlowCongestionLevel::Blocked),
+<a href=#5165 id=5165 data-nosnippet>5165</a>            <span class="kw">super</span>::TRAFFIC_BLOCKED_RGBA
+<a href=#5166 id=5166 data-nosnippet>5166</a>        );
+<a href=#5167 id=5167 data-nosnippet>5167</a>    }
+<a href=#5168 id=5168 data-nosnippet>5168</a>
+<a href=#5169 id=5169 data-nosnippet>5169</a>    <span class="attr">#[test]
+<a href=#5170 id=5170 data-nosnippet>5170</a>    </span><span class="kw">fn </span>a_traffic_flow_draws_one_thickened_quad_per_segment_in_its_congestion_color() {
+<a href=#5171 id=5171 data-nosnippet>5171</a>        <span class="kw">let </span>viewport = square_viewport();
+<a href=#5172 id=5172 data-nosnippet>5172</a>        <span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">10.0</span>);
+<a href=#5173 id=5173 data-nosnippet>5173</a>        <span class="kw">let </span>flow_shape = <span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.02</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.02</span>)];
+<a href=#5174 id=5174 data-nosnippet>5174</a>        <span class="kw">let </span>vertices = overlay_triangle_vertices(
+<a href=#5175 id=5175 data-nosnippet>5175</a>            <span class="kw-2">&amp;</span>camera,
+<a href=#5176 id=5176 data-nosnippet>5176</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#5177 id=5177 data-nosnippet>5177</a>            <span class="kw">crate</span>::camera::DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#5178 id=5178 data-nosnippet>5178</a>            <span class="kw-2">&amp;</span>[MapOverlay::TrafficFlow(TrafficFlowOverlay::new(<span class="macro">vec!</span>[
+<a href=#5179 id=5179 data-nosnippet>5179</a>                geospatial_types::TrafficFlowData::from_congestion_level(
+<a href=#5180 id=5180 data-nosnippet>5180</a>                    flow_shape,
+<a href=#5181 id=5181 data-nosnippet>5181</a>                    TrafficFlowCongestionLevel::Congested,
+<a href=#5182 id=5182 data-nosnippet>5182</a>                ),
+<a href=#5183 id=5183 data-nosnippet>5183</a>            ]))],
+<a href=#5184 id=5184 data-nosnippet>5184</a>        );
+<a href=#5185 id=5185 data-nosnippet>5185</a>        <span class="macro">assert_eq!</span>(vertices.len(), <span class="number">6</span>, <span class="string">"one flow segment draws one quad"</span>);
+<a href=#5186 id=5186 data-nosnippet>5186</a>        <span class="kw">for </span>vertex <span class="kw">in </span><span class="kw-2">&amp;</span>vertices {
+<a href=#5187 id=5187 data-nosnippet>5187</a>            <span class="macro">assert_eq!</span>(
+<a href=#5188 id=5188 data-nosnippet>5188</a>                vertex.rgba_color,
+<a href=#5189 id=5189 data-nosnippet>5189</a>                <span class="kw">super</span>::TRAFFIC_CONGESTED_RGBA,
+<a href=#5190 id=5190 data-nosnippet>5190</a>                <span class="string">"the segment paints its congestion level"
+<a href=#5191 id=5191 data-nosnippet>5191</a>            </span>);
+<a href=#5192 id=5192 data-nosnippet>5192</a>        }
+<a href=#5193 id=5193 data-nosnippet>5193</a>    }
+<a href=#5194 id=5194 data-nosnippet>5194</a>
+<a href=#5195 id=5195 data-nosnippet>5195</a>    <span class="attr">#[test]
+<a href=#5196 id=5196 data-nosnippet>5196</a>    </span><span class="kw">fn </span>a_point_pin_anchors_its_tip_and_keeps_its_head_center_hollow() {
+<a href=#5197 id=5197 data-nosnippet>5197</a>        <span class="kw">let </span>viewport = square_viewport();
+<a href=#5198 id=5198 data-nosnippet>5198</a>        <span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">10.0</span>);
+<a href=#5199 id=5199 data-nosnippet>5199</a>        <span class="kw">let </span>anchor = coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>);
+<a href=#5200 id=5200 data-nosnippet>5200</a>        <span class="kw">let </span>vertices = overlay_triangle_vertices(
+<a href=#5201 id=5201 data-nosnippet>5201</a>            <span class="kw-2">&amp;</span>camera,
+<a href=#5202 id=5202 data-nosnippet>5202</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#5203 id=5203 data-nosnippet>5203</a>            <span class="kw">crate</span>::camera::DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#5204 id=5204 data-nosnippet>5204</a>            <span class="kw-2">&amp;</span>[MapOverlay::PointPins(PointPinsOverlay::new(<span class="macro">vec!</span>[anchor]))],
+<a href=#5205 id=5205 data-nosnippet>5205</a>        );
+<a href=#5206 id=5206 data-nosnippet>5206</a>        <span class="macro">assert_eq!</span>(
+<a href=#5207 id=5207 data-nosnippet>5207</a>            vertices.len(),
+<a href=#5208 id=5208 data-nosnippet>5208</a>            <span class="kw">super</span>::POINT_PIN_RING_SIDES * <span class="number">6</span>,
+<a href=#5209 id=5209 data-nosnippet>5209</a>            <span class="string">"one pin draws two triangles per ring side"
+<a href=#5210 id=5210 data-nosnippet>5210</a>        </span>);
+<a href=#5211 id=5211 data-nosnippet>5211</a>        <span class="kw">let </span>anchor_screen = camera
+<a href=#5212 id=5212 data-nosnippet>5212</a>            .project_to_screen(<span class="kw-2">&amp;</span>anchor, <span class="kw-2">&amp;</span>viewport, <span class="number">60.0</span>)
+<a href=#5213 id=5213 data-nosnippet>5213</a>            .expect(<span class="string">"the camera projects its own scene point"</span>);
+<a href=#5214 id=5214 data-nosnippet>5214</a>        <span class="kw">let </span>head_center_screen = [
+<a href=#5215 id=5215 data-nosnippet>5215</a>            anchor_screen[<span class="number">0</span>],
+<a href=#5216 id=5216 data-nosnippet>5216</a>            anchor_screen[<span class="number">1</span>]
+<a href=#5217 id=5217 data-nosnippet>5217</a>                - DEFAULT_POINT_PIN_RADIUS_PIXELS * <span class="kw">super</span>::POINT_PIN_HEIGHT_RADIUS_FACTOR,
+<a href=#5218 id=5218 data-nosnippet>5218</a>        ];
+<a href=#5219 id=5219 data-nosnippet>5219</a>        <span class="kw">let </span>hollow_radius_pixels =
+<a href=#5220 id=5220 data-nosnippet>5220</a>            DEFAULT_POINT_PIN_RADIUS_PIXELS * <span class="kw">super</span>::POINT_PIN_HOLLOW_RADIUS_RATIO;
+<a href=#5221 id=5221 data-nosnippet>5221</a>        <span class="comment">// The tip is an outline vertex: the ring samples the downward angle.
+<a href=#5222 id=5222 data-nosnippet>5222</a>        </span><span class="kw">let </span>tip_appearances = vertices
+<a href=#5223 id=5223 data-nosnippet>5223</a>            .iter()
+<a href=#5224 id=5224 data-nosnippet>5224</a>            .filter(|vertex| {
+<a href=#5225 id=5225 data-nosnippet>5225</a>                <span class="kw">let </span>screen_pixels = vertex_screen_pixels(vertex, <span class="kw-2">&amp;</span>viewport);
+<a href=#5226 id=5226 data-nosnippet>5226</a>                (screen_pixels[<span class="number">0</span>] - anchor_screen[<span class="number">0</span>]).abs() &lt; SCREEN_PIXEL_TOLERANCE
+<a href=#5227 id=5227 data-nosnippet>5227</a>                    &amp;&amp; (screen_pixels[<span class="number">1</span>] - anchor_screen[<span class="number">1</span>]).abs() &lt; SCREEN_PIXEL_TOLERANCE
+<a href=#5228 id=5228 data-nosnippet>5228</a>            })
+<a href=#5229 id=5229 data-nosnippet>5229</a>            .count();
+<a href=#5230 id=5230 data-nosnippet>5230</a>        <span class="macro">assert!</span>(
+<a href=#5231 id=5231 data-nosnippet>5231</a>            tip_appearances &gt;= <span class="number">2</span>,
+<a href=#5232 id=5232 data-nosnippet>5232</a>            <span class="string">"the tip vertex joins both triangles of its ring side: {vertices:?}"
+<a href=#5233 id=5233 data-nosnippet>5233</a>        </span>);
+<a href=#5234 id=5234 data-nosnippet>5234</a>        <span class="kw">let </span>covered = |screen_point: [f64; <span class="number">2</span>]| {
+<a href=#5235 id=5235 data-nosnippet>5235</a>            vertices.chunks_exact(<span class="number">3</span>).any(|triangle| {
+<a href=#5236 id=5236 data-nosnippet>5236</a>                <span class="kw">let </span>corners =
+<a href=#5237 id=5237 data-nosnippet>5237</a>                    [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>].map(|corner| vertex_screen_pixels(<span class="kw-2">&amp;</span>triangle[corner], <span class="kw-2">&amp;</span>viewport));
+<a href=#5238 id=5238 data-nosnippet>5238</a>                screen_point_in_triangle(screen_point, corners)
+<a href=#5239 id=5239 data-nosnippet>5239</a>            })
+<a href=#5240 id=5240 data-nosnippet>5240</a>        };
+<a href=#5241 id=5241 data-nosnippet>5241</a>        <span class="macro">assert!</span>(
+<a href=#5242 id=5242 data-nosnippet>5242</a>            !covered(head_center_screen),
+<a href=#5243 id=5243 data-nosnippet>5243</a>            <span class="string">"the head center stays unpainted (the hollow)"
+<a href=#5244 id=5244 data-nosnippet>5244</a>        </span>);
+<a href=#5245 id=5245 data-nosnippet>5245</a>        <span class="macro">assert!</span>(
+<a href=#5246 id=5246 data-nosnippet>5246</a>            !covered([
+<a href=#5247 id=5247 data-nosnippet>5247</a>                head_center_screen[<span class="number">0</span>] + hollow_radius_pixels * <span class="number">0.5</span>,
+<a href=#5248 id=5248 data-nosnippet>5248</a>                head_center_screen[<span class="number">1</span>]
+<a href=#5249 id=5249 data-nosnippet>5249</a>            ]),
+<a href=#5250 id=5250 data-nosnippet>5250</a>            <span class="string">"a point inside the hollow radius stays unpainted"
+<a href=#5251 id=5251 data-nosnippet>5251</a>        </span>);
+<a href=#5252 id=5252 data-nosnippet>5252</a>        <span class="macro">assert!</span>(
+<a href=#5253 id=5253 data-nosnippet>5253</a>            covered([
+<a href=#5254 id=5254 data-nosnippet>5254</a>                head_center_screen[<span class="number">0</span>] + hollow_radius_pixels * <span class="number">1.8</span>,
+<a href=#5255 id=5255 data-nosnippet>5255</a>                head_center_screen[<span class="number">1</span>]
+<a href=#5256 id=5256 data-nosnippet>5256</a>            ]),
+<a href=#5257 id=5257 data-nosnippet>5257</a>            <span class="string">"a point between the hollow and the head outline paints"
+<a href=#5258 id=5258 data-nosnippet>5258</a>        </span>);
+<a href=#5259 id=5259 data-nosnippet>5259</a>        <span class="macro">assert!</span>(
+<a href=#5260 id=5260 data-nosnippet>5260</a>            !covered([
+<a href=#5261 id=5261 data-nosnippet>5261</a>                head_center_screen[<span class="number">0</span>] + DEFAULT_POINT_PIN_RADIUS_PIXELS * <span class="number">1.25</span>,
+<a href=#5262 id=5262 data-nosnippet>5262</a>                head_center_screen[<span class="number">1</span>]
+<a href=#5263 id=5263 data-nosnippet>5263</a>            ]),
+<a href=#5264 id=5264 data-nosnippet>5264</a>            <span class="string">"a point beyond the head outline stays unpainted"
+<a href=#5265 id=5265 data-nosnippet>5265</a>        </span>);
+<a href=#5266 id=5266 data-nosnippet>5266</a>    }
+<a href=#5267 id=5267 data-nosnippet>5267</a>
+<a href=#5268 id=5268 data-nosnippet>5268</a>    <span class="doccomment">/// Point-in-triangle test on the display's pixel axes; orientation does
+<a href=#5269 id=5269 data-nosnippet>5269</a>    /// not matter because the barycentric signs are compared as a set.
+<a href=#5270 id=5270 data-nosnippet>5270</a>    </span><span class="kw">fn </span>screen_point_in_triangle(screen_point: [f64; <span class="number">2</span>], corners: [[f64; <span class="number">2</span>]; <span class="number">3</span>]) -&gt; bool {
+<a href=#5271 id=5271 data-nosnippet>5271</a>        <span class="kw">let </span>edge_signs: Vec&lt;f64&gt; = (<span class="number">0</span>..<span class="number">3</span>)
+<a href=#5272 id=5272 data-nosnippet>5272</a>            .map(|edge_index| {
+<a href=#5273 id=5273 data-nosnippet>5273</a>                <span class="kw">let </span>start = corners[edge_index];
+<a href=#5274 id=5274 data-nosnippet>5274</a>                <span class="kw">let </span>end = corners[(edge_index + <span class="number">1</span>) % <span class="number">3</span>];
+<a href=#5275 id=5275 data-nosnippet>5275</a>                (end[<span class="number">0</span>] - start[<span class="number">0</span>]) * (screen_point[<span class="number">1</span>] - start[<span class="number">1</span>])
+<a href=#5276 id=5276 data-nosnippet>5276</a>                    - (end[<span class="number">1</span>] - start[<span class="number">1</span>]) * (screen_point[<span class="number">0</span>] - start[<span class="number">0</span>])
+<a href=#5277 id=5277 data-nosnippet>5277</a>            })
+<a href=#5278 id=5278 data-nosnippet>5278</a>            .collect();
+<a href=#5279 id=5279 data-nosnippet>5279</a>        <span class="kw">let </span>has_negative = edge_signs
+<a href=#5280 id=5280 data-nosnippet>5280</a>            .iter()
+<a href=#5281 id=5281 data-nosnippet>5281</a>            .any(|sign| <span class="kw-2">*</span>sign &lt; -SCREEN_PIXEL_TOLERANCE);
+<a href=#5282 id=5282 data-nosnippet>5282</a>        <span class="kw">let </span>has_positive = edge_signs.iter().any(|sign| <span class="kw-2">*</span>sign &gt; SCREEN_PIXEL_TOLERANCE);
+<a href=#5283 id=5283 data-nosnippet>5283</a>        !(has_negative &amp;&amp; has_positive)
+<a href=#5284 id=5284 data-nosnippet>5284</a>    }
+<a href=#5285 id=5285 data-nosnippet>5285</a>
+<a href=#5286 id=5286 data-nosnippet>5286</a>    <span class="attr">#[test]
+<a href=#5287 id=5287 data-nosnippet>5287</a>    </span><span class="kw">fn </span>the_screen_pixel_scale_matches_the_zoom() {
+<a href=#5288 id=5288 data-nosnippet>5288</a>        <span class="comment">// A guard on the frame projection sharing the camera's own scale
+<a href=#5289 id=5289 data-nosnippet>5289</a>        // definition: no overlay-specific conversion may drift.
+<a href=#5290 id=5290 data-nosnippet>5290</a>        </span><span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">10.0</span>);
+<a href=#5291 id=5291 data-nosnippet>5291</a>        <span class="kw">let </span>viewport = square_viewport();
+<a href=#5292 id=5292 data-nosnippet>5292</a>        <span class="kw">let </span>frame_projection = OverlayFrameProjection::for_frame(<span class="kw-2">&amp;</span>camera, <span class="kw-2">&amp;</span>viewport, <span class="number">60.0</span>);
+<a href=#5293 id=5293 data-nosnippet>5293</a>        <span class="macro">assert_eq!</span>(frame_projection.zoom_scale_pixels, zoom_scale_pixels(<span class="number">10.0</span>));
+<a href=#5294 id=5294 data-nosnippet>5294</a>        <span class="kw">let </span>wrapped = frame_projection.wrapped_x(<span class="number">0.9</span>);
+<a href=#5295 id=5295 data-nosnippet>5295</a>        <span class="macro">assert!</span>(
+<a href=#5296 id=5296 data-nosnippet>5296</a>            (wrapped - <span class="number">0.9</span>).abs() &lt;= <span class="number">0.5</span>,
+<a href=#5297 id=5297 data-nosnippet>5297</a>            <span class="string">"wrapped x stays within half a world of the camera center"
+<a href=#5298 id=5298 data-nosnippet>5298</a>        </span>);
+<a href=#5299 id=5299 data-nosnippet>5299</a>    }
+<a href=#5300 id=5300 data-nosnippet>5300</a>
+<a href=#5301 id=5301 data-nosnippet>5301</a>    <span class="doccomment">/// Screen-pixel tolerance of the world-space parity assertions: the frame
+<a href=#5302 id=5302 data-nosnippet>5302</a>    /// uniform crosses to the GPU as `f32`, while the CPU assembly keeps
+<a href=#5303 id=5303 data-nosnippet>5303</a>    /// `f64` through its projection, so a sub-hundredth of a pixel is expected
+<a href=#5304 id=5304 data-nosnippet>5304</a>    /// and a whole pixel would be a real drift.
+<a href=#5305 id=5305 data-nosnippet>5305</a>    </span><span class="kw">const </span>WORLD_SPACE_SCREEN_TOLERANCE_PIXELS: f64 = <span class="number">0.05</span>;
+<a href=#5306 id=5306 data-nosnippet>5306</a>
+<a href=#5307 id=5307 data-nosnippet>5307</a>    <span class="doccomment">/// Reimplements the world-space overlay vertex shader in `f64` for the
+<a href=#5308 id=5308 data-nosnippet>5308</a>    /// parity tests: the same mode dispatch and world-copy window discard,
+<a href=#5309 id=5309 data-nosnippet>5309</a>    /// evaluated against the same frame uniform the GPU receives. Returns the
+<a href=#5310 id=5310 data-nosnippet>5310</a>    /// final screen position, or `None` when the vertex's world copy is not
+<a href=#5311 id=5311 data-nosnippet>5311</a>    /// the camera's own (the shader's fragment discard).
+<a href=#5312 id=5312 data-nosnippet>5312</a>    </span><span class="kw">fn </span>world_space_vertex_screen(
+<a href=#5313 id=5313 data-nosnippet>5313</a>        uniforms: <span class="kw-2">&amp;</span>WorldSpaceOverlayFrameUniforms,
+<a href=#5314 id=5314 data-nosnippet>5314</a>        vertex: <span class="kw-2">&amp;</span>WorldSpaceOverlayVertex,
+<a href=#5315 id=5315 data-nosnippet>5315</a>        copy_offset: f64,
+<a href=#5316 id=5316 data-nosnippet>5316</a>    ) -&gt; <span class="prelude-ty">Option</span>&lt;[f64; <span class="number">2</span>]&gt; {
+<a href=#5317 id=5317 data-nosnippet>5317</a>        <span class="kw">let </span>origin_relative = [
+<a href=#5318 id=5318 data-nosnippet>5318</a>            f64::from(uniforms.origin_relative_normalized[<span class="number">0</span>]),
+<a href=#5319 id=5319 data-nosnippet>5319</a>            f64::from(uniforms.origin_relative_normalized[<span class="number">1</span>]),
+<a href=#5320 id=5320 data-nosnippet>5320</a>        ];
+<a href=#5321 id=5321 data-nosnippet>5321</a>        <span class="kw">let </span>window_relative_x =
+<a href=#5322 id=5322 data-nosnippet>5322</a>            origin_relative[<span class="number">0</span>] + f64::from(vertex.world_position[<span class="number">0</span>]) - copy_offset;
+<a href=#5323 id=5323 data-nosnippet>5323</a>        <span class="kw">if </span>!(-<span class="number">0.5</span>..<span class="number">0.5</span>).contains(<span class="kw-2">&amp;</span>window_relative_x) {
+<a href=#5324 id=5324 data-nosnippet>5324</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#5325 id=5325 data-nosnippet>5325</a>        }
+<a href=#5326 id=5326 data-nosnippet>5326</a>        <span class="kw">let </span>world_to_clip = |position: [f32; <span class="number">2</span>]| {
+<a href=#5327 id=5327 data-nosnippet>5327</a>            <span class="kw">let </span>relative = [
+<a href=#5328 id=5328 data-nosnippet>5328</a>                origin_relative[<span class="number">0</span>] + f64::from(position[<span class="number">0</span>]) - copy_offset,
+<a href=#5329 id=5329 data-nosnippet>5329</a>                origin_relative[<span class="number">1</span>] - f64::from(position[<span class="number">1</span>]),
+<a href=#5330 id=5330 data-nosnippet>5330</a>            ];
+<a href=#5331 id=5331 data-nosnippet>5331</a>            <span class="kw">let </span><span class="kw-2">mut </span>clip_position = [<span class="number">0.0_f64</span>; <span class="number">4</span>];
+<a href=#5332 id=5332 data-nosnippet>5332</a>            <span class="kw">for </span>(row, component) <span class="kw">in </span>clip_position.iter_mut().enumerate() {
+<a href=#5333 id=5333 data-nosnippet>5333</a>                <span class="kw-2">*</span>component = f64::from(uniforms.anchor_clip_position[row])
+<a href=#5334 id=5334 data-nosnippet>5334</a>                    + f64::from(uniforms.relative_view_projection[<span class="number">0</span>][row]) * relative[<span class="number">0</span>]
+<a href=#5335 id=5335 data-nosnippet>5335</a>                    + f64::from(uniforms.relative_view_projection[<span class="number">1</span>][row]) * relative[<span class="number">1</span>];
+<a href=#5336 id=5336 data-nosnippet>5336</a>            }
+<a href=#5337 id=5337 data-nosnippet>5337</a>            clip_position
+<a href=#5338 id=5338 data-nosnippet>5338</a>        };
+<a href=#5339 id=5339 data-nosnippet>5339</a>        <span class="kw">let </span>clip_to_screen = |clip_position: [f64; <span class="number">4</span>]| {
+<a href=#5340 id=5340 data-nosnippet>5340</a>            <span class="kw">let </span>normalized_device = [
+<a href=#5341 id=5341 data-nosnippet>5341</a>                clip_position[<span class="number">0</span>] / clip_position[<span class="number">3</span>],
+<a href=#5342 id=5342 data-nosnippet>5342</a>                clip_position[<span class="number">1</span>] / clip_position[<span class="number">3</span>],
+<a href=#5343 id=5343 data-nosnippet>5343</a>            ];
+<a href=#5344 id=5344 data-nosnippet>5344</a>            [
+<a href=#5345 id=5345 data-nosnippet>5345</a>                (normalized_device[<span class="number">0</span>] + <span class="number">1.0</span>) * <span class="number">0.5 </span>* f64::from(uniforms.viewport_size_pixels[<span class="number">0</span>]),
+<a href=#5346 id=5346 data-nosnippet>5346</a>                (<span class="number">1.0 </span>- (normalized_device[<span class="number">1</span>] + <span class="number">1.0</span>) * <span class="number">0.5</span>)
+<a href=#5347 id=5347 data-nosnippet>5347</a>                    * f64::from(uniforms.viewport_size_pixels[<span class="number">1</span>]),
+<a href=#5348 id=5348 data-nosnippet>5348</a>            ]
+<a href=#5349 id=5349 data-nosnippet>5349</a>        };
+<a href=#5350 id=5350 data-nosnippet>5350</a>        <span class="kw">match </span>vertex.shape_kind {
+<a href=#5351 id=5351 data-nosnippet>5351</a>            <span class="number">0 </span>=&gt; <span class="prelude-val">Some</span>(clip_to_screen(world_to_clip(vertex.world_position))),
+<a href=#5352 id=5352 data-nosnippet>5352</a>            <span class="number">1 </span>=&gt; {
+<a href=#5353 id=5353 data-nosnippet>5353</a>                <span class="kw">let </span>anchor_clip_position = world_to_clip(vertex.world_position);
+<a href=#5354 id=5354 data-nosnippet>5354</a>                <span class="kw">if </span>anchor_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0 </span>{
+<a href=#5355 id=5355 data-nosnippet>5355</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#5356 id=5356 data-nosnippet>5356</a>                }
+<a href=#5357 id=5357 data-nosnippet>5357</a>                <span class="kw">let </span>anchor_screen = clip_to_screen(anchor_clip_position);
+<a href=#5358 id=5358 data-nosnippet>5358</a>                <span class="prelude-val">Some</span>([
+<a href=#5359 id=5359 data-nosnippet>5359</a>                    anchor_screen[<span class="number">0</span>] + f64::from(vertex.shape_parameters[<span class="number">0</span>]),
+<a href=#5360 id=5360 data-nosnippet>5360</a>                    anchor_screen[<span class="number">1</span>] + f64::from(vertex.shape_parameters[<span class="number">1</span>]),
+<a href=#5361 id=5361 data-nosnippet>5361</a>                ])
+<a href=#5362 id=5362 data-nosnippet>5362</a>            }
+<a href=#5363 id=5363 data-nosnippet>5363</a>            <span class="number">2 </span>=&gt; {
+<a href=#5364 id=5364 data-nosnippet>5364</a>                <span class="kw">let </span>self_clip_position = world_to_clip(vertex.world_position);
+<a href=#5365 id=5365 data-nosnippet>5365</a>                <span class="kw">let </span>other_clip_position = world_to_clip(vertex.reference_position);
+<a href=#5366 id=5366 data-nosnippet>5366</a>                <span class="kw">if </span>self_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0 </span>|| other_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0 </span>{
+<a href=#5367 id=5367 data-nosnippet>5367</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#5368 id=5368 data-nosnippet>5368</a>                }
+<a href=#5369 id=5369 data-nosnippet>5369</a>                <span class="kw">let </span>self_screen = clip_to_screen(self_clip_position);
+<a href=#5370 id=5370 data-nosnippet>5370</a>                <span class="kw">let </span>other_screen = clip_to_screen(other_clip_position);
+<a href=#5371 id=5371 data-nosnippet>5371</a>                <span class="kw">let </span>direction = [
+<a href=#5372 id=5372 data-nosnippet>5372</a>                    (other_screen[<span class="number">0</span>] - self_screen[<span class="number">0</span>]) * f64::from(vertex.shape_parameters[<span class="number">0</span>]),
+<a href=#5373 id=5373 data-nosnippet>5373</a>                    (other_screen[<span class="number">1</span>] - self_screen[<span class="number">1</span>]) * f64::from(vertex.shape_parameters[<span class="number">0</span>]),
+<a href=#5374 id=5374 data-nosnippet>5374</a>                ];
+<a href=#5375 id=5375 data-nosnippet>5375</a>                <span class="kw">let </span>direction_length = direction[<span class="number">0</span>].hypot(direction[<span class="number">1</span>]);
+<a href=#5376 id=5376 data-nosnippet>5376</a>                <span class="kw">if </span>direction_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS {
+<a href=#5377 id=5377 data-nosnippet>5377</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#5378 id=5378 data-nosnippet>5378</a>                }
+<a href=#5379 id=5379 data-nosnippet>5379</a>                <span class="kw">let </span>perpendicular = [
+<a href=#5380 id=5380 data-nosnippet>5380</a>                    -direction[<span class="number">1</span>] / direction_length,
+<a href=#5381 id=5381 data-nosnippet>5381</a>                    direction[<span class="number">0</span>] / direction_length,
+<a href=#5382 id=5382 data-nosnippet>5382</a>                ];
+<a href=#5383 id=5383 data-nosnippet>5383</a>                <span class="prelude-val">Some</span>([
+<a href=#5384 id=5384 data-nosnippet>5384</a>                    self_screen[<span class="number">0</span>] + perpendicular[<span class="number">0</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
+<a href=#5385 id=5385 data-nosnippet>5385</a>                    self_screen[<span class="number">1</span>] + perpendicular[<span class="number">1</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
+<a href=#5386 id=5386 data-nosnippet>5386</a>                ])
+<a href=#5387 id=5387 data-nosnippet>5387</a>            }
+<a href=#5388 id=5388 data-nosnippet>5388</a>            <span class="number">3 </span>=&gt; {
+<a href=#5389 id=5389 data-nosnippet>5389</a>                <span class="kw">let </span>previous_clip_position = world_to_clip(vertex.reference_position);
+<a href=#5390 id=5390 data-nosnippet>5390</a>                <span class="kw">let </span>vertex_clip_position = world_to_clip(vertex.world_position);
+<a href=#5391 id=5391 data-nosnippet>5391</a>                <span class="kw">let </span>next_clip_position = world_to_clip(vertex.next_position);
+<a href=#5392 id=5392 data-nosnippet>5392</a>                <span class="kw">if </span>previous_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0
+<a href=#5393 id=5393 data-nosnippet>5393</a>                    </span>|| vertex_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0
+<a href=#5394 id=5394 data-nosnippet>5394</a>                    </span>|| next_clip_position[<span class="number">3</span>] &lt;= <span class="number">0.0
+<a href=#5395 id=5395 data-nosnippet>5395</a>                </span>{
+<a href=#5396 id=5396 data-nosnippet>5396</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#5397 id=5397 data-nosnippet>5397</a>                }
+<a href=#5398 id=5398 data-nosnippet>5398</a>                <span class="kw">let </span>previous_screen = clip_to_screen(previous_clip_position);
+<a href=#5399 id=5399 data-nosnippet>5399</a>                <span class="kw">let </span>vertex_screen = clip_to_screen(vertex_clip_position);
+<a href=#5400 id=5400 data-nosnippet>5400</a>                <span class="kw">let </span>next_screen = clip_to_screen(next_clip_position);
+<a href=#5401 id=5401 data-nosnippet>5401</a>                <span class="kw">let </span>incoming = [
+<a href=#5402 id=5402 data-nosnippet>5402</a>                    vertex_screen[<span class="number">0</span>] - previous_screen[<span class="number">0</span>],
+<a href=#5403 id=5403 data-nosnippet>5403</a>                    vertex_screen[<span class="number">1</span>] - previous_screen[<span class="number">1</span>],
+<a href=#5404 id=5404 data-nosnippet>5404</a>                ];
+<a href=#5405 id=5405 data-nosnippet>5405</a>                <span class="kw">let </span>outgoing = [
+<a href=#5406 id=5406 data-nosnippet>5406</a>                    next_screen[<span class="number">0</span>] - vertex_screen[<span class="number">0</span>],
+<a href=#5407 id=5407 data-nosnippet>5407</a>                    next_screen[<span class="number">1</span>] - vertex_screen[<span class="number">1</span>],
+<a href=#5408 id=5408 data-nosnippet>5408</a>                ];
+<a href=#5409 id=5409 data-nosnippet>5409</a>                <span class="kw">let </span>incoming_length = incoming[<span class="number">0</span>].hypot(incoming[<span class="number">1</span>]);
+<a href=#5410 id=5410 data-nosnippet>5410</a>                <span class="kw">let </span>outgoing_length = outgoing[<span class="number">0</span>].hypot(outgoing[<span class="number">1</span>]);
+<a href=#5411 id=5411 data-nosnippet>5411</a>                <span class="kw">if </span>incoming_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS
+<a href=#5412 id=5412 data-nosnippet>5412</a>                    || outgoing_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS
+<a href=#5413 id=5413 data-nosnippet>5413</a>                {
+<a href=#5414 id=5414 data-nosnippet>5414</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#5415 id=5415 data-nosnippet>5415</a>                }
+<a href=#5416 id=5416 data-nosnippet>5416</a>                <span class="kw">let </span>incoming_unit = [incoming[<span class="number">0</span>] / incoming_length, incoming[<span class="number">1</span>] / incoming_length];
+<a href=#5417 id=5417 data-nosnippet>5417</a>                <span class="kw">let </span>outgoing_unit = [outgoing[<span class="number">0</span>] / outgoing_length, outgoing[<span class="number">1</span>] / outgoing_length];
+<a href=#5418 id=5418 data-nosnippet>5418</a>                <span class="kw">let </span>direction_sum = [
+<a href=#5419 id=5419 data-nosnippet>5419</a>                    incoming_unit[<span class="number">0</span>] + outgoing_unit[<span class="number">0</span>],
+<a href=#5420 id=5420 data-nosnippet>5420</a>                    incoming_unit[<span class="number">1</span>] + outgoing_unit[<span class="number">1</span>],
+<a href=#5421 id=5421 data-nosnippet>5421</a>                ];
+<a href=#5422 id=5422 data-nosnippet>5422</a>                <span class="kw">let </span>direction_sum_length = direction_sum[<span class="number">0</span>].hypot(direction_sum[<span class="number">1</span>]);
+<a href=#5423 id=5423 data-nosnippet>5423</a>                <span class="kw">let </span>bisector =
+<a href=#5424 id=5424 data-nosnippet>5424</a>                    <span class="kw">if </span>direction_sum_length &lt; <span class="kw">super</span>::MINIMUM_VISIBLE_SEGMENT_LENGTH_PIXELS {
+<a href=#5425 id=5425 data-nosnippet>5425</a>                        [-incoming_unit[<span class="number">1</span>], incoming_unit[<span class="number">0</span>]]
+<a href=#5426 id=5426 data-nosnippet>5426</a>                    } <span class="kw">else </span>{
+<a href=#5427 id=5427 data-nosnippet>5427</a>                        [
+<a href=#5428 id=5428 data-nosnippet>5428</a>                            direction_sum[<span class="number">0</span>] / direction_sum_length,
+<a href=#5429 id=5429 data-nosnippet>5429</a>                            direction_sum[<span class="number">1</span>] / direction_sum_length,
+<a href=#5430 id=5430 data-nosnippet>5430</a>                        ]
+<a href=#5431 id=5431 data-nosnippet>5431</a>                    };
+<a href=#5432 id=5432 data-nosnippet>5432</a>                <span class="kw">let </span>perpendicular = [-bisector[<span class="number">1</span>], bisector[<span class="number">0</span>]];
+<a href=#5433 id=5433 data-nosnippet>5433</a>                <span class="prelude-val">Some</span>([
+<a href=#5434 id=5434 data-nosnippet>5434</a>                    vertex_screen[<span class="number">0</span>]
+<a href=#5435 id=5435 data-nosnippet>5435</a>                        + bisector[<span class="number">0</span>] * f64::from(vertex.shape_parameters[<span class="number">0</span>])
+<a href=#5436 id=5436 data-nosnippet>5436</a>                        + perpendicular[<span class="number">0</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
+<a href=#5437 id=5437 data-nosnippet>5437</a>                    vertex_screen[<span class="number">1</span>]
+<a href=#5438 id=5438 data-nosnippet>5438</a>                        + bisector[<span class="number">1</span>] * f64::from(vertex.shape_parameters[<span class="number">0</span>])
+<a href=#5439 id=5439 data-nosnippet>5439</a>                        + perpendicular[<span class="number">1</span>] * f64::from(vertex.shape_parameters[<span class="number">1</span>]),
+<a href=#5440 id=5440 data-nosnippet>5440</a>                ])
+<a href=#5441 id=5441 data-nosnippet>5441</a>            }
+<a href=#5442 id=5442 data-nosnippet>5442</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#5443 id=5443 data-nosnippet>5443</a>        }
+<a href=#5444 id=5444 data-nosnippet>5444</a>    }
+<a href=#5445 id=5445 data-nosnippet>5445</a>
+<a href=#5446 id=5446 data-nosnippet>5446</a>    <span class="doccomment">/// Asserts the cached world-space layer reproduces the clip-space
+<a href=#5447 id=5447 data-nosnippet>5447</a>    /// assembly's screen geometry vertex by vertex (the shape kinds emit their
+<a href=#5448 id=5448 data-nosnippet>5448</a>    /// triangles in the same order for a scene away from the antimeridian).
+<a href=#5449 id=5449 data-nosnippet>5449</a>    </span><span class="kw">fn </span>assert_world_space_matches_clip_space(
+<a href=#5450 id=5450 data-nosnippet>5450</a>        camera: <span class="kw-2">&amp;</span>MapCamera,
+<a href=#5451 id=5451 data-nosnippet>5451</a>        viewport: <span class="kw-2">&amp;</span>ViewportPixels,
+<a href=#5452 id=5452 data-nosnippet>5452</a>        overlays: <span class="kw-2">&amp;</span>[MapOverlay],
+<a href=#5453 id=5453 data-nosnippet>5453</a>    ) {
+<a href=#5454 id=5454 data-nosnippet>5454</a>        <span class="kw">let </span>geometry = WorldSpaceOverlayGeometry::tessellate(overlays);
+<a href=#5455 id=5455 data-nosnippet>5455</a>        <span class="kw">let </span>clip_space_vertices =
+<a href=#5456 id=5456 data-nosnippet>5456</a>            overlay_triangle_vertices(camera, viewport, DEFAULT_FIELD_OF_VIEW_DEGREES, overlays);
+<a href=#5457 id=5457 data-nosnippet>5457</a>        <span class="macro">assert_eq!</span>(
+<a href=#5458 id=5458 data-nosnippet>5458</a>            geometry.vertex_count(),
+<a href=#5459 id=5459 data-nosnippet>5459</a>            clip_space_vertices.len(),
+<a href=#5460 id=5460 data-nosnippet>5460</a>            <span class="string">"the world-space layer must emit the same vertex count"
+<a href=#5461 id=5461 data-nosnippet>5461</a>        </span>);
+<a href=#5462 id=5462 data-nosnippet>5462</a>        <span class="kw">let </span>uniforms = WorldSpaceOverlayFrameUniforms::for_frame(
+<a href=#5463 id=5463 data-nosnippet>5463</a>            camera,
+<a href=#5464 id=5464 data-nosnippet>5464</a>            viewport,
+<a href=#5465 id=5465 data-nosnippet>5465</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#5466 id=5466 data-nosnippet>5466</a>            geometry.origin_normalized_world(),
+<a href=#5467 id=5467 data-nosnippet>5467</a>        );
+<a href=#5468 id=5468 data-nosnippet>5468</a>        <span class="kw">for </span>(vertex_index, (world_vertex, clip_space_vertex)) <span class="kw">in </span>geometry
+<a href=#5469 id=5469 data-nosnippet>5469</a>            .vertices()
+<a href=#5470 id=5470 data-nosnippet>5470</a>            .iter()
+<a href=#5471 id=5471 data-nosnippet>5471</a>            .zip(clip_space_vertices.iter())
+<a href=#5472 id=5472 data-nosnippet>5472</a>            .enumerate()
+<a href=#5473 id=5473 data-nosnippet>5473</a>        {
+<a href=#5474 id=5474 data-nosnippet>5474</a>            <span class="kw">let </span>expected_screen = vertex_screen_pixels(clip_space_vertex, viewport);
+<a href=#5475 id=5475 data-nosnippet>5475</a>            <span class="kw">let </span>world_screen = WORLD_SPACE_OVERLAY_WORLD_COPY_OFFSETS
+<a href=#5476 id=5476 data-nosnippet>5476</a>                .iter()
+<a href=#5477 id=5477 data-nosnippet>5477</a>                .find_map(|copy_offset| {
+<a href=#5478 id=5478 data-nosnippet>5478</a>                    world_space_vertex_screen(<span class="kw-2">&amp;</span>uniforms, world_vertex, f64::from(<span class="kw-2">*</span>copy_offset))
+<a href=#5479 id=5479 data-nosnippet>5479</a>                })
+<a href=#5480 id=5480 data-nosnippet>5480</a>                .unwrap_or_else(|| {
+<a href=#5481 id=5481 data-nosnippet>5481</a>                    <span class="macro">panic!</span>(<span class="string">"world-space vertex {vertex_index} has no drawable world copy"</span>)
+<a href=#5482 id=5482 data-nosnippet>5482</a>                });
+<a href=#5483 id=5483 data-nosnippet>5483</a>            <span class="kw">let </span>drift =
+<a href=#5484 id=5484 data-nosnippet>5484</a>                (world_screen[<span class="number">0</span>] - expected_screen[<span class="number">0</span>]).hypot(world_screen[<span class="number">1</span>] - expected_screen[<span class="number">1</span>]);
+<a href=#5485 id=5485 data-nosnippet>5485</a>            <span class="macro">assert!</span>(
+<a href=#5486 id=5486 data-nosnippet>5486</a>                drift &lt;= WORLD_SPACE_SCREEN_TOLERANCE_PIXELS,
+<a href=#5487 id=5487 data-nosnippet>5487</a>                <span class="string">"world-space vertex {vertex_index} drifts {drift} px from the clip-space \
+<a href=#5488 id=5488 data-nosnippet>5488</a>                 assembly: {world_screen:?} vs {expected_screen:?}"
+<a href=#5489 id=5489 data-nosnippet>5489</a>            </span>);
+<a href=#5490 id=5490 data-nosnippet>5490</a>        }
+<a href=#5491 id=5491 data-nosnippet>5491</a>    }
+<a href=#5492 id=5492 data-nosnippet>5492</a>
+<a href=#5493 id=5493 data-nosnippet>5493</a>    <span class="kw">fn </span>sacramento_camera() -&gt; MapCamera {
+<a href=#5494 id=5494 data-nosnippet>5494</a>        MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>)
+<a href=#5495 id=5495 data-nosnippet>5495</a>    }
+<a href=#5496 id=5496 data-nosnippet>5496</a>
+<a href=#5497 id=5497 data-nosnippet>5497</a>    <span class="attr">#[test]
+<a href=#5498 id=5498 data-nosnippet>5498</a>    </span><span class="kw">fn </span>world_space_route_matches_the_clip_space_assembly() {
+<a href=#5499 id=5499 data-nosnippet>5499</a>        <span class="kw">let </span>route = RoutePolylineOverlay::new(<span class="macro">vec!</span>[
+<a href=#5500 id=5500 data-nosnippet>5500</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.5023</span>),
+<a href=#5501 id=5501 data-nosnippet>5501</a>            coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>),
+<a href=#5502 id=5502 data-nosnippet>5502</a>            coordinate(<span class="number">38.580987</span>, -<span class="number">121.4858</span>),
+<a href=#5503 id=5503 data-nosnippet>5503</a>        ]);
+<a href=#5504 id=5504 data-nosnippet>5504</a>        assert_world_space_matches_clip_space(
+<a href=#5505 id=5505 data-nosnippet>5505</a>            <span class="kw-2">&amp;</span>sacramento_camera(),
+<a href=#5506 id=5506 data-nosnippet>5506</a>            <span class="kw-2">&amp;</span>square_viewport(),
+<a href=#5507 id=5507 data-nosnippet>5507</a>            <span class="kw-2">&amp;</span>[MapOverlay::RoutePolyline(route)],
+<a href=#5508 id=5508 data-nosnippet>5508</a>        );
+<a href=#5509 id=5509 data-nosnippet>5509</a>    }
+<a href=#5510 id=5510 data-nosnippet>5510</a>
+<a href=#5511 id=5511 data-nosnippet>5511</a>    <span class="attr">#[test]
+<a href=#5512 id=5512 data-nosnippet>5512</a>    </span><span class="kw">fn </span>world_space_markers_match_the_clip_space_assembly() {
+<a href=#5513 id=5513 data-nosnippet>5513</a>        <span class="kw">let </span>markers = PointMarkersOverlay::new(<span class="macro">vec!</span>[
+<a href=#5514 id=5514 data-nosnippet>5514</a>            coordinate(<span class="number">38.574984</span>, -<span class="number">121.4971</span>),
+<a href=#5515 id=5515 data-nosnippet>5515</a>            coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>),
+<a href=#5516 id=5516 data-nosnippet>5516</a>            coordinate(<span class="number">38.578216</span>, -<span class="number">121.4917</span>),
+<a href=#5517 id=5517 data-nosnippet>5517</a>        ]);
+<a href=#5518 id=5518 data-nosnippet>5518</a>        assert_world_space_matches_clip_space(
+<a href=#5519 id=5519 data-nosnippet>5519</a>            <span class="kw-2">&amp;</span>sacramento_camera(),
+<a href=#5520 id=5520 data-nosnippet>5520</a>            <span class="kw-2">&amp;</span>square_viewport(),
+<a href=#5521 id=5521 data-nosnippet>5521</a>            <span class="kw-2">&amp;</span>[MapOverlay::PointMarkers(markers)],
+<a href=#5522 id=5522 data-nosnippet>5522</a>        );
+<a href=#5523 id=5523 data-nosnippet>5523</a>    }
+<a href=#5524 id=5524 data-nosnippet>5524</a>
+<a href=#5525 id=5525 data-nosnippet>5525</a>    <span class="attr">#[test]
+<a href=#5526 id=5526 data-nosnippet>5526</a>    </span><span class="kw">fn </span>world_space_filled_polygon_matches_the_clip_space_assembly() {
+<a href=#5527 id=5527 data-nosnippet>5527</a>        <span class="kw">let </span>polygon = FilledPolygonOverlay::new(<span class="macro">vec!</span>[
+<a href=#5528 id=5528 data-nosnippet>5528</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.4987</span>),
+<a href=#5529 id=5529 data-nosnippet>5529</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.4901</span>),
+<a href=#5530 id=5530 data-nosnippet>5530</a>            coordinate(<span class="number">38.579717</span>, -<span class="number">121.4901</span>),
+<a href=#5531 id=5531 data-nosnippet>5531</a>            coordinate(<span class="number">38.579717</span>, -<span class="number">121.4987</span>),
+<a href=#5532 id=5532 data-nosnippet>5532</a>        ]);
+<a href=#5533 id=5533 data-nosnippet>5533</a>        assert_world_space_matches_clip_space(
+<a href=#5534 id=5534 data-nosnippet>5534</a>            <span class="kw-2">&amp;</span>sacramento_camera(),
+<a href=#5535 id=5535 data-nosnippet>5535</a>            <span class="kw-2">&amp;</span>square_viewport(),
+<a href=#5536 id=5536 data-nosnippet>5536</a>            <span class="kw-2">&amp;</span>[MapOverlay::FilledPolygon(polygon)],
+<a href=#5537 id=5537 data-nosnippet>5537</a>        );
+<a href=#5538 id=5538 data-nosnippet>5538</a>    }
+<a href=#5539 id=5539 data-nosnippet>5539</a>
+<a href=#5540 id=5540 data-nosnippet>5540</a>    <span class="attr">#[test]
+<a href=#5541 id=5541 data-nosnippet>5541</a>    </span><span class="kw">fn </span>world_space_geometry_is_independent_of_the_camera_pose() {
+<a href=#5542 id=5542 data-nosnippet>5542</a>        <span class="comment">// The cached layer takes no camera and stores content-defined offsets;
+<a href=#5543 id=5543 data-nosnippet>5543</a>        // two tessellations of the same list are identical, and the origin is
+<a href=#5544 id=5544 data-nosnippet>5544</a>        // the first coordinate's normalized world position.
+<a href=#5545 id=5545 data-nosnippet>5545</a>        </span><span class="kw">let </span>route = RoutePolylineOverlay::new(<span class="macro">vec!</span>[
+<a href=#5546 id=5546 data-nosnippet>5546</a>            coordinate(<span class="number">38.573483</span>, -<span class="number">121.5023</span>),
+<a href=#5547 id=5547 data-nosnippet>5547</a>            coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>),
+<a href=#5548 id=5548 data-nosnippet>5548</a>        ]);
+<a href=#5549 id=5549 data-nosnippet>5549</a>        <span class="kw">let </span>overlays = [MapOverlay::RoutePolyline(route)];
+<a href=#5550 id=5550 data-nosnippet>5550</a>        <span class="kw">let </span>first = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>overlays);
+<a href=#5551 id=5551 data-nosnippet>5551</a>        <span class="kw">let </span>second = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>overlays);
+<a href=#5552 id=5552 data-nosnippet>5552</a>        <span class="macro">assert_eq!</span>(first, second);
+<a href=#5553 id=5553 data-nosnippet>5553</a>        <span class="kw">let </span>expected_origin =
+<a href=#5554 id=5554 data-nosnippet>5554</a>            <span class="kw">crate</span>::projection::coordinate_to_normalized_world(<span class="kw-2">&amp;</span>coordinate(<span class="number">38.573483</span>, -<span class="number">121.5023</span>));
+<a href=#5555 id=5555 data-nosnippet>5555</a>        <span class="macro">assert_eq!</span>(first.origin_normalized_world(), expected_origin);
+<a href=#5556 id=5556 data-nosnippet>5556</a>        <span class="macro">assert_eq!</span>(first.triangle_count(), <span class="number">2</span>);
+<a href=#5557 id=5557 data-nosnippet>5557</a>    }
+<a href=#5558 id=5558 data-nosnippet>5558</a>
+<a href=#5559 id=5559 data-nosnippet>5559</a>    <span class="attr">#[test]
+<a href=#5560 id=5560 data-nosnippet>5560</a>    </span><span class="kw">fn </span>world_space_antimeridian_route_draws_both_world_copies() {
+<a href=#5561 id=5561 data-nosnippet>5561</a>        <span class="comment">// The seam-crossing route unwrapped from longitude 100 east past 180
+<a href=#5562 id=5562 data-nosnippet>5562</a>        // to -160 must appear at both screen edges, exactly as the CPU
+<a href=#5563 id=5563 data-nosnippet>5563</a>        // assembly's window split places it. The cached layer stores the
+<a href=#5564 id=5564 data-nosnippet>5564</a>        // continuous chain once; the frame's world-copy instances and the
+<a href=#5565 id=5565 data-nosnippet>5565</a>        // shader's window discard supply the two recentered pieces.
+<a href=#5566 id=5566 data-nosnippet>5566</a>        </span><span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">0.0</span>);
+<a href=#5567 id=5567 data-nosnippet>5567</a>        <span class="kw">let </span>viewport = square_viewport();
+<a href=#5568 id=5568 data-nosnippet>5568</a>        <span class="kw">let </span>route = RoutePolylineOverlay::new(<span class="macro">vec!</span>[
+<a href=#5569 id=5569 data-nosnippet>5569</a>            coordinate(<span class="number">20.0</span>, <span class="number">100.0</span>),
+<a href=#5570 id=5570 data-nosnippet>5570</a>            coordinate(<span class="number">20.0</span>, <span class="number">170.0</span>),
+<a href=#5571 id=5571 data-nosnippet>5571</a>            coordinate(<span class="number">20.0</span>, -<span class="number">160.0</span>),
+<a href=#5572 id=5572 data-nosnippet>5572</a>        ]);
+<a href=#5573 id=5573 data-nosnippet>5573</a>        <span class="kw">let </span>overlays = [MapOverlay::RoutePolyline(route)];
+<a href=#5574 id=5574 data-nosnippet>5574</a>        <span class="kw">let </span>geometry = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>overlays);
+<a href=#5575 id=5575 data-nosnippet>5575</a>        <span class="kw">let </span>clip_space_vertices =
+<a href=#5576 id=5576 data-nosnippet>5576</a>            overlay_triangle_vertices(<span class="kw-2">&amp;</span>camera, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES, <span class="kw-2">&amp;</span>overlays);
+<a href=#5577 id=5577 data-nosnippet>5577</a>        <span class="macro">assert_eq!</span>(
+<a href=#5578 id=5578 data-nosnippet>5578</a>            geometry.triangle_count(),
+<a href=#5579 id=5579 data-nosnippet>5579</a>            <span class="number">6</span>,
+<a href=#5580 id=5580 data-nosnippet>5580</a>            <span class="string">"the cached layer holds two segment quads and one square join"
+<a href=#5581 id=5581 data-nosnippet>5581</a>        </span>);
+<a href=#5582 id=5582 data-nosnippet>5582</a>        <span class="macro">assert!</span>(
+<a href=#5583 id=5583 data-nosnippet>5583</a>            clip_space_vertices.len() &gt; geometry.vertex_count(),
+<a href=#5584 id=5584 data-nosnippet>5584</a>            <span class="string">"the CPU assembly additionally split the seam-crossing segment"
+<a href=#5585 id=5585 data-nosnippet>5585</a>        </span>);
+<a href=#5586 id=5586 data-nosnippet>5586</a>        <span class="kw">let </span>uniforms = WorldSpaceOverlayFrameUniforms::for_frame(
+<a href=#5587 id=5587 data-nosnippet>5587</a>            <span class="kw-2">&amp;</span>camera,
+<a href=#5588 id=5588 data-nosnippet>5588</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#5589 id=5589 data-nosnippet>5589</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#5590 id=5590 data-nosnippet>5590</a>            geometry.origin_normalized_world(),
+<a href=#5591 id=5591 data-nosnippet>5591</a>        );
+<a href=#5592 id=5592 data-nosnippet>5592</a>        <span class="kw">let </span><span class="kw-2">mut </span>left_edge_drawn = <span class="bool-val">false</span>;
+<a href=#5593 id=5593 data-nosnippet>5593</a>        <span class="kw">let </span><span class="kw-2">mut </span>right_edge_drawn = <span class="bool-val">false</span>;
+<a href=#5594 id=5594 data-nosnippet>5594</a>        <span class="kw">let </span><span class="kw-2">mut </span>selected_copies = Vec::new();
+<a href=#5595 id=5595 data-nosnippet>5595</a>        <span class="kw">for </span>copy_offset <span class="kw">in </span>WORLD_SPACE_OVERLAY_WORLD_COPY_OFFSETS {
+<a href=#5596 id=5596 data-nosnippet>5596</a>            <span class="kw">let </span><span class="kw-2">mut </span>copy_drew = <span class="bool-val">false</span>;
+<a href=#5597 id=5597 data-nosnippet>5597</a>            <span class="kw">for </span>world_vertex <span class="kw">in </span>geometry.vertices() {
+<a href=#5598 id=5598 data-nosnippet>5598</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(screen) =
+<a href=#5599 id=5599 data-nosnippet>5599</a>                    world_space_vertex_screen(<span class="kw-2">&amp;</span>uniforms, world_vertex, f64::from(copy_offset))
+<a href=#5600 id=5600 data-nosnippet>5600</a>                {
+<a href=#5601 id=5601 data-nosnippet>5601</a>                    copy_drew = <span class="bool-val">true</span>;
+<a href=#5602 id=5602 data-nosnippet>5602</a>                    left_edge_drawn |= screen[<span class="number">0</span>] &lt; viewport.width_pixels * <span class="number">0.1</span>;
+<a href=#5603 id=5603 data-nosnippet>5603</a>                    right_edge_drawn |= screen[<span class="number">0</span>] &gt; viewport.width_pixels * <span class="number">0.9</span>;
+<a href=#5604 id=5604 data-nosnippet>5604</a>                }
+<a href=#5605 id=5605 data-nosnippet>5605</a>            }
+<a href=#5606 id=5606 data-nosnippet>5606</a>            <span class="kw">if </span>copy_drew {
+<a href=#5607 id=5607 data-nosnippet>5607</a>                selected_copies.push(copy_offset);
+<a href=#5608 id=5608 data-nosnippet>5608</a>            }
+<a href=#5609 id=5609 data-nosnippet>5609</a>        }
+<a href=#5610 id=5610 data-nosnippet>5610</a>        <span class="macro">assert_eq!</span>(
+<a href=#5611 id=5611 data-nosnippet>5611</a>            selected_copies,
+<a href=#5612 id=5612 data-nosnippet>5612</a>            <span class="macro">vec!</span>[<span class="number">0.0</span>, <span class="number">1.0</span>],
+<a href=#5613 id=5613 data-nosnippet>5613</a>            <span class="string">"the route's nearest world copy spans both sides of the seam"
+<a href=#5614 id=5614 data-nosnippet>5614</a>        </span>);
+<a href=#5615 id=5615 data-nosnippet>5615</a>        <span class="macro">assert!</span>(
+<a href=#5616 id=5616 data-nosnippet>5616</a>            left_edge_drawn &amp;&amp; right_edge_drawn,
+<a href=#5617 id=5617 data-nosnippet>5617</a>            <span class="string">"the antimeridian route must reach both screen edges"
+<a href=#5618 id=5618 data-nosnippet>5618</a>        </span>);
+<a href=#5619 id=5619 data-nosnippet>5619</a>    }
+<a href=#5620 id=5620 data-nosnippet>5620</a>
+<a href=#5621 id=5621 data-nosnippet>5621</a>    <span class="attr">#[test]
+<a href=#5622 id=5622 data-nosnippet>5622</a>    </span><span class="kw">fn </span>an_empty_world_space_layer_draws_nothing() {
+<a href=#5623 id=5623 data-nosnippet>5623</a>        <span class="kw">let </span>geometry = WorldSpaceOverlayGeometry::tessellate(<span class="kw-2">&amp;</span>[]);
+<a href=#5624 id=5624 data-nosnippet>5624</a>        <span class="macro">assert!</span>(geometry.is_empty());
+<a href=#5625 id=5625 data-nosnippet>5625</a>        <span class="macro">assert_eq!</span>(geometry.triangle_count(), <span class="number">0</span>);
+<a href=#5626 id=5626 data-nosnippet>5626</a>        <span class="macro">assert_eq!</span>(geometry.origin_normalized_world(), [<span class="number">0.0</span>, <span class="number">0.0</span>]);
+<a href=#5627 id=5627 data-nosnippet>5627</a>    }
+<a href=#5628 id=5628 data-nosnippet>5628</a>
+<a href=#5629 id=5629 data-nosnippet>5629</a>    <span class="attr">#[test]
+<a href=#5630 id=5630 data-nosnippet>5630</a>    </span><span class="kw">fn </span>scaling_to_a_device_pixel_ratio_multiplies_the_screen_space_sizes() {
+<a href=#5631 id=5631 data-nosnippet>5631</a>        <span class="kw">let </span>device_pixel_ratio = <span class="number">3.0</span>;
+<a href=#5632 id=5632 data-nosnippet>5632</a>        <span class="kw">let </span>route = MapOverlay::route_polyline(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)]);
+<a href=#5633 id=5633 data-nosnippet>5633</a>        <span class="kw">let </span>markers = MapOverlay::point_markers(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]);
+<a href=#5634 id=5634 data-nosnippet>5634</a>        <span class="kw">let </span>pins = MapOverlay::point_pins(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]);
+<a href=#5635 id=5635 data-nosnippet>5635</a>        <span class="kw">let </span>traffic = MapOverlay::traffic_flow(<span class="macro">vec!</span>[TrafficFlowData::from_congestion_level(
+<a href=#5636 id=5636 data-nosnippet>5636</a>            <span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)],
+<a href=#5637 id=5637 data-nosnippet>5637</a>            TrafficFlowCongestionLevel::FreeFlow,
+<a href=#5638 id=5638 data-nosnippet>5638</a>        )]);
+<a href=#5639 id=5639 data-nosnippet>5639</a>        <span class="kw">let </span>polygon = MapOverlay::filled_polygon(<span class="macro">vec!</span>[
+<a href=#5640 id=5640 data-nosnippet>5640</a>            coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>),
+<a href=#5641 id=5641 data-nosnippet>5641</a>            coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>),
+<a href=#5642 id=5642 data-nosnippet>5642</a>            coordinate(<span class="number">0.01</span>, <span class="number">0.0</span>),
+<a href=#5643 id=5643 data-nosnippet>5643</a>        ]);
+<a href=#5644 id=5644 data-nosnippet>5644</a>
+<a href=#5645 id=5645 data-nosnippet>5645</a>        <span class="kw">let </span>scaled_route = route.scaled_to_device_pixel_ratio(device_pixel_ratio);
+<a href=#5646 id=5646 data-nosnippet>5646</a>        <span class="kw">let </span>scaled_markers = markers.scaled_to_device_pixel_ratio(device_pixel_ratio);
+<a href=#5647 id=5647 data-nosnippet>5647</a>        <span class="kw">let </span>scaled_pins = pins.scaled_to_device_pixel_ratio(device_pixel_ratio);
+<a href=#5648 id=5648 data-nosnippet>5648</a>        <span class="kw">let </span>scaled_traffic = traffic.scaled_to_device_pixel_ratio(device_pixel_ratio);
+<a href=#5649 id=5649 data-nosnippet>5649</a>        <span class="kw">let </span>scaled_polygon = polygon.scaled_to_device_pixel_ratio(device_pixel_ratio);
+<a href=#5650 id=5650 data-nosnippet>5650</a>
+<a href=#5651 id=5651 data-nosnippet>5651</a>        <span class="kw">match </span>scaled_route {
+<a href=#5652 id=5652 data-nosnippet>5652</a>            MapOverlay::RoutePolyline(route_polyline) =&gt; <span class="macro">assert_eq!</span>(
+<a href=#5653 id=5653 data-nosnippet>5653</a>                route_polyline.width_pixels,
+<a href=#5654 id=5654 data-nosnippet>5654</a>                DEFAULT_ROUTE_LINE_WIDTH_PIXELS * device_pixel_ratio
+<a href=#5655 id=5655 data-nosnippet>5655</a>            ),
+<a href=#5656 id=5656 data-nosnippet>5656</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled route kept its kind, was {other:?}"</span>),
+<a href=#5657 id=5657 data-nosnippet>5657</a>        }
+<a href=#5658 id=5658 data-nosnippet>5658</a>        <span class="kw">match </span>scaled_markers {
+<a href=#5659 id=5659 data-nosnippet>5659</a>            MapOverlay::PointMarkers(markers) =&gt; <span class="macro">assert_eq!</span>(
+<a href=#5660 id=5660 data-nosnippet>5660</a>                markers.radius_pixels,
+<a href=#5661 id=5661 data-nosnippet>5661</a>                DEFAULT_POINT_MARKER_RADIUS_PIXELS * device_pixel_ratio
+<a href=#5662 id=5662 data-nosnippet>5662</a>            ),
+<a href=#5663 id=5663 data-nosnippet>5663</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled markers kept their kind, was {other:?}"</span>),
+<a href=#5664 id=5664 data-nosnippet>5664</a>        }
+<a href=#5665 id=5665 data-nosnippet>5665</a>        <span class="kw">match </span>scaled_pins {
+<a href=#5666 id=5666 data-nosnippet>5666</a>            MapOverlay::PointPins(pins) =&gt; <span class="macro">assert_eq!</span>(
+<a href=#5667 id=5667 data-nosnippet>5667</a>                pins.radius_pixels,
+<a href=#5668 id=5668 data-nosnippet>5668</a>                DEFAULT_POINT_PIN_RADIUS_PIXELS * device_pixel_ratio
+<a href=#5669 id=5669 data-nosnippet>5669</a>            ),
+<a href=#5670 id=5670 data-nosnippet>5670</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled pins kept their kind, was {other:?}"</span>),
+<a href=#5671 id=5671 data-nosnippet>5671</a>        }
+<a href=#5672 id=5672 data-nosnippet>5672</a>        <span class="kw">match </span>scaled_traffic {
+<a href=#5673 id=5673 data-nosnippet>5673</a>            MapOverlay::TrafficFlow(traffic_flow) =&gt; <span class="macro">assert_eq!</span>(
+<a href=#5674 id=5674 data-nosnippet>5674</a>                traffic_flow.width_pixels,
+<a href=#5675 id=5675 data-nosnippet>5675</a>                DEFAULT_TRAFFIC_LINE_WIDTH_PIXELS * device_pixel_ratio
+<a href=#5676 id=5676 data-nosnippet>5676</a>            ),
+<a href=#5677 id=5677 data-nosnippet>5677</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"the scaled traffic layer kept its kind, was {other:?}"</span>),
+<a href=#5678 id=5678 data-nosnippet>5678</a>        }
+<a href=#5679 id=5679 data-nosnippet>5679</a>        <span class="macro">assert_eq!</span>(
+<a href=#5680 id=5680 data-nosnippet>5680</a>            scaled_polygon, polygon,
+<a href=#5681 id=5681 data-nosnippet>5681</a>            <span class="string">"a filled polygon has no screen-space size to scale"
+<a href=#5682 id=5682 data-nosnippet>5682</a>        </span>);
+<a href=#5683 id=5683 data-nosnippet>5683</a>        <span class="macro">assert_eq!</span>(
+<a href=#5684 id=5684 data-nosnippet>5684</a>            route.scaled_to_device_pixel_ratio(<span class="number">1.0</span>),
+<a href=#5685 id=5685 data-nosnippet>5685</a>            route,
+<a href=#5686 id=5686 data-nosnippet>5686</a>            <span class="string">"the identity ratio leaves the overlay unchanged"
+<a href=#5687 id=5687 data-nosnippet>5687</a>        </span>);
+<a href=#5688 id=5688 data-nosnippet>5688</a>    }
+<a href=#5689 id=5689 data-nosnippet>5689</a>
+<a href=#5690 id=5690 data-nosnippet>5690</a>    <span class="attr">#[test]
+<a href=#5691 id=5691 data-nosnippet>5691</a>    </span><span class="kw">fn </span>emission_scales_screen_sizes_without_a_pre_scaled_copy() {
+<a href=#5692 id=5692 data-nosnippet>5692</a>        <span class="comment">// Scaling during assembly must match scaling a copy first, so a frame
+<a href=#5693 id=5693 data-nosnippet>5693</a>        // with a device-pixel-ratio surface never needs a pre-scaled list. The
+<a href=#5694 id=5694 data-nosnippet>5694</a>        // styled route exercises the stroke's offset, casing gap and blur too.
+<a href=#5695 id=5695 data-nosnippet>5695</a>        </span><span class="kw">let </span>camera = top_down_camera([<span class="number">0.5</span>, <span class="number">0.5</span>], <span class="number">12.0</span>);
+<a href=#5696 id=5696 data-nosnippet>5696</a>        <span class="kw">let </span>viewport = square_viewport();
+<a href=#5697 id=5697 data-nosnippet>5697</a>        <span class="kw">let </span><span class="kw-2">mut </span>styled_route =
+<a href=#5698 id=5698 data-nosnippet>5698</a>            RoutePolylineOverlay::new(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)]);
+<a href=#5699 id=5699 data-nosnippet>5699</a>        styled_route.stroke = <span class="prelude-val">Some</span>(PolylineStroke {
+<a href=#5700 id=5700 data-nosnippet>5700</a>            cap: LineCap::Round,
+<a href=#5701 id=5701 data-nosnippet>5701</a>            join: LineJoin::Miter,
+<a href=#5702 id=5702 data-nosnippet>5702</a>            dash_array: <span class="macro">vec!</span>[<span class="number">2.0</span>, <span class="number">1.0</span>],
+<a href=#5703 id=5703 data-nosnippet>5703</a>            offset_pixels: <span class="number">3.0</span>,
+<a href=#5704 id=5704 data-nosnippet>5704</a>            gap_width_pixels: <span class="number">4.0</span>,
+<a href=#5705 id=5705 data-nosnippet>5705</a>            blur_pixels: <span class="number">1.5</span>,
+<a href=#5706 id=5706 data-nosnippet>5706</a>        });
+<a href=#5707 id=5707 data-nosnippet>5707</a>        <span class="kw">let </span>overlays = <span class="macro">vec!</span>[
+<a href=#5708 id=5708 data-nosnippet>5708</a>            MapOverlay::route_polyline(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)]),
+<a href=#5709 id=5709 data-nosnippet>5709</a>            MapOverlay::RoutePolyline(styled_route),
+<a href=#5710 id=5710 data-nosnippet>5710</a>            MapOverlay::point_markers(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]),
+<a href=#5711 id=5711 data-nosnippet>5711</a>            MapOverlay::point_pins(<span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, <span class="number">0.0</span>)]),
+<a href=#5712 id=5712 data-nosnippet>5712</a>            MapOverlay::traffic_flow(<span class="macro">vec!</span>[TrafficFlowData::from_congestion_level(
+<a href=#5713 id=5713 data-nosnippet>5713</a>                <span class="macro">vec!</span>[coordinate(<span class="number">0.0</span>, -<span class="number">0.01</span>), coordinate(<span class="number">0.0</span>, <span class="number">0.01</span>)],
+<a href=#5714 id=5714 data-nosnippet>5714</a>                TrafficFlowCongestionLevel::Slow,
+<a href=#5715 id=5715 data-nosnippet>5715</a>            )]),
+<a href=#5716 id=5716 data-nosnippet>5716</a>        ];
+<a href=#5717 id=5717 data-nosnippet>5717</a>        <span class="kw">let </span>device_pixel_ratio = <span class="number">2.0</span>;
+<a href=#5718 id=5718 data-nosnippet>5718</a>        <span class="kw">let </span>emitted = overlay_triangle_vertices_for_layers(
+<a href=#5719 id=5719 data-nosnippet>5719</a>            <span class="kw-2">&amp;</span>camera,
+<a href=#5720 id=5720 data-nosnippet>5720</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#5721 id=5721 data-nosnippet>5721</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#5722 id=5722 data-nosnippet>5722</a>            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>overlays],
+<a href=#5723 id=5723 data-nosnippet>5723</a>            device_pixel_ratio,
+<a href=#5724 id=5724 data-nosnippet>5724</a>        );
+<a href=#5725 id=5725 data-nosnippet>5725</a>        <span class="kw">let </span>pre_scaled: Vec&lt;MapOverlay&gt; = overlays
+<a href=#5726 id=5726 data-nosnippet>5726</a>            .iter()
+<a href=#5727 id=5727 data-nosnippet>5727</a>            .map(|overlay| overlay.scaled_to_device_pixel_ratio(device_pixel_ratio))
+<a href=#5728 id=5728 data-nosnippet>5728</a>            .collect();
+<a href=#5729 id=5729 data-nosnippet>5729</a>        <span class="kw">let </span>expected = overlay_triangle_vertices(
+<a href=#5730 id=5730 data-nosnippet>5730</a>            <span class="kw-2">&amp;</span>camera,
+<a href=#5731 id=5731 data-nosnippet>5731</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#5732 id=5732 data-nosnippet>5732</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#5733 id=5733 data-nosnippet>5733</a>            <span class="kw-2">&amp;</span>pre_scaled,
+<a href=#5734 id=5734 data-nosnippet>5734</a>        );
+<a href=#5735 id=5735 data-nosnippet>5735</a>        <span class="macro">assert!</span>(!emitted.is_empty(), <span class="string">"the scene draws triangles"</span>);
+<a href=#5736 id=5736 data-nosnippet>5736</a>        <span class="macro">assert_eq!</span>(
+<a href=#5737 id=5737 data-nosnippet>5737</a>            emitted.len(),
+<a href=#5738 id=5738 data-nosnippet>5738</a>            expected.len(),
+<a href=#5739 id=5739 data-nosnippet>5739</a>            <span class="string">"emission scaling emits the pre-scaled list's vertices"
+<a href=#5740 id=5740 data-nosnippet>5740</a>        </span>);
+<a href=#5741 id=5741 data-nosnippet>5741</a>        <span class="kw">for </span>(emitted_vertex, expected_vertex) <span class="kw">in </span>emitted.iter().zip(<span class="kw-2">&amp;</span>expected) {
+<a href=#5742 id=5742 data-nosnippet>5742</a>            <span class="macro">assert_eq!</span>(emitted_vertex.clip_position, expected_vertex.clip_position);
+<a href=#5743 id=5743 data-nosnippet>5743</a>            <span class="macro">assert_eq!</span>(emitted_vertex.rgba_color, expected_vertex.rgba_color);
+<a href=#5744 id=5744 data-nosnippet>5744</a>        }
+<a href=#5745 id=5745 data-nosnippet>5745</a>    }
+<a href=#5746 id=5746 data-nosnippet>5746</a>}
 </code></pre></div></section></main></body></html>

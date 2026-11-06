@@ -25,12 +25,12 @@ not serve. A pack above the ceiling is refused with
 <a href="../../geospatial_types/error/enum.SDKError.html#variant.InvalidCoordinateInput" title="variant geospatial_types::error::SDKError::InvalidCoordinateInput"><code>SDKError::InvalidCoordinateInput</code></a>.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.with_blocking_work_executor" class="method"><a class="src rightside" href="../../src/rustic_maps_cache/tile_packs.rs.html#788-794">Source</a><h4 class="code-header">pub fn <a href="#method.with_blocking_work_executor" class="fn">with_blocking_work_executor</a>(
     self,
-    blocking_work_executor: <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;dyn BlockingWorkExecutor&gt;,
+    blocking_work_executor: <a class="struct" href="https://doc.rust-lang.org/1.99.0/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;dyn <a class="trait" href="../../rustic_maps_core/blocking_work/trait.BlockingWorkExecutor.html" title="trait rustic_maps_core::blocking_work::BlockingWorkExecutor">BlockingWorkExecutor</a>&gt;,
 ) -&gt; Self</h4></section></summary><div class="docblock"><p>Runs the manager’s synchronous store work — defining the pack, the
 batched freshness writes and the final record read — through
 <code>blocking_work_executor</code>, so a target with worker threads keeps SQLite
 off the async reactor that drives the provider futures.</p>
-<p>The default is [<code>InlineBlockingWorkExecutor</code>], which runs the work
+<p>The default is <a href="../../rustic_maps_core/blocking_work/struct.InlineBlockingWorkExecutor.html" title="struct rustic_maps_core::blocking_work::InlineBlockingWorkExecutor"><code>InlineBlockingWorkExecutor</code></a>, which runs the work
 where it is awaited; on a single-threaded target no off-reactor
 placement exists.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.effective_time_to_live_seconds" class="method"><a class="src rightside" href="../../src/rustic_maps_cache/tile_packs.rs.html#798-808">Source</a><h4 class="code-header">pub fn <a href="#method.effective_time_to_live_seconds" class="fn">effective_time_to_live_seconds</a>(

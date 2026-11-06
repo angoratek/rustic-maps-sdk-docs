@@ -872,6 +872,10 @@ dictionary Route {
     double duration_seconds;
     /// Geographic bounds of the full route geometry.
     BoundingBox bounding_box;
+    /// The full route geometry in traversal order, one point per shape vertex
+    /// the provider returned. A provider that reports only per-step shapes
+    /// leaves this empty and the steps carry the geometry instead.
+    sequence<GeographicCoordinate> geometry;
     /// Legs, one per consecutive waypoint pair.
     sequence<RouteLeg> legs;
 };
