@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -251,7 +251,9 @@ policy records.</p>
 <p><strong>Objects</strong></p>
 <ul>
 <li><code>MapSdk</code> — the provider registry and the provider-backed calls: geocoding,
-search, routing, distance matrix, traffic and raster tiles.</li>
+search, routing, distance matrix, traffic, elevation and raster tiles, plus
+<code>configure_provider</code>, <code>provider_registrations</code> and the
+<code>register_*_from_foreign</code> calls.</li>
 <li><code>MapView</code> — the native map surface: attach, resize, detach, per-frame draw,
 overlays, the location indicator, a vector base map and frame statistics.</li>
 <li><code>Navigator</code> — the navigation session: start, location updates, reroutes,
@@ -266,8 +268,10 @@ gesture math.</li>
 </ul>
 <p><strong>Interfaces your code implements</strong></p>
 <ul>
-<li><code>GeocodingProvider</code> and <code>RasterTileProvider</code> — register your own provider
-implementation on <code>MapSdk</code>.</li>
+<li><code>GeocodingProvider</code>, <code>RoutingProvider</code>, <code>DistanceMatrixProvider</code>,
+<code>SearchPlaceProvider</code>, <code>TrafficIncidentProvider</code>, <code>TrafficFlowProvider</code>,
+<code>ElevationProvider</code> and <code>RasterTileProvider</code> — register your own provider
+implementation on <code>MapSdk</code> with the matching <code>register_*_from_foreign</code> call.</li>
 <li><code>NavigationListener</code> — receive the instruction, deviation, phase and speech
 topics.</li>
 <li><code>SdkDiagnosticEventListener</code> — receive the SDK’s structured diagnostic events.</li>

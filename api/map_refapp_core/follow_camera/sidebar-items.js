@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["NAVIGATION_FOLLOW_PITCH_3D_DEGREES","NAVIGATION_FOLLOW_ZOOM","NAVIGATION_FOLLOW_ZOOM_MAXIMUM"],"enum":["FollowPhase"],"fn":["follow_zoom_toward_trip_end"],"struct":["FollowCamera","PreTripCamera"]};
+window.SIDEBAR_ITEMS = {"constant":["NAVIGATION_FOLLOW_PITCH_3D_DEGREES","NAVIGATION_FOLLOW_ZOOM","NAVIGATION_FOLLOW_ZOOM_MAXIMUM"],"enum":["FollowBearingMode","FollowPhase"],"fn":["follow_zoom_toward_trip_end"],"struct":["FollowCamera","PreTripCamera"]};

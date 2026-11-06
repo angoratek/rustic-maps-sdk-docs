@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -189,9 +189,11 @@ Rust and have no platform dependency.</p>
 </thead>
 <tbody>
 <tr><td><code>rustic-maps-rendering</code></td><td>The camera and projection model, the raster tile scheduler, overlays, labels and the headless <code>wgpu</code> renderer</td></tr>
-<tr><td><code>rustic-maps-core</code></td><td>The provider registry, provider contracts, offline routing and the shared SDK operations</td></tr>
+<tr><td><code>rustic-maps-core</code></td><td>The provider registry, the provider bridge, offline routing and the shared SDK operations</td></tr>
 <tr><td><code>geospatial-types</code></td><td>Coordinates, tiles, records and the shared error type</td></tr>
-<tr><td><code>geospatial-traits</code></td><td>The vendor-neutral provider traits a tileset, routing or geocoding service implements</td></tr>
+<tr><td><code>geospatial-traits</code></td><td>The SDK’s own provider traits, the seam the published provider layer is adapted to</td></tr>
+<tr><td><code>everymap-core</code></td><td>The provider contracts, the portable transport seam, pacing, retry and request observation</td></tr>
+<tr><td><code>everymap-providers-*</code></td><td>The vendor implementations: MapQuest, Photon, OSRM, Valhalla and the URL-template raster and vector sources, beside HERE, Google, TomTom, Mapbox and Radar</td></tr>
 <tr><td><code>rustic-maps-navigation</code></td><td>Route walking, instruction generation, deviation and reroute policy</td></tr>
 <tr><td><code>rustic-maps-positioning</code></td><td>Position validation, course smoothing and the simulated position source</td></tr>
 <tr><td><code>rustic-maps-vector-tiles</code> / <code>rustic-maps-glyphs</code></td><td>Mapbox Vector Tile decoding and glyph-atlas packing</td></tr>
@@ -205,9 +207,10 @@ the first Rust release.</p>
 <p>The Rust artifact is <code>rustic-maps-sdk-rust-v0.1.0.tar.gz</code>: the tracked source
 tree at the release commit, under one <code>rustic-maps-sdk-rust-v0.1.0/</code>
 directory. It contains the workspace manifest and lock file, every workspace
-crate, the provider crates and their committed sample responses, the platform
-package sources and build scripts, the documentation sources, and both license
-files (MIT and Apache-2.0).</p>
+crate, the platform package sources and build scripts, the documentation
+sources, and both license files (MIT and Apache-2.0). The provider
+implementations come from the published <code>everymap-*</code> crates the lock file
+pins, not from workspace members.</p>
 <ol>
 <li>Download the archive and its <code>.sha256</code> sidecar from
 <a href="downloads.html">Downloads</a>.</li>
@@ -259,11 +262,12 @@ offscreen matches what a platform view presents.</p>
 <p>The browser uses the same camera, overlay, label and vector-style modules; it
 binds them through a WebAssembly canvas adapter rather than a Rust surface.</p>
 <h2 id="providers"><a class="header" href="#providers">Providers</a></h2>
-<p>Implement the vendor-neutral traits from <code>geospatial-traits</code> — a raster or
-vector tileset, a routing engine, a geocoding service, a distance matrix or
-traffic — and register them in the <code>rustic-maps-core</code> registry. The registry is what
-the SDK’s operations dispatch through, so a Rust application and a platform
-binding share the same provider story. See
+<p>Vendor providers implement the contracts in <code>everymap-core</code> — geocoding,
+search, type-ahead, routing, a distance matrix, traffic, raster and vector
+tiles. The SDK adapts them to its own traits at
+<code>rustic_maps_core::everymap_bridge</code> and registers them in the
+<code>rustic-maps-core</code> registry. A host that implements a provider inside its own
+application implements the <code>geospatial-traits</code> traits directly. See
 <a href="adding-a-provider.html">Add a provider</a> for the descriptor fields and the
 registration path.</p>
 <h2 id="positioning"><a class="header" href="#positioning">Positioning</a></h2>

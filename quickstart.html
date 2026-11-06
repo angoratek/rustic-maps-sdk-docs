@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -273,8 +273,10 @@ aligned because every frame re-projects the same geographic inputs.</p>
 <p>Provider-backed capabilities reach you through a registry on <code>MapSdk</code>. Register
 an implementation, then call the contract methods: geocoding, routing, the
 distance matrix, place search, traffic incidents and flow, and raster tiles. The
-SDK includes MapQuest implementations for those contracts and URL-template
-providers for any raster or vector base map.</p>
+SDK’s provider layer carries MapQuest for those capabilities, HERE, Google Maps,
+TomTom, Mapbox and Radar for keyed geocoding and routing, Photon for keyless
+search, OSRM and Valhalla for keyless routing, and URL-template providers for
+any raster or vector base map.</p>
 <p>Provider keys are runtime inputs, not build inputs. Enter a key through your own
 settings surface, secure storage, or a launch value injected for one test
 session. There is no <code>local.properties</code>, <code>Info.plist</code>, or <code>.xcconfig</code> field for a

@@ -56,13 +56,25 @@ export class FollowCamera {
      */
     breakOnGesture(): void;
     /**
+     * Resumes the eased course chase on the next fix.
+     */
+    courseUp(): void;
+    /**
      * Applies the trip's follow camera and captures the pre-trip pose.
      */
     engageTrip(current_center_latitude_degrees: number, current_center_longitude_degrees: number, current_zoom_level: number, current_bearing_degrees: number, current_pitch_degrees: number): void;
     /**
+     * Whether the camera is holding north-up.
+     */
+    isNorthUp(): boolean;
+    /**
      * Creates a disengaged camera with the default course-smoothing window.
      */
     constructor();
+    /**
+     * Holds the camera north-up whatever the fixes report.
+     */
+    northUp(): void;
     /**
      * Applies one location fix of the active trip.
      */
@@ -99,6 +111,35 @@ export class FollowCamera {
      * The target zoom level.
      */
     readonly targetZoomLevel: number;
+}
+
+/**
+ * The location puck's interpolation between fixes.
+ *
+ * `pushFix` starts (or retargets) a motion toward the measured position;
+ * `poseAt` answers the pose to draw at the given instant, so the page's
+ * frame pump can draw a puck that glides instead of hopping.
+ */
+export class LocationPoseAnimator {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Creates an animator with no fix yet.
+     */
+    constructor();
+    /**
+     * The pose to draw at `now_milliseconds`, or `undefined` before the first
+     * fix.
+     */
+    poseAt(now_milliseconds: number): object | undefined;
+    /**
+     * Starts or retargets the motion toward one measured position.
+     */
+    pushFix(latitude_degrees: number, longitude_degrees: number, course_degrees: number | null | undefined, horizontal_accuracy_meters: number | null | undefined, received_at_milliseconds: number): void;
+    /**
+     * Forgets every fix, so the next one draws immediately.
+     */
+    reset(): void;
 }
 
 /**
@@ -433,6 +474,24 @@ export class MapView {
      * to be retried.
      */
     setVectorTileSource(source: any): void;
+    /**
+     * Answers the last presented frame's pixels as RGBA bytes without
+     * reading the canvas through the compositor.
+     *
+     * The most recent [`MapView::render_frame`] left a draw list behind;
+     * this method replays that list into an offscreen texture of the same
+     * format, extent and clear color, copies the texture into a CPU-readable
+     * buffer and maps it. The pixels therefore match the frame that was
+     * presented, and captures taken after consecutive frames at the same
+     * camera pose are byte-identical. No `drawImage` re-present cycle is
+     * involved, so the result does not depend on the compositor's
+     * presented-frame lifetime.
+     *
+     * Call it after a `renderFrame` and before the next one: the draw list
+     * names that frame's reusable buffers. Fails before the first frame, or
+     * when the canvas has no pixels.
+     */
+    snapshot(): Promise<Uint8Array>;
     /**
      * Stages a deliberate parent-fallback for one requested tile, mirroring
      * the native golden-image tests: the fallback tile is evicted from the
@@ -1229,6 +1288,7 @@ export interface InitOutput {
     readonly __wbg_coursemediansmoother_free: (a: number, b: number) => void;
     readonly __wbg_exponentialvaluechase_free: (a: number, b: number) => void;
     readonly __wbg_followcamera_free: (a: number, b: number) => void;
+    readonly __wbg_locationposeanimator_free: (a: number, b: number) => void;
     readonly __wbg_mapcamera_free: (a: number, b: number) => void;
     readonly __wbg_mapssdk_free: (a: number, b: number) => void;
     readonly __wbg_mapview_free: (a: number, b: number) => void;
@@ -1260,8 +1320,11 @@ export interface InitOutput {
     readonly flushRecentDiagnosticEvents: (a: number, b: number) => number;
     readonly followZoomTowardTripEnd: (a: number) => number;
     readonly followcamera_breakOnGesture: (a: number) => void;
+    readonly followcamera_courseUp: (a: number) => void;
     readonly followcamera_engageTrip: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly followcamera_isNorthUp: (a: number) => number;
     readonly followcamera_new: () => number;
+    readonly followcamera_northUp: (a: number) => void;
     readonly followcamera_onFix: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly followcamera_phase: (a: number, b: number) => void;
     readonly followcamera_preTripCamera: (a: number, b: number) => void;
@@ -1274,6 +1337,10 @@ export interface InitOutput {
     readonly forwardGeocode: (a: number, b: number) => number;
     readonly getSdkCompiledVersion: (a: number) => void;
     readonly initializeSdk: () => number;
+    readonly locationposeanimator_new: () => number;
+    readonly locationposeanimator_poseAt: (a: number, b: number) => number;
+    readonly locationposeanimator_pushFix: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
+    readonly locationposeanimator_reset: (a: number) => void;
     readonly mapcamera_bearingDegrees: (a: number) => number;
     readonly mapcamera_center: (a: number, b: number) => void;
     readonly mapcamera_fittingBounds: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => void;
@@ -1306,6 +1373,7 @@ export interface InitOutput {
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setVectorTileSource: (a: number, b: number, c: number) => void;
+    readonly mapview_snapshot: (a: number) => number;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
     readonly mapview_updateOverlay: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly mapview_vectorTileSourceStatus: (a: number, b: number) => void;
@@ -1372,14 +1440,13 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_1966: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1966_140: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1966_141: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8871: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_8892: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_1970: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_1970_139: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_6701: (a: number, b: number) => void;
+    readonly __wasm_bindgen_func_elem_2996: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2996_148: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2996_149: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9875: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9896: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3000: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_3000_147: (a: number, b: number, c: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;

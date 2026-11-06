@@ -2729,6 +2729,29 @@ enum SdkLogSeverity {
     "Error",
 };
 
+/// One completed provider request, as a diagnostics event reports it.
+///
+/// The record is already redacted: the request path keeps its structure with
+/// query values removed, and no credential or response body is carried.
+dictionary ProviderRequestTrace {
+    /// The registry key of the provider that served the call.
+    string provider_key;
+    /// The contract the call served, for example `RoutingProvider`.
+    string provider_contract;
+    /// The HTTP method as an uppercase word (`GET`, `POST`).
+    string http_method;
+    /// The redacted request path, with query names and no values.
+    string request_path;
+    /// `2xx`, `3xx`, `4xx`, `5xx` or the transport-failure marker.
+    string status_class;
+    /// The derived outcome word (`success`, `client-error`, …).
+    string outcome;
+    /// Wall-clock duration of the attempt in milliseconds.
+    u64 duration_milliseconds;
+    /// Response payload size in bytes; zero when no response arrived.
+    u64 response_bytes;
+};
+
 /// One structured SDK log event, as delivered to a diagnostics listener or read
 /// back by a flush. Coordinates in event messages are rounded before delivery;
 /// raw coordinates at full precision and API keys are never included.
@@ -2743,6 +2766,9 @@ dictionary LogEvent {
     string subsystem_target;
     /// The one-line already-scrubbed message.
     string message_line;
+    /// The typed request facts when this event reports a completed provider
+    /// call; `None` for every other event.
+    ProviderRequestTrace? provider_request_trace;
 };
 
 /// Diagnostics listener contract. The SDK delivers its structured log events

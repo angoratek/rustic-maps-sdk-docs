@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TILE_SOURCE_MAXIMUM_WAIT_SECONDS"],"fn":["map_provider_error","tile_source_budget_rates","token_bucket_rates"],"struct":["EveryMapDistanceMatrixProvider","EveryMapGeocoder","EveryMapPlaceSearchProvider","EveryMapRasterTileProvider","EveryMapRouter","EveryMapTrafficProvider","EveryMapVectorTileProvider"]};
