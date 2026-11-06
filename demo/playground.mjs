@@ -1989,6 +1989,14 @@
           }
           const latitudes = polyline.map((coordinate) => coordinate.latitude);
           const longitudes = polyline.map((coordinate) => coordinate.longitude);
+          // A provider that answers without geometry leaves nothing to frame;
+          // Math.min over an empty list would produce Infinity and the fit
+          // would refuse it with a coordinate error instead of an honest one.
+          if (latitudes.length === 0
+              || [...latitudes, ...longitudes].some(
+                (value) => !Number.isFinite(value))) {
+            return null;
+          }
           return {
             south_west: {
               latitude: Math.min(...latitudes),
@@ -2157,7 +2165,15 @@
             },
           ];
           apply_overlays();
-          frame_trip_route(route_bounding_box(route, polyline));
+          const route_box = route_bounding_box(route, polyline);
+          if (route_box === null) {
+            show_error_report(
+              'Route framing',
+              'the provider returned no route geometry to frame',
+            );
+          } else {
+            frame_trip_route(route_box);
+          }
           schedule_render();
           // Recorded routes come from the artifact's snake-case JSON while a
           // live route carries the wasm seam's camel-case fields; the summary
@@ -2264,7 +2280,10 @@
               },
             ];
             apply_overlays();
-            frame_trip_route(route_bounding_box(recorded_trace.route, polyline));
+            const recorded_box = route_bounding_box(recorded_trace.route, polyline);
+            if (recorded_box !== null) {
+              frame_trip_route(recorded_box);
+            }
             trip_route_result.hidden = true;
             trip_source_line.hidden = false;
             trip_source_line.textContent = ui_label_text_with_values(
@@ -2441,6 +2460,9 @@
         const OFFLINE_ROUTE_FIT_PADDING_DEGREES = 0.0005;
         function offline_route_fit_box(route, polyline) {
           const route_box = route_bounding_box(route, polyline);
+          if (route_box === null) {
+            return null;
+          }
           const south_latitude = Math.min(
             route_box.south_west.latitude, route_box.north_east.latitude);
           const north_latitude = Math.max(
@@ -2498,7 +2520,10 @@
               { kind: 'routePolyline', coordinates: polyline },
             ];
             apply_overlays();
-            frame_trip_route(offline_route_fit_box(route, polyline));
+            const offline_box = offline_route_fit_box(route, polyline);
+            if (offline_box !== null) {
+              frame_trip_route(offline_box);
+            }
             const distance_meters = route.distanceMeters ?? route.distance_meters;
             const duration_seconds = route.durationSeconds ?? route.duration_seconds;
             // The grid route is a sub-minute walk; whole minutes would read
