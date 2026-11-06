@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["offline_route_from_archive_bytes"]};

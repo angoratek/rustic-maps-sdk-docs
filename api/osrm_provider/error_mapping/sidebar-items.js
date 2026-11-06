@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["OSRM_SUCCESS_CODE"],"fn":["interpret_json_response"]};

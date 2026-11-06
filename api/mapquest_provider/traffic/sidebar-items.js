@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["map_severity","parse_incidents_payload"],"struct":["MapQuestTrafficIncidentProvider"]};

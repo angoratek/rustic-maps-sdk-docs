@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_TILE_EXTENT","SPECIFICATION_DOCUMENTATION_URL"],"enum":["VectorTileAttributeValue","VectorTileError","VectorTileGeometry","VectorTileGeometryType"],"fn":["decode_vector_tile"],"mod":["wire"],"struct":["VectorTile","VectorTileFeature","VectorTileGeometryPoint","VectorTileLayer","VectorTileLinearRing"]};

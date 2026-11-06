@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["GPU_TILE_TEXTURE_CACHE_DEFAULT_MAXIMUM_BYTES"],"struct":["GpuTileTextureCache"]};

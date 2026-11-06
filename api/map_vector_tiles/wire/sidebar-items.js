@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["WIRE_TYPE_FIXED32","WIRE_TYPE_FIXED64","WIRE_TYPE_LENGTH_DELIMITED","WIRE_TYPE_VARINT"],"fn":["zigzag_decode"],"struct":["WireFieldKey","WireReader"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["archive","mmap_reader"]};
