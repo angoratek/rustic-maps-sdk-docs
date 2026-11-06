@@ -83,6 +83,7 @@
         select_scale_bar_scale,
         signed_angular_difference_degrees,
         trace_dispatch_interval_milliseconds,
+        LocationPoseAnimator,
       } from './map_controls.mjs';
 
       // Consumer copy (M28): every user-visible label of the page comes from
@@ -182,14 +183,12 @@
         dark: 'rgba(76, 141, 255, 0.70)',
         light: 'rgba(37, 99, 235, 0.75)',
       };
-      const CENTER_MARK_BY_THEME = { dark: '#f26d6d', light: '#dc2626' };
       const BACKGROUND_GRID_BY_THEME = {
         dark: 'rgba(255, 255, 255, 0.06)',
         light: 'rgba(0, 0, 0, 0.05)',
       };
       const TILE_FILL_BY_THEME_FALLBACK = TILE_FILL_BY_THEME.light;
       const TILE_STROKE_BY_THEME_FALLBACK = TILE_STROKE_BY_THEME.light;
-      const CENTER_MARK_FALLBACK = CENTER_MARK_BY_THEME.light;
       const BACKGROUND_GRID_FALLBACK = BACKGROUND_GRID_BY_THEME.light;
       const SCENE_BACKGROUND_FALLBACK = SCENE_BACKGROUND_BY_THEME.light;
       const CANVAS_GRID_SIZE = 32;
@@ -1437,9 +1436,29 @@
               + `/${provider_control.provider_descriptor.provider_key}`,
           );
         }
-        window.mapTest.setProviderCredential(credential_value);
+        const { provider_descriptor } = provider_control;
+        // One credential fills every capability the descriptor declares, each
+        // through the provider-keyed call, so the row's own key decides which
+        // provider is registered instead of a fixed convenience export.
+        const served_contract_keys = Array.isArray(provider_descriptor.served_contracts)
+          ? provider_descriptor.served_contracts : [];
+        const served_contract_names = served_contract_keys
+          .map((contract_key) => CAPABILITY_CONTRACT_NAMES[contract_key])
+          .filter((contract_name) => contract_name !== undefined);
+        if (served_contract_names.length === 0) {
+          throw new Error(
+            `${provider_descriptor.display_name} declares no capability this build can register.`,
+          );
+        }
+        for (const contract_name of served_contract_names) {
+          window.mapTest.configureProvider(
+            contract_name,
+            provider_descriptor.provider_key,
+            credential_value,
+          );
+        }
         provider_credentials_by_key.set(
-          provider_control.provider_descriptor.provider_key, credential_value);
+          provider_descriptor.provider_key, credential_value);
         applied_provider_keys.add(provider_control.provider_descriptor.provider_key);
         if (persist) {
           write_local_storage(
@@ -4336,6 +4355,10 @@
 
       window.mapLocationIndicatorState = () =>
         current_location_indicator ? { ...current_location_indicator } : null;
+      // The puck's drawn pose (M72): the interpolated position the canvas
+      // was last given, so a harness can measure the per-frame motion.
+      window.mapLocationPose = () =>
+        location_pose_animator.poseAt(performance.now()) ?? null;
       window.mapScaleBar = () =>
         scale_bar_selection
           ? {
@@ -4489,15 +4512,6 @@
         }
       }
 
-      function paint_center_mark() {
-        if (renderer_mode !== 'gpu') return;
-        const context = overlay_canvas.getContext('2d');
-        context.fillStyle = CENTER_MARK_BY_THEME[current_theme_name()] ?? CENTER_MARK_FALLBACK;
-        context.beginPath();
-        context.arc(overlay_canvas.width / 2, overlay_canvas.height / 2, 6, 0, 2 * Math.PI);
-        context.fill();
-      }
-
       // Phone width compresses the readout to its first line only
       // (docs/ReferenceAppUX.md §1); the full facts return with the width.
       function update_readout(camera) {
@@ -4611,7 +4625,6 @@
           const camera = build_camera();
           refresh_scale_bar(camera);
           paint_overlay(camera);
-          paint_center_mark();
           refresh_compass_control();
           update_readout(camera);
           refresh_performance_readout();
@@ -4708,12 +4721,19 @@
 
       // The compass control (§4.2): visible once the bearing is off north by
       // the token threshold; the letter rotates opposite the bearing, so it
-      // always points at true north on the screen.
+      // always points at true north on the screen. During a guided trip the
+      // control stays visible while north-up holds (M73): it is the toggle
+      // that returns the camera to course-up, so hiding it at bearing 0
+      // would strand the visitor in the mode.
       function refresh_compass_control() {
         const off_north_degrees_value =
           bearing_off_north_degrees(camera_state.bearing);
+        const is_holding_north_up =
+          follow_demo_phase() === FOLLOW_DEMO_PHASE_ENGAGED
+            && follow_camera.isNorthUp();
         compass_control.hidden =
-          off_north_degrees_value < COMPASS_VISIBILITY_BEARING_THRESHOLD_DEGREES;
+          !is_holding_north_up
+          && off_north_degrees_value < COMPASS_VISIBILITY_BEARING_THRESHOLD_DEGREES;
         compass_north_letter.style.transform = `rotate(${-camera_state.bearing}deg)`;
       }
 
@@ -5197,10 +5217,60 @@
       // the overlays (the native surface's top layer); the state hook stays
       // live on the 2D path too, where (like the overlays) the draw is a
       // documented GPU-only capability.
+      // The puck's interpolation (M72): every fix starts an eased motion from
+      // the pose on screen, and the frame pump draws the intermediate poses,
+      // so the position disc glides instead of hopping the fix distance.
+      const location_pose_animator = new LocationPoseAnimator();
+      let current_location_indicator_style = null;
+
+      /** Draws one interpolated pose into the GPU canvas' indicator slot. */
+      function draw_location_pose(pose) {
+        if (!gpu_map_canvas || renderer_mode !== 'gpu') {
+          return;
+        }
+        try {
+          gpu_map_canvas.setLocationIndicator(
+            {
+              coordinate: {
+                latitude: pose.latitudeDegrees,
+                longitude: pose.longitudeDegrees,
+              },
+              courseHeadingDegrees: pose.courseDegrees ?? null,
+              horizontalAccuracyMeters: pose.horizontalAccuracyMeters ?? null,
+            },
+            current_location_indicator_style,
+          );
+        } catch (indicator_failure) {
+          const indicator_failure_message = String(indicator_failure?.message ?? indicator_failure);
+          status_line_element.textContent =
+            `Location indicator rejected: ${indicator_failure_message}`;
+          show_error_report('Location indicator rejected', indicator_failure_message);
+        }
+      }
+
       function apply_location_indicator(indicator, indicator_style) {
         current_location_indicator = indicator
           ? { ...indicator, visualKind: indicator_style?.visualKind }
           : null;
+        current_location_indicator_style = indicator_style ?? null;
+        if (!indicator) {
+          location_pose_animator.reset();
+          return;
+        }
+        // The fix enters the animator; the drawn pose comes from `poseAt`, so
+        // the first fix of a session draws at once and later ones glide.
+        location_pose_animator.pushFix(
+          indicator.latitude,
+          indicator.longitude,
+          indicator.courseHeadingDegrees ?? null,
+          indicator.horizontalAccuracyMeters ?? null,
+          performance.now(),
+        );
+        const pose = location_pose_animator.poseAt(performance.now());
+        if (pose) {
+          draw_location_pose(pose);
+          if (pose.isAnimating) request_pump_step();
+        }
         if (!indicator || renderer_mode !== 'gpu' || !gpu_map_canvas) {
           return;
         }
@@ -5290,6 +5360,13 @@
             pump_running = true;
           }
           controls.bearing.value = camera_state.bearing;
+        }
+        // The puck's motion rides the same pump: draw the pose for this
+        // frame and stay scheduled while the motion is still running.
+        const location_pose = location_pose_animator.poseAt(now_milliseconds);
+        if (location_pose && current_location_indicator !== null) {
+          draw_location_pose(location_pose);
+          if (location_pose.isAnimating) pump_running = true;
         }
         refresh_control_labels();
         schedule_render();
@@ -5414,8 +5491,17 @@
       });
 
       // The compass (§4.2): a tap eases the camera north up over the one
-      // eased-camera-move duration; the pump re-renders as it swings.
+      // eased-camera-move duration; the pump re-renders as it swings. During
+      // a guided trip the tap is a mode toggle (M73): north-up holds across
+      // every following fix until the visitor chooses course-up again.
       compass_control.addEventListener('click', () => {
+        if (follow_demo_phase() === FOLLOW_DEMO_PHASE_ENGAGED) {
+          if (follow_camera.isNorthUp()) {
+            follow_camera.courseUp();
+          } else {
+            follow_camera.northUp();
+          }
+        }
         compass_renorth_ease.begin(
           performance.now(), camera_state.bearing, 0,
           eased_camera_move_duration_milliseconds());

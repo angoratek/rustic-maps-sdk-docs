@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -181,9 +181,9 @@
 turn-by-turn trip, and routes offline. One Rust core serves <strong>Android
 (Kotlin)</strong>, <strong>iOS (Swift)</strong>, <strong>React Native (TypeScript)</strong>, and <strong>WebAssembly
 (TypeScript)</strong> through one UniFFI contract. Map platforms connect through
-vendor-neutral provider contracts: MapQuest implements the platform API set,
-and any <code>{z}/{x}/{y}</code> raster or vector source connects through the URL-template
-providers.</p>
+vendor-neutral provider contracts: the provider layer carries MapQuest, Photon,
+OSRM, Valhalla, HERE, Google Maps, TomTom, Mapbox and Radar, and any <code>{z}/{x}/{y}</code>
+raster or vector source connects through the URL-template providers.</p>
 <p class="landing-cta">
 <a href="demo/">Open the live wasm demo</a>
 <a href="demo/mobile/">Run the apps on a hosted device</a>
@@ -210,9 +210,10 @@ members keep their signature and meaning.</p>
 distance matrix, place search, traffic incidents, traffic flow, elevation,
 raster tiles, vector tiles, and offline routing. MapQuest implements geocoding,
 routing, the distance matrix, place search, traffic, and raster tiles with a
-shared rate limiter and bounded retries. The SDK adds a disk response cache with
-per-category time-to-live. URL-template providers serve any raster or vector base
-map.</p>
+shared rate limiter and bounded retries. Photon serves keyless geocoding and
+search, OSRM and Valhalla serve keyless routing, and the URL-template
+providers serve any raster or vector base map. The SDK adds a disk response
+cache with per-category time-to-live.</p>
 </div>
 
 <div class="feature-card">

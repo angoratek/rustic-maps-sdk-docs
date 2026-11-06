@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -188,7 +188,7 @@ either.</p>
 <tr><th>Route</th><th>Use it when</th><th>What changes</th></tr>
 </thead>
 <tbody>
-<tr><td>Rust provider crate</td><td>The provider serves routing, search, distance matrix, traffic, elevation, or vector tiles, or needs its own HTTP policy</td><td>A crate implementing the traits, a descriptor, a dispatch arm, and a registration call on each target</td></tr>
+<tr><td>Provider crate in the provider layer</td><td>The provider serves routing, search, distance matrix, traffic, elevation, or vector tiles, or needs its own HTTP policy</td><td>A crate implementing the <code>everymap-core</code> contracts, a descriptor, a catalog row, a dispatch arm, and a registration call on each target</td></tr>
 <tr><td>Host implementation</td><td>The provider serves geocoding or raster tiles from code that already lives in the native app</td><td>A Kotlin or Swift class implementing the interface, a registration call, and a descriptor</td></tr>
 <tr><td>URL-template source</td><td>The provider publishes ordinary <code>{z}/{x}/{y}</code> raster or vector tiles</td><td>A descriptor only; the SDK’s generic source does the work</td></tr>
 </tbody>
@@ -203,54 +203,66 @@ registration call on a target.</li>
 <li><strong>Committed sample responses.</strong> The tests and the demo read provider
 payloads from committed sample data, never from the network.</li>
 </ol>
-<h2 id="route-1-a-rust-provider-crate"><a class="header" href="#route-1-a-rust-provider-crate">Route 1: a Rust provider crate</a></h2>
+<h2 id="route-1-a-provider-crate-in-the-provider-layer"><a class="header" href="#route-1-a-provider-crate-in-the-provider-layer">Route 1: a provider crate in the provider layer</a></h2>
 <h3 id="implement-the-contract"><a class="header" href="#implement-the-contract">Implement the contract</a></h3>
-<p>Implement the matching trait from <code>geospatial-traits</code>. The methods are async
-and return <code>SDKError</code> on refusal or failure.</p>
+<p>Implement the matching contract from <code>everymap-core</code>. The methods are async
+and return the provider layer’s error type on refusal or failure. The SDK
+adapts the implementation to its own records at
+<code>rustic_maps_core::everymap_bridge</code>, so the vendor crate never names an SDK
+type.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use async_trait::async_trait;
-use geospatial_traits::RoutingProvider;
-use geospatial_types::route::{RouteData, RouteOptions};
-use geospatial_types::{GeographicCoordinate, SDKError};
+use everymap_core::domains::routing::{RouteOptions, RouteResponse, Router};
+use everymap_core::types::Coordinate;
+use everymap_core::EveryMapResult;
 
 struct MyRoutingProvider;
 
 #[async_trait]
-impl RoutingProvider for MyRoutingProvider {
+impl Router for MyRoutingProvider {
     async fn calculate_route(
         &amp;self,
-        waypoints: &amp;[GeographicCoordinate],
-        route_options: &amp;RouteOptions,
-    ) -&gt; Result&lt;RouteData, SDKError&gt; {
-        let _ = (waypoints, route_options);
-        // Build the provider request, execute it through the transport, and
-        // parse the answer into RouteData.
-        todo!("implement the provider request and parse")
+        _start: &amp;Coordinate,
+        _end: &amp;Coordinate,
+        _options: &amp;RouteOptions,
+    ) -&gt; EveryMapResult&lt;RouteResponse&gt; {
+        todo!("implement the two-endpoint request and parse")
+    }
+
+    async fn calculate_route_with_waypoints(
+        &amp;self,
+        _waypoints: &amp;[Coordinate],
+        _options: &amp;RouteOptions,
+    ) -&gt; EveryMapResult&lt;RouteResponse&gt; {
+        todo!("implement the ordered-waypoint request and parse")
     }
 }
 <span class="boring">}</span></code></pre>
-<p>The traits are <code>GeocodingProvider</code>, <code>RoutingProvider</code>,
-<code>DistanceMatrixProvider</code>, <code>SearchPlaceProvider</code>, <code>TrafficIncidentProvider</code>,
-<code>TrafficFlowProvider</code>, <code>ElevationProvider</code>, <code>RasterTileProvider</code>,
-<code>VectorTileProvider</code>, and <code>OfflineRoutingProvider</code>. A provider implements
-only the ones it serves.</p>
+<p>The contracts are <code>Geocoder</code>, <code>PlaceSearchProvider</code>, <code>AutocompleteProvider</code>,
+<code>Router</code>, <code>DistanceMatrixProvider</code>, <code>TrafficProvider</code>, <code>RasterTileProvider</code>,
+<code>VectorTileProvider</code>, <code>ElevationProvider</code>, <code>IsolineProvider</code>, <code>RouteMatcher</code>,
+<code>TourPlanner</code>, <code>NetworkPositioner</code>, <code>AttributeProvider</code>, <code>MapImageProvider</code>
+and <code>OfflineRoutingProvider</code>. A provider implements only the ones it serves.
+The bridge adapts geocoding, search, type-ahead, routing, distance matrix,
+traffic, raster tiles and vector tiles to the SDK’s own records, so a vendor
+provider needs no adapter of its own for those contracts.</p>
 <h3 id="register-it-in-the-core"><a class="header" href="#register-it-in-the-core">Register it in the core</a></h3>
 <p><code>ProviderRegistry</code> holds one slot per contract. Registering replaces the
 slot; a call into an empty slot returns <code>ProviderNotConfigured</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use std::sync::Arc;
-use geospatial_traits::RoutingProvider;
+use rustic_maps_core::everymap_bridge::EveryMapRouter;
 use rustic_maps_core::ProviderRegistry;
 
-fn registry_with(provider: Arc&lt;dyn RoutingProvider&gt;) -&gt; ProviderRegistry {
+fn registry_with(provider: Arc&lt;dyn everymap_core::domains::routing::Router&gt;) -&gt; ProviderRegistry {
     let mut registry = ProviderRegistry::new();
-    registry.register_routing_provider(provider);
+    registry.register_routing_provider(Arc::new(EveryMapRouter::new(provider)));
     registry
 }
 <span class="boring">}</span></code></pre>
-<p>Use <code>provider-transport</code> for HTTP. It gives the native and browser builds one
+<p>Use the provider layer’s shared client for HTTP. It gives the native and browser builds one
 request, retry, and rate-limit path, so a provider behaves the same on every
 target.</p>
 <h3 id="expose-it-to-an-application-target"><a class="header" href="#expose-it-to-an-application-target">Expose it to an application target</a></h3>
@@ -305,7 +317,7 @@ at startup.</p>
 screen. The example uses the OSRM provider that ships with the SDK.</p>
 <ol>
 <li>Add the crate to the binding. The SDK already carries it, so this step is
-the catalog row: <code>osrm</code> maps to <code>OsrmRoutingProvider::new</code>.</li>
+the catalog row: <code>osrm</code> maps to <code>OsrmRouter::new</code>.</li>
 <li>Give the provider its deployment address. OSRM is keyless, so the
 credential field carries the base URL of the deployment instead of a
 secret; an empty string targets a local server.</li>
@@ -515,7 +527,7 @@ startup.</p>
 <tr><td>iOS</td><td><code>MapSdk.registerUrlTemplateRasterTileSource(source:)</code></td><td><code>MapView.setVectorTileSource(_:)</code></td></tr>
 <tr><td>React Native</td><td><code>MapsSdk.registerUrlTemplateRasterTileSource(source)</code></td><td><code>MapViewHandle.setVectorTileSource(source)</code></td></tr>
 <tr><td>WebAssembly</td><td><code>registerUrlTemplateRasterTileSource(source)</code></td><td><code>MapView.setVectorTileSource(source)</code></td></tr>
-<tr><td>Rust</td><td><code>UrlTemplateRasterTileProvider::new(source, transport)</code></td><td><code>UrlTemplateVectorTileProvider::new(template, descriptor, transport)</code></td></tr>
+<tr><td>Rust</td><td><code>UrlTemplateRasterTileProvider::new(source)</code> or <code>with_transport(source, transport)</code></td><td><code>UrlTemplateVectorTileProvider::new(source)</code> or <code>with_transport(source, transport)</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -542,8 +554,8 @@ provider.</p>
 <tr><td><code>attribution_text</code></td><td>The line every shell displays wherever the imagery appears</td></tr>
 <tr><td><code>terms_note</code></td><td>The provider’s rate limits, caching ceiling, or usage terms</td></tr>
 <tr><td><code>settings_hint</code></td><td>Where the reader creates a credential</td></tr>
-<tr><td><code>wasm_registration</code></td><td>The browser dispatch key, or null when the browser has no registration</td></tr>
-<tr><td><code>fixture_routes</code></td><td>The request patterns and committed sample responses for each served API</td></tr>
+<tr><td><code>wasm_registration</code></td><td>The browser dispatch key; null falls back to <code>provider_key</code></td></tr>
+<tr><td><code>fixture_routes</code></td><td>The request patterns and committed sample responses the provider’s tests and the demo serve</td></tr>
 <tr><td><code>raster_url_template</code></td><td>The keyless raster source, when the provider publishes one</td></tr>
 <tr><td><code>maximum_zoom_level</code></td><td>The highest zoom the tileset serves</td></tr>
 <tr><td><code>url_template</code></td><td>The vector tileset, when the provider publishes one</td></tr>

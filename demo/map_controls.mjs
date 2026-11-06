@@ -24,6 +24,7 @@ import {
   CourseMedianSmoother,
   ExponentialValueChase as NativeExponentialValueChase,
   FollowCamera as NativeFollowCamera,
+  LocationPoseAnimator as NativeLocationPoseAnimator,
   SmoothstepTimedEase as NativeSmoothstepTimedEase,
   TraceCursor,
   bearingOffNorthDegrees,
@@ -72,6 +73,27 @@ export const COMPASS_VISIBILITY_BEARING_THRESHOLD_DEGREES = 1.0;
  * (`compass-renorth-animation`, both moves' shared mill value).
  */
 export const EASED_CAMERA_MOVE_DURATION_MILLISECONDS = 300;
+
+/**
+ * The longest motion one fix may start
+ * (`location-animation-duration-milliseconds`): the actual duration is the
+ * interval between fixes, clamped to this ceiling.
+ */
+export const LOCATION_ANIMATION_DURATION_MILLISECONDS = 1000;
+
+/**
+ * The shortest motion one fix starts
+ * (`location-animation-minimum-milliseconds`), so a fast fix stream still
+ * animates instead of teleporting.
+ */
+export const LOCATION_ANIMATION_MINIMUM_MILLISECONDS = 120;
+
+/**
+ * The puck never predicts motion between fixes
+ * (`location-animation-dead-reckoning`): a wrong prediction would draw a
+ * place the visitor never was.
+ */
+export const LOCATION_ANIMATION_DEAD_RECKONING = 'off';
 
 /** The scale bar's width floor in pixels (`scale-bar-width-range` low). */
 export const SCALE_BAR_WIDTH_MINIMUM_PIXELS = 50.0;
@@ -166,6 +188,13 @@ const EARTH_MEAN_RADIUS_METERS = 6371008.8;
 // constructed after readiness and re-export the crate classes directly. ---
 
 export { CourseMedianSmoother, TraceCursor };
+
+/**
+ * The location puck's interpolation between fixes (`map-refapp-core`'s
+ * `LocationPoseAnimator`), created eagerly because the page constructs it
+ * after the module has loaded.
+ */
+export class LocationPoseAnimator extends NativeLocationPoseAnimator {}
 
 /**
  * A linear-in-time, smoothstep-eased value move (`map-refapp-core`'s
@@ -288,6 +317,21 @@ export class FollowCamera {
 
   reengage() {
     this.native().reengage();
+  }
+
+  /** Holds the camera north-up whatever the fixes report (M73). */
+  northUp() {
+    this.native().northUp();
+  }
+
+  /** Resumes the eased course chase on the next fix (M73). */
+  courseUp() {
+    this.native().courseUp();
+  }
+
+  /** Whether the camera is holding north-up (M73). */
+  isNorthUp() {
+    return this.native().isNorthUp();
   }
 
   restorePreTripCamera() {

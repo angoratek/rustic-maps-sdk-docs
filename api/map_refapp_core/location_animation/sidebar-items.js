@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LOCATION_ANIMATION_MAXIMUM_MILLISECONDS","LOCATION_ANIMATION_MINIMUM_MILLISECONDS"],"struct":["LocationFix","LocationPose","LocationPoseAnimator"]};

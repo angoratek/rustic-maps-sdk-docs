@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=44a5f77134495946c0440fb8786fac883c3943aa:sha256:5ddab5419f2874dcfae9ed9fe48f9243d92bdf8adee1ecb72577c73ff81dcd03 -->
+                        <!-- generated-api-reference-provenance: revision=54c0bb30c609fdb83a6f4b4ef2f52e9138e63ba8:sha256:341f90909ea6433c05d96d8e36826afa8d45b4aec236e7f4b06bddb2ca7471f3 -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -1542,6 +1542,26 @@
 </tbody>
 </table>
 </div>
+<h3 id="providerrequesttrace"><a class="header" href="#providerrequesttrace">ProviderRequestTrace</a></h3>
+<p>One completed provider request, as a diagnostics event reports it.</p>
+<p>The record is already redacted: the request path keeps its structure with query values removed, and no credential or response body is carried.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>providerKey</code></td><td><code>String</code></td><td>The registry key of the provider that served the call.</td></tr>
+<tr><td><code>providerContract</code></td><td><code>String</code></td><td>The contract the call served, for example <code>RoutingProvider</code>.</td></tr>
+<tr><td><code>httpMethod</code></td><td><code>String</code></td><td>The HTTP method as an uppercase word (<code>GET</code>, <code>POST</code>).</td></tr>
+<tr><td><code>requestPath</code></td><td><code>String</code></td><td>The redacted request path, with query names and no values.</td></tr>
+<tr><td><code>statusClass</code></td><td><code>String</code></td><td><code>2xx</code>, <code>3xx</code>, <code>4xx</code>, <code>5xx</code> or the transport-failure marker.</td></tr>
+<tr><td><code>outcome</code></td><td><code>String</code></td><td>The derived outcome word (<code>success</code>, <code>client-error</code>, …).</td></tr>
+<tr><td><code>durationMilliseconds</code></td><td><code>ULong</code></td><td>Wall-clock duration of the attempt in milliseconds.</td></tr>
+<tr><td><code>responseBytes</code></td><td><code>ULong</code></td><td>Response payload size in bytes; zero when no response arrived.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="logevent"><a class="header" href="#logevent">LogEvent</a></h3>
 <p>One structured SDK log event, as delivered to a diagnostics listener or read back by a flush. Coordinates in event messages are rounded before delivery; raw coordinates at full precision and API keys are never included.</p>
 <div class="table-wrapper">
@@ -1554,6 +1574,7 @@
 <tr><td><code>severity</code></td><td><code>SdkLogSeverity</code></td><td>The event’s severity.</td></tr>
 <tr><td><code>subsystemTarget</code></td><td><code>String</code></td><td>The named per-subsystem target that logged it, for example <code>tile_fetch</code>.</td></tr>
 <tr><td><code>messageLine</code></td><td><code>String</code></td><td>The one-line already-scrubbed message.</td></tr>
+<tr><td><code>providerRequestTrace</code></td><td><code>ProviderRequestTrace?</code></td><td>The typed request facts when this event reports a completed provider call; <code>None</code> for every other event.</td></tr>
 </tbody>
 </table>
 </div>
