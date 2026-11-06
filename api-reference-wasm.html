@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0019b612.js";
+            window.path_to_searchindex_js = "searchindex-927d39df.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=abce4fee112e53a5e8d8c6266d3ec8f4c7d60c2e:sha256:ac1744175545d251c0d95a7e479116282873bedffd25abc456fa4130ba739f22 -->
+                        <!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -861,7 +861,7 @@
 <tr><td><code>distanceMeters</code></td><td><code>number</code></td><td>Total distance across all legs, in meters.</td></tr>
 <tr><td><code>durationSeconds</code></td><td><code>number</code></td><td>Total travel time across all legs, in seconds.</td></tr>
 <tr><td><code>boundingBox</code></td><td><code>BoundingBox</code></td><td>Geographic bounds of the full route geometry.</td></tr>
-<tr><td><code>legs</code></td><td><code>RouteLeg[] }</code></td><td>Legs, one per consecutive waypoint pair.</td></tr>
+<tr><td><code>geometry</code></td><td><code>GeographicCoordinate[] /** * Legs, one per consecutive waypoint pair. */ readonly legs: RouteLeg[]; }</code></td><td>The full route geometry in traversal order, one point per shape vertex the provider returned. A provider that reports only per-step shapes leaves this empty and the steps carry the geometry instead.</td></tr>
 </tbody>
 </table>
 </div>
