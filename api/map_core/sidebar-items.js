@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["cache_policy","offline_routing","offline_routing_benchmark","registry","routing_fallback"]};

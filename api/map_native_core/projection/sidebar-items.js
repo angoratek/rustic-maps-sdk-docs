@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["coordinate_to_normalized_world","tile_key_for_coordinate","tiles_covering"]};

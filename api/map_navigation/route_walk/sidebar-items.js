@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["RouteWalkError"],"struct":["RouteWalk","SimulatedTripFix","SimulatedTripPace"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_COURSE_SMOOTHING_WINDOW_FIXES","DEFAULT_STALE_AFTER_SECONDS"],"enum":["PositionSourceStatus","PositioningError"],"struct":["PositionController","PositionFix","PositionState","SimulatedPositionSource"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["snap_coordinate_to_polyline"],"struct":["PolylineSnap"]};

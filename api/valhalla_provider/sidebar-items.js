@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["VALHALLA_DEFAULT_BASE_URL"],"struct":["ValhallaProviderConfiguration","ValhallaRoutingProvider"]};
