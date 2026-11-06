@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["error_mapping","http","vector_tiles"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TileReadiness"],"fn":["prepared_frame_is_idle"],"struct":["PreparedTile","TileScheduler","TileWarmTask"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["camera","camera_interaction","gpu_texture_cache","headless","labels","location_indicator","overlay","prefetch","projection","renderer","surface","tile_key","tile_scheduler","tile_texture_pool","vector_base","vector_style"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_NAVIGATION_RECORDER_CAPACITY"],"enum":["NavigationRecordedEvent"],"struct":["NavigationRecorder","NavigationRecordingEntry"]};

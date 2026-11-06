@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CourseFiltering"],"fn":["effective_course_heading_degrees"]};

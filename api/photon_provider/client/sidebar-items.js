@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_MAXIMUM_RETRY_ATTEMPTS","DEFAULT_PHOTON_BASE_URL","DEFAULT_PHOTON_USER_AGENT","PHOTON_PROVIDER_KEY"],"struct":["PhotonHttpClient","PhotonProviderConfiguration"]};

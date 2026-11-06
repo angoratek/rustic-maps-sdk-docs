@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["FORBIDDEN_BROWSER_REQUEST_HEADER_NAMES","FORBIDDEN_BROWSER_REQUEST_HEADER_PREFIXES"],"fn":["is_forbidden_browser_request_header"]};

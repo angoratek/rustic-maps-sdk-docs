@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DeviationGrade","NavigationPhase"],"struct":["DeviationInfo","RouteStepPosition","TripNavigationState","TripProgress"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CacheThenNetworkOutcome"],"fn":["execute_cache_then_network"],"trait":["CachedResponseStore"]};

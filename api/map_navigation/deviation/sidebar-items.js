@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_DEVIATION_DISTANCE_THRESHOLD_METERS"],"enum":["DeviationStatus"],"struct":["DeviationDetectionInputs","DistanceDeviationDetector"],"trait":["DeviationDetector"]};
