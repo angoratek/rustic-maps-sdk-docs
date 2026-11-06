@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -197,6 +197,14 @@ never place it in the bundle.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, search and suggestions, routing with its capability readback, distance matrix, traffic incidents and flow, raster tiles</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing, traffic incidents and flow</td></tr>
+<tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing</td></tr>
+<tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing, traffic incidents and flow, raster tiles</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing</td></tr>
+<tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing</td></tr>
+<tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding, reverse geocoding, search and suggestions</td></tr>
+<tr><td>OSRM</td><td><code>osrm</code></td><td>None, or a deployment URL</td><td>Selectable routing provider</td><td>Routing with its capability readback</td></tr>
+<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None, or a deployment URL</td><td>Selectable routing provider</td><td>Routing with its capability readback</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster tiles</td><td>Raster tiles</td></tr>
 <tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
 <tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
@@ -204,10 +212,13 @@ never place it in the bundle.</li>
 </table>
 </div>
 <p>MapQuest registers through <code>configureProvider</code>, one capability at a time, or
-<code>setProviderCredential</code> for its whole capability set. OpenStreetMap Standard
-registers through <code>registerUrlTemplateRasterTileSource</code>, and its tiles then
-feed the canvas’s live raster fallback. OpenStreetMap US and OpenFreeMap are
-served by <code>MapView.setVectorTileSource</code> and need no registration call.</p>
+<code>setProviderCredential</code> for its whole capability set. Photon accepts an empty
+credential and reaches its public instance; OSRM and Valhalla need their
+deployment’s base URL, and the reference apps pass each descriptor’s public
+demo address. OpenStreetMap Standard registers through
+<code>registerUrlTemplateRasterTileSource</code>, and its tiles then feed the canvas’s
+live raster fallback. OpenStreetMap US and OpenFreeMap are served by
+<code>MapView.setVectorTileSource</code> and need no registration call.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -215,6 +226,12 @@ served by <code>MapView.setVectorTileSource</code> and need no registration call
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td>Map data © OpenStreetMap contributors (ODbL) — tile imagery © MapQuest</td><td>MapQuest terms apply: rate limits and a 30-day raster-tile caching ceiling.</td></tr>
+<tr><td>HERE</td><td>© HERE</td><td>HERE terms apply: per-plan transaction limits and a caching policy that bounds stored results.</td></tr>
+<tr><td>Google Maps</td><td>Map data © Google</td><td>Google Maps Platform terms apply: billing per SKU, caching restrictions, and no permanent storage of most content.</td></tr>
+<tr><td>TomTom</td><td>© TomTom</td><td>TomTom terms apply: per-plan request quotas and a caching policy for stored tiles and results.</td></tr>
+<tr><td>Mapbox</td><td>© Mapbox © OpenStreetMap contributors</td><td>Mapbox terms apply: usage-based billing and attribution of Mapbox and OpenStreetMap wherever the data is shown.</td></tr>
+<tr><td>Radar</td><td>© Radar</td><td>Radar terms apply: per-plan request quotas and no permanent storage of geocoding results.</td></tr>
+<tr><td>Photon</td><td>Map data © OpenStreetMap contributors (ODbL) — search by Photon</td><td>The public Photon instance is offered for reasonable, non-commercial use; a self-hosted deployment follows its operator’s terms.</td></tr>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
@@ -323,7 +340,12 @@ order, with the provider key, its display name and whether a provider is
 installed. Each slot is independent, so a page may serve geocoding from one
 provider and raster tiles from another. <code>setProviderCredential(credential)</code>
 registers the full-service provider for every capability it serves, and
-<code>clearProviderRegistrations()</code> empties every slot.</p>
+<code>clearProviderRegistrations()</code> empties every slot. Photon accepts an empty
+credential; OSRM and Valhalla take the deployment’s base URL.</p>
+<pre><code class="language-js">import { configureProvider } from './web/rustic_maps_web_bindings.js';
+
+configureProvider('Routing', 'osrm', 'https://router.project-osrm.org');
+</code></pre>
 <p>A key with no compiled provider is refused with a message naming the key, and
 a blank credential for a provider that requires one is refused before any
 slot changes. Apply the credential through a settings form or a test’s

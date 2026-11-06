@@ -11,6 +11,7 @@
       "provider_key": "mapquest",
       "display_name": "MapQuest",
       "credential_label": "API key",
+      "raster_tile_cache_ceiling_days": 30,
       "registration_available": {
         "android": true,
         "ios": true,
@@ -83,6 +84,146 @@
         "traffic_incidents",
         "traffic_flow",
         "raster_tiles"
+      ]
+    },
+    {
+      "provider_key": "here",
+      "display_name": "HERE",
+      "credential_label": "API key",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "© HERE",
+      "terms_note": "HERE terms apply: per-plan transaction limits and a caching policy that bounds stored results.",
+      "settings_hint": "Create a key in the HERE developer console.",
+      "wasm_registration": "here",
+      "fixture_routes": [
+        {
+          "purpose": "geocoding",
+          "method": "GET",
+          "path_pattern": "^geocode$",
+          "fixture": "fixtures/here/geocode_brandenburg_gate.json"
+        }
+      ],
+      "served_contracts": [
+        "geocoding",
+        "routing",
+        "traffic_incidents",
+        "traffic_flow"
+      ]
+    },
+    {
+      "provider_key": "google",
+      "display_name": "Google Maps",
+      "credential_label": "API key",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "Map data © Google",
+      "terms_note": "Google Maps Platform terms apply: billing per SKU, caching restrictions, and no permanent storage of most content.",
+      "settings_hint": "Create a key in the Google Cloud console and enable the Maps APIs.",
+      "wasm_registration": "google",
+      "fixture_routes": [
+        {
+          "purpose": "geocoding",
+          "method": "GET",
+          "path_pattern": "^$",
+          "fixture": "fixtures/google/geocode_brandenburg_gate.json"
+        }
+      ],
+      "served_contracts": [
+        "geocoding",
+        "routing"
+      ]
+    },
+    {
+      "provider_key": "tomtom",
+      "display_name": "TomTom",
+      "credential_label": "API key",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "© TomTom",
+      "terms_note": "TomTom terms apply: per-plan request quotas and a caching policy for stored tiles and results.",
+      "settings_hint": "Create a key in the TomTom developer portal.",
+      "wasm_registration": "tomtom",
+      "fixture_routes": [
+        {
+          "purpose": "geocoding",
+          "method": "GET",
+          "path_pattern": "^search/2/geocode/.*\\.json$",
+          "fixture": "fixtures/tomtom/geocode_brandenburg_gate.json"
+        }
+      ],
+      "served_contracts": [
+        "geocoding",
+        "routing",
+        "traffic_incidents",
+        "traffic_flow",
+        "raster_tiles"
+      ]
+    },
+    {
+      "provider_key": "mapbox",
+      "display_name": "Mapbox",
+      "credential_label": "Access token",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "© Mapbox © OpenStreetMap contributors",
+      "terms_note": "Mapbox terms apply: usage-based billing and attribution of Mapbox and OpenStreetMap wherever the data is shown.",
+      "settings_hint": "Create an access token in the Mapbox account page.",
+      "wasm_registration": "mapbox",
+      "fixture_routes": [
+        {
+          "purpose": "geocoding",
+          "method": "GET",
+          "path_pattern": "^search/geocode/v6/forward$",
+          "fixture": "fixtures/mapbox/geocode_berlin.json"
+        }
+      ],
+      "served_contracts": [
+        "geocoding",
+        "routing"
+      ]
+    },
+    {
+      "provider_key": "radar",
+      "display_name": "Radar",
+      "credential_label": "API key",
+      "registration_available": {
+        "android": true,
+        "ios": true,
+        "react_native": true,
+        "wasm": true
+      },
+      "attribution_text": "© Radar",
+      "terms_note": "Radar terms apply: per-plan request quotas and no permanent storage of geocoding results.",
+      "settings_hint": "Create a key in the Radar dashboard.",
+      "wasm_registration": "radar",
+      "fixture_routes": [
+        {
+          "purpose": "geocoding",
+          "method": "GET",
+          "path_pattern": "^$",
+          "fixture": "fixtures/radar/geocode_brandenburg_gate.json"
+        }
+      ],
+      "served_contracts": [
+        "geocoding",
+        "routing"
       ]
     },
     {
@@ -224,19 +365,19 @@
       "demo_base_url": "https://router.project-osrm.org",
       "demo_base_url_note": "Public demo server, rate-limited and not for production use.",
       "settings_hint": "Enter the base URL of your OSRM deployment, or use the public demo server declared by the registry.",
-      "wasm_registration": null,
+      "wasm_registration": "osrm",
       "fixture_routes": [
         {
           "purpose": "routing",
           "method": "GET",
           "path_pattern": "^route/v1/driving/-122\\.3937,37\\.7955;-122\\.2711,37\\.8044$",
-          "fixture": "crates/osrm-provider/fixtures/san_francisco_oakland_ferry_route.json"
+          "fixture": "fixtures/osrm/san_francisco_oakland_ferry_route.json"
         },
         {
           "purpose": "routing",
           "method": "GET",
           "path_pattern": "^route/v1/[a-z]+/.*$",
-          "fixture": "crates/osrm-provider/fixtures/sacramento_route.json"
+          "fixture": "fixtures/osrm/sacramento_route.json"
         }
       ]
     },
@@ -258,13 +399,13 @@
       "demo_base_url": "https://valhalla1.openstreetmap.de",
       "demo_base_url_note": "FOSSGIS public demo server, limited to one request per second and not for production use.",
       "settings_hint": "Enter the base URL of your Valhalla deployment, or use the public demo server declared by the registry.",
-      "wasm_registration": null,
+      "wasm_registration": "valhalla",
       "fixture_routes": [
         {
           "purpose": "routing",
           "method": "POST",
           "path_pattern": "^route$",
-          "fixture": "crates/valhalla-provider/fixtures/route_sacramento.json"
+          "fixture": "fixtures/valhalla/route_sacramento.json"
         }
       ]
     },
@@ -293,13 +434,13 @@
           "purpose": "search",
           "method": "GET",
           "path_pattern": "^api$",
-          "fixture": "crates/photon-provider/fixtures/search_sacramento.json"
+          "fixture": "fixtures/photon/search_sacramento.json"
         },
         {
           "purpose": "reverse_geocoding",
           "method": "GET",
           "path_pattern": "^reverse$",
-          "fixture": "crates/photon-provider/fixtures/reverse_sacramento.json"
+          "fixture": "fixtures/photon/reverse_sacramento.json"
         }
       ]
     }

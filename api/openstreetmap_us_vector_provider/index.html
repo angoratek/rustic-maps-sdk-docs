@@ -32,7 +32,7 @@ consumers keep the SDK from ever downloading tiles during tests; the
 reference apps’ posture stays low-volume non-commercial.</li>
 </ul>
 <h2 id="crate-posture"><a class="doc-anchor" href="#crate-posture">§</a>Crate posture</h2>
-<p>Like <code>mapquest-provider</code>, this crate performs its requests through the
+<p>Like the MapQuest provider, this crate performs its requests through the
 shared <code>provider-transport</code> seam: the same request, retry and
 rate-limiting code runs natively and in the browser. The crate itself
 targets native platforms; the contract it implements in

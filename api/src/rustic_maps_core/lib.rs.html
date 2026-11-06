@@ -8,28 +8,31 @@
 <a href=#8 id=8 data-nosnippet>8</a>
 <a href=#9 id=9 data-nosnippet>9</a></span><span class="kw">pub mod </span>blocking_work;
 <a href=#10 id=10 data-nosnippet>10</a><span class="kw">pub mod </span>cache_policy;
-<a href=#11 id=11 data-nosnippet>11</a><span class="kw">pub mod </span>offline_routing;
-<a href=#12 id=12 data-nosnippet>12</a><span class="comment">// Benchmark support for the offline routing engine (M7 slice 6): the
-<a href=#13 id=13 data-nosnippet>13</a>// synthetic graphs, the Dijkstra baseline's harness and the coarse CI
-<a href=#14 id=14 data-nosnippet>14</a>// budget alarm. Test/bench seam, never production routing surface.
-<a href=#15 id=15 data-nosnippet>15</a></span><span class="kw">pub mod </span>offline_routing_benchmark;
-<a href=#16 id=16 data-nosnippet>16</a><span class="kw">pub mod </span>registry;
-<a href=#17 id=17 data-nosnippet>17</a><span class="kw">pub mod </span>routing_fallback;
-<a href=#18 id=18 data-nosnippet>18</a><span class="comment">// Grid-keyed, memory-bounded caching of traffic-flow answers (the traffic
-<a href=#19 id=19 data-nosnippet>19</a>// layer's reuse across pans), portable to the browser.
-<a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">pub mod </span>traffic_flow_cache;
-<a href=#21 id=21 data-nosnippet>21</a>
-<a href=#22 id=22 data-nosnippet>22</a><span class="kw">pub use </span>blocking_work::{BlockingWorkExecutor, InlineBlockingWorkExecutor, run_blocking};
-<a href=#23 id=23 data-nosnippet>23</a><span class="kw">pub use </span>cache_policy::{CacheThenNetworkOutcome, CachedResponseStore, execute_cache_then_network};
-<a href=#24 id=24 data-nosnippet>24</a><span class="kw">pub use </span>offline_routing::{
-<a href=#25 id=25 data-nosnippet>25</a>    ArchiveOfflineRoutingProvider, calculate_offline_route_from_archive_bytes,
-<a href=#26 id=26 data-nosnippet>26</a>};
-<a href=#27 id=27 data-nosnippet>27</a><span class="kw">pub use </span>registry::{ProviderContract, ProviderRegistry};
-<a href=#28 id=28 data-nosnippet>28</a><span class="kw">pub use </span>routing_fallback::OfflineFallbackRoutingProvider;
-<a href=#29 id=29 data-nosnippet>29</a><span class="kw">pub use </span>traffic_flow_cache::{
-<a href=#30 id=30 data-nosnippet>30</a>    DEFAULT_TRAFFIC_FLOW_GRID_ZOOM_LEVEL, DEFAULT_TRAFFIC_FLOW_MAXIMUM_ENTRY_COUNT,
-<a href=#31 id=31 data-nosnippet>31</a>    DEFAULT_TRAFFIC_FLOW_TIME_TO_LIVE_SECONDS, GridCachedTrafficFlowProvider,
-<a href=#32 id=32 data-nosnippet>32</a>    TrafficFlowCacheConfiguration, TrafficFlowCacheReadback, TrafficFlowCacheStatistics,
-<a href=#33 id=33 data-nosnippet>33</a>    TrafficFlowCurrentTimeSeconds, TrafficFlowGridCache, system_clock_time_seconds,
-<a href=#34 id=34 data-nosnippet>34</a>};
+<a href=#11 id=11 data-nosnippet>11</a><span class="comment">// Adapters that present an everymap-rs provider through this SDK's contracts.
+<a href=#12 id=12 data-nosnippet>12</a></span><span class="kw">pub mod </span>everymap_bridge;
+<a href=#13 id=13 data-nosnippet>13</a><span class="kw">pub mod </span>offline_routing;
+<a href=#14 id=14 data-nosnippet>14</a><span class="kw">pub mod </span>provider_observation;
+<a href=#15 id=15 data-nosnippet>15</a><span class="comment">// Benchmark support for the offline routing engine (M7 slice 6): the
+<a href=#16 id=16 data-nosnippet>16</a>// synthetic graphs, the Dijkstra baseline's harness and the coarse CI
+<a href=#17 id=17 data-nosnippet>17</a>// budget alarm. Test/bench seam, never production routing surface.
+<a href=#18 id=18 data-nosnippet>18</a></span><span class="kw">pub mod </span>offline_routing_benchmark;
+<a href=#19 id=19 data-nosnippet>19</a><span class="kw">pub mod </span>registry;
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">pub mod </span>routing_fallback;
+<a href=#21 id=21 data-nosnippet>21</a><span class="comment">// Grid-keyed, memory-bounded caching of traffic-flow answers (the traffic
+<a href=#22 id=22 data-nosnippet>22</a>// layer's reuse across pans), portable to the browser.
+<a href=#23 id=23 data-nosnippet>23</a></span><span class="kw">pub mod </span>traffic_flow_cache;
+<a href=#24 id=24 data-nosnippet>24</a>
+<a href=#25 id=25 data-nosnippet>25</a><span class="kw">pub use </span>blocking_work::{BlockingWorkExecutor, InlineBlockingWorkExecutor, run_blocking};
+<a href=#26 id=26 data-nosnippet>26</a><span class="kw">pub use </span>cache_policy::{CacheThenNetworkOutcome, CachedResponseStore, execute_cache_then_network};
+<a href=#27 id=27 data-nosnippet>27</a><span class="kw">pub use </span>offline_routing::{
+<a href=#28 id=28 data-nosnippet>28</a>    ArchiveOfflineRoutingProvider, calculate_offline_route_from_archive_bytes,
+<a href=#29 id=29 data-nosnippet>29</a>};
+<a href=#30 id=30 data-nosnippet>30</a><span class="kw">pub use </span>registry::{ProviderContract, ProviderRegistry};
+<a href=#31 id=31 data-nosnippet>31</a><span class="kw">pub use </span>routing_fallback::OfflineFallbackRoutingProvider;
+<a href=#32 id=32 data-nosnippet>32</a><span class="kw">pub use </span>traffic_flow_cache::{
+<a href=#33 id=33 data-nosnippet>33</a>    DEFAULT_TRAFFIC_FLOW_GRID_ZOOM_LEVEL, DEFAULT_TRAFFIC_FLOW_MAXIMUM_ENTRY_COUNT,
+<a href=#34 id=34 data-nosnippet>34</a>    DEFAULT_TRAFFIC_FLOW_TIME_TO_LIVE_SECONDS, GridCachedTrafficFlowProvider,
+<a href=#35 id=35 data-nosnippet>35</a>    TrafficFlowCacheConfiguration, TrafficFlowCacheReadback, TrafficFlowCacheStatistics,
+<a href=#36 id=36 data-nosnippet>36</a>    TrafficFlowCurrentTimeSeconds, TrafficFlowGridCache, system_clock_time_seconds,
+<a href=#37 id=37 data-nosnippet>37</a>};
 </code></pre></div></section></main></body></html>

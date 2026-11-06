@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -299,8 +299,9 @@ or Swift code supplies through the matching interface: <code>GeocodingProvider</
 re-registering a URL-template raster source replaces the raster-tile slot, keeps
 every other slot serving, and drops any installed tile cache. A second <code>MapSdk</code>
 object needs its own registration.</p>
-<p>The ten provider contracts include elevation. This binding surface exposes no
-elevation call, so no elevation provider is registered through these paths.</p>
+<p>The ten provider contracts include elevation. The binding exposes the
+elevation call, and no shipped provider fills it, so it refuses until you
+register one.</p>
 <h2 id="supported-providers"><a class="header" href="#supported-providers">Supported providers</a></h2>
 <p>Capability comes from whichever provider you register. These ship today:</p>
 <div class="table-wrapper">
@@ -310,6 +311,14 @@ elevation call, so no elevation provider is registered through these paths.</p>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td>geocoding, reverse geocoding, routing, distance matrix, place search, traffic incidents, traffic flow, raster tiles</td><td>API key</td></tr>
+<tr><td>HERE</td><td>geocoding, reverse geocoding, routing, traffic incidents, traffic flow</td><td>API key</td></tr>
+<tr><td>Google Maps</td><td>geocoding, reverse geocoding, routing</td><td>API key</td></tr>
+<tr><td>TomTom</td><td>geocoding, reverse geocoding, routing, traffic incidents, traffic flow, raster tiles</td><td>API key</td></tr>
+<tr><td>Mapbox</td><td>geocoding, reverse geocoding, routing</td><td>access token</td></tr>
+<tr><td>Radar</td><td>geocoding, reverse geocoding, routing</td><td>API key</td></tr>
+<tr><td>Photon</td><td>geocoding, reverse geocoding, place search, type-ahead</td><td>none, or a deployment URL</td></tr>
+<tr><td>OSRM</td><td>routing</td><td>none, or a deployment URL</td></tr>
+<tr><td>Valhalla</td><td>routing</td><td>none, or a deployment URL</td></tr>
 <tr><td>OpenStreetMap US (Sourdough)</td><td>vector tiles</td><td>none</td></tr>
 <tr><td>OpenFreeMap</td><td>vector tiles</td><td>none</td></tr>
 <tr><td>OpenStreetMap Standard</td><td>raster tiles</td><td>none</td></tr>

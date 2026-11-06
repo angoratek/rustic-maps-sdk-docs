@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2c6a10db.js";
+            window.path_to_searchindex_js = "searchindex-371d5835.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-18302c03.js"></script>
@@ -196,18 +196,26 @@ never place it in <code>Info.plist</code>, an xcconfig, or source.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow</td></tr>
+<tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, raster tiles</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding (forward and reverse), search and suggestions</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
 <tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
 <tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td>Vector base</td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
-<tr><td>OSRM</td><td><code>osrm</code></td><td>None</td><td>Selectable routing provider</td><td>Routing</td></tr>
-<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None</td><td>Selectable routing provider</td><td>Routing</td></tr>
+<tr><td>OSRM</td><td><code>osrm</code></td><td>None, or a deployment URL</td><td>Selectable routing provider</td><td>Routing</td></tr>
+<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None, or a deployment URL</td><td>Selectable routing provider</td><td>Routing</td></tr>
 </tbody>
 </table>
 </div>
-<p>MapQuest registers through a runtime credential. OpenStreetMap Standard
-registers through the provider-neutral URL-template raster call.
-OpenStreetMap US and OpenFreeMap are served by the shipped <code>MapView</code>’s vector
-base member and need no registration call.</p>
+<p>MapQuest registers through a runtime credential. Photon, OSRM and Valhalla
+are keyless: select one with <code>configureProvider(contract:providerKey: credential:)</code>. Photon reaches its public instance from an empty credential;
+OSRM and Valhalla take the deployment’s base URL, and an empty one targets the
+local default. OpenStreetMap Standard registers through the provider-neutral
+URL-template raster call. OpenStreetMap US and OpenFreeMap are served by the
+shipped <code>MapView</code>’s vector base member and need no registration call.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -215,6 +223,12 @@ base member and need no registration call.</p>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td>Map data © OpenStreetMap contributors (ODbL) — tile imagery © MapQuest</td><td>MapQuest terms apply: rate limits and a 30-day raster-tile caching ceiling.</td></tr>
+<tr><td>HERE</td><td>© HERE</td><td>HERE terms apply: per-plan transaction limits and a caching policy that bounds stored results.</td></tr>
+<tr><td>Google Maps</td><td>Map data © Google</td><td>Google Maps Platform terms apply: billing per SKU, caching restrictions, and no permanent storage of most content.</td></tr>
+<tr><td>TomTom</td><td>© TomTom</td><td>TomTom terms apply: per-plan request quotas and a caching policy for stored tiles and results.</td></tr>
+<tr><td>Mapbox</td><td>© Mapbox © OpenStreetMap contributors</td><td>Mapbox terms apply: usage-based billing and attribution of Mapbox and OpenStreetMap wherever the data is shown.</td></tr>
+<tr><td>Radar</td><td>© Radar</td><td>Radar terms apply: per-plan request quotas and no permanent storage of geocoding results.</td></tr>
+<tr><td>Photon</td><td>Map data © OpenStreetMap contributors (ODbL) — search by Photon</td><td>The public Photon instance is offered for reasonable, non-commercial use; a self-hosted deployment follows its operator’s terms.</td></tr>
 <tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
 <tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
 <tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
@@ -326,11 +340,36 @@ try mapSdk.setProviderCredential(credential: providerApiKey)
 <p>A refused key throws <code>SdkError</code> with the provider’s verbatim detail. Apply
 the credential through your settings sheet or a launch-environment
 automation seam; never compile it into the app.</p>
-<p>The SDK call takes the credential, not a provider key. Your application owns
-the provider-key dispatch: its settings surface selects the descriptor and
-calls <code>setProviderCredential</code> for the selected provider. A provider key with
-no dispatch arm is refused by name rather than pretending to work. Adding an
-arm is covered in <a href="adding-a-provider.html">Add a provider</a>.</p>
+<p><code>setProviderCredential(credential:)</code> fills every capability the full-service
+provider serves. Per-capability selection takes the provider key explicitly,
+so one application can search with one provider and route with another. A
+keyed vendor registers one capability per call for exactly the contracts its
+descriptor declares.</p>
+<pre><code class="language-swift">import RusticMapsSDK
+
+let mapSdk = MapSdk()
+for contract in [ProviderContract.geocoding, .routing] {
+    try mapSdk.configureProvider(
+        contract: contract,
+        providerKey: "here",
+        credential: providerApiKey
+    )
+}
+</code></pre>
+<p>A keyless provider takes its deployment address in the credential slot; an
+empty address targets the crate’s local default, so a shared deployment must
+be named. Photon is the exception: its empty address is the public instance.</p>
+<pre><code class="language-swift">import RusticMapsSDK
+
+let mapSdk = MapSdk()
+try mapSdk.configureProvider(
+    contract: .routing,
+    providerKey: "osrm",
+    credential: "https://router.project-osrm.org"
+)
+</code></pre>
+<p>A provider key with no dispatch arm is refused by name rather than pretending
+to work. Adding an arm is covered in <a href="adding-a-provider.html">Add a provider</a>.</p>
 <h2 id="what-you-should-see"><a class="header" href="#what-you-should-see">What you should see</a></h2>
 <p>After the vector install, <code>vectorTileSourceStatus()</code> reports a configured
 source with the <code>bright-light</code> style id and the OpenFreeMap source name.
@@ -340,9 +379,9 @@ traffic answer; without one, those calls throw
 <code>SdkError.providerNotConfigured</code> while the keyless base still draws.</p>
 <h2 id="constraints"><a class="header" href="#constraints">Constraints</a></h2>
 <ul>
-<li><code>setProviderCredential</code> installs the shipped provider set; the provider
-key is your application’s dispatch decision, not a parameter of the SDK
-call.</li>
+<li><code>setProviderCredential</code> fills every capability the full-service provider
+serves in one call; <code>configureProvider(contract:providerKey:credential:)</code>
+selects one capability and leaves the rest serving.</li>
 <li>Every contract has a host-implemented interface: <code>GeocodingProvider</code>,
 <code>RoutingProvider</code>, <code>DistanceMatrixProvider</code>, <code>SearchPlaceProvider</code>,
 <code>TrafficIncidentProvider</code>, <code>TrafficFlowProvider</code>, <code>ElevationProvider</code> and
