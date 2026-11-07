@@ -1006,8 +1006,12 @@ export function fetchTrafficIncidents(south_west_latitude: number, south_west_lo
  * Reads the most recent events the rings recorded at the requested
  * severity or above, oldest first, capped at `maximum_count`, as an array
  * of `{timestampMillisecondsSinceEpoch, severity, subsystemTarget,
- * messageLine}` objects. Coordinates in the messages are already rounded to
- * the sink's decimals (the sink's privacy scrub, the native contract rule).
+ * messageLine, providerRequest}` objects. `providerRequest` is `null` unless
+ * the event is a provider request observation, in which case it carries
+ * `{providerKey, providerContract, httpMethod, requestPath, statusClass,
+ * outcome, durationMilliseconds, responseBytes}`. Coordinates in the
+ * messages are already rounded to the sink's decimals (the sink's privacy
+ * scrub, the native contract rule).
  */
 export function flushRecentDiagnosticEvents(minimum_severity: SdkLogSeverity, maximum_count: number): Array<any>;
 
@@ -1440,13 +1444,13 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_2993: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2993_148: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2993_149: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9876: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9897: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2997: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_2997_147: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_2998: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2998_148: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_2998_149: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9881: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9902: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3002: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_3002_147: (a: number, b: number, c: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
