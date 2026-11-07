@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-927d39df.js";
+            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-18302c03.js"></script>
+        <script src="toc-5cf2e765.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
+                        <!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -658,7 +658,7 @@
 </thead>
 <tbody>
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>subscribeToDiagnosticEvents(minimumSeverity: SdkLogSeverity): void</code></td><td>—</td><td>Lowers the recording gate to the requested severity: from that moment on, events at the severity or above record into the bounded rings (the gate never raises back — the same rule the native sink documents). Installs the ring subscriber on the first call; a no-op gate-wise when the page’s host already installed its own global subscriber (the ring then stays empty and the flush seam answers an empty list — the subscriber’s own <code>enabled</code> is never consulted).</td></tr>
-<tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>flushRecentDiagnosticEvents(minimumSeverity: SdkLogSeverity, maximumCount: number): any[]</code></td><td>Returns <code>any[]</code>.</td><td>Reads the most recent events the rings recorded at the requested severity or above, oldest first, capped at <code>maximum_count</code>, as an array of <code>{timestampMillisecondsSinceEpoch, severity, subsystemTarget, messageLine}</code> objects. Coordinates in the messages are already rounded to the sink’s decimals (the sink’s privacy scrub, the native contract rule).</td></tr>
+<tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>flushRecentDiagnosticEvents(minimumSeverity: SdkLogSeverity, maximumCount: number): any[]</code></td><td>Returns <code>any[]</code>.</td><td>Reads the most recent events the rings recorded at the requested severity or above, oldest first, capped at <code>maximum_count</code>, as an array of <code>{timestampMillisecondsSinceEpoch, severity, subsystemTarget, messageLine, providerRequest}</code> objects. <code>providerRequest</code> is <code>null</code> unless the event is a provider request observation, in which case it carries <code>{providerKey, providerContract, httpMethod, requestPath, statusClass, outcome, durationMilliseconds, responseBytes}</code>. Coordinates in the messages are already rounded to the sink’s decimals (the sink’s privacy scrub, the native contract rule).</td></tr>
 </tbody>
 </table>
 </div>

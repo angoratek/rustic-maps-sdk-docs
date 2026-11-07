@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-927d39df.js";
+            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-18302c03.js"></script>
+        <script src="toc-5cf2e765.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -590,6 +590,86 @@ stays in the page’s memory and is never persisted unless you opt in.</li>
 <p>Every guide in this book has a WebAssembly tab that uses the same surface.
 Install the wasm package and follow <a href="#your-first-map">Your first map</a> for the
 whole loop.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="see-provider-requests-in-the-demo"><a class="header" href="#see-provider-requests-in-the-demo">See provider requests in the demo</a></h1>
+<p>The live demo’s provider console shows one row for every request the SDK made
+to a map provider: which provider served it, which capability it asked for,
+the method and path, the status, the duration and the outcome. Use it to tell
+a provider problem from a map problem without opening the browser’s developer
+tools.</p>
+<h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What you get</a></h2>
+<ul>
+<li>One row per provider request, newest first, prefixed with the provider’s
+display name, so a search that failed against one provider reads as that
+provider’s failure rather than a blank map.</li>
+<li>Filters for provider and outcome, filled from the same provider registry the
+settings surface uses.</li>
+<li><strong>Copy</strong> puts the visible rows on the clipboard as text. <strong>Export</strong>
+downloads the visible rows as JSON.</li>
+<li>No credential ever appears in a row or in the export: paths that carry one
+show the parameter name with the value replaced.</li>
+</ul>
+<h2 id="open-the-panel"><a class="header" href="#open-the-panel">Open the panel</a></h2>
+<ol>
+<li>Open the <a href="#live-demo">live demo</a>.</li>
+<li>In the panel header, select the provider console button.</li>
+<li>Issue a request: search for a place, plan a route, or turn on a provider
+tile layer.</li>
+<li>The panel lists the request within a second of the response settling.</li>
+</ol>
+<p>The panel stays open while you use the map. Select the button again, the
+close button, or press Escape to hide it.</p>
+<h2 id="read-a-row"><a class="header" href="#read-a-row">Read a row</a></h2>
+<p>A row reads left to right:</p>
+<pre><code>MapQuest · GeocodingProvider · GET /geocoding/v1/address · 2xx · 142 ms
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Part</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td>Provider</td><td>The provider’s display name from the provider registry.</td></tr>
+<tr><td>Capability</td><td>The contract the request served: <code>GeocodingProvider</code>, <code>RoutingProvider</code>, <code>RasterTileProvider</code>, and so on.</td></tr>
+<tr><td>Method and path</td><td>The HTTP method and the request path, with credential values replaced by <code>&lt;redacted&gt;</code>.</td></tr>
+<tr><td>Status</td><td>The status class the response fell into: <code>2xx</code>, <code>3xx</code>, <code>4xx</code>, <code>5xx</code>, or <code>transport-failure</code> when no response arrived.</td></tr>
+<tr><td>Duration</td><td>The time from sending the request to the response settling.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="outcomes"><a class="header" href="#outcomes">Outcomes</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Outcome</th><th>What happened</th><th>What to check</th></tr>
+</thead>
+<tbody>
+<tr><td><code>success</code></td><td>The provider returned a response the SDK accepted.</td><td>Nothing.</td></tr>
+<tr><td><code>client-error</code></td><td>The provider refused the request.</td><td>The credential, the provider’s plan tier, or the request’s coordinates.</td></tr>
+<tr><td><code>server-error</code></td><td>The provider failed while handling the request.</td><td>Retry; if it persists, use the row in a report to the provider.</td></tr>
+<tr><td><code>transport-failure</code></td><td>The request never reached the provider.</td><td>The network, the browser’s CORS policy, or the configured base URL.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="report-a-provider-failure"><a class="header" href="#report-a-provider-failure">Report a provider failure</a></h2>
+<ol>
+<li>Open the console and issue the action that failed.</li>
+<li>Filter to the affected provider and to the failing outcome.</li>
+<li>Select <strong>Export</strong>.</li>
+<li>Attach the downloaded file to your report, and name the action you took.</li>
+</ol>
+<p>The export contains only the panel’s fields, so it is safe to attach: no
+credential, no request header and no response body.</p>
+<h2 id="where-the-panel-ships-today"><a class="header" href="#where-the-panel-ships-today">Where the panel ships today</a></h2>
+<p>The panel ships in the browser demo. The Android, iOS and React Native
+reference applications expose the same provider request events through their
+diagnostics surfaces, which list the event lines for a session.</p>
+<h2 id="next"><a class="header" href="#next">Next</a></h2>
+<ul>
+<li><a href="#provider-capabilities-on-webassembly">Provider capabilities in the browser</a></li>
+<li><a href="#mix-providers-per-capability">Mix providers per capability</a></li>
+<li><a href="#faq-and-troubleshooting">FAQ and troubleshooting</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mobile-demo"><a class="header" href="#mobile-demo">Mobile demo</a></h1>
 <div class="demo-launch">
@@ -3395,7 +3475,7 @@ its lower rows: the last base-map rows, <strong>Traffic</strong>, <strong>Overla
 <h3 id="webassembly-2"><a class="header" href="#webassembly-2">WebAssembly</a></h3>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-layers-closed.png" alt="The browser map with the layers control closed over MapQuest’s raster base: the zoom and 2D controls at the top end, the readiness chip and scale bar at the bottom start, and the round layers control above the attribution control"><span class="img-wrapper"><img src="img/wasm-layers-closed.png" alt="The browser map with the layers control closed over MapQuest’s raster base: the zoom and 2D controls at the top end, the readiness chip and scale bar at the bottom start, and the round layers control above the attribution control"></span></label></p>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img/wasm-layers-open.png" alt="The browser layers panel open over the same map: Base map with the MapQuest Raster row serving, Traffic off, the four Overlay switches with Clear overlays, and Device location off"><span class="img-wrapper"><img src="img/wasm-layers-open.png" alt="The browser layers panel open over the same map: Base map with the MapQuest Raster row serving, Traffic off, the four Overlay switches with Clear overlays, and Device location off"></span></label></p>
-<h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What you get</a></h2>
+<h2 id="what-you-get-2"><a class="header" href="#what-you-get-2">What you get</a></h2>
 <ul>
 <li>One round control on the map that switches the base map or vector style,
 the traffic layer, the demo overlays and the device location source.</li>
@@ -5093,7 +5173,7 @@ provider-backed app can add.</li>
 application searches with one vendor, routes with a self-hosted engine and
 draws its base map from a public tileset. This page shows how selection
 works, what the SDK reports back, and what the reference apps put on screen.</p>
-<h2 id="what-you-get-2"><a class="header" href="#what-you-get-2">What you get</a></h2>
+<h2 id="what-you-get-3"><a class="header" href="#what-you-get-3">What you get</a></h2>
 <ul>
 <li>One call per capability, so a choice never disturbs the rest of the map.</li>
 <li>A readback that names the serving provider for every capability.</li>
@@ -5289,7 +5369,7 @@ tests never reach the network.</li>
 <li>Changing a capability never silently changes another. If a call would
 replace more than the capability it names, it is not this API.</li>
 </ul>
-<h2 id="next"><a class="header" href="#next">Next</a></h2>
+<h2 id="next-1"><a class="header" href="#next-1">Next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> walks the crate, descriptor and
 catalog row.</li>
@@ -7078,7 +7158,7 @@ offline graph.</li>
 <li><a href="#react-native-api-reference">React Native API reference</a></li>
 <li><a href="#webassembly-api-reference">WebAssembly API reference</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -8499,7 +8579,7 @@ offline graph.</li>
 <li><a href="#how-it-works">How it works</a> explains the rendering and navigation pipelines.</li>
 <li><a href="#performance-and-profiling">Performance and profiling</a> covers the frame budget.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -10353,7 +10433,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
 <h1 id="ios-api-reference"><a class="header" href="#ios-api-reference">iOS API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Swift bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -12207,7 +12287,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -14061,7 +14141,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=b1437b989ccd943ec8625182a1a4f0edb94a471a:sha256:e796cfa99718f4099e005bbd9865aaa05b0731eb138e3d1748af8f5a7b5d8c0c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -14544,7 +14624,7 @@ offline graph.</li>
 </thead>
 <tbody>
 <tr><td><code>subscribeToDiagnosticEvents</code></td><td><code>subscribeToDiagnosticEvents(minimumSeverity: SdkLogSeverity): void</code></td><td>—</td><td>Lowers the recording gate to the requested severity: from that moment on, events at the severity or above record into the bounded rings (the gate never raises back — the same rule the native sink documents). Installs the ring subscriber on the first call; a no-op gate-wise when the page’s host already installed its own global subscriber (the ring then stays empty and the flush seam answers an empty list — the subscriber’s own <code>enabled</code> is never consulted).</td></tr>
-<tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>flushRecentDiagnosticEvents(minimumSeverity: SdkLogSeverity, maximumCount: number): any[]</code></td><td>Returns <code>any[]</code>.</td><td>Reads the most recent events the rings recorded at the requested severity or above, oldest first, capped at <code>maximum_count</code>, as an array of <code>{timestampMillisecondsSinceEpoch, severity, subsystemTarget, messageLine}</code> objects. Coordinates in the messages are already rounded to the sink’s decimals (the sink’s privacy scrub, the native contract rule).</td></tr>
+<tr><td><code>flushRecentDiagnosticEvents</code></td><td><code>flushRecentDiagnosticEvents(minimumSeverity: SdkLogSeverity, maximumCount: number): any[]</code></td><td>Returns <code>any[]</code>.</td><td>Reads the most recent events the rings recorded at the requested severity or above, oldest first, capped at <code>maximum_count</code>, as an array of <code>{timestampMillisecondsSinceEpoch, severity, subsystemTarget, messageLine, providerRequest}</code> objects. <code>providerRequest</code> is <code>null</code> unless the event is a provider request observation, in which case it carries <code>{providerKey, providerContract, httpMethod, requestPath, statusClass, outcome, durationMilliseconds, responseBytes}</code>. Coordinates in the messages are already rounded to the sink’s decimals (the sink’s privacy scrub, the native contract rule).</td></tr>
 </tbody>
 </table>
 </div>
