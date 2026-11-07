@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PROVIDER_ENTRIES"],"enum":["Contract"],"fn":["build_vendor","entry_for_key"],"struct":["ProviderEntry","VendorImplementations"]};

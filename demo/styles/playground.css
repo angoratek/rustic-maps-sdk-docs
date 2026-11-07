@@ -593,6 +593,94 @@
       }
       #attribution-panel .attribution-terms-note:last-child { margin-bottom: 0; }
 
+      /* --- The provider console (M77) ---
+         One row per provider request, docked on the map's end edge above the
+         attribution control; the list scrolls inside the panel and each row is
+         prefixed with the provider's display name. */
+      #provider-console-control {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        color: var(--text-secondary-color);
+        border-radius: 50%;
+        font-size: 15px;
+      }
+      #provider-console-control:hover,
+      #provider-console-control[aria-expanded='true'] {
+        color: var(--accent-text-color);
+        border-color: var(--accent-color);
+        background: var(--surface-hover-color);
+      }
+      #provider-console-panel {
+        max-width: min(460px, calc(100vw - 2 * var(--gutter-inline)));
+        max-height: 50vh;
+        overflow: auto;
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
+        border-radius: var(--radius-inline);
+        padding: var(--stack-tight) var(--stack-group);
+        box-shadow: var(--elevation-surface);
+        color: var(--text-primary-color);
+        font-size: var(--type-caption-size);
+      }
+      #provider-console-panel[hidden] { display: none; }
+      .provider-console-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .provider-console-title {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      #provider-console-close {
+        padding: 0 4px;
+        color: var(--text-secondary-color);
+        background: none;
+        border: 0;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .provider-console-filters {
+        display: flex;
+        gap: var(--stack-tight);
+        margin: var(--stack-tight) 0;
+      }
+      .provider-console-filters label {
+        display: flex;
+        flex-direction: column;
+        color: var(--text-secondary-color);
+        font-size: var(--type-caption-size);
+      }
+      .provider-console-rows {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .provider-console-rows li {
+        color: var(--text-secondary-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .provider-console-empty {
+        margin: var(--stack-tight) 0 0;
+        color: var(--text-secondary-color);
+      }
+      .provider-console-actions {
+        display: flex;
+        gap: var(--stack-tight);
+        margin-top: var(--stack-tight);
+      }
+
       /* --- The on-map layer control (docs/design/MapControlsAndTrafficLayer.md) ---
          The round layers button docks above the attribution notice on the
          map's end edge; its panel opens upward, clamped to 70% of the

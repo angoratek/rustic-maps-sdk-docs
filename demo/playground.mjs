@@ -392,7 +392,8 @@
         trip_route_maneuver.hidden = true;
         trip_route_note.hidden = true;
         trip_route_result.hidden = true;
-      }
+            refresh_attribution_notice();
+}
       // The phone bottom sheet reserves the measured bottom dock height, so
       // the status line, scale bar and a live error strip never draw over it.
       // The dock grows and shrinks (the scale bar appears at readiness, an
@@ -478,26 +479,11 @@
       const attribution_info_control = document.getElementById('attribution-info-control');
       const attribution_panel = document.getElementById('attribution-panel');
       const attribution_notice = document.getElementById('attribution-notice');
-      // Only a provider this page actually uses contributes its attribution
-      // line: a wasm-registered provider (a runtime credential), or a keyless
-      // provider whose tile URL the base map paints. A descriptor the page
-      // cannot use is excluded, so the panel never claims it.
       const registered_provider_descriptors = providers_registry.providers
         .filter((provider_descriptor) =>
           provider_descriptor.wasm_registration != null
           || typeof provider_descriptor.url_template === 'string'
           || typeof provider_descriptor.raster_url_template === 'string');
-      const descriptor_attribution_texts = registered_provider_descriptors
-        .map((provider_descriptor) => provider_descriptor.attribution_text)
-        .filter((attribution_text) => typeof attribution_text === 'string'
-          && attribution_text.trim() !== '');
-      if (descriptor_attribution_texts.length > 0) {
-        attribution_notice.textContent = descriptor_attribution_texts.join(' · ');
-      } else {
-        // No descriptor line: the control does not present an empty panel
-        // (never a guess).
-        attribution_info_control.hidden = true;
-      }
       // The descriptors' terms notes join the panel (deduplicated like the
       // attribution lines); the panel is the compliance text's home, so no
       // always-visible line is needed on the map.
@@ -663,6 +649,20 @@
         return ui_label_text_with_values('settings.credential_applied', {
           provider: provider_descriptor.display_name,
         });
+      }
+      /** Prefixes a provider failure with the provider's name when the
+       * provider's own detail does not already name it, so a notification
+       * says which provider answered. */
+      function provider_prefixed_failure_text(provider_descriptor, failure_text) {
+        const display_name = provider_descriptor?.display_name ?? '';
+        const provider_key = provider_descriptor?.provider_key ?? '';
+        const lowered = String(failure_text).toLowerCase();
+        if (display_name === ''
+            || lowered.includes(display_name.toLowerCase())
+            || (provider_key !== '' && lowered.includes(provider_key.toLowerCase()))) {
+          return String(failure_text);
+        }
+        return `${display_name}: ${failure_text}`;
       }
       // Persistence is an explicit opt-in (docs/ReferenceAppUX.md §6.5): the
       // key stays in memory unless the visitor ticks "Remember keys on this
@@ -1295,7 +1295,8 @@
             ? ''
             : `${failure_text} ${ui_label_text('settings.routing_unreachable_next_step')}`;
         }
-      }
+            refresh_attribution_notice();
+}
 
       /**
        * Configures one capability from a chosen descriptor. A credentialed
@@ -1364,7 +1365,8 @@
             });
           }
         } catch (error) {
-          const failure_text = provider_failure_text(error);
+          const failure_text = provider_prefixed_failure_text(
+            provider_descriptor, provider_failure_text(error));
           capability_failure_text_by_key.set(capability_key, failure_text);
           if (announce) {
             set_capability_provider_status(failure_text);
@@ -1517,8 +1519,9 @@
                   ? 'Applied — live providers ready, and this key is remembered on this device.'
                   : 'Applied — live providers ready.');
             } catch (error) {
-              set_provider_status(`Refused: ${String(error)}`, 'warning');
-              set_settings_credentials_status(`Refused: ${String(error)}`);
+              const failure_text = provider_prefixed_failure_text(provider_descriptor, String(error));
+              set_provider_status(`Refused: ${failure_text}`, 'warning');
+              set_settings_credentials_status(`Refused: ${failure_text}`);
             }
           });
           clear_element.addEventListener('click', () => {
@@ -2214,7 +2217,8 @@
               ? 'Recorded demo route ready \u2014 start the simulated trip.'
               : 'Live route planned.',
             'success');
-        }
+                refresh_attribution_notice();
+}
 
         // Demo plans (M31, docs/ReferenceAppUX.md §4.1): the shared artifact's
         // recorded plans stay available to tests, launch automation and the
@@ -3408,7 +3412,8 @@
           trafficEnabled: traffic_layer_enabled,
           enabledSceneCount: enabled_scene_count,
         });
-      }
+            refresh_attribution_notice();
+}
 
       /** Opens or closes the layers panel; Escape returns focus to the button. */
       function set_map_layers_panel_open(is_open) {
@@ -3653,15 +3658,30 @@
             attribution_texts.push(traffic_descriptor.attribution_text);
           }
         }
+        // A route on the map owes the routing provider's line; an idle map
+        // does not.
+        if (trip_route_overlays.length > 0 || planned_route_record !== null) {
+          try {
+            const routing_registration = window.mapTest.providerRegistrations().find(
+              (row) => row.registered && row.contract === 'Routing');
+            const routing_descriptor = providers_registry.providers.find(
+              (provider_descriptor) =>
+                provider_descriptor.provider_key === routing_registration?.providerKey);
+            if (typeof routing_descriptor?.attribution_text === 'string') {
+              attribution_texts.push(routing_descriptor.attribution_text);
+            }
+          } catch {
+            // A page without the wasm seam has no registration to read.
+          }
+        }
         return attribution_texts;
       }
 
       /** Recomputes the attribution notice; its live region announces changes. */
       function refresh_attribution_notice() {
-        const attribution_texts = Array.from(new Set([
-          ...descriptor_attribution_texts,
-          ...current_layer_attribution_texts(),
-        ])).filter((attribution_text) =>
+        const attribution_texts = Array.from(
+          new Set(current_layer_attribution_texts()),
+        ).filter((attribution_text) =>
           typeof attribution_text === 'string' && attribution_text.trim() !== '');
         if (attribution_texts.length > 0) {
           attribution_notice.textContent = attribution_texts.join(' · ');
@@ -7214,3 +7234,160 @@
       }
       window.runReferenceFlow = run_reference_flow;
       window.referenceFlowIds = () => Object.keys(REFERENCE_FLOW_FALLBACK_STEPS);
+
+      // --- Provider console (M77) ---
+      // One row per provider request, read from the typed `providerRequest`
+      // the diagnostics event carries; the composed message line is never
+      // parsed.
+      const PROVIDER_CONSOLE_MAXIMUM_ROWS = 200;
+      const PROVIDER_CONSOLE_REFRESH_MILLISECONDS = 1000;
+      const PROVIDER_CONSOLE_FLUSH_LIMIT = 1000;
+      const provider_console_control = document.getElementById('provider-console-control');
+      const provider_console_panel = document.getElementById('provider-console-panel');
+      const provider_console_close = document.getElementById('provider-console-close');
+      const provider_console_rows_element = document.getElementById('provider-console-rows');
+      const provider_console_empty = document.getElementById('provider-console-empty');
+      const provider_console_provider_filter =
+        document.getElementById('provider-console-provider-filter');
+      const provider_console_outcome_filter =
+        document.getElementById('provider-console-outcome-filter');
+      const provider_console_copy = document.getElementById('provider-console-copy');
+      const provider_console_export = document.getElementById('provider-console-export');
+      let provider_console_refresh_timer = null;
+      let provider_console_last_rows = '';
+
+      function provider_console_display_name(provider_key) {
+        const descriptor = providers_registry.providers.find(
+          (candidate) => candidate.provider_key === provider_key);
+        return descriptor?.display_name ?? provider_key;
+      }
+
+      function provider_console_rows() {
+        let events = [];
+        try {
+          events = Array.from(window.mapTest.flushRecentDiagnosticEvents(
+            window.mapTest.SdkLogSeverity.Info,
+            PROVIDER_CONSOLE_FLUSH_LIMIT,
+          ));
+        } catch {
+          return [];
+        }
+        const provider_filter = provider_console_provider_filter.value;
+        const outcome_filter = provider_console_outcome_filter.value;
+        return events
+          .map((event) => event.providerRequest)
+          .filter((request) => request !== null && request !== undefined)
+          .filter((request) => provider_filter === ''
+            || request.providerKey === provider_filter)
+          .filter((request) => outcome_filter === ''
+            || request.outcome === outcome_filter)
+          .slice(-PROVIDER_CONSOLE_MAXIMUM_ROWS)
+          .reverse();
+      }
+
+      function provider_console_row_text(request) {
+        const duration_text = Number.isFinite(request.durationMilliseconds)
+          ? ` · ${Math.round(request.durationMilliseconds)} ms`
+          : '';
+        return `${provider_console_display_name(request.providerKey)}`
+          + ` · ${request.providerContract}`
+          + ` · ${request.httpMethod} ${request.requestPath}`
+          + ` · ${request.statusClass}${duration_text}`;
+      }
+
+      function refresh_provider_console() {
+        if (provider_console_panel === null || provider_console_panel.hidden) {
+          return;
+        }
+        populate_provider_console_providers();
+        const rows = provider_console_rows();
+        const row_texts = rows.map(provider_console_row_text);
+        // The timer refresh must not rebuild identical rows: a visitor may be
+        // selecting a row's text while the next tick arrives.
+        const row_signature = row_texts.join('\n');
+        if (row_signature !== provider_console_last_rows) {
+          provider_console_last_rows = row_signature;
+          provider_console_rows_element.replaceChildren(
+            ...row_texts.map((row_text) => {
+              const row = document.createElement('li');
+              row.textContent = row_text;
+              return row;
+            }));
+        }
+        provider_console_empty.hidden = rows.length > 0;
+      }
+
+      function populate_provider_console_providers() {
+        const descriptors = providers_registry.providers.filter(
+          (descriptor) => descriptor.registration_available?.wasm === true,
+        );
+        const all_option = provider_console_provider_filter.options[0];
+        if (descriptors.length === 0
+            || provider_console_provider_filter.options.length - 1
+              === descriptors.length) {
+          return;
+        }
+        provider_console_provider_filter.replaceChildren(
+          all_option,
+          ...descriptors.map((descriptor) => {
+            const option = document.createElement('option');
+            option.value = descriptor.provider_key;
+            option.textContent = descriptor.display_name;
+            return option;
+          }),
+        );
+      }
+
+      function set_provider_console_open(is_open) {
+        if (provider_console_panel === null) {
+          return;
+        }
+        provider_console_panel.hidden = !is_open;
+        provider_console_control.setAttribute('aria-expanded', String(is_open));
+        if (is_open) {
+          populate_provider_console_providers();
+          refresh_provider_console();
+          if (provider_console_refresh_timer === null) {
+            provider_console_refresh_timer = setInterval(
+              refresh_provider_console,
+              PROVIDER_CONSOLE_REFRESH_MILLISECONDS,
+            );
+          }
+        } else if (provider_console_refresh_timer !== null) {
+          clearInterval(provider_console_refresh_timer);
+          provider_console_refresh_timer = null;
+        }
+      }
+
+      if (provider_console_control !== null) {
+        provider_console_control.addEventListener('click', () => {
+          set_provider_console_open(provider_console_panel.hidden);
+        });
+        provider_console_close.addEventListener('click', () => {
+          set_provider_console_open(false);
+        });
+        provider_console_provider_filter.addEventListener('change', refresh_provider_console);
+        provider_console_outcome_filter.addEventListener('change', refresh_provider_console);
+        provider_console_copy.addEventListener('click', () => {
+          const text = Array.from(provider_console_rows_element.children)
+            .map((row) => row.textContent)
+            .join('\n');
+          navigator.clipboard?.writeText(text).catch(() => undefined);
+        });
+        provider_console_export.addEventListener('click', () => {
+          const rows = provider_console_rows();
+          const blob = new Blob([JSON.stringify(rows, null, 2)], {
+            type: 'application/json',
+          });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'provider-console.json';
+          link.click();
+          URL.revokeObjectURL(link.href);
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && !provider_console_panel.hidden) {
+            set_provider_console_open(false);
+          }
+        });
+      }
