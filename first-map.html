@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
+            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -218,7 +218,7 @@ call:</p>
 
 val mapSdk = MapSdk()
 // The key belongs to the provider you registered; see "Choosing a provider".
-mapSdk.setProviderCredential(providerApiKey)
+mapSdk.configureProviderSet("mapquest", providerApiKey)
 </code></pre>
 <p>The call throws the provider’s message when the key is refused. Surface it
 in your error state instead of continuing.</p>
@@ -366,7 +366,7 @@ let package = Package(
 
 let mapSdk = MapSdk()
 // The key belongs to the provider you registered; see "Choosing a provider".
-try mapSdk.setProviderCredential(credential: providerApiKey)
+try mapSdk.configureProviderSet(providerKey: "mapquest", credential: providerApiKey)
 </code></pre>
 <p>The call throws the provider’s message when the key is refused.</p>
 <p>Read the key at <strong>runtime</strong>: from app settings, a secure configuration
@@ -617,11 +617,11 @@ from a same-origin path you host. The page keeps pointer handling; the
 view owns the surface and the frame.</p>
 <pre><code class="language-html">&lt;canvas id="map-canvas"&gt;&lt;/canvas&gt;
 </code></pre>
-<pre><code class="language-js">import init, { MapsSdk, MapView, setProviderCredential } from './web/rustic_maps_web_bindings.js';
+<pre><code class="language-js">import init, { MapsSdk, MapView, configureProviderSet } from './web/rustic_maps_web_bindings.js';
 
 await init();
 const mapSdk = await MapsSdk.create();
-setProviderCredential(providerCredential);
+configureProviderSet('mapquest', providerCredential);
 
 const canvas = /** @type {HTMLCanvasElement} */ (
   document.querySelector('#map-canvas')

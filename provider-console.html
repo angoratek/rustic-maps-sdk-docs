@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
+            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -190,8 +190,11 @@ provider’s failure rather than a blank map.</li>
 settings surface uses.</li>
 <li><strong>Copy</strong> puts the visible rows on the clipboard as text. <strong>Export</strong>
 downloads the visible rows as JSON.</li>
+<li>An opt-in <strong>Capture response excerpts</strong> switch shows the beginning of each
+provider’s response beneath its row.</li>
 <li>No credential ever appears in a row or in the export: paths that carry one
-show the parameter name with the value replaced.</li>
+show the parameter name with the value replaced, and the captured excerpt
+redacts credential-bearing members and assignments.</li>
 </ul>
 <h2 id="open-the-panel"><a class="header" href="#open-the-panel">Open the panel</a></h2>
 <ol>
@@ -218,6 +221,7 @@ close button, or press Escape to hide it.</p>
 <tr><td>Method and path</td><td>The HTTP method and the request path, with credential values replaced by <code>&lt;redacted&gt;</code>.</td></tr>
 <tr><td>Status</td><td>The status class the response fell into: <code>2xx</code>, <code>3xx</code>, <code>4xx</code>, <code>5xx</code>, or <code>transport-failure</code> when no response arrived.</td></tr>
 <tr><td>Duration</td><td>The time from sending the request to the response settling.</td></tr>
+<tr><td>Response excerpt</td><td>With capture on, the first 512 bytes of the response, redacted and shown beneath the row. With capture off, nothing.</td></tr>
 </tbody>
 </table>
 </div>
@@ -235,6 +239,19 @@ close button, or press Escape to hide it.</p>
 </tbody>
 </table>
 </div>
+<h2 id="capture-a-response-excerpt"><a class="header" href="#capture-a-response-excerpt">Capture a response excerpt</a></h2>
+<p>Response bodies are opt-in because they can contain provider data you did not
+type:</p>
+<ol>
+<li>Open the console.</li>
+<li>Select <strong>Capture response excerpts</strong>.</li>
+<li>Issue the request again.</li>
+</ol>
+<p>The captured prefix appears beneath the row and in the export as
+<code>responseExcerpt</code>. It is capped at 512 bytes, cut on a character boundary, and
+credential-bearing JSON members and <code>name=value</code> assignments are replaced with
+<code>***</code>. The switch is off whenever the page loads; turning it off stops new
+captures but does not erase rows already captured.</p>
 <h2 id="report-a-provider-failure"><a class="header" href="#report-a-provider-failure">Report a provider failure</a></h2>
 <ol>
 <li>Open the console and issue the action that failed.</li>
@@ -242,8 +259,10 @@ close button, or press Escape to hide it.</p>
 <li>Select <strong>Export</strong>.</li>
 <li>Attach the downloaded file to your report, and name the action you took.</li>
 </ol>
-<p>The export contains only the panel’s fields, so it is safe to attach: no
-credential, no request header and no response body.</p>
+<p>The export contains only the panel’s fields: no credential and no request
+header. With capture off it carries no response body either. With capture on it
+carries the redacted prefix, so review the excerpt before you attach the file if
+the provider’s answer contains data you would rather not share.</p>
 <h2 id="where-the-panel-ships-today"><a class="header" href="#where-the-panel-ships-today">Where the panel ships today</a></h2>
 <p>The panel ships in the browser demo. The Android, iOS and React Native
 reference applications expose the same provider request events through their

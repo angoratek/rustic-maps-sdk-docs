@@ -20,7 +20,7 @@ import init, {
   rotateCameraByDegreesAroundScreenPoint,
   offlineRouteFromArchiveBytes,
   configureProvider,
-  setProviderCredential,
+  configureProviderSet,
   setProviderBaseUrl,
   clearProviderRegistrations,
   providerRegistrations,
@@ -44,6 +44,7 @@ import init, {
   initializeSdk,
   subscribeToDiagnosticEvents,
   flushRecentDiagnosticEvents,
+  setResponseExcerptCapture,
 } from './pkg/rustic_maps_web_bindings.js';
 
 window.mapTestReady = (async () => {
@@ -72,7 +73,7 @@ window.mapTestReady = (async () => {
     rotateCameraByDegreesAroundScreenPoint,
     offlineRouteFromArchiveBytes,
     configureProvider,
-    setProviderCredential,
+    configureProviderSet,
     setProviderBaseUrl,
     clearProviderRegistrations,
     providerRegistrations,
@@ -95,6 +96,7 @@ window.mapTestReady = (async () => {
     fetchRasterTile,
     subscribeToDiagnosticEvents,
     flushRecentDiagnosticEvents,
+    setResponseExcerptCapture,
   };
   const status_element = document.getElementById('harness-status');
   if (status_element) {

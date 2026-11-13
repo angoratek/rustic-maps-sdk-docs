@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
+            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=77502a680666a707773bc25e79aa1c46887158dc:sha256:3ee1034ff8f3e5e682a96a8a1014e9356ea0c7103a3790c632fa6b2949103758 -->
+                        <!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -438,6 +438,7 @@
 <tr><td><code>offline_routing_benchmark</code></td><td>module</td><td><code>pub mod offline_routing_benchmark</code></td><td>—</td></tr>
 <tr><td><code>registry</code></td><td>module</td><td><code>pub mod registry</code></td><td>—</td></tr>
 <tr><td><code>routing_fallback</code></td><td>module</td><td><code>pub mod routing_fallback</code></td><td>—</td></tr>
+<tr><td><code>tile_cache_keys</code></td><td>module</td><td><code>pub mod tile_cache_keys</code></td><td>—</td></tr>
 <tr><td><code>traffic_flow_cache</code></td><td>module</td><td><code>pub mod traffic_flow_cache</code></td><td>—</td></tr>
 </tbody>
 </table>
@@ -541,6 +542,8 @@
 <tr><td><code>RESPONSE_SNIPPET_MAXIMUM_BYTES</code></td><td>const</td><td><code>pub const RESPONSE_SNIPPET_MAXIMUM_BYTES: usize</code></td><td>Maximum length of the response snippet in an observation, in bytes, counted on character boundaries so a multi-byte glyph is never split.</td></tr>
 <tr><td><code>OBSERVABLE_QUERY_PARAMETER_NAMES</code></td><td>const</td><td><code>pub const OBSERVABLE_QUERY_PARAMETER_NAMES: [&amp;str; 4]</code></td><td>Query parameters whose values may appear in an observation because they describe the request shape rather than carry data or a secret. Every other parameter’s value is dropped; its name is not.</td></tr>
 <tr><td><code>TRANSPORT_FAILURE_STATUS_CLASS</code></td><td>const</td><td><code>pub const TRANSPORT_FAILURE_STATUS_CLASS: &amp;str</code></td><td>The status class an observation reports when no HTTP response arrived.</td></tr>
+<tr><td><code>set_response_excerpt_capture</code></td><td>function</td><td><code>pub fn set_response_excerpt_capture(enabled: bool)</code></td><td>Enables or disables the bounded response excerpt on provider observations, and on the provider layer’s own observation seam.</td></tr>
+<tr><td><code>response_excerpt_capture_enabled</code></td><td>function</td><td><code>pub fn response_excerpt_capture_enabled() -&gt; bool</code></td><td>Whether observations currently capture the response prefix.</td></tr>
 <tr><td><code>OUTCOME_SUCCESS</code></td><td>const</td><td><code>pub const OUTCOME_SUCCESS: &amp;str</code></td><td>The outcome an observation reports for a <code>2xx</code> response.</td></tr>
 <tr><td><code>OUTCOME_REDIRECT</code></td><td>const</td><td><code>pub const OUTCOME_REDIRECT: &amp;str</code></td><td>The outcome an observation reports for a <code>3xx</code> response.</td></tr>
 <tr><td><code>OUTCOME_CLIENT_ERROR</code></td><td>const</td><td><code>pub const OUTCOME_CLIENT_ERROR: &amp;str</code></td><td>The outcome an observation reports for a <code>4xx</code> response.</td></tr>
@@ -587,6 +590,21 @@
 <tbody>
 <tr><td><code>ROUTING_FALLBACK_TRACING_TARGET</code></td><td>const</td><td><code>pub const ROUTING_FALLBACK_TRACING_TARGET: &amp;str</code></td><td>Diagnostic target of the fallback’s tracing events.</td></tr>
 <tr><td><code>OfflineFallbackRoutingProvider</code></td><td>struct</td><td><code>pub struct OfflineFallbackRoutingProvider</code></td><td>Wraps a primary routing provider with an offline retry. When the primary provider fails for a request with at least two waypoints, each consecutive waypoint pair is routed over the loaded offline graph and the answers are joined into one route: one leg per pair, summed distance and duration, and the union bounding box. Behavior: - A successful primary response is returned unchanged, and the offline provider is not consulted. - A request with fewer than two waypoints has no point-to-point offline equivalent, so it is rejected with [<code>SDKError::ProviderRequestRejected</code>] without a fallback attempt. - If the offline retry also fails, that failure is logged and returned. It describes the last failure, matching how a primary failure reaches the caller.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-tile_cache_keys"><a class="header" href="#module-tile_cache_keys">Module <code>tile_cache_keys</code></a></h3>
+<p>Stable cache keys for tile payloads.</p>
+<p>Raster and vector tile payloads share one cache store, and nothing in a tile address says which provider or source produced the bytes. Every key therefore carries a <code>tile_source_namespace</code>: the provider key for a catalog provider, a stable caller-supplied key for an application provider. The namespace is part of the key, so two sources serving the same address can never read each other’s payloads.</p>
+<p>The vector-tile key lives here rather than in the storage crate because the renderer builds the same key before handing a fetch to a store, and the renderer must stay free of a storage backend.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>VECTOR_TILES_FINGERPRINT_PREFIX</code></td><td>const</td><td><code>pub const VECTOR_TILES_FINGERPRINT_PREFIX: &amp;str</code></td><td>The response-category prefix of every vector-tile payload key. The prefix matches the vector-tiles category’s storage name, which the disk store reads to pick the entry’s retention policy.</td></tr>
+<tr><td><code>vector_tile_payload_fingerprint</code></td><td>function</td><td><code>pub fn vector_tile_payload_fingerprint( tile_source_namespace: &amp;str, zoom_level: u8, tile_x: u32, tile_y: u32, ) -&gt; String</code></td><td>The key one vector-tile payload is stored under. # Parameters - <code>tile_source_namespace</code> — the provider or source that produces the tiles; never a credential and never a raw URL. - <code>zoom_level</code> — the web-mercator zoom level. - <code>tile_x</code> — the tile column at that zoom level. - <code>tile_y</code> — the tile row at that zoom level. # Returns A stable key of the form <code>vector_tiles:&lt;namespace&gt;/&lt;zoom&gt;/&lt;x&gt;/&lt;y&gt;</code>.</td></tr>
 </tbody>
 </table>
 </div>

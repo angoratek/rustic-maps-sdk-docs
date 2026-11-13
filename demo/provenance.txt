@@ -1,4 +1,4 @@
-source_commit: 77502a680666a707773bc25e79aa1c46887158dc
+source_commit: e71f09f9bff36be7542a9a63b39686e9362617e4
 dirty_tree: no
 generator: scripts/build-docs-site.sh (rustic-maps-sdk)
 content_license: MIT OR Apache-2.0

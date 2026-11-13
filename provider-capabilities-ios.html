@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
+            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -335,7 +335,7 @@ the shipped provider set with the SDK’s rate-limit and retry defaults.</p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 let mapSdk = MapSdk()
-try mapSdk.setProviderCredential(credential: providerApiKey)
+try mapSdk.configureProviderSet(providerKey: "mapquest", credential: providerApiKey)
 </code></pre>
 <p>A refused key throws <code>SdkError</code> with the provider’s verbatim detail. Apply
 the credential through your settings sheet or a launch-environment

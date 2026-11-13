@@ -1066,6 +1066,23 @@ dictionary UrlTemplateVectorTileSource {
     double? refill_tokens_per_second = null;
 };
 
+/// A vector base map served by a provider configured through
+/// `MapSdk.configure_provider_set`. The provider supplies its own tileset
+/// name, attribution line and zoom span; you choose only the provider and
+/// the built-in style the base paints with.
+///
+/// Installing a provider-backed base requires the vector-tile provider to be
+/// registered first and the style id to name a committed style whose schema
+/// matches the provider's tiles; otherwise installation throws naming the
+/// mismatch and leaves any base already installed in force.
+dictionary ProviderVectorTileSource {
+    /// The provider key that `configure_provider_set` registered for vector
+    /// tiles. A different installed provider is refused.
+    string provider_key;
+    /// The built-in style id the base paints with.
+    string style_id;
+};
+
 /// The vector base source's status: what the view is drawing a styled base
 /// with, and what its last resolved frame achieved. The counts are per frame,
 /// matching the raster tile statistics, so your UI can show an accurate
@@ -1329,27 +1346,33 @@ interface MapSdk {
         RasterTileResolution tile_resolution
     );
 
-    /// Registers the build's full-service credentialed provider set from one
-    /// credential, with the SDK defaults for base URL, rate limiting and
-    /// retries.
+    /// Registers every capability the provider named by `provider_key` serves
+    /// from one credential, with the SDK defaults for base URL, rate limiting
+    /// and retries.
     ///
-    /// The call installs geocoding, routing, distance matrix, place search,
-    /// traffic incidents, traffic flow and raster tiles, so one call and one
-    /// key enable the whole provider set. Re-registration replaces every
-    /// provider. Elevation has no provider and keeps throwing
-    /// `ProviderNotConfigured`.
+    /// One call and one credential enable that provider's whole set — for the
+    /// full-service provider, geocoding, routing, distance matrix, place
+    /// search, traffic incidents, traffic flow and raster tiles. Re-registration
+    /// replaces every capability of the named provider. A capability the
+    /// provider does not serve stays on whichever provider served it before;
+    /// elevation has no provider and keeps throwing `ProviderNotConfigured`.
+    /// The raster-tile contract is installed uncached, so a previously
+    /// installed tile cache and its terms are dropped.
     ///
     /// # Parameters
-    /// - `credential` — the provider credential.
+    /// - `provider_key` — the stable key of a provider built into this SDK.
+    /// - `credential` — the provider credential; a provider that requires one
+    ///   refuses a blank value.
     ///
     /// # Errors
-    /// Throws `SdkError` when the credential is empty or the registration is
-    /// refused.
+    /// Throws `ProviderNotConfigured` when the key is unknown to this build and
+    /// `ProviderRequestRejected` when a required credential is blank; a
+    /// provider's own construction failure passes through verbatim.
     [Throws=SdkError]
-    void set_provider_credential(string credential);
+    void configure_provider_set(string provider_key, string credential);
 
     /// Registers the provider named by `provider_key` from one credential,
-    /// exactly like `set_provider_credential`, and wraps its raster-tile
+    /// exactly like `configure_provider_set`, and wraps its raster-tile
     /// provider in a disk response cache.
     ///
     /// The key names a credentialed provider that serves raster tiles and
@@ -1411,7 +1434,7 @@ interface MapSdk {
     /// keys; this call is how an application selects one. A key may serve
     /// several capabilities, so an application that wants one vendor
     /// everywhere configures each capability in turn, or calls
-    /// `set_provider_credential` for the all-in-one convenience.
+    /// `configure_provider_set` for the all-in-one convenience.
     ///
     /// # Parameters
     /// - `contract` — the capability whose provider is being chosen.
@@ -1504,6 +1527,20 @@ interface MapSdk {
     /// # Returns
     /// The number of events delivered.
     u32 flush_recent_diagnostic_events(SdkDiagnosticEventListener listener, SdkLogSeverity minimum_severity, u32 maximum_count);
+
+    /// Enables or disables the bounded, redacted response prefix carried by
+    /// provider request observations.
+    ///
+    /// The switch is off by default. While it is on, each provider request
+    /// observation carries the first 512 bytes of the response body in
+    /// `ProviderRequestTrace.response_excerpt`, truncated on a character
+    /// boundary, with credential-bearing JSON members and `name=value`
+    /// assignments replaced by `***`. Turning it off empties the field on the
+    /// observations that follow. The switch is process-wide.
+    ///
+    /// # Parameters
+    /// - `enabled` — whether observations capture the response prefix.
+    void set_response_excerpt_capture(boolean enabled);
 
     /// Returns the retained diagnostics of failed provider calls made by
     /// foreign provider implementations, oldest first.
@@ -2596,6 +2633,28 @@ interface MapView {
     [Throws=SdkError]
     void set_vector_tile_source(UrlTemplateVectorTileSource source);
 
+    /// Installs a vector base map served by a provider registered with
+    /// `MapSdk.configure_provider_set` for the vector-tiles capability. The
+    /// provider supplies the tileset name, attribution line and zoom span its
+    /// descriptor declares; the source record names only the provider and the
+    /// built-in style.
+    ///
+    /// The whole source builds before the view changes, so a refused call
+    /// (no vector-tile provider registered, a source naming a different
+    /// provider than the installed one, or an unknown style id) throws and
+    /// leaves the previous base in force. Installing while a frame draws is
+    /// deferred to the frame's end, the last request winning, exactly like
+    /// `set_vector_tile_source`.
+    ///
+    /// # Parameters
+    /// - `source` — the configured provider key and the style to paint.
+    ///
+    /// # Errors
+    /// Throws when no vector-tile provider serves the requested key or the
+    /// style is unknown.
+    [Throws=SdkError]
+    void set_provider_vector_tile_source(ProviderVectorTileSource source);
+
     /// Removes the vector base map; following frames draw raster tiles and
     /// overlays alone until `set_vector_tile_source` installs a new base. Like
     /// installing, a call that lands while a frame draws is applied when that
@@ -2754,6 +2813,9 @@ dictionary ProviderRequestTrace {
     u64 duration_milliseconds;
     /// Response payload size in bytes; zero when no response arrived.
     u64 response_bytes;
+    /// The redacted response prefix captured behind the excerpt switch, capped
+    /// at 512 bytes; null while capture is off or no response body arrived.
+    string? response_excerpt = null;
 };
 
 /// One structured SDK log event, as delivered to a diagnostics listener or read

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-33e0bca2.js";
+            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -207,14 +207,14 @@ answer. Two calls fill the slots:</p>
 <p>The example is an Android application in Kotlin. It serves geocoding from
 MapQuest, draws OpenStreetMap US vector tiles, and routes through a
 self-hosted OSRM deployment. Every target exposes these calls; the React
-Native package handle spells the credential-only call
-<code>setProviderCredential(providerKey, credential)</code>.</p>
+Native package handle spells the whole-set call
+<code>configureProviderSet(providerKey, credential)</code>, the React Native wrapper <code>setProviderCredential(providerKey, credential)</code>.</p>
 <ol>
 <li>
 <p><strong>Set the vendor credential.</strong> This fills every capability the full-service
 provider serves: geocoding, routing, distance matrix, place search, traffic
 incidents, traffic flow and raster tiles.</p>
-<pre><code class="language-kotlin">mapSdk.setProviderCredential(mapQuestApiKey)
+<pre><code class="language-kotlin">mapSdk.configureProviderSet("mapquest", mapQuestApiKey)
 </code></pre>
 </li>
 <li>

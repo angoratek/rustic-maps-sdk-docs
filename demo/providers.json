@@ -106,6 +106,24 @@
           "method": "GET",
           "path_pattern": "^geocode$",
           "fixture": "fixtures/here/geocode_brandenburg_gate.json"
+        },
+        {
+          "purpose": "routing",
+          "method": "POST",
+          "path_pattern": "^routes$",
+          "fixture": "fixtures/here/route_two_sections.json"
+        },
+        {
+          "purpose": "traffic_incidents",
+          "method": "GET",
+          "path_pattern": "^incidents$",
+          "fixture": "fixtures/here/traffic_incidents_berlin.json"
+        },
+        {
+          "purpose": "traffic_flow",
+          "method": "GET",
+          "path_pattern": "^flow$",
+          "fixture": "fixtures/here/traffic_flow_berlin.json"
         }
       ],
       "served_contracts": [
@@ -133,7 +151,7 @@
         {
           "purpose": "geocoding",
           "method": "GET",
-          "path_pattern": "^$",
+          "path_pattern": "^maps/api/geocode/json$",
           "fixture": "fixtures/google/geocode_brandenburg_gate.json"
         }
       ],
@@ -217,7 +235,7 @@
         {
           "purpose": "geocoding",
           "method": "GET",
-          "path_pattern": "^$",
+          "path_pattern": "^v1/geocode/forward$",
           "fixture": "fixtures/radar/geocode_brandenburg_gate.json"
         }
       ],

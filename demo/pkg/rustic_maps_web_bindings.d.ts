@@ -449,6 +449,23 @@ export class MapView {
      */
     setOverlays(overlays: any[]): void;
     /**
+     * Installs a styled vector base map served by a provider configured
+     * through `configureProvider` for the vector-tiles capability (the UDL
+     * `MapView.set_provider_vector_tile_source` contract member).
+     *
+     * The descriptor is one plain JavaScript object carrying the UDL
+     * `ProviderVectorTileSource` fields in lower camel case:
+     * `{providerKey, styleId}`. The provider supplies its own tileset name,
+     * attribution line and zoom span; the page chooses only the provider and
+     * the committed style. A call naming a provider other than the one
+     * configured for vector tiles, made before any vector-tile provider is
+     * configured, or naming an unknown style id throws a coded failure and
+     * leaves the installed base in force. An install that lands while a frame
+     * resolves is deferred to that frame's end, exactly like
+     * [`Self::set_vector_tile_source`].
+     */
+    setProviderVectorTileSource(source: any): void;
+    /**
      * Installs a styled vector base map (the UDL
      * `MapView.set_vector_tile_source` contract member).
      *
@@ -948,6 +965,18 @@ export function clearUrlTemplateRasterTileSource(): void;
 export function configureProvider(contract: string, provider_key: string, credential: string): void;
 
 /**
+ * Registers every capability the provider named by `provider_key` serves
+ * from one credential — the contract's `MapSdk.configure_provider_set`.
+ *
+ * The served list comes from the shared provider table, so a capability a
+ * provider does not serve is never installed into a slot it cannot fill. A
+ * provider that requires a credential refuses a blank one; the credential
+ * lives in module memory only and is never logged. Configure one capability at
+ * a time with [`configure_provider`] to mix providers across capabilities.
+ */
+export function configureProviderSet(provider_key: string, credential: string): void;
+
+/**
  * Maps a coordinate to normalized world coordinates in `[0, 1]²`, as
  * `{x, y}`; latitude is clamped to the Mercator cutoffs, mirroring the
  * native `coordinate_to_normalized_world`.
@@ -1009,9 +1038,9 @@ export function fetchTrafficIncidents(south_west_latitude: number, south_west_lo
  * messageLine, providerRequest}` objects. `providerRequest` is `null` unless
  * the event is a provider request observation, in which case it carries
  * `{providerKey, providerContract, httpMethod, requestPath, statusClass,
- * outcome, durationMilliseconds, responseBytes}`. Coordinates in the
- * messages are already rounded to the sink's decimals (the sink's privacy
- * scrub, the native contract rule).
+ * outcome, durationMilliseconds, responseBytes, responseExcerpt}`. Coordinates
+ * in the messages are already rounded to the sink's decimals (the sink's
+ * privacy scrub, the native contract rule).
  */
 export function flushRecentDiagnosticEvents(minimum_severity: SdkLogSeverity, maximum_count: number): Array<any>;
 
@@ -1167,15 +1196,15 @@ export function selectScaleBarScaleWithWidthRange(ground_meters_per_screen_pixel
 export function setProviderBaseUrl(provider_key: string, base_url: string): void;
 
 /**
- * Registers a provider for every capability it serves — the all-in-one
- * convenience, the contract's `MapSdk::setProviderCredential` with the
- * provider key fixed to this build's full-service provider.
+ * Enables or disables the bounded, redacted response prefix carried by
+ * provider request observations.
  *
- * A blank credential is refused; the credential lives in module memory only
- * and is never logged. Configure one capability at a time with
- * [`configure_provider`] to mix providers across capabilities.
+ * The switch is off by default; while it is on, each flushed provider
+ * request carries `responseExcerpt` (the first 512 bytes of the response
+ * body, redacted and truncated on a character boundary). The switch is
+ * process-wide and reaches the provider layer's own excerpt capture.
  */
-export function setProviderCredential(credential: string): void;
+export function setResponseExcerptCapture(enabled: boolean): void;
 
 /**
  * The shortest signed angular difference `to − from`, in degrees.
@@ -1308,6 +1337,7 @@ export interface InitOutput {
     readonly clearProviderRegistrations: () => void;
     readonly clearUrlTemplateRasterTileSource: () => void;
     readonly configureProvider: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly configureProviderSet: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly coordinateToNormalizedWorld: (a: number, b: number, c: number) => void;
     readonly coursemediansmoother_add: (a: number, b: number) => void;
     readonly coursemediansmoother_median: (a: number) => number;
@@ -1376,6 +1406,7 @@ export interface InitOutput {
     readonly mapview_setCameraGestureActive: (a: number, b: number) => void;
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
+    readonly mapview_setProviderVectorTileSource: (a: number, b: number, c: number) => void;
     readonly mapview_setVectorTileSource: (a: number, b: number, c: number) => void;
     readonly mapview_snapshot: (a: number) => number;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
@@ -1415,7 +1446,7 @@ export interface InitOutput {
     readonly selectScaleBarScale: (a: number, b: number) => void;
     readonly selectScaleBarScaleWithWidthRange: (a: number, b: number, c: number, d: number) => void;
     readonly setProviderBaseUrl: (a: number, b: number, c: number, d: number, e: number) => void;
-    readonly setProviderCredential: (a: number, b: number, c: number) => void;
+    readonly setResponseExcerptCapture: (a: number) => void;
     readonly signedAngularDifferenceDegrees: (a: number, b: number) => number;
     readonly smoothstepEasedProgress: (a: number) => number;
     readonly smoothsteptimedease_advance: (a: number, b: number) => number;
@@ -1444,13 +1475,13 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_2998: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2998_148: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_2998_149: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9881: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9902: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_3002: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_3002_147: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_3042: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3042_150: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3042_151: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9934: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_9955: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3046: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_3046_149: (a: number, b: number, c: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
