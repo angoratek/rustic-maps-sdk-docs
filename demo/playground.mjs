@@ -7253,6 +7253,7 @@
         document.getElementById('provider-console-outcome-filter');
       const provider_console_copy = document.getElementById('provider-console-copy');
       const provider_console_export = document.getElementById('provider-console-export');
+      const provider_console_capture = document.getElementById('provider-console-capture');
       let provider_console_refresh_timer = null;
       let provider_console_last_rows = '';
 
@@ -7301,16 +7302,24 @@
         }
         populate_provider_console_providers();
         const rows = provider_console_rows();
-        const row_texts = rows.map(provider_console_row_text);
         // The timer refresh must not rebuild identical rows: a visitor may be
         // selecting a row's text while the next tick arrives.
-        const row_signature = row_texts.join('\n');
+        const row_signature = rows
+          .map((request) => `${provider_console_row_text(request)}\n${request.responseExcerpt ?? ''}`)
+          .join('\n');
         if (row_signature !== provider_console_last_rows) {
           provider_console_last_rows = row_signature;
           provider_console_rows_element.replaceChildren(
-            ...row_texts.map((row_text) => {
+            ...rows.map((request) => {
               const row = document.createElement('li');
-              row.textContent = row_text;
+              row.textContent = provider_console_row_text(request);
+              if (request.responseExcerpt) {
+                row.className = 'provider-console-row-with-excerpt';
+                const excerpt = document.createElement('span');
+                excerpt.className = 'provider-console-excerpt';
+                excerpt.textContent = request.responseExcerpt;
+                row.append(excerpt);
+              }
               return row;
             }));
         }
@@ -7368,9 +7377,20 @@
         });
         provider_console_provider_filter.addEventListener('change', refresh_provider_console);
         provider_console_outcome_filter.addEventListener('change', refresh_provider_console);
+        provider_console_capture.addEventListener('change', () => {
+          window.mapTest?.setResponseExcerptCapture?.(
+            provider_console_capture.checked);
+          provider_console_last_rows = '';
+          refresh_provider_console();
+        });
         provider_console_copy.addEventListener('click', () => {
-          const text = Array.from(provider_console_rows_element.children)
-            .map((row) => row.textContent)
+          const text = provider_console_rows()
+            .map((request) => {
+              const excerpt = request.responseExcerpt
+                ? `\n${request.responseExcerpt}`
+                : '';
+              return `${provider_console_row_text(request)}${excerpt}`;
+            })
             .join('\n');
           navigator.clipboard?.writeText(text).catch(() => undefined);
         });

@@ -657,6 +657,13 @@
         color: var(--text-secondary-color);
         font-size: var(--type-caption-size);
       }
+      .provider-console-capture-row {
+        display: flex;
+        align-items: center;
+        gap: var(--stack-tight);
+        color: var(--text-secondary-color);
+        font-size: var(--type-caption-size);
+      }
       .provider-console-rows {
         list-style: none;
         margin: 0;
@@ -670,6 +677,18 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      /* A row carrying a captured response excerpt wraps and shows the
+         redacted prefix beneath the request line. */
+      .provider-console-rows li.provider-console-row-with-excerpt {
+        white-space: normal;
+      }
+      .provider-console-excerpt {
+        display: block;
+        margin-top: 2px;
+        font-family: ui-monospace, monospace;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
       }
       .provider-console-empty {
         margin: var(--stack-tight) 0 0;

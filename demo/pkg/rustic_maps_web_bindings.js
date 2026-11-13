@@ -1018,6 +1018,36 @@ export class MapView {
         }
     }
     /**
+     * Installs a styled vector base map served by a provider configured
+     * through `configureProvider` for the vector-tiles capability (the UDL
+     * `MapView.set_provider_vector_tile_source` contract member).
+     *
+     * The descriptor is one plain JavaScript object carrying the UDL
+     * `ProviderVectorTileSource` fields in lower camel case:
+     * `{providerKey, styleId}`. The provider supplies its own tileset name,
+     * attribution line and zoom span; the page chooses only the provider and
+     * the committed style. A call naming a provider other than the one
+     * configured for vector tiles, made before any vector-tile provider is
+     * configured, or naming an unknown style id throws a coded failure and
+     * leaves the installed base in force. An install that lands while a frame
+     * resolves is deferred to that frame's end, exactly like
+     * [`Self::set_vector_tile_source`].
+     * @param {any} source
+     */
+    setProviderVectorTileSource(source) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.mapview_setProviderVectorTileSource(retptr, this.__wbg_ptr, addHeapObject(source));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            if (r1) {
+                throw takeObject(r0);
+            }
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
+    }
+    /**
      * Installs a styled vector base map (the UDL
      * `MapView.set_vector_tile_source` contract member).
      *
@@ -1998,6 +2028,36 @@ export function configureProvider(contract, provider_key, credential) {
 }
 
 /**
+ * Registers every capability the provider named by `provider_key` serves
+ * from one credential — the contract's `MapSdk.configure_provider_set`.
+ *
+ * The served list comes from the shared provider table, so a capability a
+ * provider does not serve is never installed into a slot it cannot fill. A
+ * provider that requires a credential refuses a blank one; the credential
+ * lives in module memory only and is never logged. Configure one capability at
+ * a time with [`configure_provider`] to mix providers across capabilities.
+ * @param {string} provider_key
+ * @param {string} credential
+ */
+export function configureProviderSet(provider_key, credential) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(provider_key, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(credential, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.configureProviderSet(retptr, ptr0, len0, ptr1, len1);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        if (r1) {
+            throw takeObject(r0);
+        }
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
  * Maps a coordinate to normalized world coordinates in `[0, 1]²`, as
  * `{x, y}`; latitude is clamped to the Mercator cutoffs, mirroring the
  * native `coordinate_to_normalized_world`.
@@ -2110,9 +2170,9 @@ export function fetchTrafficIncidents(south_west_latitude, south_west_longitude,
  * messageLine, providerRequest}` objects. `providerRequest` is `null` unless
  * the event is a provider request observation, in which case it carries
  * `{providerKey, providerContract, httpMethod, requestPath, statusClass,
- * outcome, durationMilliseconds, responseBytes}`. Coordinates in the
- * messages are already rounded to the sink's decimals (the sink's privacy
- * scrub, the native contract rule).
+ * outcome, durationMilliseconds, responseBytes, responseExcerpt}`. Coordinates
+ * in the messages are already rounded to the sink's decimals (the sink's
+ * privacy scrub, the native contract rule).
  * @param {SdkLogSeverity} minimum_severity
  * @param {number} maximum_count
  * @returns {Array<any>}
@@ -2507,29 +2567,17 @@ export function setProviderBaseUrl(provider_key, base_url) {
 }
 
 /**
- * Registers a provider for every capability it serves — the all-in-one
- * convenience, the contract's `MapSdk::setProviderCredential` with the
- * provider key fixed to this build's full-service provider.
+ * Enables or disables the bounded, redacted response prefix carried by
+ * provider request observations.
  *
- * A blank credential is refused; the credential lives in module memory only
- * and is never logged. Configure one capability at a time with
- * [`configure_provider`] to mix providers across capabilities.
- * @param {string} credential
+ * The switch is off by default; while it is on, each flushed provider
+ * request carries `responseExcerpt` (the first 512 bytes of the response
+ * body, redacted and truncated on a character boundary). The switch is
+ * process-wide and reaches the provider layer's own excerpt capture.
+ * @param {boolean} enabled
  */
-export function setProviderCredential(credential) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(credential, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.setProviderCredential(retptr, ptr0, len0);
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        if (r1) {
-            throw takeObject(r0);
-        }
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
+export function setResponseExcerptCapture(enabled) {
+    wasm.setResponseExcerptCapture(enabled);
 }
 
 /**
@@ -3896,7 +3944,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_9902(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_9955(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -3942,7 +3990,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return __wasm_bindgen_func_elem_9902(a, state0.b, arg0, arg1);
+                        return __wasm_bindgen_func_elem_9955(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -4988,33 +5036,33 @@ function __wbg_get_imports() {
             getObject(arg0).writeTexture(getObject(arg1), getArrayU8FromWasm0(arg2, arg3), getObject(arg4), getObject(arg5));
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 3157, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_9881);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 3170, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_9934);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 817, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2998);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDevice")], shim_idx: 830, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3042);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 821, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3002);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUDeviceLostInfo")], shim_idx: 834, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3046);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 821, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3002_147);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 834, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3046_149);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000005: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 817, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2998_148);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("any")], shim_idx: 830, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3042_150);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000006: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 817, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_2998_149);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("undefined")], shim_idx: 830, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, __wasm_bindgen_func_elem_3042_151);
             return addHeapObject(ret);
         },
         __wbindgen_generic_0000000000000007: function(arg0) {
@@ -5088,22 +5136,22 @@ function __wbg_get_imports() {
     };
 }
 
-function __wasm_bindgen_func_elem_3002(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_3002(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_3046(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_3046(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_3002_147(arg0, arg1, arg2) {
-    wasm.__wasm_bindgen_func_elem_3002_147(arg0, arg1, addHeapObject(arg2));
+function __wasm_bindgen_func_elem_3046_149(arg0, arg1, arg2) {
+    wasm.__wasm_bindgen_func_elem_3046_149(arg0, arg1, addHeapObject(arg2));
 }
 
-function __wasm_bindgen_func_elem_9902(arg0, arg1, arg2, arg3) {
-    wasm.__wasm_bindgen_func_elem_9902(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
+function __wasm_bindgen_func_elem_9955(arg0, arg1, arg2, arg3) {
+    wasm.__wasm_bindgen_func_elem_9955(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
-function __wasm_bindgen_func_elem_9881(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_9934(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_9881(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_9934(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5114,10 +5162,10 @@ function __wasm_bindgen_func_elem_9881(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2998(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_3042(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2998(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_3042(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5128,10 +5176,10 @@ function __wasm_bindgen_func_elem_2998(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2998_148(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_3042_150(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2998_148(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_3042_150(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {
@@ -5142,10 +5190,10 @@ function __wasm_bindgen_func_elem_2998_148(arg0, arg1, arg2) {
     }
 }
 
-function __wasm_bindgen_func_elem_2998_149(arg0, arg1, arg2) {
+function __wasm_bindgen_func_elem_3042_151(arg0, arg1, arg2) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.__wasm_bindgen_func_elem_2998_149(retptr, arg0, arg1, addHeapObject(arg2));
+        wasm.__wasm_bindgen_func_elem_3042_151(retptr, arg0, arg1, addHeapObject(arg2));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         if (r1) {

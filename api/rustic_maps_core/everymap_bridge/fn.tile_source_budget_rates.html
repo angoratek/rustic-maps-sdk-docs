@@ -2,13 +2,13 @@
     source_name: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.str.html">str</a>,
     capacity_tokens: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>,
     refill_tokens_per_second: <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u32.html">u32</a>, <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>), <a class="enum" href="../../geospatial_types/error/enum.SDKError.html" title="enum geospatial_types::error::SDKError">SDKError</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Converts a declared request budget into the whole-token capacity and
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.99.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;(<a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.u32.html">u32</a>, <a class="primitive" href="https://doc.rust-lang.org/1.99.0/std/primitive.f64.html">f64</a>), SDKError&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Converts a declared request budget into the whole-token capacity and
 refill rate the provider layer’s token bucket admits.</p>
 <p>The bucket admits a whole number of requests, so a fractional capacity is
 refused rather than rounded: rounding would silently change the budget the
 application declared.</p>
 <h2 id="errors"><a class="doc-anchor" href="#errors">§</a>Errors</h2>
-<p>Returns <a href="../../geospatial_types/error/enum.SDKError.html#variant.InvalidCoordinateInput" title="variant geospatial_types::error::SDKError::InvalidCoordinateInput"><code>SDKError::InvalidCoordinateInput</code></a> when the capacity is not a
+<p>Returns [<code>SDKError::InvalidCoordinateInput</code>] when the capacity is not a
 whole number of at least one, or the refill rate is not a finite positive
 rate.
 Converts a declared request budget, naming the source that declared it.</p>
@@ -16,6 +16,6 @@ Converts a declared request budget, naming the source that declared it.</p>
 settings surface can point at the offending source rather than at the
 contract.</p>
 <h2 id="errors-1"><a class="doc-anchor" href="#errors-1">§</a>Errors</h2>
-<p>Returns <a href="../../geospatial_types/error/enum.SDKError.html#variant.InvalidCoordinateInput" title="variant geospatial_types::error::SDKError::InvalidCoordinateInput"><code>SDKError::InvalidCoordinateInput</code></a> with the same detail
+<p>Returns [<code>SDKError::InvalidCoordinateInput</code>] with the same detail
 <a href="fn.token_bucket_rates.html" title="fn rustic_maps_core::everymap_bridge::token_bucket_rates"><code>token_bucket_rates</code></a> produces, prefixed by the declaring source.</p>
 </div></details></section></div></main></body></html>
