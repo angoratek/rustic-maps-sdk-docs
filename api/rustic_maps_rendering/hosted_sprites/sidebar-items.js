@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SPRITE_INDEX_URL_SUFFIX","SPRITE_SHEET_URL_SUFFIX"],"fn":["fetch_hosted_sprite_atlas"]};

@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
+            window.path_to_searchindex_js = "searchindex-c3e803c7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -3684,10 +3684,10 @@ and serves the three tile sources as base maps.</p>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td><code>everymap-providers-mapquest</code></td><td>Geocoding, search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td><code>everymap-providers-here</code></td><td>Geocoding, routing, traffic incidents and flow</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td><code>everymap-providers-here</code></td><td>Geocoding, routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
 <tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td><code>everymap-providers-google</code></td><td>Geocoding, routing</td></tr>
 <tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td><code>everymap-providers-tomtom</code></td><td>Geocoding, routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td><code>everymap-providers-mapbox</code></td><td>Geocoding, routing</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td><code>everymap-providers-mapbox</code></td><td>Geocoding, routing, vector tiles with Mapbox Streets</td></tr>
 <tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td><code>everymap-providers-radar</code></td><td>Geocoding, routing</td></tr>
 <tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-photon</code></td><td>Geocoding, search and suggestions</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td><code>everymap-providers-url-template-raster</code> with the registry template</td><td>Raster tiles</td></tr>
@@ -3724,9 +3724,12 @@ not selectable through <code>configure_provider</code>.</p>
 </table>
 </div>
 <p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> for OpenStreetMap US, and <code>bright-light</code>,
-<code>fiord-dark</code>, and <code>positron-light</code> for OpenFreeMap. The vector source’s status
-readback reports the active style’s line.</p>
+<code>carto-light</code> and <code>carto-dark</code> for OpenStreetMap US, <code>bright-light</code>, <code>fiord-dark</code>,
+and <code>positron-light</code> for OpenFreeMap, <code>omv-light</code> for HERE, and <code>streets-light</code>
+for Mapbox. The vector source’s status readback reports the active style’s line.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider
+publishes. The SDK fetches that document with the registered credential and
+keeps it for the session, so no style file ships with your application.</p>
 <p>Whether a provider is reachable from a shipped target depends on that
 target’s dispatch table. The browser registers all nine keys: MapQuest, HERE,
 Google Maps, TomTom, Mapbox, Radar, Photon, OSRM and Valhalla; the vector base
@@ -3926,10 +3929,10 @@ never place it in a build field, a resource, or source.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
 <tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, vector tiles with Mapbox Streets</td></tr>
 <tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding (forward and reverse), search and suggestions</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
@@ -3968,9 +3971,14 @@ shipped <code>MapView</code>’s vector base member and need no registration cal
 </table>
 </div>
 <p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), and <code>bright-light</code>,
-<code>fiord-dark</code>, and <code>positron-light</code> (OpenFreeMap). The status readback returns
-the active style’s line, so display it verbatim.</p>
+<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), <code>bright-light</code>, <code>fiord-dark</code>,
+and <code>positron-light</code> (OpenFreeMap), <code>omv-light</code> (HERE), and <code>streets-light</code>
+(Mapbox). The status readback returns the active style’s line, so display it
+verbatim.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider
+publishes. The SDK fetches that document with the registered credential and
+keeps it for the session, so no style file ships with your application. The
+Mapbox document on Android, iOS and React Native requires a Mapbox Order.</p>
 <h2 id="what-you-can-call-1"><a class="header" href="#what-you-can-call-1">What you can call</a></h2>
 <div class="table-wrapper">
 <table>
@@ -4139,10 +4147,10 @@ never place it in <code>Info.plist</code>, an xcconfig, or source.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
 <tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, vector tiles with Mapbox Streets</td></tr>
 <tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding (forward and reverse), search and suggestions</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
@@ -4181,9 +4189,14 @@ shipped <code>MapView</code>’s vector base member and need no registration cal
 </table>
 </div>
 <p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), and <code>bright-light</code>,
-<code>fiord-dark</code>, and <code>positron-light</code> (OpenFreeMap). The status readback returns
-the active style’s line, so display it verbatim.</p>
+<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), <code>bright-light</code>, <code>fiord-dark</code>,
+and <code>positron-light</code> (OpenFreeMap), <code>omv-light</code> (HERE), and <code>streets-light</code>
+(Mapbox). The status readback returns the active style’s line, so display it
+verbatim.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider
+publishes. The SDK fetches that document with the registered credential and
+keeps it for the session, so no style file ships with your application. The
+Mapbox document on Android, iOS and React Native requires a Mapbox Order.</p>
 <h2 id="what-you-can-call-2"><a class="header" href="#what-you-can-call-2">What you can call</a></h2>
 <div class="table-wrapper">
 <table>
@@ -4366,10 +4379,10 @@ never place it in the JavaScript bundle or a native build file.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
 <tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, vector tiles with Mapbox Streets</td></tr>
 <tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding (forward and reverse), search and suggestions</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
@@ -4409,9 +4422,14 @@ URL-template raster call. OpenStreetMap US and OpenFreeMap are served by the
 </table>
 </div>
 <p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), and <code>bright-light</code>,
-<code>fiord-dark</code>, and <code>positron-light</code> (OpenFreeMap). The status readback returns
-the active style’s line, so display it verbatim.</p>
+<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), <code>bright-light</code>, <code>fiord-dark</code>,
+and <code>positron-light</code> (OpenFreeMap), <code>omv-light</code> (HERE), and <code>streets-light</code>
+(Mapbox). The status readback returns the active style’s line, so display it
+verbatim.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider
+publishes. The SDK fetches that document with the registered credential and
+keeps it for the session, so no style file ships with your application. The
+Mapbox document on Android, iOS and React Native requires a Mapbox Order.</p>
 <h2 id="what-you-can-call-3"><a class="header" href="#what-you-can-call-3">What you can call</a></h2>
 <div class="table-wrapper">
 <table>
@@ -4581,10 +4599,10 @@ never place it in the bundle.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, search and suggestions, routing with its capability readback, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing, traffic incidents and flow</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
 <tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing</td></tr>
 <tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing, vector tiles with Mapbox Streets</td></tr>
 <tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding, reverse geocoding, routing</td></tr>
 <tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding, reverse geocoding, search and suggestions</td></tr>
 <tr><td>OSRM</td><td><code>osrm</code></td><td>None, or a deployment URL</td><td>Selectable routing provider</td><td>Routing with its capability readback</td></tr>
@@ -4625,9 +4643,14 @@ live raster fallback. OpenStreetMap US and OpenFreeMap are served by
 </table>
 </div>
 <p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), and <code>bright-light</code>,
-<code>fiord-dark</code>, and <code>positron-light</code> (OpenFreeMap). The status readback returns
-the active style’s line, so display it verbatim.</p>
+<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), <code>bright-light</code>, <code>fiord-dark</code>,
+and <code>positron-light</code> (OpenFreeMap), <code>omv-light</code> (HERE), and <code>streets-light</code>
+(Mapbox). The status readback returns the active style’s line, so display it
+verbatim.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider
+publishes. The SDK fetches that document with the registered credential and
+keeps it for the session, so no style file ships with your application. The
+Mapbox document on Android, iOS and React Native requires a Mapbox Order.</p>
 <h2 id="what-you-can-call-4"><a class="header" href="#what-you-can-call-4">What you can call</a></h2>
 <div class="table-wrapper">
 <table>
@@ -7017,7 +7040,7 @@ redistribute the SDK or ship an application built on it, reproduce the
 <ul>
 <li><a href="https://maplibre.org/">MapLibre</a> — its open map renderers and how they frame tile scheduling, frustum listing and tile budgeting are the mature prior art this SDK’s renderer seams knowingly re-implement from first principles.</li>
 <li><a href="https://github.com/maplibre/demotiles">MapLibre style specification and demotiles</a> — the version-8 document model, typed expressions, filters and CSS colour parsing in <code>rustic-maps-style</code> are a from-scratch Rust implementation of the published MapLibre style specification; no specification text, schema or C++ source is copied. <code>crates/rustic-maps-style/fixtures/styles/demotiles-style.json</code> is a verbatim copy of <a href="https://demotiles.maplibre.org/style.json">https://demotiles.maplibre.org/style.json</a> (BSD 3-Clause, Copyright (c) 2021 MapLibre), retained as test data only. Its licence text is committed at <code>docs/THIRD_PARTY_LICENSES/maplibre-demotiles-LICENSE.txt</code>. The style’s metadata carries its own attribution: “This style was generated on MapTiler Cloud. Usage is governed by the license terms in https://github.com/maplibre/demotiles/blob/gh-pages/LICENSE”.</li>
-<li><a href="https://github.com/notofonts/latin-greek-cyrillic">Noto Sans</a> — the committed glyph range <code>crates/rustic-maps-rendering/fixtures/render/glyphs/noto_sans_regular_0-255.pbf</code> is Noto Sans font material served in the Mapbox glyph protocol, retained as test data for the label pass. The Noto Sans Regular stack is licensed under the SIL Open Font License 1.1 (Copyright 2022 The Noto Project Authors), committed at <code>docs/THIRD_PARTY_LICENSES/noto-sans-OFL-1.1.txt</code>; no font file ships in the SDK packages.</li>
+<li><a href="https://github.com/notofonts/latin-greek-cyrillic">Noto Sans</a> — the committed glyph ranges <code>fixtures/glyphs/noto_sans_regular_0-255.pbf</code> and <code>fixtures/glyphs/noto_sans_regular_256-511.pbf</code> are Noto Sans font material served in the Mapbox glyph protocol, retained as test data for the label pass. The Noto Sans Regular stack is licensed under the SIL Open Font License 1.1 (Copyright 2022 The Noto Project Authors), committed at <code>docs/THIRD_PARTY_LICENSES/noto-sans-OFL-1.1.txt</code>; no font file ships in the SDK packages.</li>
 <li><a href="https://tile.openstreetmap.us/">OpenStreetMap US Tile Service</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> — the demotiles vector tiles are © OpenStreetMap contributors, licensed under the Open Database License (ODbL), and its country data derives from Natural Earth; that attribution accompanies the committed fixture and is reproduced in <code>crates/rustic-maps-style/fixtures/styles/README.md</code>.</li>
 <li><a href="https://www.openstreetmap.org/">OpenStreetMap</a> and its ODbL database — the map-data backbone this SDK renders; the ODbL attribution obligations above are real and are honored in every reference app.</li>
 <li><a href="https://github.com/mozilla/uniffi-rs">UniFFI</a> — whose UDL-first, contract-as-single-source-of-truth binding approach this SDK adopts for its Kotlin/Swift/React Native FFI surface.</li>
@@ -7177,7 +7200,7 @@ offline graph.</li>
 <li><a href="#react-native-api-reference">React Native API reference</a></li>
 <li><a href="#webassembly-api-reference">WebAssembly API reference</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -7440,6 +7463,7 @@ offline graph.</li>
 <tr><td><code>offline_routing_benchmark</code></td><td>module</td><td><code>pub mod offline_routing_benchmark</code></td><td>—</td></tr>
 <tr><td><code>registry</code></td><td>module</td><td><code>pub mod registry</code></td><td>—</td></tr>
 <tr><td><code>routing_fallback</code></td><td>module</td><td><code>pub mod routing_fallback</code></td><td>—</td></tr>
+<tr><td><code>style_resources</code></td><td>module</td><td><code>pub mod style_resources</code></td><td>—</td></tr>
 <tr><td><code>tile_cache_keys</code></td><td>module</td><td><code>pub mod tile_cache_keys</code></td><td>—</td></tr>
 <tr><td><code>traffic_flow_cache</code></td><td>module</td><td><code>pub mod traffic_flow_cache</code></td><td>—</td></tr>
 </tbody>
@@ -7595,6 +7619,20 @@ offline graph.</li>
 </tbody>
 </table>
 </div>
+<h3 id="module-style_resources"><a class="header" href="#module-style_resources">Module <code>style_resources</code></a></h3>
+<p>Provider-authenticated fetches of rendering style resources.</p>
+<p>A vector base is designed to be painted with a style published by the tileset’s provider, and that style references hosted glyph ranges and a sprite sheet. Loading them needs the provider credential, but the credential belongs to the provider layer: it lives in the vendor’s HTTP client, whose authentication provider applies it to whatever address a request names.</p>
+<p>[<code>StyleResourceClient</code>] is that seam. The SDK supplies only the address the shared registry declares for one provider’s style resource; the implementation, built beside the vendor client, sends the request through the same transport, authentication, pacing, retry policy and redacted request observation the provider’s contract calls use. The credential never leaves the client, this crate names no provider, and no provider URL shape lives here.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>StyleResourceClient</code></td><td>trait</td><td><code>pub trait StyleResourceClient: Send + Sync</code></td><td>Fetches one rendering style resource with the configured credential. Implementations wrap the client that serves the provider’s own contract calls, so the credential, transport and request policy are the provider layer’s and the SDK holds neither the credential nor a vendor URL shape.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="module-tile_cache_keys"><a class="header" href="#module-tile_cache_keys">Module <code>tile_cache_keys</code></a></h3>
 <p>Stable cache keys for tile payloads.</p>
 <p>Raster and vector tile payloads share one cache store, and nothing in a tile address says which provider or source produced the bytes. Every key therefore carries a <code>tile_source_namespace</code>: the provider key for a catalog provider, a stable caller-supplied key for an application provider. The namespace is part of the key, so two sources serving the same address can never read each other’s payloads.</p>
@@ -7653,6 +7691,8 @@ offline graph.</li>
 <tr><td><code>geojson_source</code></td><td>module</td><td><code>pub mod geojson_source</code></td><td>—</td></tr>
 <tr><td><code>gpu_texture_cache</code></td><td>module</td><td><code>pub mod gpu_texture_cache</code></td><td>—</td></tr>
 <tr><td><code>headless</code></td><td>module</td><td><code>pub mod headless</code></td><td>—</td></tr>
+<tr><td><code>hosted_glyphs</code></td><td>module</td><td><code>pub mod hosted_glyphs</code></td><td>—</td></tr>
+<tr><td><code>hosted_sprites</code></td><td>module</td><td><code>pub mod hosted_sprites</code></td><td>—</td></tr>
 <tr><td><code>labels</code></td><td>module</td><td><code>pub mod labels</code></td><td>—</td></tr>
 <tr><td><code>location_indicator</code></td><td>module</td><td><code>pub mod location_indicator</code></td><td>—</td></tr>
 <tr><td><code>overlay</code></td><td>module</td><td><code>pub mod overlay</code></td><td>—</td></tr>
@@ -7783,6 +7823,38 @@ offline graph.</li>
 <tr><td><code>CapturedFrame</code></td><td>struct</td><td><code>pub struct CapturedFrame</code></td><td>One rendered frame copied back from the GPU: tightly packed RGBA8, row-major, origin top-left, no row padding.</td></tr>
 <tr><td><code>HeadlessTileRenderer</code></td><td>struct</td><td><code>pub struct HeadlessTileRenderer</code></td><td>Renders raster tiles headlessly. Owns the pipeline, sampler, and the uploaded-texture cache; the graphics context is injected, so production code and tests can supply any backed device through [<code>GraphicsContextSource</code>].</td></tr>
 <tr><td><code>capture_frame_bytes</code></td><td>function</td><td><code>pub fn capture_frame_bytes( device: &amp;Device, queue: &amp;Queue, mut command_encoder: CommandEncoder, source_texture: &amp;Texture, ) -&gt; Result&lt;CapturedFrame, String&gt;</code></td><td>Copies a rendered texture into a staging buffer honoring the 256-byte row alignment ([<code>wgpu::COPY_BYTES_PER_ROW_ALIGNMENT</code>]), maps the buffer, and reads it back as a tightly packed [<code>CapturedFrame</code>], stripping the padding the alignment inserts between rows. # Reusability Any render-attachment texture (<code>RENDER_ATTACHMENT \| COPY_SRC</code>, RGBA8 unorm) of any size is captured. The copy commands are encoded onto the provided encoder, which the caller has not submitted yet and which this function then finishes and submits; mapping completes through device polling — native only (see the module docs).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-hosted_glyphs"><a class="header" href="#module-hosted_glyphs">Module <code>hosted_glyphs</code></a></h3>
+<p>Glyph ranges for a hosted vector style, fetched through the provider’s authenticated style-resource client.</p>
+<p>A style document published by a tileset’s provider names its glyph endpoint as a template (<code>…/{fontstack}/{range}.pbf</code>). The ranges are only served to a request carrying the provider’s credential, so the fetch goes through [<code>StyleResourceClient</code>] and the credential never reaches this crate. The template resolves against the style document’s own address, and the result must land on the document’s origin or on a host the provider declared: any other host is refused before a request is made, because a style document must not be able to aim the provider credential at a host the provider did not declare.</p>
+<p>Decoded ranges are retained in a [<code>GlyphRangeCache</code>] keyed by the provider’s namespace, the font stack and the range, so two providers serving the same font-stack name never share a range and a repeated frame costs no request.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GLYPH_URL_FONT_STACK_PLACEHOLDER</code></td><td>const</td><td><code>pub const GLYPH_URL_FONT_STACK_PLACEHOLDER: &amp;str</code></td><td>The glyph URL template’s font-stack placeholder.</td></tr>
+<tr><td><code>GLYPH_URL_RANGE_PLACEHOLDER</code></td><td>const</td><td><code>pub const GLYPH_URL_RANGE_PLACEHOLDER: &amp;str</code></td><td>The glyph URL template’s range placeholder.</td></tr>
+<tr><td><code>HostedGlyphRanges</code></td><td>struct</td><td><code>pub struct HostedGlyphRanges</code></td><td>Fetches and retains one hosted style’s glyph ranges. The fetch goes through the provider’s [<code>StyleResourceClient</code>], so the credential, transport, pacing and retry policy are the provider layer’s.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-hosted_sprites"><a class="header" href="#module-hosted_sprites">Module <code>hosted_sprites</code></a></h3>
+<p>Sprite sheets for a hosted vector style, fetched through the provider’s authenticated style-resource client.</p>
+<p>A style document published by a tileset’s provider names its sprite by a base address; the sprite protocol resolves the index document at <code>&lt;base&gt;.json</code> and the sheet at <code>&lt;base&gt;.png</code>. Both are served only to a request carrying the provider’s credential, so the fetches go through [<code>StyleResourceClient</code>] and the credential never reaches this crate. The base resolves against the style document’s own address, exactly as a glyph template does, and the resolved address must land on the document’s origin or on a host the provider declared: any other host is refused before a request is made, because a style document must not be able to aim the provider credential at a host the provider did not declare.</p>
+<p>The sheet is decoded here because the renderer’s <a href="crate::sprite::SpriteSource"><code>SpriteSource</code></a> is synchronous: both install paths prefetch once and hand the decoded atlas to the scheduler. The PNG decoder builds on every target, so the native surface and the browser canvas resolve a style’s sprite the same way.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>SPRITE_INDEX_URL_SUFFIX</code></td><td>const</td><td><code>pub const SPRITE_INDEX_URL_SUFFIX: &amp;str</code></td><td>The suffix the sprite protocol names a style’s index document by.</td></tr>
+<tr><td><code>SPRITE_SHEET_URL_SUFFIX</code></td><td>const</td><td><code>pub const SPRITE_SHEET_URL_SUFFIX: &amp;str</code></td><td>The suffix the sprite protocol names a style’s sheet by.</td></tr>
+<tr><td><code>fetch_hosted_sprite_atlas</code></td><td>function</td><td><code>pub async fn fetch_hosted_sprite_atlas( style_resources: Arc&lt;dyn StyleResourceClient&gt;, style_document_url: &amp;str, sprite_url: &amp;str, declared_hosts: &amp;[String], ) -&gt; Result&lt;SpriteAtlas, SDKError&gt;</code></td><td>Fetches and decodes the sprite sheet a hosted style names. # Parameters - <code>style_resources</code> — the provider’s authenticated style-resource client. - <code>style_document_url</code> — the style document’s address, whose origin and directory bound both sprite requests. - <code>sprite_url</code> — the document’s <code>sprite</code> value, the base address the protocol resolves the index and the sheet from, either absolute or relative to the document’s own address. - <code>declared_hosts</code> — the hosts the provider declared for its published style resources; the base may live on any of them as well as on the document’s own origin. # Returns The decoded atlas, ready for the scheduler’s per-URL sprite cache. # Errors Returns [<code>SDKError::ResponseParsingFailure</code>] when the base address does not resolve to an absolute <code>http</code>/<code>https</code> URL, or when the index or sheet cannot be fetched or decoded; [<code>SDKError::ProviderRequestRejected</code>] when the resolved base names a host that is neither the document’s origin nor one the provider declared.</td></tr>
 </tbody>
 </table>
 </div>
@@ -8098,7 +8170,7 @@ offline graph.</li>
 </div>
 <h3 id="module-sprite"><a class="header" href="#module-sprite">Module <code>sprite</code></a></h3>
 <p>The sprite atlas: a style’s sprite index document and its sheet decoded into one texture the icon pass samples.</p>
-<p>A MapLibre style names a sprite base URL. The host resolves that URL through an injected [<code>SpriteSource</code>] and hands back a [<code>SpriteAtlas</code>]; the renderer never fetches, so a test binds the URL to committed fixtures and a product keeps the fetch in its own transport. The index follows the published sprite-index format: an object keyed by icon name whose members are the icon’s rectangle in the sheet (<code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>) and the pixel ratio it was authored at.</p>
+<p>A MapLibre style names a sprite base URL. The host resolves that URL through an injected <a href="crate::sprite::SpriteSource"><code>SpriteSource</code></a> and hands back a [<code>SpriteAtlas</code>]; the renderer never fetches, so a test binds the URL to committed fixtures and a product keeps the fetch in its own transport. The index follows the published sprite-index format: an object keyed by icon name whose members are the icon’s rectangle in the sheet (<code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>) and the pixel ratio it was authored at.</p>
 <p>A malformed index, a missing icon and an icon rectangle outside the sheet all degrade to “no icon” rather than failing a frame: an icon that cannot be sampled is not painted, and the rest of the map (and the layer’s text) still draws.</p>
 <div class="table-wrapper">
 <table>
@@ -8616,7 +8688,7 @@ offline graph.</li>
 <li><a href="#how-it-works">How it works</a> explains the rendering and navigation pipelines.</li>
 <li><a href="#performance-and-profiling">Performance and profiling</a> covers the frame budget.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -9017,6 +9089,7 @@ offline graph.</li>
 <tr><td><code>reloadTileSource</code></td><td><code>fun reloadTileSource(): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>fun setVectorTileSource(source: UrlTemplateVectorTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>setProviderVectorTileSource</code></td><td><code>fun setProviderVectorTileSource(source: ProviderVectorTileSource): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Installs a vector base map served by a provider registered with <code>MapSdk.configure_provider_set</code> for the vector-tiles capability. The provider supplies the tileset name, attribution line and zoom span its descriptor declares; the source record names only the provider and the built-in style. The whole source builds before the view changes, so a refused call (no vector-tile provider registered, a source naming a different provider than the installed one, or an unknown style id) throws and leaves the previous base in force. Installing while a frame draws is deferred to the frame’s end, the last request winning, exactly like <code>set_vector_tile_source</code>. # Parameters - <code>source</code> — the configured provider key and the style to paint. # Errors Throws when no vector-tile provider serves the requested key or the style is unknown.</td></tr>
+<tr><td><code>setProviderVectorTileSourceFromDocument</code></td><td><code>suspend fun setProviderVectorTileSourceFromDocument(source: ProviderVectorTileSource, styleDocumentUrl: String): Unit</code></td><td>Asynchronous. Throws <code>SdkException</code>.</td><td>Installs a vector base map served by a provider registered with <code>MapSdk.configure_provider_set</code> for the vector-tiles capability and painted with the style document the provider publishes. The provider supplies the tileset name, attribution line and zoom span its descriptor declares; <code>style_document_url</code> addresses the provider’s style for the family named by <code>source.style_id</code>. The document is fetched through the provider’s own authenticated client, so the credential never leaves the provider layer and the request carries the provider’s transport, pacing and retry policy. A fetched document that compiled is kept per provider and address, so installing the same family again costs no request. A document that fails to fetch, decode or compile throws and leaves the previous base in force; installing while a frame draws is deferred to the frame’s end, exactly like <code>set_provider_vector_tile_source</code>. # Parameters - <code>source</code> — the configured provider key and the style label the status reports. - <code>style_document_url</code> — the absolute address of the provider’s style document, without a credential. # Errors Throws when no vector-tile provider serves the requested key, when the provider registers no style-resource fetch, when the request fails, or when the served document is not a compilable style.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>fun clearVectorTileSource(): Unit</code></td><td>Throws <code>SdkException</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>fun vectorTileSourceStatus(): VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
 </tbody>
@@ -10473,7 +10546,7 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="async-and-threading-1"><a class="header" href="#async-and-threading-1">Async and threading</a></h2>
-<p>These calls are asynchronous on Kotlin: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
+<p>These calls are asynchronous on Kotlin: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>MapView.setProviderVectorTileSourceFromDocument</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
 <p>Asynchronous calls are <code>suspend</code> functions and do not block the calling thread. The shipped map view members expect the main thread.</p>
 <ul>
 <li><code>MapView.draw</code> is frame-driven: call it from the platform display callback. A concurrent draw or resize reports <code>RenderingSurfaceUnavailable</code>; retry the next frame.</li>
@@ -10487,7 +10560,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
 <h1 id="ios-api-reference"><a class="header" href="#ios-api-reference">iOS API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Swift bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -10888,6 +10961,7 @@ offline graph.</li>
 <tr><td><code>reloadTileSource</code></td><td><code>func reloadTileSource() throws</code></td><td>Throws <code>SdkError</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>func setVectorTileSource(source: UrlTemplateVectorTileSource) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>setProviderVectorTileSource</code></td><td><code>func setProviderVectorTileSource(source: ProviderVectorTileSource) throws</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map served by a provider registered with <code>MapSdk.configure_provider_set</code> for the vector-tiles capability. The provider supplies the tileset name, attribution line and zoom span its descriptor declares; the source record names only the provider and the built-in style. The whole source builds before the view changes, so a refused call (no vector-tile provider registered, a source naming a different provider than the installed one, or an unknown style id) throws and leaves the previous base in force. Installing while a frame draws is deferred to the frame’s end, the last request winning, exactly like <code>set_vector_tile_source</code>. # Parameters - <code>source</code> — the configured provider key and the style to paint. # Errors Throws when no vector-tile provider serves the requested key or the style is unknown.</td></tr>
+<tr><td><code>setProviderVectorTileSourceFromDocument</code></td><td><code>func setProviderVectorTileSourceFromDocument(source: ProviderVectorTileSource, styleDocumentUrl: String) async throws</code></td><td>Asynchronous. Throws <code>SdkError</code>.</td><td>Installs a vector base map served by a provider registered with <code>MapSdk.configure_provider_set</code> for the vector-tiles capability and painted with the style document the provider publishes. The provider supplies the tileset name, attribution line and zoom span its descriptor declares; <code>style_document_url</code> addresses the provider’s style for the family named by <code>source.style_id</code>. The document is fetched through the provider’s own authenticated client, so the credential never leaves the provider layer and the request carries the provider’s transport, pacing and retry policy. A fetched document that compiled is kept per provider and address, so installing the same family again costs no request. A document that fails to fetch, decode or compile throws and leaves the previous base in force; installing while a frame draws is deferred to the frame’s end, exactly like <code>set_provider_vector_tile_source</code>. # Parameters - <code>source</code> — the configured provider key and the style label the status reports. - <code>style_document_url</code> — the absolute address of the provider’s style document, without a credential. # Errors Throws when no vector-tile provider serves the requested key, when the provider registers no style-resource fetch, when the request fails, or when the served document is not a compilable style.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>func clearVectorTileSource() throws</code></td><td>Throws <code>SdkError</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>func vectorTileSourceStatus() -&gt; VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
 </tbody>
@@ -12344,7 +12418,7 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="async-and-threading-2"><a class="header" href="#async-and-threading-2">Async and threading</a></h2>
-<p>These calls are asynchronous on Swift: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
+<p>These calls are asynchronous on Swift: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>MapView.setProviderVectorTileSourceFromDocument</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
 <p>Asynchronous calls are <code>async throws</code> functions and do not block the calling thread. The shipped map view members expect the main thread.</p>
 <ul>
 <li><code>MapView.draw</code> is frame-driven: call it from the platform display callback. A concurrent draw or resize reports <code>RenderingSurfaceUnavailable</code>; retry the next frame.</li>
@@ -12358,7 +12432,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -12759,6 +12833,7 @@ offline graph.</li>
 <tr><td><code>reloadTileSource</code></td><td><code>reloadTileSource(): void</code></td><td>Throws <code>SdkError</code>.</td><td>Re-resolves the raster-tile provider and drops the scheduler’s pooled raster state, so a provider, credential or source change reaches the following frames without an attach/detach cycle. The next frame plans its fetches afresh: tiles, warm fetches in flight and the retained cross-fade level from the previous source are dropped, so no earlier imagery draws again. Overlays, the location layer, the camera, the device pixel ratio and the vector base survive the reload. The view is left unsettled until the next frame draws, so a render pump that skips settled frames draws the re-planned tiles. A call made while a frame draws is applied when that frame finishes, and the following frames use the new provider; a later call replaces the earlier one. While detached there is no pooled state to clear and the next attach resolves the current provider, so the call succeeds and changes nothing. # Errors Throws <code>ProviderNotConfigured</code> when the view is attached and no raster-tile provider is registered; the previous source stays in force.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: UrlTemplateVectorTileSource): void</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map, a provider-neutral vector tileset painted with one of the SDK’s built-in styles, replacing any vector base already installed. The source is validated before anything moves (the template’s placeholders and scheme, the zoom range and the style id), so a refused call keeps the previously installed base in force. Each frame resolves the camera’s visible tiles through one shared scheduler: a tile is fetched and decoded once and restyled from its cached geometry when the style changes or the camera crosses a style zoom stop, never refetched for either. The styled base draws over the raster tiles and beneath the overlay list. A tile that fails to fetch or decode is skipped and counted; it never fails the frame. Configuring a base needs no attached surface: like the overlay list, the source outlives attach and detach cycles. A call that lands while a frame draws is not refused: it is applied when that frame finishes, and the following frames draw the new base. A request made during that same frame replaces an earlier one, so the last request wins. # Parameters - <code>source</code> — the tileset, attribution and style. # Errors Throws when the source is invalid; the previously installed base stays in force.</td></tr>
 <tr><td><code>setProviderVectorTileSource</code></td><td><code>setProviderVectorTileSource(source: ProviderVectorTileSource): void</code></td><td>Throws <code>SdkError</code>.</td><td>Installs a vector base map served by a provider registered with <code>MapSdk.configure_provider_set</code> for the vector-tiles capability. The provider supplies the tileset name, attribution line and zoom span its descriptor declares; the source record names only the provider and the built-in style. The whole source builds before the view changes, so a refused call (no vector-tile provider registered, a source naming a different provider than the installed one, or an unknown style id) throws and leaves the previous base in force. Installing while a frame draws is deferred to the frame’s end, the last request winning, exactly like <code>set_vector_tile_source</code>. # Parameters - <code>source</code> — the configured provider key and the style to paint. # Errors Throws when no vector-tile provider serves the requested key or the style is unknown.</td></tr>
+<tr><td><code>setProviderVectorTileSourceFromDocument</code></td><td><code>async setProviderVectorTileSourceFromDocument(source: ProviderVectorTileSource, styleDocumentUrl: string, asyncOpts_?: { signal: AbortSignal }): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws <code>SdkError</code>.</td><td>Installs a vector base map served by a provider registered with <code>MapSdk.configure_provider_set</code> for the vector-tiles capability and painted with the style document the provider publishes. The provider supplies the tileset name, attribution line and zoom span its descriptor declares; <code>style_document_url</code> addresses the provider’s style for the family named by <code>source.style_id</code>. The document is fetched through the provider’s own authenticated client, so the credential never leaves the provider layer and the request carries the provider’s transport, pacing and retry policy. A fetched document that compiled is kept per provider and address, so installing the same family again costs no request. A document that fails to fetch, decode or compile throws and leaves the previous base in force; installing while a frame draws is deferred to the frame’s end, exactly like <code>set_provider_vector_tile_source</code>. # Parameters - <code>source</code> — the configured provider key and the style label the status reports. - <code>style_document_url</code> — the absolute address of the provider’s style document, without a credential. # Errors Throws when no vector-tile provider serves the requested key, when the provider registers no style-resource fetch, when the request fails, or when the served document is not a compilable style.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws <code>SdkError</code>.</td><td>Removes the vector base map; following frames draw raster tiles and overlays alone until <code>set_vector_tile_source</code> installs a new base. Like installing, a call that lands while a frame draws is applied when that frame finishes, and a later request replaces an earlier one. # Errors Never throws; clearing a view with no vector base succeeds.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>vectorTileSourceStatus(): VectorTileSourceStatus</code></td><td>Returns <code>VectorTileSourceStatus</code>.</td><td>Reads the vector base source’s status: the configured source and style plus the last resolved frame’s drawn and failed tile counts. A pure query that never fetches or draws; it answers while a frame is in flight with the previous frame’s counts. While a base-map switch waits for the drawing frame to finish, it keeps reporting the source that frame is drawing, never a source that has only been scheduled. It never throws: with no source installed it answers a not-configured status.</td></tr>
 </tbody>
@@ -14215,7 +14290,7 @@ offline graph.</li>
 </table>
 </div>
 <h2 id="async-and-threading-3"><a class="header" href="#async-and-threading-3">Async and threading</a></h2>
-<p>These calls are asynchronous on TypeScript: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
+<p>These calls are asynchronous on TypeScript: <code>offlineRouteFromArchiveBytes</code>, <code>GeocodingProvider.forwardGeocode</code>, <code>GeocodingProvider.reverseGeocode</code>, <code>RasterTileProvider.fetchRasterTile</code>, <code>RoutingProvider.calculateRoute</code>, <code>DistanceMatrixProvider.calculateDistanceMatrix</code>, <code>SearchPlaceProvider.searchAutocomplete</code>, <code>SearchPlaceProvider.searchPlaces</code>, <code>TrafficIncidentProvider.fetchTrafficIncidents</code>, <code>TrafficFlowProvider.fetchTrafficFlow</code>, <code>ElevationProvider.fetchElevationPoints</code>, <code>MapSdk.forwardGeocode</code>, <code>MapSdk.reverseGeocode</code>, <code>MapSdk.calculateRoute</code>, <code>MapSdk.calculateDistanceMatrix</code>, <code>MapSdk.suggest</code>, <code>MapSdk.search</code>, <code>MapSdk.fetchTrafficIncidents</code>, <code>MapSdk.fetchTrafficFlow</code>, <code>MapSdk.fetchElevationPoints</code>, <code>MapSdk.fetchRasterTile</code>, <code>MapView.draw</code>, <code>MapView.setProviderVectorTileSourceFromDocument</code>, <code>SearchEngine.search</code>, <code>SearchEngine.suggest</code>, <code>SearchEngine.reverseGeocode</code>, <code>RoutingEngine.calculateRoute</code>, <code>RoutingEngine.calculateDistanceMatrix</code>, <code>OfflineManager.downloadRegion</code>, <code>OfflineManager.regionRecords</code>, <code>OfflineManager.regionRecord</code>, <code>OfflineManager.deleteRegion</code>.</p>
 <p>Asynchronous calls return a <code>Promise</code> and accept an optional <code>AbortSignal</code>; they do not block the JavaScript thread.</p>
 <ul>
 <li><code>MapView.draw</code> is frame-driven: call it from the platform display callback. A concurrent draw or resize reports <code>RenderingSurfaceUnavailable</code>; retry the next frame.</li>
@@ -14229,7 +14304,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -14319,6 +14394,7 @@ offline graph.</li>
 <tr><td><code>clearLocationIndicator</code></td><td><code>clearLocationIndicator(): void</code></td><td>—</td><td>Clears the location-indicator layer; following frames draw no indicator until [<code>MapView::set_location_indicator</code>] supplies a new one.</td></tr>
 <tr><td><code>setVectorTileSource</code></td><td><code>setVectorTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Installs a styled vector base map (the UDL <code>MapView.set_vector_tile_source</code> contract member). The descriptor is one plain JavaScript object carrying the UDL <code>UrlTemplateVectorTileSource</code> fields in lower camel case: <code>{urlTemplate, sourceName, attributionText, styleId, minimumZoomLevel, maximumZoomLevel}</code>, plus the optional <code>tokenBucketCapacityTokens</code> and <code>refillTokensPerSecond</code> pacing rates (absent fields keep the SDK’s documented bucket). The template must be an absolute <code>http</code>/<code>https</code> URL carrying <code>{z}</code>, <code>{x}</code> and <code>{y}</code>; the style id must name one of the committed style artifacts (<code>bright-light</code>, <code>fiord-dark</code>, …). The whole source builds before this view changes, so a refused call (a malformed template, an empty name, an inverted zoom range, an unusable pacing rate or an unknown style id) throws a coded failure and leaves the previous base in force. While a source is installed the canvas hides the raster base and paints the style’s own background, exactly like the native surface; the source’s overlays and place names draw beneath every overlay the page supplies. An install that lands while a frame resolves is deferred to that frame’s end and the last request wins, so a style switch never has to be retried.</td></tr>
 <tr><td><code>setProviderVectorTileSource</code></td><td><code>setProviderVectorTileSource(source: any): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Installs a styled vector base map served by a provider configured through <code>configureProvider</code> for the vector-tiles capability (the UDL <code>MapView.set_provider_vector_tile_source</code> contract member). The descriptor is one plain JavaScript object carrying the UDL <code>ProviderVectorTileSource</code> fields in lower camel case: <code>{providerKey, styleId}</code>. The provider supplies its own tileset name, attribution line and zoom span; the page chooses only the provider and the committed style. A call naming a provider other than the one configured for vector tiles, made before any vector-tile provider is configured, or naming an unknown style id throws a coded failure and leaves the installed base in force. An install that lands while a frame resolves is deferred to that frame’s end, exactly like [<code>Self::set_vector_tile_source</code>].</td></tr>
+<tr><td><code>setProviderVectorTileSourceFromDocument</code></td><td><code>async setProviderVectorTileSourceFromDocument(source: any, styleDocumentUrl: string): Promise&lt;void&gt;</code></td><td>Asynchronous. Throws the verbatim failure message as a string.</td><td>Installs a provider-backed base painted with the style document the provider publishes (<code>MapView.set_provider_vector_tile_source_from_document</code>’s contract member). The document is fetched through the configured provider’s own authenticated client, compiled once and kept per provider and address, so installing the same family again costs no request. A failed fetch or an uncompilable document throws a coded failure and leaves the installed base in force. # Parameters - <code>source</code> — <code>{providerKey, styleId}</code>. - <code>style_document_url</code> — the absolute address of the provider’s style document, without a credential.</td></tr>
 <tr><td><code>reloadTileSource</code></td><td><code>reloadTileSource(): void</code></td><td>—</td><td>Drops the canvas’ pooled raster state and re-plans the next frame’s fetches from the current raster sources (the UDL <code>MapView.reload_tile_source</code> contract member, served on the canvas). The scheduler, its payload pool, the staging provider’s staged and decoded payloads, the uploaded textures and the retained cross-fade level are replaced or cleared, so a source change reaches the next frame without constructing a new canvas and no payload fetched from the previous source draws again. Overlays, labels, the vector base and the location layer survive the reload; fixtures and the registered live sources are consulted afresh on the next tile pass. A call made while a frame owns the draw state is applied before the next frame’s tile pass. A call before initialization is a no-op.</td></tr>
 <tr><td><code>clearVectorTileSource</code></td><td><code>clearVectorTileSource(): void</code></td><td>Throws the verbatim failure message as a string.</td><td>Removes the vector base map (the UDL <code>MapView.clear_vector_tile_source</code> contract member): following frames draw raster tiles and overlays alone. A clear that lands while a frame resolves is deferred to that frame’s end, like installing, and it cancels an install that was waiting.</td></tr>
 <tr><td><code>vectorTileSourceStatus</code></td><td><code>vectorTileSourceStatus(): object</code></td><td>Returns <code>object</code>. Throws the verbatim failure message as a string.</td><td>Reads the vector base source’s status (the UDL <code>MapView.vector_tile_source_status</code> contract member): the configured source’s style, name, attribution and zoom ceiling plus the last resolved frame’s drawn and failed tile counts. While a source is configured, the object additionally carries the frame diagnostics — payload-cache hits and misses, in-flight fetches and the first-drawn-tile latency — as additive fields. A pure query — it never fetches or draws — and it answers an honest not-configured status with no source installed.</td></tr>

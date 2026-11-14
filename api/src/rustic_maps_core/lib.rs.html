@@ -18,25 +18,29 @@
 <a href=#18 id=18 data-nosnippet>18</a></span><span class="kw">pub mod </span>offline_routing_benchmark;
 <a href=#19 id=19 data-nosnippet>19</a><span class="kw">pub mod </span>registry;
 <a href=#20 id=20 data-nosnippet>20</a><span class="kw">pub mod </span>routing_fallback;
-<a href=#21 id=21 data-nosnippet>21</a><span class="comment">// The namespace-aware cache keys tile payloads are stored under, shared by
-<a href=#22 id=22 data-nosnippet>22</a>// the storage crate and the renderer.
-<a href=#23 id=23 data-nosnippet>23</a></span><span class="kw">pub mod </span>tile_cache_keys;
-<a href=#24 id=24 data-nosnippet>24</a><span class="comment">// Grid-keyed, memory-bounded caching of traffic-flow answers (the traffic
-<a href=#25 id=25 data-nosnippet>25</a>// layer's reuse across pans), portable to the browser.
-<a href=#26 id=26 data-nosnippet>26</a></span><span class="kw">pub mod </span>traffic_flow_cache;
-<a href=#27 id=27 data-nosnippet>27</a>
-<a href=#28 id=28 data-nosnippet>28</a><span class="kw">pub use </span>blocking_work::{BlockingWorkExecutor, InlineBlockingWorkExecutor, run_blocking};
-<a href=#29 id=29 data-nosnippet>29</a><span class="kw">pub use </span>cache_policy::{CacheThenNetworkOutcome, CachedResponseStore, execute_cache_then_network};
-<a href=#30 id=30 data-nosnippet>30</a><span class="kw">pub use </span>offline_routing::{
-<a href=#31 id=31 data-nosnippet>31</a>    ArchiveOfflineRoutingProvider, calculate_offline_route_from_archive_bytes,
-<a href=#32 id=32 data-nosnippet>32</a>};
-<a href=#33 id=33 data-nosnippet>33</a><span class="kw">pub use </span>registry::{ProviderContract, ProviderRegistry};
-<a href=#34 id=34 data-nosnippet>34</a><span class="kw">pub use </span>routing_fallback::OfflineFallbackRoutingProvider;
-<a href=#35 id=35 data-nosnippet>35</a><span class="kw">pub use </span>tile_cache_keys::{VECTOR_TILES_FINGERPRINT_PREFIX, vector_tile_payload_fingerprint};
-<a href=#36 id=36 data-nosnippet>36</a><span class="kw">pub use </span>traffic_flow_cache::{
-<a href=#37 id=37 data-nosnippet>37</a>    DEFAULT_TRAFFIC_FLOW_GRID_ZOOM_LEVEL, DEFAULT_TRAFFIC_FLOW_MAXIMUM_ENTRY_COUNT,
-<a href=#38 id=38 data-nosnippet>38</a>    DEFAULT_TRAFFIC_FLOW_TIME_TO_LIVE_SECONDS, GridCachedTrafficFlowProvider,
-<a href=#39 id=39 data-nosnippet>39</a>    TrafficFlowCacheConfiguration, TrafficFlowCacheReadback, TrafficFlowCacheStatistics,
-<a href=#40 id=40 data-nosnippet>40</a>    TrafficFlowCurrentTimeSeconds, TrafficFlowGridCache, system_clock_time_seconds,
-<a href=#41 id=41 data-nosnippet>41</a>};
+<a href=#21 id=21 data-nosnippet>21</a><span class="comment">// Fetches of rendering style resources (style documents, glyph ranges and
+<a href=#22 id=22 data-nosnippet>22</a>// sprites) through a provider's own authenticated client.
+<a href=#23 id=23 data-nosnippet>23</a></span><span class="kw">pub mod </span>style_resources;
+<a href=#24 id=24 data-nosnippet>24</a><span class="comment">// The namespace-aware cache keys tile payloads are stored under, shared by
+<a href=#25 id=25 data-nosnippet>25</a>// the storage crate and the renderer.
+<a href=#26 id=26 data-nosnippet>26</a></span><span class="kw">pub mod </span>tile_cache_keys;
+<a href=#27 id=27 data-nosnippet>27</a><span class="comment">// Grid-keyed, memory-bounded caching of traffic-flow answers (the traffic
+<a href=#28 id=28 data-nosnippet>28</a>// layer's reuse across pans), portable to the browser.
+<a href=#29 id=29 data-nosnippet>29</a></span><span class="kw">pub mod </span>traffic_flow_cache;
+<a href=#30 id=30 data-nosnippet>30</a>
+<a href=#31 id=31 data-nosnippet>31</a><span class="kw">pub use </span>blocking_work::{BlockingWorkExecutor, InlineBlockingWorkExecutor, run_blocking};
+<a href=#32 id=32 data-nosnippet>32</a><span class="kw">pub use </span>cache_policy::{CacheThenNetworkOutcome, CachedResponseStore, execute_cache_then_network};
+<a href=#33 id=33 data-nosnippet>33</a><span class="kw">pub use </span>offline_routing::{
+<a href=#34 id=34 data-nosnippet>34</a>    ArchiveOfflineRoutingProvider, calculate_offline_route_from_archive_bytes,
+<a href=#35 id=35 data-nosnippet>35</a>};
+<a href=#36 id=36 data-nosnippet>36</a><span class="kw">pub use </span>registry::{ProviderContract, ProviderRegistry};
+<a href=#37 id=37 data-nosnippet>37</a><span class="kw">pub use </span>routing_fallback::OfflineFallbackRoutingProvider;
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">pub use </span>style_resources::StyleResourceClient;
+<a href=#39 id=39 data-nosnippet>39</a><span class="kw">pub use </span>tile_cache_keys::{VECTOR_TILES_FINGERPRINT_PREFIX, vector_tile_payload_fingerprint};
+<a href=#40 id=40 data-nosnippet>40</a><span class="kw">pub use </span>traffic_flow_cache::{
+<a href=#41 id=41 data-nosnippet>41</a>    DEFAULT_TRAFFIC_FLOW_GRID_ZOOM_LEVEL, DEFAULT_TRAFFIC_FLOW_MAXIMUM_ENTRY_COUNT,
+<a href=#42 id=42 data-nosnippet>42</a>    DEFAULT_TRAFFIC_FLOW_TIME_TO_LIVE_SECONDS, GridCachedTrafficFlowProvider,
+<a href=#43 id=43 data-nosnippet>43</a>    TrafficFlowCacheConfiguration, TrafficFlowCacheReadback, TrafficFlowCacheStatistics,
+<a href=#44 id=44 data-nosnippet>44</a>    TrafficFlowCurrentTimeSeconds, TrafficFlowGridCache, system_clock_time_seconds,
+<a href=#45 id=45 data-nosnippet>45</a>};
 </code></pre></div></section></main></body></html>

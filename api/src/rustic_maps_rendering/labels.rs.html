@@ -712,7 +712,7 @@
 <a href=#712 id=712 data-nosnippet>712</a>/// gives every surface a glyph source without a network fetch or a
 <a href=#713 id=713 data-nosnippet>713</a>/// platform-specific asset.
 <a href=#714 id=714 data-nosnippet>714</a></span><span class="kw">pub const </span>DEFAULT_LATIN_GLYPH_RANGE_PBF_BYTES: <span class="kw-2">&amp;</span>[u8] =
-<a href=#715 id=715 data-nosnippet>715</a>    <span class="macro">include_bytes!</span>(<span class="string">"../fixtures/render/glyphs/noto_sans_regular_0-255.pbf"</span>);
+<a href=#715 id=715 data-nosnippet>715</a>    <span class="macro">include_bytes!</span>(<span class="string">"../../../fixtures/glyphs/noto_sans_regular_0-255.pbf"</span>);
 <a href=#716 id=716 data-nosnippet>716</a>
 <a href=#717 id=717 data-nosnippet>717</a><span class="doccomment">/// The default label font, decoded and packed on first use and then shared by
 <a href=#718 id=718 data-nosnippet>718</a>/// every frame and every view in the process.
@@ -2651,7 +2651,7 @@
 <a href=#2651 id=2651 data-nosnippet>2651</a>        <span class="macro">include_bytes!</span>(<span class="string">"../../../fixtures/openfreemap/openmaptiles_tile_z14_x2661_y6286.pbf"</span>);
 <a href=#2652 id=2652 data-nosnippet>2652</a>    <span class="doccomment">/// The bundled Latin glyph range.
 <a href=#2653 id=2653 data-nosnippet>2653</a>    </span><span class="kw">const </span>GLYPH_RANGE_BYTES: <span class="kw-2">&amp;</span>[u8] =
-<a href=#2654 id=2654 data-nosnippet>2654</a>        <span class="macro">include_bytes!</span>(<span class="string">"../fixtures/render/glyphs/noto_sans_regular_0-255.pbf"</span>);
+<a href=#2654 id=2654 data-nosnippet>2654</a>        <span class="macro">include_bytes!</span>(<span class="string">"../../../fixtures/glyphs/noto_sans_regular_0-255.pbf"</span>);
 <a href=#2655 id=2655 data-nosnippet>2655</a>    <span class="doccomment">/// How far past the viewport edge the avoid-edges test places a label, in
 <a href=#2656 id=2656 data-nosnippet>2656</a>    /// screen pixels: enough to cross, too little to miss the frame.
 <a href=#2657 id=2657 data-nosnippet>2657</a>    </span><span class="kw">const </span>LABEL_EDGE_TOLERANCE_PIXELS: f64 = <span class="number">4.0</span>;

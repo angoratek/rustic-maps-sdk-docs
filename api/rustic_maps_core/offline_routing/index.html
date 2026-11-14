@@ -12,7 +12,7 @@ under a haversine heuristic.</p>
 graph source on WebAssembly.</li>
 <li><a href="../../geospatial_traits/enum.OfflineGraphSource.html#variant.FilePath" title="variant geospatial_traits::OfflineGraphSource::FilePath"><code>OfflineGraphSource::FilePath</code></a> memory-maps the archive on native
 targets. On WebAssembly it returns
-[<code>SDKError::ProviderRequestRejected</code>] with a message that directs the
+<a href="../../geospatial_types/error/enum.SDKError.html#variant.ProviderRequestRejected" title="variant geospatial_types::error::SDKError::ProviderRequestRejected"><code>SDKError::ProviderRequestRejected</code></a> with a message that directs the
 caller to <a href="../../geospatial_traits/enum.OfflineGraphSource.html#variant.Memory" title="variant geospatial_traits::OfflineGraphSource::Memory"><code>OfflineGraphSource::Memory</code></a>, because the browser has no
 memory mapping.</li>
 </ul>
@@ -20,21 +20,21 @@ memory mapping.</li>
 <ul>
 <li>Only automobile routing is supported. The archive carries an automobile
 profile, so a request for another transportation mode is rejected with
-[<code>SDKError::ProviderRequestRejected</code>] rather than answered.</li>
-<li>Costs follow [<code>RouteOptions::route_strategy</code>]: <code>Fastest</code> minimizes edge
+<a href="../../geospatial_types/error/enum.SDKError.html#variant.ProviderRequestRejected" title="variant geospatial_types::error::SDKError::ProviderRequestRejected"><code>SDKError::ProviderRequestRejected</code></a> rather than answered.</li>
+<li>Costs follow <a href="../../geospatial_types/route/struct.RouteOptions.html#structfield.route_strategy" title="field geospatial_types::route::RouteOptions::route_strategy"><code>RouteOptions::route_strategy</code></a>: <code>Fastest</code> minimizes edge
 durations and <code>Shortest</code> minimizes edge distances. Edge speeds and road
 classes come from each edge record.</li>
 <li>Steps are derived from graph metadata. Besides road-class and speed
 runs, a step boundary occurs at every junction whose signed bearing
 change leaves the straight band; the step then carries the matching
-[<code>TurnDirection</code>]. A road-class or speed change without a turn produces
+<a href="../../geospatial_types/route/enum.TurnDirection.html" title="enum geospatial_types::route::TurnDirection"><code>TurnDirection</code></a>. A road-class or speed change without a turn produces
 a <code>Continue</code> step. The archive carries no street names, so instruction
 text stays name-free and faithful to the geometry, for example
 <code>"Turn right"</code> or <code>"U-turn"</code>. A strongly curved road yields a step at
 each junction.</li>
 <li>Display and speech text on a step names the maneuver at the step’s end
 junction, the point a countdown to the next maneuver refers to.
-[<code>ManeuverType</code>] stays anchored to the maneuver that opens the step. See
+<a href="../../geospatial_types/route/enum.ManeuverType.html" title="enum geospatial_types::route::ManeuverType"><code>ManeuverType</code></a> stays anchored to the maneuver that opens the step. See
 <code>end_anchored_instruction_text</code>.</li>
 <li>Turn restrictions are evaluated against the incoming edge of the
 settled path. The approximation is exact unless a node is reachable
@@ -62,4 +62,4 @@ deterministic expansion metric for comparing them. These items are hidden
 from generated documentation and are not part of the supported API.</p>
 </div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.ArchiveOfflineRoutingProvider.html" title="struct rustic_maps_core::offline_routing::ArchiveOfflineRoutingProvider">Archive<wbr>Offline<wbr>Routing<wbr>Provider</a></dt><dd>An offline routing provider over a compiled routing graph archive.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.calculate_offline_route_from_archive_bytes.html" title="fn rustic_maps_core::offline_routing::calculate_offline_route_from_archive_bytes">calculate_<wbr>offline_<wbr>route_<wbr>from_<wbr>archive_<wbr>bytes</a></dt><dd>Loads a compiled routing graph from in-memory archive bytes and calculates
 one route between two coordinates with the default request options
-([<code>RouteOptions::default</code>]: automobile, fastest, metric).</dd></dl></section></div></main></body></html>
+(<a href="../../geospatial_types/route/struct.RouteOptions.html#method.default" title="associated function geospatial_types::route::RouteOptions::default"><code>RouteOptions::default</code></a>: automobile, fastest, metric).</dd></dl></section></div></main></body></html>

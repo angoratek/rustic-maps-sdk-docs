@@ -39,7 +39,11 @@
           "purpose": "search",
           "method": "GET",
           "path_pattern": "^search/v3/prediction$",
-          "fixture": "fixtures/mapquest/search_prediction_denver.json"
+          "fixture": "fixtures/mapquest/search_prediction_denver.json",
+          "expectations": {
+            "suggestion_text": "Denver Int'l Airport, 8500 Pena Blvd, Denver, CO 80249-6205, United States",
+            "suggestion_quality": "Point"
+          }
         },
         {
           "purpose": "directions",
@@ -124,13 +128,70 @@
           "method": "GET",
           "path_pattern": "^flow$",
           "fixture": "fixtures/here/traffic_flow_berlin.json"
+        },
+        {
+          "purpose": "vector_tiles",
+          "method": "GET",
+          "path_pattern": "^vectortiles/base/mc/6/18/27/omv$",
+          "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt",
+          "note": "One recorded vector tile shared with the other vector sources; the native suite serves the same bytes on a loopback server."
+        },
+        {
+          "purpose": "style_document",
+          "method": "GET",
+          "path_pattern": "^styles/berlin/base/mapbox/tilezen$",
+          "fixture": "fixtures/here/vendor_style_document.json",
+          "note": "A synthetic document with the OMV schema's layer names; the vendor prohibits redistributing its own style, so no vendor file is committed."
+        },
+        {
+          "purpose": "glyphs",
+          "method": "GET",
+          "path_pattern": "^styles/berlin/base/mapbox/glyphs/[^/]+/0-255\\.pbf$",
+          "fixture": "fixtures/glyphs/noto_sans_regular_0-255.pbf",
+          "note": "The committed Latin block the style document's own relative glyph endpoint resolves to; the suite never reaches the network."
+        },
+        {
+          "purpose": "glyphs",
+          "method": "GET",
+          "path_pattern": "^styles/berlin/base/mapbox/glyphs/[^/]+/256-511\\.pbf$",
+          "fixture": "fixtures/glyphs/noto_sans_regular_256-511.pbf",
+          "note": "The committed second Latin block the style document's own relative glyph endpoint resolves to."
+        },
+        {
+          "purpose": "sprite_sheet",
+          "method": "GET",
+          "path_pattern": "^styles/berlin/base/mapbox/sprite\\.json$",
+          "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.json",
+          "note": "The committed sprite index and sheet the style document's own relative sprite base resolves to."
+        },
+        {
+          "purpose": "sprite_sheet",
+          "method": "GET",
+          "path_pattern": "^styles/berlin/base/mapbox/sprite\\.png$",
+          "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.png",
+          "note": "The committed sheet the style document's own relative sprite base resolves to."
         }
+      ],
+      "maximum_zoom_level": 17,
+      "vector_styles": [
+        {
+          "style_id": "omv-light",
+          "display_name": "HERE Base",
+          "theme": "light",
+          "attribution_text": "© HERE",
+          "document_url": "https://assets.vector.hereapi.com/styles/berlin/base/mapbox/tilezen",
+          "note": "The provider's published style; the SDK fetches it with the registered credential and caches it on the device. No vendor copy is committed."
+        }
+      ],
+      "style_resource_hosts": [
+        "assets.vector.hereapi.com"
       ],
       "served_contracts": [
         "geocoding",
         "routing",
         "traffic_incidents",
-        "traffic_flow"
+        "traffic_flow",
+        "vector_tiles"
       ]
     },
     {
@@ -153,6 +214,12 @@
           "method": "GET",
           "path_pattern": "^maps/api/geocode/json$",
           "fixture": "fixtures/google/geocode_brandenburg_gate.json"
+        },
+        {
+          "purpose": "routing",
+          "method": "POST",
+          "path_pattern": "^directions/v2:computeRoutes$",
+          "fixture": "fixtures/google/route_berlin_paris.json"
         }
       ],
       "served_contracts": [
@@ -180,6 +247,31 @@
           "method": "GET",
           "path_pattern": "^search/2/geocode/.*\\.json$",
           "fixture": "fixtures/tomtom/geocode_brandenburg_gate.json"
+        },
+        {
+          "purpose": "routing",
+          "method": "GET",
+          "path_pattern": "^routing/1/calculateRoute/-?[0-9.]+,-?[0-9.]+:-?[0-9.]+,-?[0-9.]+/json$",
+          "fixture": "fixtures/tomtom/route_berlin_london.json"
+        },
+        {
+          "purpose": "traffic_incidents",
+          "method": "GET",
+          "path_pattern": "^traffic/services/5/incidentDetails$",
+          "fixture": "fixtures/tomtom/traffic_incidents_berlin.json"
+        },
+        {
+          "purpose": "traffic_flow",
+          "method": "GET",
+          "path_pattern": "^traffic/services/4/flowSegmentData/absolute/10/json$",
+          "fixture": "fixtures/tomtom/traffic_flow_berlin.json"
+        },
+        {
+          "purpose": "raster_tiles",
+          "method": "GET",
+          "path_pattern": "^map/1/tile/basic/main/13/1331/3143\\.png$",
+          "fixture": "crates/rustic-maps-rendering/fixtures/render/tiles/13_1331_3143.png",
+          "note": "One recorded PNG of the Map Display layer at zoom 13; the native suite serves the same bytes on a loopback server."
         }
       ],
       "served_contracts": [
@@ -210,11 +302,74 @@
           "method": "GET",
           "path_pattern": "^search/geocode/v6/forward$",
           "fixture": "fixtures/mapbox/geocode_berlin.json"
+        },
+        {
+          "purpose": "routing",
+          "method": "GET",
+          "path_pattern": "^directions/v5/mapbox/[a-z]+/-?[0-9.]+,-?[0-9.]+;-?[0-9.]+,-?[0-9.]+$",
+          "fixture": "fixtures/mapbox/route_berlin_paris.json"
+        },
+        {
+          "purpose": "vector_tiles",
+          "method": "GET",
+          "path_pattern": "^v4/mapbox\\.mapbox-streets-v8/14/2661/6286\\.mvt$",
+          "fixture": "fixtures/openfreemap/openmaptiles_tile_z14_x2661_y6286.pbf",
+          "note": "One recorded vector tile shared with the other vector sources; the native suite serves the same bytes on a loopback server."
+        },
+        {
+          "purpose": "style_document",
+          "method": "GET",
+          "path_pattern": "^styles/v1/mapbox/streets-v11$",
+          "fixture": "fixtures/mapbox/vendor_style_document.json",
+          "note": "A synthetic document with the Streets schema's layer names; the vendor prohibits redistributing its own style, so no vendor file is committed."
+        },
+        {
+          "purpose": "glyphs",
+          "method": "GET",
+          "path_pattern": "^styles/v1/mapbox/glyphs/[^/]+/0-255\\.pbf$",
+          "fixture": "fixtures/glyphs/noto_sans_regular_0-255.pbf",
+          "note": "The committed Latin block the style document's own relative glyph endpoint resolves to; the suite never reaches the network."
+        },
+        {
+          "purpose": "glyphs",
+          "method": "GET",
+          "path_pattern": "^styles/v1/mapbox/glyphs/[^/]+/256-511\\.pbf$",
+          "fixture": "fixtures/glyphs/noto_sans_regular_256-511.pbf",
+          "note": "The committed second Latin block the style document's own relative glyph endpoint resolves to."
+        },
+        {
+          "purpose": "sprite_sheet",
+          "method": "GET",
+          "path_pattern": "^styles/v1/mapbox/sprite\\.json$",
+          "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.json",
+          "note": "The committed sprite index and sheet the style document's own relative sprite base resolves to."
+        },
+        {
+          "purpose": "sprite_sheet",
+          "method": "GET",
+          "path_pattern": "^styles/v1/mapbox/sprite\\.png$",
+          "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.png",
+          "note": "The committed sheet the style document's own relative sprite base resolves to."
         }
+      ],
+      "maximum_zoom_level": 22,
+      "vector_styles": [
+        {
+          "style_id": "streets-light",
+          "display_name": "Mapbox Streets",
+          "theme": "light",
+          "attribution_text": "© Mapbox © OpenStreetMap contributors",
+          "document_url": "https://api.mapbox.com/styles/v1/mapbox/streets-v11",
+          "note": "The provider's published style; the SDK fetches it with the registered access token and caches it on the device. No vendor copy is committed."
+        }
+      ],
+      "style_resource_hosts": [
+        "api.mapbox.com"
       ],
       "served_contracts": [
         "geocoding",
-        "routing"
+        "routing",
+        "vector_tiles"
       ]
     },
     {
@@ -237,6 +392,12 @@
           "method": "GET",
           "path_pattern": "^v1/geocode/forward$",
           "fixture": "fixtures/radar/geocode_brandenburg_gate.json"
+        },
+        {
+          "purpose": "routing",
+          "method": "GET",
+          "path_pattern": "^v1/route/directions$",
+          "fixture": "fixtures/radar/route_berlin_paris.json"
         }
       ],
       "served_contracts": [
@@ -452,7 +613,11 @@
           "purpose": "search",
           "method": "GET",
           "path_pattern": "^api$",
-          "fixture": "fixtures/photon/search_sacramento.json"
+          "fixture": "fixtures/photon/search_sacramento.json",
+          "expectations": {
+            "suggestion_text": "Capitol Mall",
+            "suggestion_quality": "Street"
+          }
         },
         {
           "purpose": "reverse_geocoding",

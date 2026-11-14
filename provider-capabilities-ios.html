@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
+            window.path_to_searchindex_js = "searchindex-c3e803c7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -196,10 +196,10 @@ never place it in <code>Info.plist</code>, an xcconfig, or source.</li>
 </thead>
 <tbody>
 <tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
 <tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td>Live provider</td><td>Geocoding (forward and reverse), routing, vector tiles with Mapbox Streets</td></tr>
 <tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td>Live provider</td><td>Geocoding (forward and reverse), routing</td></tr>
 <tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td>Selectable search provider</td><td>Geocoding (forward and reverse), search and suggestions</td></tr>
 <tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td>Raster base</td><td>Raster tiles</td></tr>
@@ -238,9 +238,14 @@ shipped <code>MapView</code>’s vector base member and need no registration cal
 </table>
 </div>
 <p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), and <code>bright-light</code>,
-<code>fiord-dark</code>, and <code>positron-light</code> (OpenFreeMap). The status readback returns
-the active style’s line, so display it verbatim.</p>
+<code>carto-light</code> and <code>carto-dark</code> (OpenStreetMap US), <code>bright-light</code>, <code>fiord-dark</code>,
+and <code>positron-light</code> (OpenFreeMap), <code>omv-light</code> (HERE), and <code>streets-light</code>
+(Mapbox). The status readback returns the active style’s line, so display it
+verbatim.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider
+publishes. The SDK fetches that document with the registered credential and
+keeps it for the session, so no style file ships with your application. The
+Mapbox document on Android, iOS and React Native requires a Mapbox Order.</p>
 <h2 id="what-you-can-call"><a class="header" href="#what-you-can-call">What you can call</a></h2>
 <div class="table-wrapper">
 <table>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GLYPH_URL_FONT_STACK_PLACEHOLDER","GLYPH_URL_RANGE_PLACEHOLDER"],"struct":["HostedGlyphRanges"]};

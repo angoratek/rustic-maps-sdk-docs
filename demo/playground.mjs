@@ -93,6 +93,20 @@
       // the helpers directly, so no wording is written here twice.
       import { ui_label_text, ui_label_text_with_values } from './ui_strings.mjs';
 
+      // The whole page installs from one entry point that runs once the SDK
+      // root exists. `main.mjs` owns the wasm instantiation and exposes the
+      // bound surface on `window.mapTest`; module evaluation is not ordered
+      // against that promise, so nothing here may touch the surface at module
+      // scope. A browser that runs this module while `init()` still fetches
+      // the binary would otherwise abort the installation halfway.
+      /**
+       * Installs the page: the controls, the panels and the map surface. Runs
+       * after `mapTestReady` resolved, so every statement below may use the
+       * bound wasm surface.
+       * @param {string} compiled_version The SDK version the surface reports.
+       */
+      async function install_playground(compiled_version) {
+
       /**
        * Fills every `data-ui-label` element from the shared module: its text,
        * or the attribute named by `data-ui-label-attribute` (e.g. an input's
@@ -2912,6 +2926,8 @@
       // bound comes from the descriptor's own declared ceiling.
       const VECTOR_BASE_MINIMUM_ZOOM_LEVEL = 0;
       const VECTOR_BASE_DEFAULT_MAXIMUM_ZOOM_LEVEL = 19;
+      // The registry's contract name for a provider's vector tileset.
+      const VECTOR_TILES_CAPABILITY_NAME = 'vector_tiles';
       // Every raster base layer a registry descriptor declares (their fixture
       // routes back the demo canvas' recorded imagery).
       const RASTER_BASE_MAP_DESCRIPTORS = providers_registry.providers
@@ -2920,11 +2936,16 @@
           && provider_descriptor.fixture_routes.some(
             (fixture_route) => fixture_route.purpose === 'raster_tiles'));
       // Every vector base layer: a descriptor that declares a tile URL
-      // template (a provider registry entry, never a page-side URL).
+      // template, or the vector-tile contract with named styles (a provider
+      // registry entry, never a page-side URL). A credentialed descriptor's
+      // rows wait for that provider's credential.
       const VECTOR_BASE_MAP_DESCRIPTORS = providers_registry.providers
         .filter((provider_descriptor) =>
-          typeof provider_descriptor.url_template === 'string'
-          && provider_descriptor.url_template.trim() !== '');
+          (typeof provider_descriptor.url_template === 'string'
+            && provider_descriptor.url_template.trim() !== '')
+          || ((provider_descriptor.served_contracts ?? []).includes(
+            VECTOR_TILES_CAPABILITY_NAME)
+            && (provider_descriptor.vector_styles ?? []).length > 0));
       let current_tile_mode = TILE_LAYER_MODES.raster;
       // The demo's default vector base is the descriptor offering the
       // Bright/Fiord/Positron family (the richest committed styles); a
@@ -2995,6 +3016,15 @@
           ?? '';
       }
 
+      /** The path of a style-document address, for the fixture-origin rewrite. */
+      function style_document_pathname(document_url) {
+        try {
+          return new URL(document_url).pathname;
+        } catch {
+          return '';
+        }
+      }
+
       /**
        * Installs the selected vector source on the canvas (M31's
        * renderer-internal base): the canvas fetches, decodes, styles and
@@ -3010,8 +3040,47 @@
         if (vector_descriptor === null) return;
         const style_id = active_vector_style_id();
         if (style_id === null) return;
+        const style_choice = (vector_descriptor.vector_styles ?? []).find(
+          (candidate) => candidate.style_id === style_id);
+        // A credentialed family waits for its provider's credential, exactly
+        // like the raster base rows.
+        const refusal_text = base_row_credential_refusal(
+          vector_descriptor, applied_provider_keys);
+        if (refusal_text !== null) {
+          set_base_map_status(refusal_text);
+          return;
+        }
         set_base_map_status(
           `Loading the ${vector_descriptor.display_name} vector base…`);
+        // The provider's own style document: fetched through the provider's
+        // authenticated client, never by the page, so this page names no
+        // credential and no vendor URL beyond the registry field. The harness
+        // seam `?useProviderFixtures` serves the same path from the registry's
+        // committed fixture routes, so the suite never reaches the network.
+        const style_document_url =
+          typeof style_choice?.document_url === 'string'
+            ? style_choice.document_url.trim()
+            : '';
+        if (style_document_url !== '') {
+          const fetch_url = use_provider_fixtures
+            ? `${providers_registry.fixture_base_path}/${vector_descriptor.provider_key}${style_document_pathname(style_document_url)}`
+            : style_document_url;
+          gpu_map_canvas.setProviderVectorTileSourceFromDocument(
+            { providerKey: vector_descriptor.provider_key, styleId: style_id },
+            fetch_url,
+          ).then(
+            () => {
+              refresh_vector_base_status();
+              schedule_render();
+            },
+            (vector_failure) => {
+              set_base_map_status(
+                `The vector base failed: ${String(
+                  vector_failure?.message ?? vector_failure)}`);
+            },
+          );
+          return;
+        }
         try {
           gpu_map_canvas.setVectorTileSource({
             urlTemplate: vector_descriptor.url_template,
@@ -3243,6 +3312,15 @@
       function build_map_layers_base_rows() {
         map_layers_base_rows_element.textContent = '';
         map_layers_base_row_bindings.clear();
+        // The keyless families first (the demo's default base among them),
+        // then the credential-gated families, each in registry order.
+        const keyless_vector_descriptors = VECTOR_BASE_MAP_DESCRIPTORS.filter(
+          (provider_descriptor) =>
+            typeof provider_descriptor.url_template === 'string'
+            && provider_descriptor.url_template.trim() !== '');
+        const hosted_vector_descriptors = VECTOR_BASE_MAP_DESCRIPTORS.filter(
+          (provider_descriptor) =>
+            !keyless_vector_descriptors.includes(provider_descriptor));
         const base_rows = [
           ...RASTER_BASE_MAP_DESCRIPTORS.map((provider_descriptor) => ({
             row_identifier:
@@ -3253,20 +3331,21 @@
             style_id: null,
             served_from_fixtures: true,
           })),
-          ...VECTOR_BASE_MAP_DESCRIPTORS.flatMap((provider_descriptor) =>
-            (provider_descriptor.vector_styles ?? []).map((style_choice) => ({
-              row_identifier:
-                `${MAP_LAYER_STYLE_ROW_IDENTIFIER_PREFIX}${style_choice.style_id}`,
-              // The one provider-row composition every surface renders:
-              // the descriptor's display name and the style name, never a
-              // bare style name.
-              label:
-                `${provider_descriptor.display_name} · ${style_choice.display_name}`,
-              mode: TILE_LAYER_MODES.vector,
-              provider_descriptor,
-              style_id: style_choice.style_id,
-              served_from_fixtures: false,
-            }))),
+          ...[...keyless_vector_descriptors, ...hosted_vector_descriptors]
+            .flatMap((provider_descriptor) =>
+              (provider_descriptor.vector_styles ?? []).map((style_choice) => ({
+                row_identifier:
+                  `${MAP_LAYER_STYLE_ROW_IDENTIFIER_PREFIX}${style_choice.style_id}`,
+                // The one provider-row composition every surface renders:
+                // the descriptor's display name and the style name, never a
+                // bare style name.
+                label:
+                  `${provider_descriptor.display_name} · ${style_choice.display_name}`,
+                mode: TILE_LAYER_MODES.vector,
+                provider_descriptor,
+                style_id: style_choice.style_id,
+                served_from_fixtures: false,
+              }))),
         ];
         for (const base_row of base_rows) {
           const row_element = document.createElement('button');
@@ -4099,6 +4178,12 @@
       let compiled_version_value = null;
       // The wasm GPU canvas binding, set once `mapTestReady` resolved.
       let gpu_map_canvas = null;
+      // Whether the bound wasm surface exists yet: the page's module body
+      // runs while `init()` may still be fetching the binary, and a layout
+      // observer can fire before that promise resolves, so a frame asked for
+      // before readiness is dropped rather than built against a missing
+      // surface. The ready handler draws the first frame itself.
+      let map_surface_ready = false;
       // GPU frames run one at a time; a change during a frame queues a
       // follow-up re-render instead of overlapping `renderFrame` calls.
       let render_busy = false;
@@ -4606,6 +4691,11 @@
       // is up (awaited through the serialized frame queue), repaint the 2D
       // overlay, refresh the scale bar, the compass and the readout.
       function schedule_render() {
+        // A frame before the bound surface exists would read `window.mapTest`
+        // as undefined (`build_camera`). Readiness draws the first frame.
+        if (!map_surface_ready) {
+          return;
+        }
         // Every camera path funnels through here; the traffic layer restarts
         // its settle debounce when the pose it last asked about changed.
         note_camera_pose_for_traffic();
@@ -6755,7 +6845,12 @@
       // disables them with the degradation reason).
       set_overlay_controls_enabled(false, 'Scene overlays wait for the renderer…');
 
-      window.mapTestReady.then(async (compiled_version) => {
+      /**
+       * Creates the bound surface and everything that needs it: the GPU
+       * canvas, the restored choices and the first frame.
+       */
+      async function install_map_surface() {
+        map_surface_ready = true;
         compiled_version_value = compiled_version;
         status_element.textContent = `Map ready (version ${compiled_version})`;
         try {
@@ -6874,13 +6969,7 @@
         diagnostics_facts_element.textContent = diagnostics_facts_text();
         refresh_control_labels();
         await run_render_step();
-      }).catch((load_error) => {
-        status_element.textContent = `Map failed to start: ${load_error}`;
-        status_line_element.textContent =
-          `${ui_label_text('readiness.chip_failed_prefix')}${load_error}`;
-        status_line_element.setAttribute('data-readiness', 'failed');
-        show_error_report('Rustic Maps SDK start failed', String(load_error));
-      });
+      }
 
       // --- The reference-flow launch automation (docs/design/ReferenceApplicationBehavior.md
       // §Launch automation) ---
@@ -7411,3 +7500,39 @@
           }
         });
       }
+
+      // The controls, panels and automation seams above need no wasm surface;
+      // installing them first keeps every wired control live the moment
+      // readiness resolves. The surface itself, and its first frame, come last.
+      await install_map_surface();
+      }
+
+      /**
+       * Reports a failure that stopped the page from installing, on the same
+       * readiness surfaces a running page uses.
+       * @param {unknown} start_failure The rejection the start promise produced.
+       */
+      function install_start_failure(start_failure) {
+        const failure_text = String(start_failure?.message ?? start_failure);
+        const failure_status_element = document.getElementById('harness-status');
+        const failure_status_line_element = document.getElementById('status-line');
+        const failure_error_report_element = document.getElementById('error-report');
+        if (failure_status_element !== null) {
+          failure_status_element.textContent =
+            `Map failed to start: ${failure_text}`;
+        }
+        if (failure_status_line_element !== null) {
+          failure_status_line_element.textContent =
+            `${ui_label_text('readiness.chip_failed_prefix')}${failure_text}`;
+          failure_status_line_element.setAttribute('data-readiness', 'failed');
+        }
+        if (failure_error_report_element !== null) {
+          failure_error_report_element.hidden = false;
+          failure_error_report_element.textContent =
+            `Rustic Maps SDK start failed: ${failure_text}`;
+        }
+      }
+
+      window.mapTestReady
+        .then((compiled_version) => install_playground(compiled_version))
+        .catch((start_failure) => install_start_failure(start_failure));

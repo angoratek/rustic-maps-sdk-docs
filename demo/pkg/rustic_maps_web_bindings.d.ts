@@ -449,6 +449,21 @@ export class MapView {
      */
     setOverlays(overlays: any[]): void;
     /**
+     * Installs a provider-backed base painted with the style document the
+     * provider publishes (`MapView.set_provider_vector_tile_source_from_document`'s
+     * contract member). The document is fetched through the configured
+     * provider's own authenticated client, compiled once and kept per
+     * provider and address, so installing the same family again costs no
+     * request. A failed fetch or an uncompilable document throws a coded
+     * failure and leaves the installed base in force.
+     *
+     * # Parameters
+     * - `source` — `{providerKey, styleId}`.
+     * - `style_document_url` — the absolute address of the provider's style
+     *   document, without a credential.
+     */
+    setProviderVectorTileSourceFromDocument(source: any, style_document_url: string): Promise<void>;
+    /**
      * Installs a styled vector base map served by a provider configured
      * through `configureProvider` for the vector-tiles capability (the UDL
      * `MapView.set_provider_vector_tile_source` contract member).
@@ -1407,6 +1422,7 @@ export interface InitOutput {
     readonly mapview_setLocationIndicator: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setOverlays: (a: number, b: number, c: number, d: number) => void;
     readonly mapview_setProviderVectorTileSource: (a: number, b: number, c: number) => void;
+    readonly mapview_setProviderVectorTileSourceFromDocument: (a: number, b: number, c: number, d: number) => number;
     readonly mapview_setVectorTileSource: (a: number, b: number, c: number) => void;
     readonly mapview_snapshot: (a: number) => number;
     readonly mapview_stageParentTile: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => number;
@@ -1475,13 +1491,13 @@ export interface InitOutput {
     readonly vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-    readonly __wasm_bindgen_func_elem_3042: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_3042_150: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_3042_151: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9934: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_9955: (a: number, b: number, c: number, d: number) => void;
-    readonly __wasm_bindgen_func_elem_3046: (a: number, b: number, c: number) => void;
-    readonly __wasm_bindgen_func_elem_3046_149: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_10408: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_10429: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3103: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3103_151: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3103_152: (a: number, b: number, c: number, d: number) => void;
+    readonly __wasm_bindgen_func_elem_3107: (a: number, b: number, c: number) => void;
+    readonly __wasm_bindgen_func_elem_3107_150: (a: number, b: number, c: number) => void;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_export3: (a: number) => void;
