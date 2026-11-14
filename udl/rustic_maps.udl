@@ -2655,6 +2655,38 @@ interface MapView {
     [Throws=SdkError]
     void set_provider_vector_tile_source(ProviderVectorTileSource source);
 
+    /// Installs a vector base map served by a provider registered with
+    /// `MapSdk.configure_provider_set` for the vector-tiles capability and
+    /// painted with the style document the provider publishes. The provider
+    /// supplies the tileset name, attribution line and zoom span its
+    /// descriptor declares; `style_document_url` addresses the provider's
+    /// style for the family named by `source.style_id`.
+    ///
+    /// The document is fetched through the provider's own authenticated
+    /// client, so the credential never leaves the provider layer and the
+    /// request carries the provider's transport, pacing and retry policy. A
+    /// fetched document that compiled is kept per provider and address, so
+    /// installing the same family again costs no request. A document that
+    /// fails to fetch, decode or compile throws and leaves the previous base
+    /// in force; installing while a frame draws is deferred to the frame's
+    /// end, exactly like `set_provider_vector_tile_source`.
+    ///
+    /// # Parameters
+    /// - `source` — the configured provider key and the style label the
+    ///   status reports.
+    /// - `style_document_url` — the absolute address of the provider's style
+    ///   document, without a credential.
+    ///
+    /// # Errors
+    /// Throws when no vector-tile provider serves the requested key, when the
+    /// provider registers no style-resource fetch, when the request fails, or
+    /// when the served document is not a compilable style.
+    [Async, Throws=SdkError]
+    void set_provider_vector_tile_source_from_document(
+        ProviderVectorTileSource source,
+        string style_document_url
+    );
+
     /// Removes the vector base map; following frames draw raster tiles and
     /// overlays alone until `set_vector_tile_source` installs a new base. Like
     /// installing, a call that lands while a frame draws is applied when that

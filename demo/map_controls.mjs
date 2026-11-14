@@ -15,10 +15,11 @@
 // The wasm package is loaded here because the page and the Node-side specs
 // both need the crate's classes and functions. In a browser the page's own
 // `main.mjs` owns the single wasm instantiation; the classes the page
-// constructs before readiness (`SmoothstepTimedEase`, `ExponentialValueChase`
-// and `FollowCamera`) defer creating their Rust object until first use, so
-// this module never delays the page's module evaluation. In Node the generated
-// bindings are initialized synchronously from the package's bytes.
+// constructs before readiness (`SmoothstepTimedEase`, `ExponentialValueChase`,
+// `FollowCamera` and `LocationPoseAnimator`) defer creating their Rust object
+// until first use, so this module never delays the page's module evaluation.
+// In Node the generated bindings are initialized synchronously from the
+// package's bytes.
 
 import {
   CourseMedianSmoother,
@@ -191,10 +192,52 @@ export { CourseMedianSmoother, TraceCursor };
 
 /**
  * The location puck's interpolation between fixes (`map-refapp-core`'s
- * `LocationPoseAnimator`), created eagerly because the page constructs it
- * after the module has loaded.
+ * `LocationPoseAnimator`). The Rust object is created on first use so the page
+ * may construct the animator before the wasm module finishes loading.
  */
-export class LocationPoseAnimator extends NativeLocationPoseAnimator {}
+export class LocationPoseAnimator {
+  constructor() {
+    this.native_instance = null;
+  }
+
+  /** The lazily created Rust object. */
+  native() {
+    if (this.native_instance === null) {
+      this.native_instance = new NativeLocationPoseAnimator();
+    }
+    return this.native_instance;
+  }
+
+  /**
+   * The pose to draw at `now_milliseconds`, or `undefined` before the first
+   * fix.
+   */
+  poseAt(now_milliseconds) {
+    return this.native().poseAt(now_milliseconds);
+  }
+
+  /** Starts or retargets the motion toward one measured position. */
+  pushFix(
+    latitude_degrees,
+    longitude_degrees,
+    course_degrees,
+    horizontal_accuracy_meters,
+    received_at_milliseconds,
+  ) {
+    this.native().pushFix(
+      latitude_degrees,
+      longitude_degrees,
+      course_degrees,
+      horizontal_accuracy_meters,
+      received_at_milliseconds,
+    );
+  }
+
+  /** Forgets every fix, so the next one draws immediately. */
+  reset() {
+    this.native().reset();
+  }
+}
 
 /**
  * A linear-in-time, smoothstep-eased value move (`map-refapp-core`'s

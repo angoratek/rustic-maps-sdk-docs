@@ -20,6 +20,7 @@
         "longitude": -121.49492
       }
     },
+    "geometry": [],
     "legs": [
       {
         "distance_meters": 1436.0420881526836,
@@ -264,6 +265,7 @@
         "longitude": -121.49492
       }
     },
+    "geometry": [],
     "legs": [
       {
         "distance_meters": 1163.8998471431082,

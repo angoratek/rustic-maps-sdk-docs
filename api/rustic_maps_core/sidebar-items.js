@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["blocking_work","cache_policy","everymap_bridge","offline_routing","offline_routing_benchmark","provider_observation","registry","routing_fallback","tile_cache_keys","traffic_flow_cache"]};
+window.SIDEBAR_ITEMS = {"mod":["blocking_work","cache_policy","everymap_bridge","offline_routing","offline_routing_benchmark","provider_observation","registry","routing_fallback","style_resources","tile_cache_keys","traffic_flow_cache"]};

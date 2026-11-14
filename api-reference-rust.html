@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3dfd72c1.js";
+            window.path_to_searchindex_js = "searchindex-c3e803c7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5cf2e765.js"></script>
@@ -175,7 +175,7 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <!-- generated-api-reference-provenance: revision=e71f09f9bff36be7542a9a63b39686e9362617e4:sha256:9797be2bfacf97fc07575e1a3c38a8eebe07836930914a99c6527e31bc3b7e1c -->
+                        <!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -438,6 +438,7 @@
 <tr><td><code>offline_routing_benchmark</code></td><td>module</td><td><code>pub mod offline_routing_benchmark</code></td><td>—</td></tr>
 <tr><td><code>registry</code></td><td>module</td><td><code>pub mod registry</code></td><td>—</td></tr>
 <tr><td><code>routing_fallback</code></td><td>module</td><td><code>pub mod routing_fallback</code></td><td>—</td></tr>
+<tr><td><code>style_resources</code></td><td>module</td><td><code>pub mod style_resources</code></td><td>—</td></tr>
 <tr><td><code>tile_cache_keys</code></td><td>module</td><td><code>pub mod tile_cache_keys</code></td><td>—</td></tr>
 <tr><td><code>traffic_flow_cache</code></td><td>module</td><td><code>pub mod traffic_flow_cache</code></td><td>—</td></tr>
 </tbody>
@@ -593,6 +594,20 @@
 </tbody>
 </table>
 </div>
+<h3 id="module-style_resources"><a class="header" href="#module-style_resources">Module <code>style_resources</code></a></h3>
+<p>Provider-authenticated fetches of rendering style resources.</p>
+<p>A vector base is designed to be painted with a style published by the tileset’s provider, and that style references hosted glyph ranges and a sprite sheet. Loading them needs the provider credential, but the credential belongs to the provider layer: it lives in the vendor’s HTTP client, whose authentication provider applies it to whatever address a request names.</p>
+<p>[<code>StyleResourceClient</code>] is that seam. The SDK supplies only the address the shared registry declares for one provider’s style resource; the implementation, built beside the vendor client, sends the request through the same transport, authentication, pacing, retry policy and redacted request observation the provider’s contract calls use. The credential never leaves the client, this crate names no provider, and no provider URL shape lives here.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>StyleResourceClient</code></td><td>trait</td><td><code>pub trait StyleResourceClient: Send + Sync</code></td><td>Fetches one rendering style resource with the configured credential. Implementations wrap the client that serves the provider’s own contract calls, so the credential, transport and request policy are the provider layer’s and the SDK holds neither the credential nor a vendor URL shape.</td></tr>
+</tbody>
+</table>
+</div>
 <h3 id="module-tile_cache_keys"><a class="header" href="#module-tile_cache_keys">Module <code>tile_cache_keys</code></a></h3>
 <p>Stable cache keys for tile payloads.</p>
 <p>Raster and vector tile payloads share one cache store, and nothing in a tile address says which provider or source produced the bytes. Every key therefore carries a <code>tile_source_namespace</code>: the provider key for a catalog provider, a stable caller-supplied key for an application provider. The namespace is part of the key, so two sources serving the same address can never read each other’s payloads.</p>
@@ -651,6 +666,8 @@
 <tr><td><code>geojson_source</code></td><td>module</td><td><code>pub mod geojson_source</code></td><td>—</td></tr>
 <tr><td><code>gpu_texture_cache</code></td><td>module</td><td><code>pub mod gpu_texture_cache</code></td><td>—</td></tr>
 <tr><td><code>headless</code></td><td>module</td><td><code>pub mod headless</code></td><td>—</td></tr>
+<tr><td><code>hosted_glyphs</code></td><td>module</td><td><code>pub mod hosted_glyphs</code></td><td>—</td></tr>
+<tr><td><code>hosted_sprites</code></td><td>module</td><td><code>pub mod hosted_sprites</code></td><td>—</td></tr>
 <tr><td><code>labels</code></td><td>module</td><td><code>pub mod labels</code></td><td>—</td></tr>
 <tr><td><code>location_indicator</code></td><td>module</td><td><code>pub mod location_indicator</code></td><td>—</td></tr>
 <tr><td><code>overlay</code></td><td>module</td><td><code>pub mod overlay</code></td><td>—</td></tr>
@@ -781,6 +798,38 @@
 <tr><td><code>CapturedFrame</code></td><td>struct</td><td><code>pub struct CapturedFrame</code></td><td>One rendered frame copied back from the GPU: tightly packed RGBA8, row-major, origin top-left, no row padding.</td></tr>
 <tr><td><code>HeadlessTileRenderer</code></td><td>struct</td><td><code>pub struct HeadlessTileRenderer</code></td><td>Renders raster tiles headlessly. Owns the pipeline, sampler, and the uploaded-texture cache; the graphics context is injected, so production code and tests can supply any backed device through [<code>GraphicsContextSource</code>].</td></tr>
 <tr><td><code>capture_frame_bytes</code></td><td>function</td><td><code>pub fn capture_frame_bytes( device: &amp;Device, queue: &amp;Queue, mut command_encoder: CommandEncoder, source_texture: &amp;Texture, ) -&gt; Result&lt;CapturedFrame, String&gt;</code></td><td>Copies a rendered texture into a staging buffer honoring the 256-byte row alignment ([<code>wgpu::COPY_BYTES_PER_ROW_ALIGNMENT</code>]), maps the buffer, and reads it back as a tightly packed [<code>CapturedFrame</code>], stripping the padding the alignment inserts between rows. # Reusability Any render-attachment texture (<code>RENDER_ATTACHMENT \| COPY_SRC</code>, RGBA8 unorm) of any size is captured. The copy commands are encoded onto the provided encoder, which the caller has not submitted yet and which this function then finishes and submits; mapping completes through device polling — native only (see the module docs).</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-hosted_glyphs"><a class="header" href="#module-hosted_glyphs">Module <code>hosted_glyphs</code></a></h3>
+<p>Glyph ranges for a hosted vector style, fetched through the provider’s authenticated style-resource client.</p>
+<p>A style document published by a tileset’s provider names its glyph endpoint as a template (<code>…/{fontstack}/{range}.pbf</code>). The ranges are only served to a request carrying the provider’s credential, so the fetch goes through [<code>StyleResourceClient</code>] and the credential never reaches this crate. The template resolves against the style document’s own address, and the result must land on the document’s origin or on a host the provider declared: any other host is refused before a request is made, because a style document must not be able to aim the provider credential at a host the provider did not declare.</p>
+<p>Decoded ranges are retained in a [<code>GlyphRangeCache</code>] keyed by the provider’s namespace, the font stack and the range, so two providers serving the same font-stack name never share a range and a repeated frame costs no request.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GLYPH_URL_FONT_STACK_PLACEHOLDER</code></td><td>const</td><td><code>pub const GLYPH_URL_FONT_STACK_PLACEHOLDER: &amp;str</code></td><td>The glyph URL template’s font-stack placeholder.</td></tr>
+<tr><td><code>GLYPH_URL_RANGE_PLACEHOLDER</code></td><td>const</td><td><code>pub const GLYPH_URL_RANGE_PLACEHOLDER: &amp;str</code></td><td>The glyph URL template’s range placeholder.</td></tr>
+<tr><td><code>HostedGlyphRanges</code></td><td>struct</td><td><code>pub struct HostedGlyphRanges</code></td><td>Fetches and retains one hosted style’s glyph ranges. The fetch goes through the provider’s [<code>StyleResourceClient</code>], so the credential, transport, pacing and retry policy are the provider layer’s.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="module-hosted_sprites"><a class="header" href="#module-hosted_sprites">Module <code>hosted_sprites</code></a></h3>
+<p>Sprite sheets for a hosted vector style, fetched through the provider’s authenticated style-resource client.</p>
+<p>A style document published by a tileset’s provider names its sprite by a base address; the sprite protocol resolves the index document at <code>&lt;base&gt;.json</code> and the sheet at <code>&lt;base&gt;.png</code>. Both are served only to a request carrying the provider’s credential, so the fetches go through [<code>StyleResourceClient</code>] and the credential never reaches this crate. The base resolves against the style document’s own address, exactly as a glyph template does, and the resolved address must land on the document’s origin or on a host the provider declared: any other host is refused before a request is made, because a style document must not be able to aim the provider credential at a host the provider did not declare.</p>
+<p>The sheet is decoded here because the renderer’s <a href="crate::sprite::SpriteSource"><code>SpriteSource</code></a> is synchronous: both install paths prefetch once and hand the decoded atlas to the scheduler. The PNG decoder builds on every target, so the native surface and the browser canvas resolve a style’s sprite the same way.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Item</th><th>Kind</th><th>Signature</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>SPRITE_INDEX_URL_SUFFIX</code></td><td>const</td><td><code>pub const SPRITE_INDEX_URL_SUFFIX: &amp;str</code></td><td>The suffix the sprite protocol names a style’s index document by.</td></tr>
+<tr><td><code>SPRITE_SHEET_URL_SUFFIX</code></td><td>const</td><td><code>pub const SPRITE_SHEET_URL_SUFFIX: &amp;str</code></td><td>The suffix the sprite protocol names a style’s sheet by.</td></tr>
+<tr><td><code>fetch_hosted_sprite_atlas</code></td><td>function</td><td><code>pub async fn fetch_hosted_sprite_atlas( style_resources: Arc&lt;dyn StyleResourceClient&gt;, style_document_url: &amp;str, sprite_url: &amp;str, declared_hosts: &amp;[String], ) -&gt; Result&lt;SpriteAtlas, SDKError&gt;</code></td><td>Fetches and decodes the sprite sheet a hosted style names. # Parameters - <code>style_resources</code> — the provider’s authenticated style-resource client. - <code>style_document_url</code> — the style document’s address, whose origin and directory bound both sprite requests. - <code>sprite_url</code> — the document’s <code>sprite</code> value, the base address the protocol resolves the index and the sheet from, either absolute or relative to the document’s own address. - <code>declared_hosts</code> — the hosts the provider declared for its published style resources; the base may live on any of them as well as on the document’s own origin. # Returns The decoded atlas, ready for the scheduler’s per-URL sprite cache. # Errors Returns [<code>SDKError::ResponseParsingFailure</code>] when the base address does not resolve to an absolute <code>http</code>/<code>https</code> URL, or when the index or sheet cannot be fetched or decoded; [<code>SDKError::ProviderRequestRejected</code>] when the resolved base names a host that is neither the document’s origin nor one the provider declared.</td></tr>
 </tbody>
 </table>
 </div>
@@ -1096,7 +1145,7 @@
 </div>
 <h3 id="module-sprite"><a class="header" href="#module-sprite">Module <code>sprite</code></a></h3>
 <p>The sprite atlas: a style’s sprite index document and its sheet decoded into one texture the icon pass samples.</p>
-<p>A MapLibre style names a sprite base URL. The host resolves that URL through an injected [<code>SpriteSource</code>] and hands back a [<code>SpriteAtlas</code>]; the renderer never fetches, so a test binds the URL to committed fixtures and a product keeps the fetch in its own transport. The index follows the published sprite-index format: an object keyed by icon name whose members are the icon’s rectangle in the sheet (<code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>) and the pixel ratio it was authored at.</p>
+<p>A MapLibre style names a sprite base URL. The host resolves that URL through an injected <a href="crate::sprite::SpriteSource"><code>SpriteSource</code></a> and hands back a [<code>SpriteAtlas</code>]; the renderer never fetches, so a test binds the URL to committed fixtures and a product keeps the fetch in its own transport. The index follows the published sprite-index format: an object keyed by icon name whose members are the icon’s rectangle in the sheet (<code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>) and the pixel ratio it was authored at.</p>
 <p>A malformed index, a missing icon and an icon rectangle outside the sheet all degrade to “no icon” rather than failing a frame: an icon that cannot be sampled is not painted, and the rest of the map (and the layer’s text) still draws.</p>
 <div class="table-wrapper">
 <table>
