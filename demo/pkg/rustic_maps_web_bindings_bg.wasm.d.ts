@@ -159,8 +159,8 @@ export const vectorTileGeographicBounds: (a: number, b: number, c: number, d: nu
 export const vectorTileOverlayDescriptors: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
 export const vectorTileOverlayDescriptorsForStyle: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
 export const zoomCameraByLevelsAroundScreenPoint: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
-export const __wasm_bindgen_func_elem_10408: (a: number, b: number, c: number, d: number) => void;
-export const __wasm_bindgen_func_elem_10429: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_10413: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_10434: (a: number, b: number, c: number, d: number) => void;
 export const __wasm_bindgen_func_elem_3103: (a: number, b: number, c: number, d: number) => void;
 export const __wasm_bindgen_func_elem_3103_151: (a: number, b: number, c: number, d: number) => void;
 export const __wasm_bindgen_func_elem_3103_152: (a: number, b: number, c: number, d: number) => void;

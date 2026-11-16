@@ -29,7 +29,7 @@
 <a href=#29 id=29 data-nosnippet>29</a><span class="kw">use </span>std::sync::Arc;
 <a href=#30 id=30 data-nosnippet>30</a>
 <a href=#31 id=31 data-nosnippet>31</a><span class="doccomment">/// Runs one cache-then-network call and hands back an owned value.
-<a href=#32 id=32 data-nosnippet>32</a></span><span class="kw">async fn </span>run_cached&lt;D, F, FutureOutput&gt;(
+<a href=#32 id=32 data-nosnippet>32</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>run_cached&lt;D, F, FutureOutput&gt;(
 <a href=#33 id=33 data-nosnippet>33</a>    blocking_work_executor: <span class="kw-2">&amp;</span><span class="kw">dyn </span>BlockingWorkExecutor,
 <a href=#34 id=34 data-nosnippet>34</a>    response_store: <span class="kw-2">&amp;</span>Arc&lt;<span class="kw">dyn </span>CachedResponseStore&lt;D&gt;&gt;,
 <a href=#35 id=35 data-nosnippet>35</a>    request_descriptor: <span class="kw-2">&amp;</span>RequestDescriptor,

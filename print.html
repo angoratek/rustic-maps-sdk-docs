@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c3e803c7.js";
+            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5cf2e765.js"></script>
+        <script src="toc-5807ce67.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -3655,6 +3655,119 @@ position sources the map control starts.</li>
 platform.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="draw-a-providers-own-map-style"><a class="header" href="#draw-a-providers-own-map-style">Draw a provider’s own map style</a></h1>
+<p>A provider that publishes a vector style document draws its tiles the way its
+own cartographers designed them. This page installs that style as your base
+map, so roads, water, place names and icons match the tiles exactly, and
+explains what the SDK fetches, what it refuses, and what it keeps on the
+device.</p>
+<h2 id="what-you-get-3"><a class="header" href="#what-you-get-3">What you get</a></h2>
+<ul>
+<li>A base map painted with the style document the provider publishes, not a
+style that ships with the SDK.</li>
+<li>Place names drawn in the style’s own font and icons drawn from its own
+sprite sheet.</li>
+<li>A status readback that reports the style id, the tileset name and the style’s
+attribution line.</li>
+<li>The fetched style document, glyph ranges and sprite sheet kept on the device
+for up to thirty days, so a reopened application paints without requesting
+them again.</li>
+</ul>
+<h2 id="what-you-need-2"><a class="header" href="#what-you-need-2">What you need</a></h2>
+<ul>
+<li>A vector-tile provider whose registry entry declares a style document
+(<code>document_url</code>). HERE and Mapbox do today, under the style ids <code>omv-light</code>
+and <code>streets-light</code>.</li>
+<li>That provider’s credential applied at runtime. The SDK never ships a key.</li>
+<li>A target that carries the provider: Android, iOS, React Native and the
+browser all do, and a Rust application reaches the same member.</li>
+</ul>
+<h2 id="steps"><a class="header" href="#steps">Steps</a></h2>
+<ol>
+<li>
+<p><strong>Configure the provider with your credential.</strong> Use the provider’s own
+registration path, exactly as you would for its geocoding or routing
+contracts. The credential lives in the provider client from this point on.</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
+import uniffi.rustic_maps.ProviderContract
+
+val mapSdk = MapSdk()
+mapSdk.configureProvider(ProviderContract.VectorTiles, "here", providerApiKey)
+</code></pre>
+</li>
+<li>
+<p><strong>Install the style by provider key and style id.</strong> The address is the
+provider’s published document, as the registry lists it; it carries no
+credential, because the provider’s client appends it.</p>
+<pre><code class="language-kotlin">import uniffi.rustic_maps.ProviderVectorTileSource
+
+val source = ProviderVectorTileSource(
+    providerKey = "here",
+    styleId = "omv-light",
+)
+mapView.setProviderVectorTileSourceFromDocument(
+    source = source,
+    styleDocumentUrl = "https://assets.vector.hereapi.com/styles/berlin/base/mapbox/tilezen",
+)
+</code></pre>
+</li>
+<li>
+<p><strong>Read the status back.</strong> <code>vectorTileSourceStatus()</code> reports the style id
+you installed, the tileset’s name and the attribution line the style
+requires. Show that line wherever the map is shown.</p>
+</li>
+<li>
+<p><strong>Reopen the application.</strong> The same family installs again without a
+request while the kept resources are younger than thirty days and the
+device cache is installed.</p>
+</li>
+</ol>
+<h2 id="what-the-sdk-fetches-and-what-it-refuses"><a class="header" href="#what-the-sdk-fetches-and-what-it-refuses">What the SDK fetches, and what it refuses</a></h2>
+<p>An install fetches four resources through the provider’s authenticated
+client: the style document, its Latin glyph ranges, its sprite index and its
+sprite sheet. Each address resolves against the document’s own address — an
+absolute address, a path root-relative to the document’s origin, or a path
+relative to the document’s directory.</p>
+<ul>
+<li>The credential travels only to the document’s own origin and to the hosts
+the provider declares for its published resources. A style document naming
+any other host is refused before a request is made, and the refusal names
+the host.</li>
+<li>An address the SDK cannot fetch — a vendor’s own URI scheme, or a path that
+climbs above the document’s directory — is not a credential risk. The
+install continues with the SDK’s embedded Latin font and draws no icons, so
+a base never fails over an address the SDK cannot read.</li>
+<li>A style with no glyph endpoint or no sprite draws its labels in the embedded
+font and its icons not at all.</li>
+</ul>
+<h2 id="what-each-target-calls"><a class="header" href="#what-each-target-calls">What each target calls</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Target</th><th>Member</th></tr>
+</thead>
+<tbody>
+<tr><td>Rust</td><td><code>MapView::set_provider_vector_tile_source_from_document</code></td></tr>
+<tr><td>Android</td><td><code>MapView.setProviderVectorTileSourceFromDocument</code></td></tr>
+<tr><td>iOS</td><td><code>MapView.setProviderVectorTileSourceFromDocument</code></td></tr>
+<tr><td>React Native</td><td><code>setProviderVectorTileSourceFromDocument</code> on <code>MapView</code></td></tr>
+<tr><td>WebAssembly</td><td><code>setProviderVectorTileSourceFromDocument</code> on <code>MapView</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>The committed styles — <code>bright-light</code>, <code>fiord-dark</code>, <code>positron-light</code>,
+<code>carto-light</code>, <code>carto-dark</code> — install through the sibling member without a
+credential: <code>set_provider_vector_tile_source</code> with the provider key and style
+id.</p>
+<h2 id="next-1"><a class="header" href="#next-1">Next</a></h2>
+<ul>
+<li><a href="#provider-capabilities-in-rust">Provider capabilities in Rust</a> lists every
+provider, the style ids each declares, and the attribution each one
+requires.</li>
+<li><a href="#map-layers-and-traffic">Map layers and traffic</a> shows the layers control
+that switches between these bases on every platform.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="provider-capabilities-in-rust"><a class="header" href="#provider-capabilities-in-rust">Provider capabilities in Rust</a></h1>
 <p>The Rust crates are the SDK’s implementation layer. Providers come from two
 directions: the published provider layer carries the vendor implementations,
@@ -3666,7 +3779,7 @@ downloadable artifacts are the Android, iOS, React Native, and WebAssembly
 targets. If you build inside the repository, the contracts, registry, provider
 crates, renderer, navigation reducer, and offline archive APIs are available
 directly.</p>
-<h2 id="what-you-need-2"><a class="header" href="#what-you-need-2">What you need</a></h2>
+<h2 id="what-you-need-3"><a class="header" href="#what-you-need-3">What you need</a></h2>
 <ul>
 <li>Rust 1.87 or newer, with the repository’s Cargo workspace.</li>
 <li>A provider credential only for the live provider APIs, read at runtime and
@@ -3914,7 +4027,7 @@ vector base maps, the disk tile cache, offline routing and turn-by-turn
 navigation. This page lists the providers the shared registry declares, the
 public Kotlin calls each capability uses, and the code that switches a base
 map or registers a provider.</p>
-<h2 id="what-you-need-3"><a class="header" href="#what-you-need-3">What you need</a></h2>
+<h2 id="what-you-need-4"><a class="header" href="#what-you-need-4">What you need</a></h2>
 <ul>
 <li>The Android bindings artifact and the <code>MapView</code> artifact, with
 <code>minSdk = 24</code>.</li>
@@ -4132,7 +4245,7 @@ vector base maps, the disk tile cache, offline routing and turn-by-turn
 navigation. This page lists the providers the shared registry declares, the
 public Swift calls each capability uses, and the code that switches a base
 map or registers a provider.</p>
-<h2 id="what-you-need-4"><a class="header" href="#what-you-need-4">What you need</a></h2>
+<h2 id="what-you-need-5"><a class="header" href="#what-you-need-5">What you need</a></h2>
 <ul>
 <li>The <code>RusticMapsSDK</code> bindings product and the <code>MapNativeCoreUI</code> product,
 with an iOS 17 deployment target.</li>
@@ -4364,7 +4477,7 @@ exports the navigation and offline-routing classes. The component draws the
 surface and switches the vector base. This page lists the registry’s
 providers, the public calls each capability uses, and the code that switches
 a base map or registers a provider.</p>
-<h2 id="what-you-need-5"><a class="header" href="#what-you-need-5">What you need</a></h2>
+<h2 id="what-you-need-6"><a class="header" href="#what-you-need-6">What you need</a></h2>
 <ul>
 <li>An initialized bare React Native application on Android arm64-v8a or iOS,
 with the <code>@angoratek/rustic-maps-sdk</code> package installed.</li>
@@ -4584,7 +4697,7 @@ the navigation driving core. It has no native view and no disk cache. This
 page lists the registry’s providers, the public JavaScript calls each
 capability uses, and the code that switches a base map or registers a
 provider.</p>
-<h2 id="what-you-need-6"><a class="header" href="#what-you-need-6">What you need</a></h2>
+<h2 id="what-you-need-7"><a class="header" href="#what-you-need-7">What you need</a></h2>
 <ul>
 <li>A Chromium-based browser with WebGPU, and the WebAssembly package served
 from the page’s own origin over HTTPS or localhost.</li>
@@ -5215,7 +5328,7 @@ provider-backed app can add.</li>
 application searches with one vendor, routes with a self-hosted engine and
 draws its base map from a public tileset. This page shows how selection
 works, what the SDK reports back, and what the reference apps put on screen.</p>
-<h2 id="what-you-get-3"><a class="header" href="#what-you-get-3">What you get</a></h2>
+<h2 id="what-you-get-4"><a class="header" href="#what-you-get-4">What you get</a></h2>
 <ul>
 <li>One call per capability, so a choice never disturbs the rest of the map.</li>
 <li>A readback that names the serving provider for every capability.</li>
@@ -5411,7 +5524,7 @@ tests never reach the network.</li>
 <li>Changing a capability never silently changes another. If a call would
 replace more than the capability it names, it is not this API.</li>
 </ul>
-<h2 id="next-1"><a class="header" href="#next-1">Next</a></h2>
+<h2 id="next-2"><a class="header" href="#next-2">Next</a></h2>
 <ul>
 <li><a href="#add-a-provider">Add a provider</a> walks the crate, descriptor and
 catalog row.</li>
@@ -7200,7 +7313,7 @@ offline graph.</li>
 <li><a href="#react-native-api-reference">React Native API reference</a></li>
 <li><a href="#webassembly-api-reference">WebAssembly API reference</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=cceee99506ffaf42d5646111d5b71668ebb3190d:sha256:1efcc5991e3609722e3db0eb994cd8a862c62b1387f4177bc92aaee804d229ad -->
 <h1 id="rust-api-reference"><a class="header" href="#rust-api-reference">Rust API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the Rust crate sources. Do not edit this page by hand; change the sources and regenerate the documentation.</p>
@@ -8304,6 +8417,7 @@ offline graph.</li>
 <tr><td><code>VectorBaseFrame</code></td><td>struct</td><td><code>pub struct VectorBaseFrame</code></td><td>One resolved vector base frame: the overlay primitives to draw beneath the caller’s overlays plus the honest counts of what the frame drew.</td></tr>
 <tr><td><code>VectorTileMemoryCache</code></td><td>struct</td><td><code>pub struct VectorTileMemoryCache</code></td><td>The in-memory vector-tile payload cache the browser installs where no SQLite store exists: the same cache-then-network policy as the native disk store (a fingerprint key, a time-to-live and a bounded capacity), held in process memory with least-recently-used eviction. The cache is shared across scheduler installs, so switching a style or reinstalling the same tileset serves the region from memory instead of refetching it. It never outlives the page.</td></tr>
 <tr><td><code>VectorBaseScheduler</code></td><td>struct</td><td><code>pub struct VectorBaseScheduler</code></td><td>The shared vector base pipeline: fetches, decodes, styles and caches one vector tileset.</td></tr>
+<tr><td><code>BASE_SOURCE_ID</code></td><td>const</td><td><code>pub const BASE_SOURCE_ID: &amp;str</code></td><td>The source id the committed styles and the provider documents name their tileset by.</td></tr>
 </tbody>
 </table>
 </div>
@@ -8688,7 +8802,7 @@ offline graph.</li>
 <li><a href="#how-it-works">How it works</a> explains the rendering and navigation pipelines.</li>
 <li><a href="#performance-and-profiling">Performance and profiling</a> covers the frame budget.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=cceee99506ffaf42d5646111d5b71668ebb3190d:sha256:1efcc5991e3609722e3db0eb994cd8a862c62b1387f4177bc92aaee804d229ad -->
 <h1 id="android-api-reference"><a class="header" href="#android-api-reference">Android API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Android bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -10560,7 +10674,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=cceee99506ffaf42d5646111d5b71668ebb3190d:sha256:1efcc5991e3609722e3db0eb994cd8a862c62b1387f4177bc92aaee804d229ad -->
 <h1 id="ios-api-reference"><a class="header" href="#ios-api-reference">iOS API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated Swift bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -12432,7 +12546,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=cceee99506ffaf42d5646111d5b71668ebb3190d:sha256:1efcc5991e3609722e3db0eb994cd8a862c62b1387f4177bc92aaee804d229ad -->
 <h1 id="react-native-api-reference"><a class="header" href="#react-native-api-reference">React Native API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated React Native bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
@@ -14304,7 +14418,7 @@ offline graph.</li>
 <li><a href="#turn-by-turn-navigation-1">Turn-by-turn navigation</a></li>
 <li><a href="#offline-maps-1">Offline maps</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=7069a92336a255f73f2e7bae0768257ed31b957f:sha256:dfabf08591007234d91666d8fef3353d0b82e6e71e3d2676625115451ee72db5 -->
+<div style="break-before: page; page-break-before: always;"></div><!-- generated-api-reference-provenance: revision=cceee99506ffaf42d5646111d5b71668ebb3190d:sha256:1efcc5991e3609722e3db0eb994cd8a862c62b1387f4177bc92aaee804d229ad -->
 <h1 id="webassembly-api-reference"><a class="header" href="#webassembly-api-reference">WebAssembly API reference</a></h1>
 <blockquote>
 <p>Generated from the SDK contract and the generated WebAssembly bindings. Do not edit this page by hand; change the contract and regenerate the documentation.</p>
