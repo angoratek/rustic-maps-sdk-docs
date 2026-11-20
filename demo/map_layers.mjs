@@ -122,6 +122,38 @@ export function is_non_default_layer_active({
   return baseMode !== rasterMode || trafficEnabled || enabledSceneCount > 0;
 }
 
+/**
+ * The fixture route kinds that back a raster base with a complete committed
+ * tile set. A directory route records every address the demo camera asks
+ * for, so its row serves keylessly from the committed imagery.
+ */
+const DEMO_RASTER_FIXTURE_KINDS = Object.freeze(new Set(['tile_directory']));
+
+/** Whether a raster descriptor is backed by a complete committed demo tile set. */
+export function raster_descriptor_serves_demo_fixtures(provider_descriptor) {
+  return (provider_descriptor.fixture_routes ?? []).some(
+    (fixture_route) => fixture_route.purpose === 'raster_tiles'
+      && DEMO_RASTER_FIXTURE_KINDS.has(fixture_route.fixture_kind),
+  );
+}
+
+/** Whether a raster descriptor serves through a live `{z}/{x}/{y}` template. */
+export function raster_descriptor_declares_live_source(provider_descriptor) {
+  return typeof provider_descriptor.raster_url_template === 'string'
+    && provider_descriptor.raster_url_template.trim() !== '';
+}
+
+/** The status line a raster base shows when no requested tile drew. */
+export const RASTER_RETRY_STATUS_TEXT =
+  'Raster tiles could not be drawn; retrying…';
+
+/**
+ * The neutral paper background behind a raster frame that requested tiles and
+ * drew none: a retrying base reads as paper, never as a black outage.
+ */
+export const RASTER_RETRY_BACKGROUND_COLOR = Object.freeze(
+  { red: 0.94, green: 0.93, blue: 0.90, alpha: 1.0 });
+
 /** Whether a descriptor requires a runtime credential before it can serve. */
 export function descriptor_requires_credential(provider_descriptor) {
   return typeof provider_descriptor.credential_label === 'string'

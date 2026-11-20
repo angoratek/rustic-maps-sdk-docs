@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,84 +176,63 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="provider-capabilities-in-rust"><a class="header" href="#provider-capabilities-in-rust">Provider capabilities in Rust</a></h1>
-<p>The Rust crates are the SDK’s implementation layer. Providers come from two
-directions: the published provider layer carries the vendor implementations,
-and the SDK adapts each one to its own records at a single seam. The four
-application targets bind the same core through the contract.</p>
-<p>The repository publishes the Rust API reference, but it does not publish a
-Rust application package or a public Rust <code>MapsSdk</code>/<code>MapView</code> object. The
-downloadable artifacts are the Android, iOS, React Native, and WebAssembly
-targets. If you build inside the repository, the contracts, registry, provider
-crates, renderer, navigation reducer, and offline archive APIs are available
-directly.</p>
+<p>The Rust crates are the SDK’s implementation layer. Providers come from two directions:
+the published provider layer carries the vendor implementations, and the SDK adapts each
+one to its own records at a single seam. The four application targets bind the same core
+through the contract.</p>
+<p>The repository publishes the Rust API reference but no Rust application package or
+public <code>MapsSdk</code>/<code>MapView</code> object; the downloadable artifacts are the Android, iOS,
+React Native and WebAssembly targets. Building inside the repository gives you the
+contracts, registry, provider crates, renderer, navigation reducer and offline archive
+APIs directly.</p>
 <h2 id="what-you-need"><a class="header" href="#what-you-need">What you need</a></h2>
 <ul>
-<li>Rust 1.87 or newer, with the repository’s Cargo workspace.</li>
-<li>A provider credential only for the live provider APIs, read at runtime and
-never stored in the crate, a sample response, or a log.</li>
-<li>A deployment base URL instead of a credential for the keyless providers
-OSRM, Valhalla and Photon, when you do not use their public endpoints.</li>
+<li>Rust 1.89 or newer, with the repository’s Cargo workspace.</li>
+<li>A provider credential only for the live provider APIs, read at runtime and never
+stored in the crate, a sample response or a log.</li>
+<li>A deployment base URL instead of a credential for the keyless providers OSRM, Valhalla
+and Photon, when you do not use their public endpoints.</li>
 </ul>
 <h2 id="providers-available-in-rust"><a class="header" href="#providers-available-in-rust">Providers available in Rust</a></h2>
-<p>The provider layer publishes eleven vendor crates. This build catalogs nine keys
-and serves the three tile sources as base maps.</p>
+<p>The provider layer publishes eleven vendor crates. This build catalogs nine keys and
+serves the three tile sources as base maps.</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Provider</th><th>Key</th><th>Credential</th><th>Form in Rust</th><th>Serves</th></tr>
+<tr><th>Provider</th><th>Key</th><th>Credential</th><th>Form in Rust</th><th>Serves</th><th>Attribution line</th><th>Terms</th></tr>
 </thead>
 <tbody>
-<tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td><code>everymap-providers-mapquest</code></td><td>Geocoding, search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td><code>everymap-providers-here</code></td><td>Geocoding, routing, traffic incidents and flow, vector tiles with HERE Base</td></tr>
-<tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td><code>everymap-providers-google</code></td><td>Geocoding, routing</td></tr>
-<tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td><code>everymap-providers-tomtom</code></td><td>Geocoding, routing, traffic incidents and flow, raster tiles</td></tr>
-<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td><code>everymap-providers-mapbox</code></td><td>Geocoding, routing, vector tiles with Mapbox Streets</td></tr>
-<tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td><code>everymap-providers-radar</code></td><td>Geocoding, routing</td></tr>
-<tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-photon</code></td><td>Geocoding, search and suggestions</td></tr>
-<tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td><code>everymap-providers-url-template-raster</code> with the registry template</td><td>Raster tiles</td></tr>
-<tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td><code>everymap-providers-url-template-vector</code> with <code>openstreetmap_us_vector_source()</code></td><td>Vector tiles with Carto Light and Carto Dark</td></tr>
-<tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td><code>everymap-providers-url-template-vector</code> with <code>openfreemap_vector_source()</code></td><td>Vector tiles with Bright, Fiord, and Positron</td></tr>
-<tr><td>OSRM</td><td><code>osrm</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-osrm</code></td><td>Routing</td></tr>
-<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-valhalla</code></td><td>Routing</td></tr>
+<tr><td>MapQuest</td><td><code>mapquest</code></td><td>API key</td><td><code>everymap-providers-mapquest</code></td><td>Geocoding, search and suggestions, routing, distance matrix, traffic incidents and flow, raster tiles</td><td>Map data © OpenStreetMap contributors (ODbL) — tile imagery © MapQuest</td><td>MapQuest terms apply: rate limits and a 30-day raster-tile caching ceiling.</td></tr>
+<tr><td>HERE</td><td><code>here</code></td><td>API key</td><td><code>everymap-providers-here</code></td><td>Geocoding, routing, traffic incidents and flow, vector tiles with HERE Base</td><td>© 20XX HERE, XXX</td><td>HERE terms apply: per-plan transaction limits and a caching policy that bounds stored results.</td></tr>
+<tr><td>Google Maps</td><td><code>google</code></td><td>API key</td><td><code>everymap-providers-google</code></td><td>Geocoding, routing</td><td>Map data © Google</td><td>Google Maps Platform terms apply: billing per SKU, caching restrictions, and no permanent storage of most content.</td></tr>
+<tr><td>TomTom</td><td><code>tomtom</code></td><td>API key</td><td><code>everymap-providers-tomtom</code></td><td>Geocoding, routing, traffic incidents and flow, raster tiles</td><td>© TomTom</td><td>TomTom terms apply: per-plan request quotas and a caching policy for stored tiles and results.</td></tr>
+<tr><td>Mapbox</td><td><code>mapbox</code></td><td>Access token</td><td><code>everymap-providers-mapbox</code></td><td>Geocoding, routing, vector tiles with Mapbox Streets</td><td>© Mapbox © OpenStreetMap contributors</td><td>Mapbox terms apply: usage-based billing and attribution of Mapbox and OpenStreetMap wherever the data is shown.</td></tr>
+<tr><td>Radar</td><td><code>radar</code></td><td>API key</td><td><code>everymap-providers-radar</code></td><td>Geocoding, routing</td><td>© Radar</td><td>Radar terms apply: per-plan request quotas and no permanent storage of geocoding results.</td></tr>
+<tr><td>Photon</td><td><code>photon</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-photon</code></td><td>Geocoding, search and suggestions</td><td>Map data © OpenStreetMap contributors (ODbL) — search by Photon</td><td>The public Photon instance is offered for reasonable, non-commercial use; a self-hosted deployment follows its operator’s terms.</td></tr>
+<tr><td>OpenStreetMap Standard</td><td><code>openstreetmap</code></td><td>None</td><td><code>everymap-providers-url-template-raster</code> with the registry template</td><td>Raster tiles</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
+<tr><td>OpenStreetMap US</td><td><code>osmus</code></td><td>None</td><td><code>everymap-providers-url-template-vector</code> with <code>openstreetmap_us_vector_source()</code></td><td>Vector tiles with Carto Light and Carto Dark</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
+<tr><td>OpenFreeMap</td><td><code>openfreemap</code></td><td>None</td><td><code>everymap-providers-url-template-vector</code> with <code>openfreemap_vector_source()</code></td><td>Vector tiles with Bright, Fiord, and Positron</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
+<tr><td>OSRM</td><td><code>osrm</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-osrm</code></td><td>Routing</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>Project OSRM’s public demo server is capped at one request per second; a self-hosted deployment follows its operator’s terms.</td></tr>
+<tr><td>Valhalla</td><td><code>valhalla</code></td><td>None, or a deployment URL</td><td><code>everymap-providers-valhalla</code></td><td>Routing</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>The FOSSGIS public demo server allows one request per second with an identifying User-Agent; a self-hosted deployment follows its operator’s terms.</td></tr>
 </tbody>
 </table>
 </div>
-<p>All twelve rows above are catalogued by this build. HERE and Mapbox also
-implement vector tiles in the provider layer, but the SDK’s vector base is a
-URL-template source rather than a registry slot, so those implementations are
-not selectable through <code>configure_provider</code>.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Provider</th><th>Attribution line</th><th>Terms</th></tr>
-</thead>
-<tbody>
-<tr><td>MapQuest</td><td>Map data © OpenStreetMap contributors (ODbL) — tile imagery © MapQuest</td><td>MapQuest terms apply: rate limits and a 30-day raster-tile caching ceiling.</td></tr>
-<tr><td>HERE</td><td>© HERE</td><td>HERE terms apply: per-plan transaction limits and a caching policy that bounds stored results.</td></tr>
-<tr><td>Google Maps</td><td>Map data © Google</td><td>Google Maps Platform terms apply: billing per SKU, caching restrictions, and no permanent storage of most content.</td></tr>
-<tr><td>TomTom</td><td>© TomTom</td><td>TomTom terms apply: per-plan request quotas and a caching policy for stored tiles and results.</td></tr>
-<tr><td>Mapbox</td><td>© Mapbox © OpenStreetMap contributors</td><td>Mapbox terms apply: usage-based billing and attribution of Mapbox and OpenStreetMap wherever the data is shown.</td></tr>
-<tr><td>Radar</td><td>© Radar</td><td>Radar terms apply: per-plan request quotas and no permanent storage of geocoding results.</td></tr>
-<tr><td>Photon</td><td>Map data © OpenStreetMap contributors (ODbL) — search by Photon</td><td>The public Photon instance is offered for reasonable, non-commercial use; a self-hosted deployment follows its operator’s terms.</td></tr>
-<tr><td>OpenStreetMap Standard</td><td>Map data © OpenStreetMap contributors (ODbL) — raster tiles © OpenStreetMap contributors</td><td>OpenStreetMap tile usage policy applies: low-volume use only, with attribution.</td></tr>
-<tr><td>OpenStreetMap US</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenStreetMap US</td><td>OpenStreetMap US tileservice terms apply: free for low-volume, non-commercial use with attribution.</td></tr>
-<tr><td>OpenFreeMap</td><td>Map data © OpenStreetMap contributors (ODbL) — vector tiles © OpenFreeMap and OpenMapTiles</td><td>OpenFreeMap terms apply: free public use with attribution; bulk downloads are limited to 3,000 tiles or 50 MB per download.</td></tr>
-<tr><td>OSRM</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by OSRM</td><td>Project OSRM’s public demo server is capped at one request per second; a self-hosted deployment follows its operator’s terms.</td></tr>
-<tr><td>Valhalla</td><td>Map data © OpenStreetMap contributors (ODbL) — routing by Valhalla</td><td>The FOSSGIS public demo server allows one request per second with an identifying User-Agent; a self-hosted deployment follows its operator’s terms.</td></tr>
-</tbody>
-</table>
-</div>
-<p>Each vector style also carries its own attribution line. The style ids are
-<code>carto-light</code> and <code>carto-dark</code> for OpenStreetMap US, <code>bright-light</code>, <code>fiord-dark</code>,
-and <code>positron-light</code> for OpenFreeMap, <code>omv-light</code> for HERE, and <code>streets-light</code>
-for Mapbox. The vector source’s status readback reports the active style’s line.</p>
-<p>HERE and Mapbox paint their vector tiles with the style document the provider
-publishes. The SDK fetches that document with the registered credential and
-keeps it for the session, so no style file ships with your application.</p>
-<p>Whether a provider is reachable from a shipped target depends on that
-target’s dispatch table. The browser registers all nine keys: MapQuest, HERE,
-Google Maps, TomTom, Mapbox, Radar, Photon, OSRM and Valhalla; the vector base
-reaches every target through the generic URL-template vector provider.</p>
+<p>All twelve rows above are catalogued by this build. HERE and Mapbox also implement
+vector tiles in the provider layer, but the SDK’s vector base is a URL-template source
+rather than a registry slot, so those implementations are not selectable through
+<code>configure_provider</code>.</p>
+<p>Each vector style also carries its own attribution line. The style ids are <code>carto-light</code>
+and <code>carto-dark</code> for OpenStreetMap US, <code>bright-light</code>, <code>fiord-dark</code>, and
+<code>positron-light</code> for OpenFreeMap, <code>omv-light</code> for HERE, and <code>streets-light</code> for Mapbox.
+The vector source’s status readback reports the active style’s line.</p>
+<p>HERE and Mapbox paint their vector tiles with the style document the provider publishes.
+The SDK fetches that document with the registered credential and keeps it in the
+installed tile cache for up to thirty days, or for the session when no tile cache is
+installed, so no style file ships with your application.</p>
+<p>Whether a provider is reachable from a shipped target depends on that target’s dispatch
+table. The browser registers all nine keys: MapQuest, HERE, Google Maps, TomTom, Mapbox,
+Radar, Photon, OSRM and Valhalla; the vector base reaches every target through the
+generic URL-template vector provider.</p>
 <h2 id="what-you-can-call"><a class="header" href="#what-you-can-call">What you can call</a></h2>
 <div class="table-wrapper">
 <table>
@@ -277,45 +256,25 @@ reaches every target through the generic URL-template vector provider.</p>
 </tbody>
 </table>
 </div>
-<p>The crates that carry these surfaces:</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Crate</th><th>Role</th></tr>
-</thead>
-<tbody>
-<tr><td><code>everymap-core</code></td><td>The provider contracts, the portable transport seam, pacing, retry and request observation</td></tr>
-<tr><td><code>everymap-providers-mapquest</code></td><td>MapQuest geocoding, search, type-ahead, routing, matrix, traffic and raster tiles</td></tr>
-<tr><td><code>everymap-providers-here</code></td><td>HERE geocoding, routing and traffic</td></tr>
-<tr><td><code>everymap-providers-google</code></td><td>Google Maps geocoding and routing</td></tr>
-<tr><td><code>everymap-providers-tomtom</code></td><td>TomTom geocoding, routing, traffic and raster tiles</td></tr>
-<tr><td><code>everymap-providers-mapbox</code></td><td>Mapbox geocoding and routing</td></tr>
-<tr><td><code>everymap-providers-radar</code></td><td>Radar geocoding and routing</td></tr>
-<tr><td><code>everymap-providers-photon</code></td><td>Photon geocoding, search and type-ahead</td></tr>
-<tr><td><code>everymap-providers-osrm</code>, <code>everymap-providers-valhalla</code></td><td>The two self-hosted routing engines</td></tr>
-<tr><td><code>everymap-providers-url-template-raster</code></td><td>A raster-tile provider over any <code>{z}/{x}/{y}</code> template</td></tr>
-<tr><td><code>everymap-providers-url-template-vector</code></td><td>A vector-tile provider over any <code>{z}/{x}/{y}</code> template, with the OpenStreetMap US and OpenFreeMap descriptors</td></tr>
-<tr><td><code>geospatial-types</code></td><td>Coordinates, bounding boxes, route records, tile data, and <code>SDKError</code></td></tr>
-<tr><td><code>geospatial-traits</code></td><td>The SDK’s own provider traits, which a host implements when it supplies a provider inside its application; the provider layer is adapted to them at the bridge</td></tr>
-<tr><td><code>rustic-maps-core</code></td><td><code>ProviderRegistry</code>, the provider bridge, cache-then-network policy, offline routing and the fallback</td></tr>
-<tr><td><code>rustic-maps-cache</code></td><td>The disk response cache and byte budget</td></tr>
-<tr><td><code>rustic-maps-rendering</code></td><td>The <code>wgpu</code> renderer, camera, and vector styles</td></tr>
-<tr><td><code>rustic-maps-vector-tiles</code></td><td>The MVT decoder</td></tr>
-<tr><td><code>rustic-maps-glyphs</code></td><td>The glyph reader, range cache, and atlas packer</td></tr>
-<tr><td><code>rustic-maps-navigation</code></td><td>The navigation reducer, policies, speech pacing, and route walk</td></tr>
-<tr><td><code>rustic-maps-offline-graph-archive</code></td><td>The reader for compiled routing archives</td></tr>
-<tr><td><code>rustic-maps-offline-graph-compiler</code></td><td>The OpenStreetMap to archive compiler</td></tr>
-<tr><td><code>rustic-maps-native-core</code></td><td>The UniFFI binding crate behind the native targets</td></tr>
-<tr><td><code>rustic-maps-web-bindings</code></td><td>The WebAssembly binding crate</td></tr>
-</tbody>
-</table>
-</div>
+<p>The workspace crates behind these surfaces: <code>everymap-core</code> holds the provider
+contracts, the portable transport seam, pacing, retry and request observation;
+<code>geospatial-types</code> holds coordinates, bounding boxes, route records, tile data and
+<code>SDKError</code>; <code>geospatial-traits</code> holds the SDK’s own provider traits, which a host
+implements when it supplies a provider inside its application. <code>rustic-maps-core</code> holds
+<code>ProviderRegistry</code>, the provider bridge, cache-then-network policy, offline routing and
+the fallback; <code>rustic-maps-cache</code> holds the disk response cache and byte budget;
+<code>rustic-maps-rendering</code> holds the <code>wgpu</code> renderer, camera and vector styles;
+<code>rustic-maps-vector-tiles</code> is the MVT decoder; <code>rustic-maps-glyphs</code> is the glyph reader,
+range cache and atlas packer; <code>rustic-maps-navigation</code> is the navigation reducer,
+policies, speech pacing and route walk; <code>rustic-maps-offline-graph-archive</code> reads
+compiled routing archives; <code>rustic-maps-offline-graph-compiler</code> compiles OpenStreetMap
+into an archive. <code>rustic-maps-native-core</code> is the UniFFI binding crate behind the native
+targets; <code>rustic-maps-web-bindings</code> is the WebAssembly binding crate.</p>
 <h2 id="register-a-provider"><a class="header" href="#register-a-provider">Register a provider</a></h2>
-<p>A vendor provider is written against the provider layer’s contracts in
-<code>everymap-core</code> and presented to the SDK through the bridge in
-<code>rustic_maps_core::everymap_bridge</code>. A host that implements a provider inside
-its own application implements the SDK’s own traits from <code>geospatial-traits</code>
-and registers the implementation directly.</p>
+<p>A vendor provider is written against the provider layer’s contracts in <code>everymap-core</code>
+and presented to the SDK through the bridge in <code>rustic_maps_core::everymap_bridge</code>. A
+host that implements a provider inside its own application implements the SDK’s own
+traits from <code>geospatial-traits</code> and registers the implementation directly.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use std::sync::Arc;
@@ -333,15 +292,15 @@ fn registry_with_osrm() -&gt; ProviderRegistry {
     registry
 }
 <span class="boring">}</span></code></pre>
-<p><code>ProviderRegistry</code> holds one optional slot per contract. Registering replaces
-that slot; <code>require_*</code> answers <code>ProviderNotConfigured</code> with the contract name
-when a slot is empty. A keyed provider is also reachable through the SDK’s
-<code>MapSdk::configure_provider</code>, which resolves the key against the compiled
-catalog and registers exactly the requested capability.</p>
+<p><code>ProviderRegistry</code> holds one optional slot per contract. Registering replaces that slot;
+<code>require_*</code> answers <code>ProviderNotConfigured</code> with the contract name when a slot is empty.
+A keyed provider is also reachable through the SDK’s <code>MapSdk::configure_provider</code>, which
+resolves the key against the compiled catalog and registers exactly the requested
+capability.</p>
 <h2 id="use-a-url-template-source"><a class="header" href="#use-a-url-template-source">Use a URL-template source</a></h2>
-<p>A URL-template raster source takes the registry’s template, the attribution
-and terms its policy requires, the zoom span, the image format, the resolution
-and an optional request budget.</p>
+<p>A URL-template raster source takes the registry’s template, the attribution and terms
+its policy requires, the zoom span, the image format, the resolution and an optional
+request budget.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use everymap_core::domains::tiling::{RasterImageFormat, RasterTileResolution};
@@ -365,14 +324,13 @@ fn open_street_map_raster_source() -&gt; Result&lt;UrlTemplateRasterTileProvider
     })
 }
 <span class="boring">}</span></code></pre>
-<p>The constructor validates the declaration and the template before any request
-is sent, so a malformed source is refused at construction rather than on the
-first tile. <code>with_transport</code> takes the same declaration plus an injected
-transport.</p>
+<p>The constructor validates the declaration and the template before any request is sent,
+so a malformed source is refused at construction rather than on the first tile.
+<code>with_transport</code> takes the same declaration plus an injected transport.</p>
 <h2 id="route-without-the-network"><a class="header" href="#route-without-the-network">Route without the network</a></h2>
-<p>The offline routing archive is the self-describing container compiled from
-an OpenStreetMap extract. The helper takes the archive bytes, so the same
-call serves every target.</p>
+<p>The offline routing archive is the self-describing container compiled from an
+OpenStreetMap extract. The helper takes the archive bytes, so the same call serves every
+target.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use geospatial_types::{GeographicCoordinate, SDKError};
@@ -393,38 +351,35 @@ async fn route_over_archive(archive_bytes: &amp;[u8]) -&gt; Result&lt;(), SDKErr
     Ok(())
 }
 <span class="boring">}</span></code></pre>
-<p>The request uses the archive profile’s default options: automobile, fastest,
-metric. A corrupt archive returns <code>OfflineRoutingFailure</code>; a coordinate
-outside the graph’s snap tolerance or a pair the graph cannot connect is
-refused, never guessed.</p>
+<p>The request uses the archive profile’s default options: automobile, fastest, metric. A
+corrupt archive returns <code>OfflineRoutingFailure</code>; a coordinate outside the graph’s snap
+tolerance or a pair the graph cannot connect is refused, never guessed.</p>
 <h2 id="what-you-should-see"><a class="header" href="#what-you-should-see">What you should see</a></h2>
-<p>After registering a provider, <code>require_*</code> answers the implementation and the
-contract calls run through it. An empty slot returns
-<code>ProviderNotConfigured</code> with the contract name. A keyed registration answers
-the provider’s display name and key through the registration readback. The
-offline helper returns a <code>RouteData</code> on a connected pair, and a typed
-<code>SDKError</code> on a corrupt archive or an unconnectable pair.</p>
+<p>After registering a provider, <code>require_*</code> answers the implementation and the contract
+calls run through it. An empty slot returns <code>ProviderNotConfigured</code> with the contract
+name. A keyed registration answers the provider’s display name and key through the
+registration readback. The offline helper returns a <code>RouteData</code> on a connected pair, and
+a typed <code>SDKError</code> on a corrupt archive or an unconnectable pair.</p>
 <h2 id="constraints"><a class="header" href="#constraints">Constraints</a></h2>
 <ul>
-<li>A provider crate implements the contracts it serves and returns the
-contract’s error types. It owns its vendor URL, credential handling, status
-mapping, attribution, and terms.</li>
+<li>A provider crate implements the contracts it serves and returns the contract’s error
+types. It owns its vendor URL, credential handling, status mapping, attribution and
+terms.</li>
 <li>Provider types must be <code>Send + Sync</code>; trait methods are async.</li>
-<li>Use the provider layer’s shared client for HTTP so the native and browser
-builds share one request, retry, and rate-limit path.</li>
-<li>A new provider key becomes reachable from a shipped target through that
-target’s dispatch table and a registry descriptor. A contract with no
-registration call on the FFI surface needs an addition-only contract change
-before a native or browser application can select it.</li>
-<li>Tests never reach the network. Provider responses in tests come from
-committed sample data served under the provider’s key.</li>
+<li>Use the provider layer’s shared client for HTTP so the native and browser builds share
+one request, retry and rate-limit path.</li>
+<li>A new provider key becomes reachable from a shipped target through that target’s
+dispatch table and a registry descriptor. A contract with no registration call on the
+FFI surface needs an addition-only contract change before a native or browser
+application can select it.</li>
+<li>Tests never reach the network. Provider responses in tests come from committed sample
+data served under the provider’s key.</li>
 </ul>
 <h2 id="where-to-go-next"><a class="header" href="#where-to-go-next">Where to go next</a></h2>
 <ul>
-<li><a href="adding-a-provider.html">Add a provider</a> for the descriptor and dispatch
-work around a provider crate.</li>
-<li><a href="udl-contract.html">The FFI contract</a> for the surface the application
-targets bind.</li>
+<li><a href="adding-a-provider.html">Add a provider</a> for the descriptor and dispatch work around a
+provider crate.</li>
+<li><a href="udl-contract.html">The FFI contract</a> for the surface the application targets bind.</li>
 <li><a href="offline-maps.html">Offline maps</a> for the archive and tile-cache story.</li>
 </ul>
 

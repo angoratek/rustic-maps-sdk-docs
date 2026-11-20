@@ -13,7 +13,7 @@
 // keeps the documented rustic-maps-rendering default style the fixtures were
 // rendered with.
 import scene_artifact from '../reference-scenes.json' with { type: 'json' };
-import { TrafficFlowCongestionLevel } from './pkg/rustic_maps_web_bindings.js';
+import { TrafficFlowCongestionLevel } from './generated/rustic_maps_bg.js';
 
 // The artifact spells congestion levels with the enum's variant names; the
 // wasm canvas rejects unknown values, so an unmapped artifact name surfaces

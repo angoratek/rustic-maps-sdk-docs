@@ -73,12 +73,18 @@ const WESTERN_EDGE_LONGITUDE_DEGREES = 180;
 const DEGREES_PER_RADIAN = Math.PI / 180;
 /** Latitude where the web-mercator projection is cut, in both hemispheres. */
 const MAXIMUM_MERCATOR_LATITUDE_DEGREES = 85.05112878;
-// Integer zoom-grid bounds mirrored from `rustic-maps-rendering`'s camera
+// The demo's integer zoom range mirrors `rustic-maps-rendering`'s camera
 // (`MINIMUM_ZOOM_LEVEL` / `MAXIMUM_ZOOM_LEVEL`).
 /** Lowest integer zoom level of the tile grid. */
 const MINIMUM_TILE_ZOOM_LEVEL = 0;
-/** Highest integer zoom level of the tile grid. */
-const MAXIMUM_TILE_ZOOM_LEVEL = 24;
+/**
+ * Highest integer zoom level the browser demo displays. It mirrors the native
+ * camera's display ceiling and must stay below the SDK's shared tile-grid
+ * bound (`MAXIMUM_TILE_ZOOM_LEVEL`, zoom 63 in `geospatial-types`): the demo
+ * ceiling is a product choice for its authored scenes, while the shared bound
+ * is the deepest grid any tile address can name.
+ */
+const DEMO_DISPLAY_MAXIMUM_ZOOM_LEVEL = 24;
 
 /**
  * Generation stamp of the latest `loadVectorBaseOverlays` call; a newer call
@@ -136,7 +142,7 @@ function clamped_tile_index(tile_index, tile_count) {
 function integer_tile_zoom_level(camera_zoom, maximum_zoom_level) {
   return Math.min(
     Math.max(Math.round(camera_zoom), MINIMUM_TILE_ZOOM_LEVEL),
-    Math.min(MAXIMUM_TILE_ZOOM_LEVEL, maximum_zoom_level),
+    Math.min(DEMO_DISPLAY_MAXIMUM_ZOOM_LEVEL, maximum_zoom_level),
   );
 }
 
@@ -190,14 +196,14 @@ function tile_address_for_coordinate(latitude, longitude, zoom_level) {
  * @param {number} [options.tileSizePixels]
  * @param {number} [options.tileRadius]
  * @param {number} [options.maximumZoomLevel] the provider's highest served
- *   zoom level (defaults to the grid's own ceiling)
+ *   zoom level (defaults to the demo display ceiling)
  * @returns {{zoomLevel: number, tileX: number, tileY: number}[]}
  */
 export function vectorTileAddressesAroundCenter({
   cameraState,
   tileSizePixels = DEFAULT_TILE_SIZE_PIXELS,
   tileRadius = DEFAULT_TILE_RADIUS,
-  maximumZoomLevel = MAXIMUM_TILE_ZOOM_LEVEL,
+  maximumZoomLevel = DEMO_DISPLAY_MAXIMUM_ZOOM_LEVEL,
 }) {
   validated_tile_size_pixels(tileSizePixels);
   const validated_radius = validated_tile_radius(tileRadius);
@@ -370,7 +376,7 @@ export async function loadVectorBaseOverlays({
     ...descriptors.map((descriptor) =>
       Number.isInteger(descriptor?.[VECTOR_TILE_MAXIMUM_ZOOM_LEVEL_FIELD])
         ? descriptor[VECTOR_TILE_MAXIMUM_ZOOM_LEVEL_FIELD]
-        : MAXIMUM_TILE_ZOOM_LEVEL),
+        : DEMO_DISPLAY_MAXIMUM_ZOOM_LEVEL),
   );
   const tile_addresses = vectorTileAddressesAroundCenter({
     cameraState,

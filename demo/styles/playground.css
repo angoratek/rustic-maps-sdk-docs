@@ -242,8 +242,7 @@
       }
       /* The header links are quiet chips in the accent role, never the
          browser's default link blue (which vanishes on the dark surface). */
-      #docs-back-link,
-      #mobile-demo-link {
+      #docs-back-link {
         display: inline-flex;
         align-items: center;
         font-size: var(--type-caption-size);
@@ -255,10 +254,8 @@
         border-radius: var(--radius-inline);
         white-space: nowrap;
       }
-      #docs-back-link:hover,
-      #mobile-demo-link:hover { border-color: var(--accent-color); }
+      #docs-back-link:hover { border-color: var(--accent-color); }
       #docs-back-link:focus-visible,
-      #mobile-demo-link:focus-visible,
       #settings-control:focus-visible {
         outline: 2px solid var(--accent-color);
         outline-offset: 1px;
@@ -593,27 +590,121 @@
       }
       #attribution-panel .attribution-terms-note:last-child { margin-bottom: 0; }
 
-      /* --- The provider console (M77) ---
-         One row per provider request, docked on the map's end edge above the
-         attribution control; the list scrolls inside the panel and each row is
-         prefixed with the provider's display name. */
+      /* --- The provider console ---
+         The control sits beside the layers control on the map's end edge; the
+         panel lists the scrubbed SDK event stream newest first, one row per
+         event with the provider's display name first on a request row. The
+         detail view repeats the typed trace and the live cache readbacks. */
+      #map-floating-control-row {
+        display: flex;
+        align-items: center;
+        gap: var(--stack-tight);
+      }
       #provider-console-control {
         position: relative;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: var(--map-control-diameter);
+        height: var(--map-control-diameter);
+        min-height: var(--map-control-diameter);
         padding: 0;
-        color: var(--text-secondary-color);
+        font-size: 17px;
+        color: var(--text-primary-color);
+        background: var(--surface-color);
+        border: 1px solid var(--surface-border-color);
         border-radius: 50%;
-        font-size: 15px;
+        box-shadow: var(--elevation-surface);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        cursor: pointer;
       }
       #provider-console-control:hover,
       #provider-console-control[aria-expanded='true'] {
         color: var(--accent-text-color);
         border-color: var(--accent-color);
-        background: var(--surface-hover-color);
+      }
+      /* The unread warning/error dot: absent until a warning or an error
+         reaches the stream while the panel is closed. */
+      .provider-console-alert-dot {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--warning-color);
+        pointer-events: none;
+      }
+      .provider-console-alert-dot[data-severity='Error'] {
+        background: var(--danger-color);
+      }
+      .provider-console-alert-dot[hidden] { display: none; }
+      #provider-console-list-view[hidden] { display: none; }
+      .provider-console-note {
+        margin: var(--stack-tight) 0;
+        color: var(--warning-color);
+      }
+      .provider-console-row-button {
+        display: block;
+        width: 100%;
+        padding: 0;
+        color: inherit;
+        background: none;
+        border: 0;
+        font: inherit;
+        text-align: start;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+      }
+      .provider-console-row-button:hover { color: var(--accent-text-color); }
+      .provider-console-rows li[data-severity='Warn'] .provider-console-row-button {
+        color: var(--warning-color);
+      }
+      .provider-console-rows li[data-severity='Error'] .provider-console-row-button {
+        color: var(--danger-color);
+      }
+      .provider-console-detail[hidden] { display: none; }
+      .provider-console-detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--stack-tight);
+      }
+      .provider-console-detail-title {
+        margin: 0;
+        font-size: var(--type-caption-size);
+        font-weight: var(--type-body-strong-weight);
+      }
+      #provider-console-detail-close {
+        padding: 0 4px;
+        color: var(--text-secondary-color);
+        background: none;
+        border: 0;
+        font-size: var(--type-caption-size);
+        cursor: pointer;
+      }
+      .provider-console-detail-fields[hidden] { display: none; }
+      .provider-console-detail-fields {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px var(--stack-tight);
+        margin: var(--stack-tight) 0;
+        color: var(--text-secondary-color);
+        font-size: var(--type-caption-size);
+      }
+      .provider-console-detail-fields dt {
+        font-weight: var(--type-body-strong-weight);
+      }
+      .provider-console-detail-fields dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      #provider-console-detail-excerpt {
+        font-family: ui-monospace, monospace;
+        white-space: pre-wrap;
       }
       #provider-console-panel {
         max-width: min(460px, calc(100vw - 2 * var(--gutter-inline)));
@@ -664,6 +755,23 @@
         color: var(--text-secondary-color);
         font-size: var(--type-caption-size);
       }
+      /* The session's cache counters: the tile pipeline's counts beside the
+         traffic cache's, refreshed with the request rows and always read-only. */
+      .provider-console-cache-counters {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px var(--stack-tight);
+        margin: var(--stack-tight) 0;
+        color: var(--text-secondary-color);
+        font-size: var(--type-caption-size);
+      }
+      .provider-console-cache-counters dt {
+        font-weight: var(--type-body-strong-weight);
+      }
+      .provider-console-cache-counters dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
       .provider-console-rows {
         list-style: none;
         margin: 0;
@@ -700,7 +808,7 @@
         margin-top: var(--stack-tight);
       }
 
-      /* --- The on-map layer control (docs/design/MapControlsAndTrafficLayer.md) ---
+      /* --- The on-map layer control (docs/ReferenceAppUX.md §4.2) ---
          The round layers button docks above the attribution notice on the
          map's end edge; its panel opens upward, clamped to 70% of the
          viewport height on a phone and scrolling inside. */
@@ -929,6 +1037,9 @@
       }
       #theme-toggle-control { align-self: flex-start; height: var(--control-height); padding: 0 14px; }
       .settings-toggle { margin-top: var(--stack-tight); }
+      /* The browser's named secure-store exception: the remembered key lives
+         in readable localStorage, so the opt-in carries a visible warning. */
+      .settings-remember-warning { color: var(--warning-color); }
       .settings-probe {
         display: flex;
         flex-direction: column;
@@ -972,7 +1083,7 @@
       .provider-credential-row input {
         width: 100%;
         height: var(--control-height);
-        padding: 0 64px 0 10px;
+        padding: 0 10px;
         font: inherit;
         color: var(--text-primary-color);
         background: var(--surface-color);
@@ -983,23 +1094,6 @@
         outline: none;
         border-color: var(--accent-color);
         box-shadow: 0 0 0 3px var(--accent-soft-color);
-      }
-      .provider-credential-visibility {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        min-height: 28px;
-        height: 28px;
-        padding: 0 10px;
-        font-size: var(--type-caption-size);
-        color: var(--text-secondary-color);
-        border-color: transparent;
-        background: transparent;
-      }
-      .provider-credential-visibility:hover {
-        color: var(--accent-text-color);
-        border-color: var(--surface-border-color);
-        background: var(--surface-hover-color);
       }
       .provider-credential-actions { display: flex; gap: var(--stack-tight); }
       .provider-credential-actions button { min-height: var(--control-height); }
@@ -1099,7 +1193,7 @@
         color: var(--text-secondary-color);
       }
       /* The two endpoint fields' visible labels and the compact swap action
-         (docs/design/ReferenceApplicationBehavior.md §Home and search): the
+         (docs/ReferenceAppUX.md §4.1): the
          label row keeps the swap one tap away without costing a whole row on a
          phone sheet. */
       .trip-field-label-row {
@@ -1339,7 +1433,7 @@
         color: var(--text-secondary-color);
       }
       .trip-route-result p[hidden] { display: none; }
-      /* Directions (docs/design/DirectionsModesAndStrategy.md): mode and strategy
+      /* Directions (PRD.md §6 item 36): mode and strategy
          sit beside the plan action as the page's pressed-choice groups. The
          strategy row is hidden while the plan walks, so the two rows stay one
          eight-point rhythm apart. */

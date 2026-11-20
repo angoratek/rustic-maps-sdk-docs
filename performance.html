@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -209,80 +209,56 @@ listeners is wasted work on every frame.</li>
 </ul>
 <h2 id="frame-the-camera-with-the-contracts-helpers"><a class="header" href="#frame-the-camera-with-the-contracts-helpers">Frame the camera with the contract’s helpers</a></h2>
 <ul>
-<li>Prefer the <code>fit_bounds</code> camera constructor for route previews and
-search-result framing. It computes a top-down, north-up camera that
-keeps the whole box visible inside the insets you give it, instead of a
-hand-tuned zoom level that breaks on another screen size.</li>
-<li>Give it real insets. Route cards, attribution, and sheets are overlays
-your application owns; the insets tell the camera what the map may not
-hide. The insets-aware framing is what keeps the destination inside the
-visible region on every device.</li>
-<li>Read the camera back with the attribute getters (<code>center</code>,
-<code>zoomLevel</code>, <code>bearingDegrees</code>, <code>pitchDegrees</code>) when you need to persist
-or compare a pose; the camera carries no setters, so a new pose is a
-new constructor call.</li>
+<li>Prefer <code>fit_bounds</code> for route previews and search-result framing. It computes
+a top-down, north-up camera that keeps the whole box visible inside the
+insets you give it, instead of a hand-tuned zoom that breaks on another screen
+size.</li>
+<li>Give it real insets. Route cards, attribution, and sheets are overlays your
+application owns; the insets tell the camera what the map may not hide.</li>
+<li>Read the camera back with the attribute getters (<code>center</code>, <code>zoomLevel</code>,
+<code>bearingDegrees</code>, <code>pitchDegrees</code>) when you need to persist or compare a pose;
+a new pose is a new constructor call.</li>
 </ul>
 <h2 id="let-the-render-loop-stay-explicit"><a class="header" href="#let-the-render-loop-stay-explicit">Let the render loop stay explicit</a></h2>
 <ul>
-<li>Frames are explicit by design: the platform view drives <code>draw</code> from its
-own cadence (a display link or choreographer callback). Do not add a
-second render loop; serialize draws and never call <code>draw</code> again while a
-previous call is still in flight — a draw in flight reports the next
-frame busy, and the cadence retries it.</li>
-<li>Poll <code>isFrameSettled</code> in the render pump to skip <code>draw</code> when a re-draw
-would present the same pixels: true when the camera, overlay list, and
-location indicator are unchanged and no pending tile pixels remain.
-This keeps battery cost near zero on a static map.</li>
-<li>Read <code>FrameStatistics</code> from every draw. The four readiness counts
-(<code>present</code>, <code>fallback</code>, <code>deferred</code>, <code>unavailable</code>) always add up to the
-requested count, so a persistent slice of <code>deferred</code> tells you your
-per-frame fetch budget is the limiter on your network, and a slice of
-<code>unavailable</code> points at provider refusals rather than slow ones.</li>
-<li>Feed gesture deltas through the SDK’s camera seam (pan by pixels,
-focal-point zoom and rotation) instead of moving the viewport yourself;
-the SDK clamps zoom and pitch through the camera’s own ranges and holds
-the focal point exactly.</li>
+<li>Frames are explicit by design: the platform view drives <code>draw</code> from its own
+cadence. Do not add a second render loop, and never call <code>draw</code> again while a
+previous call is in flight.</li>
+<li>Poll <code>isFrameSettled</code> in the render pump to skip <code>draw</code> when a re-draw would
+present the same pixels. This keeps battery cost near zero on a static map.</li>
+<li>Read <code>FrameStatistics</code> from every draw. The four readiness counts (<code>present</code>,
+<code>fallback</code>, <code>deferred</code>, <code>unavailable</code>) add up to the requested count, so a
+persistent portion of <code>deferred</code> tells you the per-frame fetch budget is the
+limiter, and a portion of <code>unavailable</code> points at provider refusals rather than
+slow ones.</li>
+<li>Feed gesture deltas through the SDK’s camera seam instead of moving the
+viewport yourself; the SDK clamps zoom and pitch and holds the focal point.</li>
 </ul>
 <h2 id="size-the-tile-cache-deliberately"><a class="header" href="#size-the-tile-cache-deliberately">Size the tile cache deliberately</a></h2>
-<ul>
-<li>Register the tile cache with an absolute byte budget that fits your
-product (the reference application’s demo budget is 16 MiB for the
-whole bundled demo region). The budget is a registration-time fact:
-retuning it means re-registering.</li>
-<li>Set the tile time-to-live live through
-<code>setRasterTileCacheTimeToLive</code>. Imagery-provider terms put a ceiling on
-what the cache may retain; a request above the ceiling is accepted and
-the ceiling clamps what is stored. Read <code>rasterTileCacheTerms</code> to
-display the effective value, the ceiling, and the default in a settings
-or diagnostics screen.</li>
-<li>Do not set a zero time-to-live; the call is refused because it would
-expire every entry on capture.</li>
-</ul>
+<p>Register the tile cache with an absolute byte budget that fits your product;
+the budget is a registration-time fact, so retuning it means re-registering.
+Set the tile time-to-live live through <code>setRasterTileCacheTimeToLive</code>; a request
+above the provider’s ceiling is accepted and clamped, and
+<code>rasterTileCacheTerms</code> displays the effective value, the ceiling, and the
+default. Do not set a zero time-to-live; the call is refused because it would
+expire every entry on capture.</p>
 <h2 id="keep-the-provider-path-under-your-quota"><a class="header" href="#keep-the-provider-path-under-your-quota">Keep the provider path under your quota</a></h2>
 <ul>
-<li>The provider implementation carries a shared token-bucket rate limiter
-and bounded idempotent retries. Treat <code>RateLimitExhausted</code> as “retry
-after the next refill”, not as an error to surface in the UI.</li>
-<li>Cache-then-network is the default shape of every provider call, so
-repeated identical requests inside the time-to-live cost no quota. The
-tile category defaults to a 30-day time-to-live, the imagery terms
-ceiling.</li>
+<li>The provider implementation carries a shared token-bucket limiter and bounded
+idempotent retries. Treat <code>RateLimitExhausted</code> as “retry after the next
+refill”, not as an error to surface in the UI.</li>
+<li>Cache-then-network is the default shape of every provider call, so repeated
+identical requests inside the time-to-live cost no quota.</li>
 <li>Batch what the contracts batch: the distance matrix answers every
-origin-destination pair in one call; fetching matrix cells one by one
-multiplies your request count for the same data.</li>
+origin-destination pair in one call.</li>
 </ul>
 <h2 id="use-offline-where-it-pays"><a class="header" href="#use-offline-where-it-pays">Use offline where it pays</a></h2>
-<ul>
-<li>The offline routing provider answers routes over a memory-mapped
-archive with A*; no network round trip. Compile an extract sized to
-the region your users drive in, not the planet: the compiler is
-deterministic and the archive is self-describing.</li>
-<li>The offline routing decorator retries over the offline graph when the
-online provider fails, so a coverage-limited archive is a graceful
-degradation, not a failure mode. You wire it around your online
-provider; the SDK registers no fallback on your behalf. Its maneuver
-texts stay honest where the archive carries no street names.</li>
-</ul>
+<p>The offline routing provider answers routes over a memory-mapped archive with
+A* and no network request. Compile an extract sized to the region your users
+drive in, not the planet. The offline decorator retries over the offline graph
+when the online provider fails, so a coverage-limited archive is graceful
+degradation; you wire it around your online provider, and its maneuver texts
+stay honest where the archive carries no street names.</p>
 <h2 id="profile-with-the-sdks-own-readbacks"><a class="header" href="#profile-with-the-sdks-own-readbacks">Profile with the SDK’s own readbacks</a></h2>
 <ul>
 <li>Subscribe to diagnostics events at <code>Info</code> severity (or <code>Debug</code> for

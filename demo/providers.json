@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "fixture_base_path": "/providers",
-  "reference_app_user_agent_template": "RusticMapsReferenceApp/%s (+https://angoratek.github.io/rustic-maps-sdk-docs)",
+  "reference_app_user_agent_template": "RusticMapsReferenceApp/%s (+https://angoratek.github.io/rustic-maps-sdk-docs/)",
   "keyless_base_map": {
     "provider_key": "openfreemap",
     "style_id": "bright-light"
@@ -25,18 +25,21 @@
       "fixture_routes": [
         {
           "purpose": "geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^geocoding/v1/address$",
           "fixture": "fixtures/mapquest/geocode_address_city.json"
         },
         {
           "purpose": "reverse_geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^geocoding/v1/reverse$",
           "fixture": "fixtures/mapquest/geocode_reverse_capitol.json"
         },
         {
           "purpose": "search",
+          "contract": "place_search",
           "method": "GET",
           "path_pattern": "^search/v3/prediction$",
           "fixture": "fixtures/mapquest/search_prediction_denver.json",
@@ -47,30 +50,35 @@
         },
         {
           "purpose": "directions",
+          "contract": "routing",
           "method": "GET",
           "path_pattern": "^directions/v2/route$",
           "fixture": "fixtures/mapquest/directions_route_two_waypoints.json"
         },
         {
           "purpose": "distance_matrix",
+          "contract": "distance_matrix",
           "method": "POST",
           "path_pattern": "^directions/v2/routematrix$",
           "fixture": "fixtures/mapquest/routematrix_three_locations_unit_k.json"
         },
         {
           "purpose": "traffic_incidents",
+          "contract": "traffic_incidents",
           "method": "GET",
           "path_pattern": "^traffic/v2/incidents$",
           "fixture": "fixtures/mapquest/traffic_incidents_denver.json"
         },
         {
           "purpose": "traffic_flow",
+          "contract": "traffic_flow",
           "method": "GET",
           "path_pattern": "^traffic/v2/flow$",
           "fixture": "fixtures/mapquest/traffic_flow_new_york.json"
         },
         {
           "purpose": "raster_tiles",
+          "contract": "raster_tiles",
           "method": "GET",
           "path_pattern": "^tiles/v1/render/latest/[a-z0-9_-]+/(?<tile_zoom_level>\\d+)/(?<tile_x>\\d+)/(?<tile_y>\\d+)/(?<size_segment>256|256@2x)/(?<format>png|jpeg)$",
           "fixture_kind": "tile_directory",
@@ -100,44 +108,58 @@
         "react_native": true,
         "wasm": true
       },
-      "attribution_text": "© HERE",
+      "attribution_text": "© 20XX HERE, XXX",
+      "attribution_note": "Replace 20XX with the current year and XXX with the licensee, and refresh the notice within 24 hours.",
       "terms_note": "HERE terms apply: per-plan transaction limits and a caching policy that bounds stored results.",
       "settings_hint": "Create a key in the HERE developer console.",
       "wasm_registration": "here",
       "fixture_routes": [
         {
           "purpose": "geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^geocode$",
           "fixture": "fixtures/here/geocode_brandenburg_gate.json"
         },
         {
+          "purpose": "reverse_geocoding",
+          "contract": "geocoding",
+          "method": "GET",
+          "path_pattern": "^revgeocode$",
+          "fixture": "fixtures/here/geocode_reverse_berlin.json"
+        },
+        {
           "purpose": "routing",
-          "method": "POST",
+          "contract": "routing",
+          "method": "GET",
           "path_pattern": "^routes$",
           "fixture": "fixtures/here/route_two_sections.json"
         },
         {
           "purpose": "traffic_incidents",
+          "contract": "traffic_incidents",
           "method": "GET",
           "path_pattern": "^incidents$",
           "fixture": "fixtures/here/traffic_incidents_berlin.json"
         },
         {
           "purpose": "traffic_flow",
+          "contract": "traffic_flow",
           "method": "GET",
           "path_pattern": "^flow$",
           "fixture": "fixtures/here/traffic_flow_berlin.json"
         },
         {
           "purpose": "vector_tiles",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^vectortiles/base/mc/6/18/27/omv$",
-          "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt",
-          "note": "One recorded vector tile shared with the other vector sources; the native suite serves the same bytes on a loopback server."
+          "fixture": "fixtures/here/vendor_style_tile.mvt",
+          "note": "A neutral authored tile with the OMV schema's water, roads and places layers, with document-relative resources and no vendor material."
         },
         {
           "purpose": "style_document",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/berlin/base/mapbox/tilezen$",
           "fixture": "fixtures/here/vendor_style_document.json",
@@ -145,6 +167,7 @@
         },
         {
           "purpose": "glyphs",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/berlin/base/mapbox/glyphs/[^/]+/0-255\\.pbf$",
           "fixture": "fixtures/glyphs/noto_sans_regular_0-255.pbf",
@@ -152,6 +175,7 @@
         },
         {
           "purpose": "glyphs",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/berlin/base/mapbox/glyphs/[^/]+/256-511\\.pbf$",
           "fixture": "fixtures/glyphs/noto_sans_regular_256-511.pbf",
@@ -159,6 +183,7 @@
         },
         {
           "purpose": "sprite_sheet",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/berlin/base/mapbox/sprite\\.json$",
           "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.json",
@@ -166,6 +191,7 @@
         },
         {
           "purpose": "sprite_sheet",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/berlin/base/mapbox/sprite\\.png$",
           "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.png",
@@ -178,7 +204,8 @@
           "style_id": "omv-light",
           "display_name": "HERE Base",
           "theme": "light",
-          "attribution_text": "© HERE",
+          "attribution_text": "© 20XX HERE, XXX",
+          "attribution_note": "Replace 20XX with the current year and XXX with the licensee, and refresh the notice within 24 hours.",
           "document_url": "https://assets.vector.hereapi.com/styles/berlin/base/mapbox/tilezen",
           "note": "The provider's published style; the SDK fetches it with the registered credential and caches it on the device. No vendor copy is committed."
         }
@@ -211,12 +238,22 @@
       "fixture_routes": [
         {
           "purpose": "geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^maps/api/geocode/json$",
           "fixture": "fixtures/google/geocode_brandenburg_gate.json"
         },
         {
+          "purpose": "reverse_geocoding",
+          "contract": "geocoding",
+          "method": "GET",
+          "path_pattern": "^maps/api/geocode/json$",
+          "fixture": "fixtures/google/geocode_reverse_berlin.json",
+          "note": "The reverse call shares the forward endpoint and differs only by the latlng query parameter; the native bridge case serves this payload directly."
+        },
+        {
           "purpose": "routing",
+          "contract": "routing",
           "method": "POST",
           "path_pattern": "^directions/v2:computeRoutes$",
           "fixture": "fixtures/google/route_berlin_paris.json"
@@ -244,34 +281,54 @@
       "fixture_routes": [
         {
           "purpose": "geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^search/2/geocode/.*\\.json$",
           "fixture": "fixtures/tomtom/geocode_brandenburg_gate.json"
         },
         {
+          "purpose": "reverse_geocoding",
+          "contract": "geocoding",
+          "method": "GET",
+          "path_pattern": "^search/2/reverseGeocode/-?[0-9.]+,-?[0-9.]+\\.json$",
+          "fixture": "fixtures/tomtom/geocode_reverse_berlin.json"
+        },
+        {
           "purpose": "routing",
+          "contract": "routing",
           "method": "GET",
           "path_pattern": "^routing/1/calculateRoute/-?[0-9.]+,-?[0-9.]+:-?[0-9.]+,-?[0-9.]+/json$",
           "fixture": "fixtures/tomtom/route_berlin_london.json"
         },
         {
           "purpose": "traffic_incidents",
+          "contract": "traffic_incidents",
           "method": "GET",
           "path_pattern": "^traffic/services/5/incidentDetails$",
           "fixture": "fixtures/tomtom/traffic_incidents_berlin.json"
         },
         {
           "purpose": "traffic_flow",
+          "contract": "traffic_flow",
           "method": "GET",
           "path_pattern": "^traffic/services/4/flowSegmentData/absolute/10/json$",
           "fixture": "fixtures/tomtom/traffic_flow_berlin.json"
         },
         {
           "purpose": "raster_tiles",
+          "contract": "raster_tiles",
           "method": "GET",
           "path_pattern": "^map/1/tile/basic/main/13/1331/3143\\.png$",
           "fixture": "crates/rustic-maps-rendering/fixtures/render/tiles/13_1331_3143.png",
           "note": "One recorded PNG of the Map Display layer at zoom 13; the native suite serves the same bytes on a loopback server."
+        },
+        {
+          "purpose": "raster_tiles",
+          "contract": "raster_tiles",
+          "method": "GET",
+          "path_pattern": "^map/1/tile/basic/main/(?<tile_zoom_level>\\d+)/(?<tile_x>\\d+)/(?<tile_y>\\d+)\\.png$",
+          "fixture": "crates/rustic-maps-rendering/fixtures/render/tiles/14_2661_6286.png",
+          "note": "The demo camera's own recorded tile served under the provider's route, so fixture mode can paint this base without a vendor asset or a network request. It is one recorded tile, not a complete set, so the row still waits for its credential."
         }
       ],
       "served_contracts": [
@@ -299,25 +356,36 @@
       "fixture_routes": [
         {
           "purpose": "geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^search/geocode/v6/forward$",
           "fixture": "fixtures/mapbox/geocode_berlin.json"
         },
         {
+          "purpose": "reverse_geocoding",
+          "contract": "geocoding",
+          "method": "GET",
+          "path_pattern": "^search/geocode/v6/reverse$",
+          "fixture": "fixtures/mapbox/geocode_reverse_berlin.json"
+        },
+        {
           "purpose": "routing",
+          "contract": "routing",
           "method": "GET",
           "path_pattern": "^directions/v5/mapbox/[a-z]+/-?[0-9.]+,-?[0-9.]+;-?[0-9.]+,-?[0-9.]+$",
           "fixture": "fixtures/mapbox/route_berlin_paris.json"
         },
         {
           "purpose": "vector_tiles",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^v4/mapbox\\.mapbox-streets-v8/14/2661/6286\\.mvt$",
-          "fixture": "fixtures/openfreemap/openmaptiles_tile_z14_x2661_y6286.pbf",
-          "note": "One recorded vector tile shared with the other vector sources; the native suite serves the same bytes on a loopback server."
+          "fixture": "fixtures/mapbox/vendor_style_tile.pbf",
+          "note": "A neutral authored tile with the Streets schema's road, water, place_label and poi_label layers and current attributes, with document-relative resources and no vendor material."
         },
         {
           "purpose": "style_document",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/v1/mapbox/streets-v11$",
           "fixture": "fixtures/mapbox/vendor_style_document.json",
@@ -325,6 +393,7 @@
         },
         {
           "purpose": "glyphs",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/v1/mapbox/glyphs/[^/]+/0-255\\.pbf$",
           "fixture": "fixtures/glyphs/noto_sans_regular_0-255.pbf",
@@ -332,6 +401,7 @@
         },
         {
           "purpose": "glyphs",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/v1/mapbox/glyphs/[^/]+/256-511\\.pbf$",
           "fixture": "fixtures/glyphs/noto_sans_regular_256-511.pbf",
@@ -339,6 +409,7 @@
         },
         {
           "purpose": "sprite_sheet",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/v1/mapbox/sprite\\.json$",
           "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.json",
@@ -346,6 +417,7 @@
         },
         {
           "purpose": "sprite_sheet",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^styles/v1/mapbox/sprite\\.png$",
           "fixture": "crates/rustic-maps-style/fixtures/sprites/icon-sprite.png",
@@ -389,12 +461,21 @@
       "fixture_routes": [
         {
           "purpose": "geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^v1/geocode/forward$",
           "fixture": "fixtures/radar/geocode_brandenburg_gate.json"
         },
         {
+          "purpose": "reverse_geocoding",
+          "contract": "geocoding",
+          "method": "GET",
+          "path_pattern": "^v1/geocode/reverse$",
+          "fixture": "fixtures/radar/geocode_reverse_berlin.json"
+        },
+        {
           "purpose": "routing",
+          "contract": "routing",
           "method": "GET",
           "path_pattern": "^v1/route/directions$",
           "fixture": "fixtures/radar/route_berlin_paris.json"
@@ -426,12 +507,14 @@
       "fixture_routes": [
         {
           "purpose": "vector_tiles",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^vector/sourdough/6/18/27\\.mvt$",
           "fixture": "fixtures/openstreetmap-us/sourdough_tile_z6_x18_y27.mvt"
         },
         {
           "purpose": "vector_tiles",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^vector/sourdough/9/83/196\\.mvt$",
           "fixture": "fixtures/openstreetmap-us/osmus_tile_z9_x83_y196.mvt"
@@ -496,6 +579,7 @@
       "fixture_routes": [
         {
           "purpose": "vector_tiles",
+          "contract": "vector_tiles",
           "method": "GET",
           "path_pattern": "^planet/latest/14/2661/6286\\.pbf$",
           "fixture": "fixtures/openfreemap/openmaptiles_tile_z14_x2661_y6286.pbf"
@@ -522,6 +606,12 @@
       "raster_url_template": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       "maximum_zoom_level": 19,
       "fixture_routes": [],
+      "fixtureless_contracts": [
+        {
+          "contract": "raster_tiles",
+          "reason": "Live-only base map: the tiles are served by tile.openstreetmap.org under the OpenStreetMap tile usage policy, and no tile is committed because redistributing a recorded OpenStreetMap Standard tile would misstate its provenance. Tests must not serve another provider's recorded tile under this key."
+        }
+      ],
       "served_contracts": [
         "raster_tiles"
       ]
@@ -548,12 +638,14 @@
       "fixture_routes": [
         {
           "purpose": "routing",
+          "contract": "routing",
           "method": "GET",
           "path_pattern": "^route/v1/driving/-122\\.3937,37\\.7955;-122\\.2711,37\\.8044$",
           "fixture": "fixtures/osrm/san_francisco_oakland_ferry_route.json"
         },
         {
           "purpose": "routing",
+          "contract": "routing",
           "method": "GET",
           "path_pattern": "^route/v1/[a-z]+/.*$",
           "fixture": "fixtures/osrm/sacramento_route.json"
@@ -582,6 +674,7 @@
       "fixture_routes": [
         {
           "purpose": "routing",
+          "contract": "routing",
           "method": "POST",
           "path_pattern": "^route$",
           "fixture": "fixtures/valhalla/route_sacramento.json"
@@ -611,6 +704,7 @@
       "fixture_routes": [
         {
           "purpose": "search",
+          "contract": "place_search",
           "method": "GET",
           "path_pattern": "^api$",
           "fixture": "fixtures/photon/search_sacramento.json",
@@ -621,6 +715,7 @@
         },
         {
           "purpose": "reverse_geocoding",
+          "contract": "geocoding",
           "method": "GET",
           "path_pattern": "^reverse$",
           "fixture": "fixtures/photon/reverse_sacramento.json"

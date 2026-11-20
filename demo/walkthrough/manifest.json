@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "artifact": "reference-walkthrough",
+  "source_commit": "e9b7ec567d2f951a9af98a24863ae81981887cde",
+  "contract": {
+    "path": "platform/reference-walkthrough.json",
+    "sha256": "26b57dfa6ffef1bd5a16608c7086280a473f1bf531a205c1a7aecfe7cbaf9c2c"
+  },
+  "normalisation": {
+    "android": {
+      "target_aspect_ratio": 2.1667,
+      "mode": "pad",
+      "source_width": 1080,
+      "source_height": 2200,
+      "target_width": 1080,
+      "target_height": 2340,
+      "offset_x": 0,
+      "offset_y": 70,
+      "pad_color": "#000000"
+    },
+    "ios": {
+      "target_aspect_ratio": 2.1667,
+      "mode": "crop",
+      "source_width": 1206,
+      "source_height": 2622,
+      "target_width": 1206,
+      "target_height": 2613,
+      "offset_x": 0,
+      "offset_y": 4
+    },
+    "react_native": {
+      "target_aspect_ratio": 2.1667,
+      "mode": "pad",
+      "source_width": 1080,
+      "source_height": 2200,
+      "target_width": 1080,
+      "target_height": 2340,
+      "offset_x": 0,
+      "offset_y": 70,
+      "pad_color": "#000000"
+    }
+  },
+  "player": [
+    {
+      "source": "player/index.html",
+      "output": "index.html",
+      "sha256": "3acf5e71658a563994a34cdf5e5cc52a68dad1e6f3de8080c042fc5a241abd45",
+      "bytes": 4930
+    },
+    {
+      "source": "player/player.css",
+      "output": "player.css",
+      "sha256": "7e0d37234716d0ffa758641281b24ec08088a555c68e4cd486f569470941f595",
+      "bytes": 3997
+    },
+    {
+      "source": "player/player.js",
+      "output": "player.js",
+      "sha256": "d023c022ccb5f2ce4e2b2f547a3b30f6bbde1cc7f544ef727ad3d317af8b1edf",
+      "bytes": 15307
+    }
+  ],
+  "assets": [
+    {
+      "platform": "android",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/android-plan-sheet.png",
+      "output": "assets/android/android-plan-sheet.png",
+      "sha256": "4dee6b8904dce87284d19e6209623ad7495245ef900a96e4022516e9ac491ce8",
+      "bytes": 830545
+    },
+    {
+      "platform": "android",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/android-provider-section.png",
+      "output": "assets/android/android-provider-section.png",
+      "sha256": "50874d88e17b09b527b408945d53d6232488429a5244340828f37774f9a714ed",
+      "bytes": 694141
+    },
+    {
+      "platform": "android",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/android-navigation.png",
+      "output": "assets/android/android-navigation.png",
+      "sha256": "f0b1b23f28a33cc206eee4078bbb1ec52dc18e1287e1dff199f7311a73df0414",
+      "bytes": 440675
+    },
+    {
+      "platform": "android",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/android-vector-base.png",
+      "output": "assets/android/android-vector-base.png",
+      "sha256": "295524316d7031592f1f0cbb5cd2c53e1c68a12eb81b9b86f58d9b5fc5267f97",
+      "bytes": 852479
+    },
+    {
+      "platform": "android",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/android-layers-closed.png",
+      "output": "assets/android/android-layers-closed.png",
+      "sha256": "f412c3394196146aad82fb6091464465edc76ef5179760a90740c1f06eae18f5",
+      "bytes": 1431869
+    },
+    {
+      "platform": "android",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/android-layers-open.png",
+      "output": "assets/android/android-layers-open.png",
+      "sha256": "0fa8e8bfbc557afe97f67cacb390f507ee1356eada31753c698e597f8dc9e840",
+      "bytes": 948555
+    },
+    {
+      "platform": "ios",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/ios-plan-sheet.png",
+      "output": "assets/ios/ios-plan-sheet.png",
+      "sha256": "4c6cc84f3bce8344b9d248c7bfa8dfa20962211c3ac4b528822040e5a7d19745",
+      "bytes": 1496843
+    },
+    {
+      "platform": "ios",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/ios-provider-section.png",
+      "output": "assets/ios/ios-provider-section.png",
+      "sha256": "f549a580c2954d45db85090f22fadc0befa762b4f60664327d486e2e52786db9",
+      "bytes": 1057528
+    },
+    {
+      "platform": "ios",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/ios-navigation.png",
+      "output": "assets/ios/ios-navigation.png",
+      "sha256": "6468402c2afc4601bcc5fc6a56207cf23173dde2c644785e5b4f9f51512598d1",
+      "bytes": 888217
+    },
+    {
+      "platform": "ios",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/ios-vector-base.png",
+      "output": "assets/ios/ios-vector-base.png",
+      "sha256": "894a7fcdcf8efe133b2eaff53974f22c0c4cc0f2ef884ad4da3b8ebbfdbe5956",
+      "bytes": 1711916
+    },
+    {
+      "platform": "ios",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/ios-layers-closed.png",
+      "output": "assets/ios/ios-layers-closed.png",
+      "sha256": "5e78ce269355b903149100f79bff92b1bfca97bd882a8f12c83cacd6903e2e3f",
+      "bytes": 2076347
+    },
+    {
+      "platform": "ios",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/ios-layers-open.png",
+      "output": "assets/ios/ios-layers-open.png",
+      "sha256": "dbfd408a84fe67d5c286d7e51657f1daf96875c38e4605f272efc83580a38cde",
+      "bytes": 931010
+    },
+    {
+      "platform": "react_native",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/react-native-plan-sheet.png",
+      "output": "assets/react_native/react-native-plan-sheet.png",
+      "sha256": "c66d440a7d6e084ad9293e40830edb1404e0da25bd6165074b482f6f1f555f37",
+      "bytes": 992921
+    },
+    {
+      "platform": "react_native",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/react-native-provider-section.png",
+      "output": "assets/react_native/react-native-provider-section.png",
+      "sha256": "667196a000f3cea6949818645a500ce4c93b738e9acdd37a9612acb4a8091557",
+      "bytes": 917214
+    },
+    {
+      "platform": "react_native",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/react-native-navigation.png",
+      "output": "assets/react_native/react-native-navigation.png",
+      "sha256": "ae71408acb2c2695e3a624aebb22dcf45001d7d847b05eb589e5f0959ecba58c",
+      "bytes": 540319
+    },
+    {
+      "platform": "react_native",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/react-native-vector-base.png",
+      "output": "assets/react_native/react-native-vector-base.png",
+      "sha256": "bafeb9f94580e5c49ec8de34a6d75cbd7da5b72e5e8dfe93c6a58a22417ff7fe",
+      "bytes": 978055
+    },
+    {
+      "platform": "react_native",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/react-native-layers-closed.png",
+      "output": "assets/react_native/react-native-layers-closed.png",
+      "sha256": "824c39ebc3e5a0eb18969b6967387472c09e1d7137c45bf10ba148e9e56f18f6",
+      "bytes": 1749852
+    },
+    {
+      "platform": "react_native",
+      "source": "crates/rustic-maps-walkthrough/assets/normalised/react-native-layers-open.png",
+      "output": "assets/react_native/react-native-layers-open.png",
+      "sha256": "203d2d605d22aab3870f4d329f32674ebc1f05a078ab1e595eb4fd10990f8ea6",
+      "bytes": 849396
+    }
+  ]
+}

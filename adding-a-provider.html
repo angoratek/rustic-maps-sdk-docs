@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,11 +176,10 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="add-a-provider"><a class="header" href="#add-a-provider">Add a provider</a></h1>
-<p>A provider is a set of implementations of the vendor-neutral contracts plus
-one descriptor in the shared provider registry. The descriptor carries the
-labels, availability, attribution, and tile sources; the implementations
-carry the vendor’s requests and status mapping. No credential is ever part of
-either.</p>
+<p>A provider is a set of vendor-neutral contract implementations plus one
+descriptor in the shared provider registry. The descriptor carries the labels,
+availability, attribution and tile sources; the implementations carry the
+vendor’s requests and status mapping. Neither carries a credential.</p>
 <p>There are two implementation routes and one no-code route:</p>
 <div class="table-wrapper">
 <table>
@@ -194,22 +193,12 @@ either.</p>
 </tbody>
 </table>
 </div>
-<h2 id="what-every-provider-needs"><a class="header" href="#what-every-provider-needs">What every provider needs</a></h2>
-<ol>
-<li><strong>Implementations.</strong> One struct or class per contract the provider serves.</li>
-<li><strong>A descriptor.</strong> The shared registry entry that every application reads.</li>
-<li><strong>A dispatch arm.</strong> The one place that maps the provider key to its
-registration call on a target.</li>
-<li><strong>Committed sample responses.</strong> The tests and the demo read provider
-payloads from committed sample data, never from the network.</li>
-</ol>
 <h2 id="route-1-a-provider-crate-in-the-provider-layer"><a class="header" href="#route-1-a-provider-crate-in-the-provider-layer">Route 1: a provider crate in the provider layer</a></h2>
 <h3 id="implement-the-contract"><a class="header" href="#implement-the-contract">Implement the contract</a></h3>
-<p>Implement the matching contract from <code>everymap-core</code>. The methods are async
-and return the provider layer’s error type on refusal or failure. The SDK
-adapts the implementation to its own records at
-<code>rustic_maps_core::everymap_bridge</code>, so the vendor crate never names an SDK
-type.</p>
+<p>Implement the matching <code>everymap-core</code> contract. The methods are async and
+return the provider layer’s error type on refusal or failure. The SDK adapts
+the implementation at <code>rustic_maps_core::everymap_bridge</code>, so the vendor crate
+never names an SDK type.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use async_trait::async_trait;
@@ -243,10 +232,9 @@ impl Router for MyRoutingProvider {
 <code>Router</code>, <code>DistanceMatrixProvider</code>, <code>TrafficProvider</code>, <code>RasterTileProvider</code>,
 <code>VectorTileProvider</code>, <code>ElevationProvider</code>, <code>IsolineProvider</code>, <code>RouteMatcher</code>,
 <code>TourPlanner</code>, <code>NetworkPositioner</code>, <code>AttributeProvider</code>, <code>MapImageProvider</code>
-and <code>OfflineRoutingProvider</code>. A provider implements only the ones it serves.
+and <code>OfflineRoutingProvider</code>. Implement only the ones the provider serves.
 The bridge adapts geocoding, search, type-ahead, routing, distance matrix,
-traffic, raster tiles and vector tiles to the SDK’s own records, so a vendor
-provider needs no adapter of its own for those contracts.</p>
+traffic, raster tiles and vector tiles, so those need no vendor adapter.</p>
 <h3 id="register-it-in-the-core"><a class="header" href="#register-it-in-the-core">Register it in the core</a></h3>
 <p><code>ProviderRegistry</code> holds one slot per contract. Registering replaces the
 slot; a call into an empty slot returns <code>ProviderNotConfigured</code>.</p>
@@ -262,24 +250,22 @@ fn registry_with(provider: Arc&lt;dyn everymap_core::domains::routing::Router&gt
     registry
 }
 <span class="boring">}</span></code></pre>
-<p>Use the provider layer’s shared client for HTTP. It gives the native and browser builds one
-request, retry, and rate-limit path, so a provider behaves the same on every
-target.</p>
+<p>Use the provider layer’s shared client for HTTP. It gives the native and
+browser builds one request, retry and rate-limit path, so a provider behaves
+the same on every target.</p>
 <h3 id="expose-it-to-an-application-target"><a class="header" href="#expose-it-to-an-application-target">Expose it to an application target</a></h3>
 <ol>
-<li><strong>Add the descriptor.</strong> One entry in the shared provider registry, with
-the capabilities the provider serves in <code>served_contracts</code>.</li>
-<li><strong>Add the catalog row.</strong> One entry in the SDK’s provider catalog maps the
-provider key to the crate’s construction call and the capabilities it
-serves. This row is what makes the key selectable; compiling the crate
-into a binding alone does not.</li>
-<li><strong>Add committed sample responses.</strong> Each served API gets a route pattern
-and a committed response under the provider’s key. The test server and
-the demo use them; tests never reach the network.</li>
+<li><strong>Add the descriptor.</strong> One entry in the shared registry, with the served
+capabilities in <code>served_contracts</code>.</li>
+<li><strong>Add the catalog row.</strong> It maps the provider key to the crate’s
+construction call and its capabilities. The row makes the key selectable;
+compiling the crate into a binding alone does not.</li>
+<li><strong>Add committed sample responses.</strong> Each served API gets a route pattern and
+a committed response under the provider’s key; the test server and the demo
+use them.</li>
 </ol>
-<p>An application then selects the provider by key. The call replaces one
-capability and leaves every other capability serving, so one app can search
-with one provider, route with another and draw tiles from a third.</p>
+<p>An application selects the provider by key. The call replaces one capability
+and leaves the rest serving.</p>
 <p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">val mapSdk = MapSdk()
 mapSdk.configureProvider(
@@ -302,27 +288,19 @@ let routing = mapSdk.providerRegistrations()
     .first { $0.contract == .routing }
 precondition(routing?.registered == true &amp;&amp; routing?.providerKey == "my-provider")
 </code></pre>
-<p><code>providerRegistrations()</code> answers every capability in the same order every
-time — geocoding, routing, distance matrix, place search, traffic incidents,
-traffic flow, elevation, raster tiles, vector tiles, offline routing — so a
-settings surface can render one row per capability without knowing the list.
-A capability with no provider reports <code>registered</code> false and an empty key.</p>
-<p>A provider that needs no credential accepts an empty string; a provider with
-a credential refuses a blank one and leaves the previously serving provider
-in place. That is the whole integration: the application stores its own
-choice (a key and, when needed, a credential) and calls <code>configureProvider</code>
-at startup.</p>
+<p><code>providerRegistrations()</code> answers every capability in a stable order —
+geocoding, routing, distance matrix, place search, traffic incidents, traffic
+flow, elevation, raster tiles, vector tiles, offline routing — so a settings
+surface can render one row per capability without knowing the list. A
+capability with no provider reports <code>registered</code> false and an empty key.</p>
+<p>A keyless provider accepts an empty string; a provider with a credential
+refuses a blank one and leaves the previously serving provider in place. The
+application stores its own choice and calls <code>configureProvider</code> at startup.</p>
 <h3 id="sample-a-routing-provider-key-in-an-app"><a class="header" href="#sample-a-routing-provider-key-in-an-app">Sample: a routing provider key in an app</a></h3>
-<p>The steps below are the complete path from a routing crate to a working
-screen. The example uses the OSRM provider that ships with the SDK.</p>
-<ol>
-<li>Add the crate to the binding. The SDK already carries it, so this step is
-the catalog row: <code>osrm</code> maps to <code>OsrmRouter::new</code>.</li>
-<li>Give the provider its deployment address. OSRM is keyless, so the
-credential field carries the base URL of the deployment instead of a
-secret; an empty string targets a local server.</li>
-<li>Choose it for routing at startup:</li>
-</ol>
+<p>The OSRM provider ships with the SDK, so its catalog row already maps <code>osrm</code>
+to <code>OsrmRouter::new</code>. OSRM is keyless: the credential field carries the
+deployment’s base URL, and an empty string targets a local server. Choose it
+for routing at startup.</p>
 <p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">mapSdk.configureProvider(
     contract = ProviderContract.Routing,
@@ -337,11 +315,9 @@ secret; an empty string targets a local server.</li>
     credential: "http://localhost:5000"
 )
 </code></pre>
-<ol start="4">
-<li>Plan a route. <code>RoutingFacade.calculateRoute</code> resolves the routing slot, so
-the result comes from the chosen provider and no other capability changes.</li>
-</ol>
-<p>To let the reader switch providers, render one row per capability from
+<p><code>RoutingFacade.calculateRoute</code> resolves the routing slot, so the result comes
+from the chosen provider and no other capability changes. To let the reader
+switch providers, render one row per capability from
 <code>providerRegistrations()</code>, list the descriptors whose <code>served_contracts</code>
 contain that capability, and call <code>configureProvider</code> with the picked key.</p>
 <h3 id="constraints"><a class="header" href="#constraints">Constraints</a></h3>
@@ -350,23 +326,21 @@ contain that capability, and call <code>configureProvider</code> with the picked
 <li>The crate owns its vendor URL, credential handling, status mapping, and
 error detail. It does not name another vendor.</li>
 <li>Map transport failures to <code>NetworkRequestFailed</code>, unparseable payloads to
-<code>ResponseParsingFailure</code>, documented application refusals to
-<code>ProviderRequestRejected</code>, and an exhausted limiter to
-<code>RateLimitExhausted</code>. Keep the provider’s detail text verbatim.</li>
-<li>A vector source’s <code>source_name</code> is its cache namespace. Two tilesets must
+<code>ResponseParsingFailure</code>, documented refusals to <code>ProviderRequestRejected</code>,
+and an exhausted limiter to <code>RateLimitExhausted</code>. Keep the detail verbatim.</li>
+<li>A vector source’s <code>source_name</code> is its cache namespace; two tilesets must
 never share one name.</li>
-<li>The provider name appears only in its crate, its sample-data directory,
-the shared descriptor, and the dispatch arms; the provider-name guard
-enforces that boundary.</li>
+<li>The provider name appears only in its crate, its sample-data directory, the
+shared descriptor and the dispatch arms; the provider-name guard enforces
+that boundary.</li>
 </ul>
 <h2 id="route-2-a-host-implementation"><a class="header" href="#route-2-a-host-implementation">Route 2: a host implementation</a></h2>
 <p>Every provider contract can be implemented directly in application code:
 geocoding, routing, distance matrix, place search, traffic incidents, traffic
-flow, elevation, and raster tiles. Register the implementation on the
-<code>MapSdk</code> object that the map view and every provider call use; it replaces
-that one capability and leaves the others serving.</p>
+flow, elevation, and raster tiles. Register the implementation on the <code>MapSdk</code>
+object the map view and every provider call use; it replaces that capability
+and leaves the others serving.</p>
 <h3 id="geocoding-in-kotlin"><a class="header" href="#geocoding-in-kotlin">Geocoding in Kotlin</a></h3>
-<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeocodingProvider
 import uniffi.rustic_maps.GeographicCoordinate
 import uniffi.rustic_maps.MapSdk
@@ -388,7 +362,6 @@ val mapSdk = MapSdk()
 mapSdk.registerGeocodingProviderFromForeign(AppGeocodingProvider())
 </code></pre>
 <h3 id="geocoding-in-swift"><a class="header" href="#geocoding-in-swift">Geocoding in Swift</a></h3>
-<p><strong>Swift</strong></p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class AppGeocodingProvider: GeocodingProvider {
@@ -407,7 +380,6 @@ try mapSdk.registerGeocodingProviderFromForeign(
 )
 </code></pre>
 <h3 id="routing-in-kotlin"><a class="header" href="#routing-in-kotlin">Routing in Kotlin</a></h3>
-<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
 import uniffi.rustic_maps.MapSdk
 import uniffi.rustic_maps.Route
@@ -427,7 +399,6 @@ val mapSdk = MapSdk()
 mapSdk.registerRoutingProviderFromForeign(AppRoutingProvider())
 </code></pre>
 <h3 id="routing-in-swift"><a class="header" href="#routing-in-swift">Routing in Swift</a></h3>
-<p><strong>Swift</strong></p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class AppRoutingProvider: RoutingProvider {
@@ -443,7 +414,6 @@ let mapSdk = MapSdk()
 try mapSdk.registerRoutingProviderFromForeign(routingProvider: AppRoutingProvider())
 </code></pre>
 <h3 id="raster-tiles-in-kotlin"><a class="header" href="#raster-tiles-in-kotlin">Raster tiles in Kotlin</a></h3>
-<p><strong>Kotlin</strong></p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
 import uniffi.rustic_maps.RasterImageFormat
 import uniffi.rustic_maps.RasterTileData
@@ -466,7 +436,6 @@ val mapSdk = MapSdk()
 mapSdk.registerRasterTileProviderFromForeign(AppRasterTileProvider())
 </code></pre>
 <h3 id="raster-tiles-in-swift"><a class="header" href="#raster-tiles-in-swift">Raster tiles in Swift</a></h3>
-<p><strong>Swift</strong></p>
 <pre><code class="language-swift">import RusticMapsSDK
 
 final class AppRasterTileProvider: RasterTileProvider {
@@ -497,25 +466,23 @@ provider kind. The registration call names the contract:
 <code>registerTrafficIncidentProviderFromForeign</code>,
 <code>registerTrafficFlowProviderFromForeign</code>,
 <code>registerElevationProviderFromForeign</code> and
-<code>registerRasterTileProviderFromForeign</code> (Swift spells each with its trailing
-argument label).</li>
-<li>The implementation runs on the foreign runtime and calls back into the
-SDK. Do not block; hand long work to your own queue or coroutine scope.</li>
+<code>registerRasterTileProviderFromForeign</code>. Swift spells each with its
+trailing argument label.</li>
+<li>The implementation runs on the foreign runtime and calls back into the SDK.
+Do not block; hand long work to your own queue or coroutine scope.</li>
 <li>A failure must be one of the contract’s <code>SdkError</code> variants. An
 unclassified failure still reaches the typed refusal at the call, and the
 SDK records it for <code>latestProviderFailureDiagnostics()</code>.</li>
-<li>Registration is per <code>MapSdk</code> object and replaces that slot. The other
-slots keep serving. There is no unregister call; a restart returns the
-registry to its empty state.</li>
-<li>The package handle on React Native does not expose these interfaces, and
-the browser has no host-provided provider path. Use a Rust provider crate
-there.</li>
-<li>The provider’s attribution and terms still belong in the descriptor, not
-in the class.</li>
+<li>Registration is per <code>MapSdk</code> object and replaces that slot; the other slots
+keep serving. There is no unregister call.</li>
+<li>The React Native package handle does not expose these interfaces, and the
+browser has no host-provided provider path. Use a Rust provider crate there.</li>
+<li>The provider’s attribution and terms belong in the descriptor, not in the
+class.</li>
 </ul>
 <h2 id="route-3-a-url-template-source"><a class="header" href="#route-3-a-url-template-source">Route 3: a URL-template source</a></h2>
 <p>A plain XYZ tileset needs no provider code. Add a descriptor with the
-tileset’s template, zoom span, and terms, then register the source once at
+tileset’s template, zoom span and terms, then register the source once at
 startup.</p>
 <div class="table-wrapper">
 <table>
@@ -531,16 +498,15 @@ startup.</p>
 </tbody>
 </table>
 </div>
-<p>A raster source declares its image format, pixel resolution, and the
-<code>User-Agent</code> its requests carry. A vector source declares the committed
-style id it paints with. Templates must be absolute <code>http</code> or <code>https</code> URLs
-carrying <code>{z}</code>, <code>{x}</code>, and <code>{y}</code> and no other placeholders; the zoom span
-must not be inverted; the style id must name a committed style. A refused
-source keeps the previously serving base.</p>
+<p>A raster source declares its image format, pixel resolution and the
+<code>User-Agent</code> its requests carry. A vector source declares the committed style
+id it paints with. Templates must be absolute <code>http</code> or <code>https</code> URLs carrying
+<code>{z}</code>, <code>{x}</code> and <code>{y}</code> and no other placeholders; the zoom span must not be
+inverted; the style id must name a committed style. A refused source keeps the
+previous base.</p>
 <h2 id="the-descriptor"><a class="header" href="#the-descriptor">The descriptor</a></h2>
-<p>One descriptor per provider lives in the shared registry. Every application,
-the test server, and the demo read it by name; none of them hardcode a
-provider.</p>
+<p>One descriptor per provider lives in the shared registry. Every application, the
+test server and the demo read it by name; none of them hardcode a provider.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -567,38 +533,30 @@ provider.</p>
 </div>
 <p>A descriptor never carries a credential value.</p>
 <h2 id="what-the-reader-sees"><a class="header" href="#what-the-reader-sees">What the reader sees</a></h2>
-<ul>
-<li>The settings surface renders one credential row per descriptor, with the
-provider’s display name, credential label, hint, attribution, and terms.</li>
-<li>The base-map section renders the keyless raster sources and one row per
-vector style.</li>
-<li>A keyless start is a first-class state: the app renders the recorded demo
-until a credential is applied, and a provider-dependent call returns
-<code>ProviderNotConfigured</code> verbatim.</li>
-<li>Clearing a credential removes it from memory and the secure store, but the
-running SDK keeps its registered providers; tell the reader that a restart
-returns the session to the keyless state.</li>
-</ul>
+<p>The settings surface renders one credential row per descriptor: display name,
+credential label, hint, attribution and terms. The base-map section renders the
+keyless raster sources and one row per vector style. A keyless start is a
+first-class state; the app renders the recorded demo until a credential is
+applied, and a provider-dependent call returns <code>ProviderNotConfigured</code>
+verbatim. Clearing a credential removes it from memory and the secure store,
+but the running SDK keeps its registered providers; a restart returns the
+session to the keyless state.</p>
 <h2 id="verify-the-addition"><a class="header" href="#verify-the-addition">Verify the addition</a></h2>
 <ol>
 <li>The descriptor renders on every target’s settings surface.</li>
 <li>The provider’s sample responses serve through its provider key; no test
 reaches the network.</li>
 <li>The provider-name guard passes: the name appears only in the provider’s
-crate, its sample-data directory, the descriptor, and the dispatch arms.</li>
-<li>The platform builds and the provider’s own tests pass on the exact tree
-you ship.</li>
+crate, its sample-data directory, the descriptor and the dispatch arms.</li>
+<li>The platform builds and the provider’s own tests pass.</li>
 </ol>
 <h2 id="where-to-go-next"><a class="header" href="#where-to-go-next">Where to go next</a></h2>
 <ul>
-<li><a href="provider-capabilities-android.html">Android</a>, <a href="provider-capabilities-ios.html">iOS</a>,
-<a href="provider-capabilities-react-native.html">React Native</a>,
-<a href="provider-capabilities-wasm.html">WebAssembly</a>, and
-<a href="provider-capabilities-rust.html">Rust</a> list the calls each target exposes.</li>
+<li><a href="provider-capabilities-android.html">Provider capability pages</a> list the calls
+each target exposes.</li>
 <li><a href="first-map.html">Your first map</a> shows the runtime credential path in a
 complete app.</li>
-<li><a href="offline-maps.html">Offline maps</a> covers the tile cache and archive routing a
-provider-backed app can add.</li>
+<li><a href="offline-maps.html">Offline maps</a> covers the tile cache and archive routing.</li>
 </ul>
 
                     </main>

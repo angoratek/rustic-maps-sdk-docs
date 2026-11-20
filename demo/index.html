@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Rustic Maps SDK live demo</title>
     <link rel="stylesheet" href="./styles/playground.css" />
+    <!-- The generated package's only bare specifiers are the player runtime
+         (`@ubjs/wasm`) and its core (`@ubjs/core`). No bundler resolves them:
+         this import map names the browser builds, and `serve.mjs` serves the
+         installed files under `/generated-runtime/@ubjs/...`. Relative imports
+         inside those files resolve against their served paths, so no further
+         entries are needed. The mapping is relative so a copy of the harness
+         served under a subpath (the docs site's /demo) resolves its own
+         runtime beside it. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@ubjs/core": "./generated-runtime/@ubjs/core/dist/esm/index.js",
+          "@ubjs/wasm": "./generated-runtime/@ubjs/wasm/dist/browser/src/index.js",
+          "@ubjs/wasm/core": "./generated-runtime/@ubjs/wasm/dist/core/src/index.js"
+        }
+      }
+    </script>
   </head>
   <body>
     <!-- The first focus stop: keyboard and screen-reader visitors reach the
@@ -41,22 +58,12 @@
         </div>
         <div id="controls-header-actions">
           <a id="docs-back-link" href="../" hidden>&larr; Docs</a>
-          <!-- The hosted mobile demo beside this page: the published site
-               serves it under /demo/mobile/ (relative `mobile/`), the local
-               harness under /mobile-demo/ (relative `mobile-demo/`). The page
-               sets the target from the same local/published signal as the
-               docs link, so neither path is guessed in the markup. -->
-          <a id="mobile-demo-link" href="mobile-demo/">Mobile demo</a>
           <!-- Consumer copy (M28): the canonical text sits in the markup as a
                no-script-safe default and `data-ui-label` names the shared row;
                `data-ui-label-attribute` fills an attribute instead of the text.
                `data-ui-label-aria` fills the accessible name when it reads a
                different row than the visible text. playground.mjs re-applies
                every marked value from ui_strings.mjs on load. -->
-          <button id="provider-console-control" type="button"
-                  aria-label="Provider console" aria-haspopup="dialog"
-                  aria-controls="provider-console-panel" aria-expanded="false"
-                  title="Provider console">&#9776;</button>
           <button id="settings-control" type="button" aria-label="Open settings"
                   aria-haspopup="dialog" aria-controls="settings-dialog"
                   title="Open settings" data-ui-label="settings.open_accessibility"
@@ -77,7 +84,7 @@
             data-ui-label="plan.search_heading">Plan a route</h2>
         <p class="trip-subtitle">Enter an origin and a destination, plan the route,
           then start the trip simulation.</p>
-        <!-- The two labelled endpoint fields (docs/design/ReferenceApplicationBehavior.md
+        <!-- The two labelled endpoint fields (docs/ReferenceAppUX.md
              §Search, route card and navigation UX): a visible Origin/Destination
              label, the field's own search action, and its My location chip. The
              swap action beside the Origin label exchanges both the text and the
@@ -167,10 +174,10 @@
         <p id="trip-plan-route-reason" class="reason-strip"
            data-ui-label="plan.missing_both">Enter an origin and a destination
           to plan the route.</p>
-        <!-- The route card (docs/design/ReferenceApplicationBehavior.md §Route
-             card): destination title, distance · duration, the mode · strategy
-             caption, the ETA line and the maneuver note. The same card carries a
-             recorded demo route's honesty note. -->
+        <!-- The route card (docs/ReferenceAppUX.md §4.2): destination title,
+             distance · duration, the mode · strategy caption, the ETA line and
+             the maneuver note. The same card carries a recorded demo route's
+             honesty note. -->
         <div id="trip-route-result" class="trip-route-result" hidden>
           <p id="trip-route-title" class="trip-route-title"></p>
           <p id="trip-route-facts" class="trip-route-facts"></p>
@@ -182,7 +189,7 @@
         <!-- The trip card's ETA-distance line while a trip runs: the same
              prefix and labelled remaining values the native drawers show. -->
         <p id="trip-navigation-eta-line" class="then-line" hidden></p>
-        <!-- Directions (docs/design/DirectionsModesAndStrategy.md): the mode and
+        <!-- Directions (PRD.md §6 item 36): the mode and
              strategy every route plan carries. Both are two-value button
              groups with the page's pressed-choice pattern; Car and Fastest
              are the defaults. Strategy applies to automobile plans, so its
@@ -303,7 +310,7 @@
 
 <section class="control-group" id="diagnostics-controls">
         <h2 class="group-label" data-ui-label="diagnostics.title">Diagnostics</h2>
-        <!-- Diagnostics are opt-in (docs/design/ReferenceApplicationBehavior.md
+        <!-- Diagnostics are opt-in (docs/ReferenceAppUX.md
              §Diagnostics policy): opening this pane starts the one bounded
              stream at Info; Show debug events lowers it to Debug for the rest of
              the session. Nothing is subscribed while the pane stays closed. -->
@@ -354,6 +361,11 @@
               <input id="remember-provider-credential" type="checkbox" />
               Remember keys on this device
             </label>
+            <p class="settings-note settings-remember-warning">
+              The browser has no secure store: a remembered key is kept in this
+              browser's localStorage in readable form, so do not use this option
+              on a shared computer.
+            </p>
             <p id="settings-credentials-status" class="settings-note" role="status" hidden></p>
             <div class="settings-probe">
               <h4 class="settings-subsection-title">Live connection check</h4>
@@ -365,7 +377,7 @@
                       aria-label="Fetched tile preview"></canvas>
             </div>
           </section>
-          <!-- Provider capabilities (docs/design/ReferenceApplicationBehavior.md
+          <!-- Provider capabilities (docs/ReferenceAppUX.md
                §Provider selection, descriptors and endpoints): one row per
                capability the registry offers on this platform. The row and every
                picker entry compose "{display name} · {credential state}", both
@@ -448,7 +460,7 @@
       <!-- The on-map layer control: a round button docked directly above the
            attribution notice on the map's end edge. Its panel carries the
            base map, the traffic layer, the demo overlay scenes and the device
-           location status (docs/design/MapControlsAndTrafficLayer.md). -->
+           location status (docs/ReferenceAppUX.md §4.2). -->
       <div id="map-layers-control-container">
         <section id="map-layers-panel" hidden aria-label="Map layers">
           <h2 class="map-layers-panel-title">Map layers</h2>
@@ -477,54 +489,146 @@
           </section>
           <p id="map-layers-status" class="reason-strip" role="status" hidden></p>
         </section>
-        <button id="map-layers-control" type="button"
-                aria-expanded="false" aria-controls="map-layers-panel"
-                aria-label="Map layers" aria-haspopup="dialog">
-          <span aria-hidden="true">&#9638;</span>
-          <span class="map-layers-active-dot" hidden></span>
-        </button>
+        <div id="map-floating-control-row">
+          <!-- The developer console sits beside the layers control on the
+               map's end edge. Its dot lights when a warning or error reaches
+               the SDK stream while the panel is closed. -->
+          <button id="provider-console-control" type="button"
+                  aria-label="Provider console" aria-haspopup="dialog"
+                  aria-controls="provider-console-panel" aria-expanded="false"
+                  title="Provider console">
+            <span aria-hidden="true">&#9776;</span>
+            <span id="provider-console-alert-dot"
+                  class="provider-console-alert-dot" hidden
+                  aria-hidden="true"></span>
+          </button>
+          <button id="map-layers-control" type="button"
+                  aria-expanded="false" aria-controls="map-layers-panel"
+                  aria-label="Map layers" aria-haspopup="dialog">
+            <span aria-hidden="true">&#9638;</span>
+            <span class="map-layers-active-dot" hidden></span>
+          </button>
+        </div>
       </div>
-      <!-- The provider console: one row per provider request, with the
-           provider's display name as the prefix. It reads the typed
+      <!-- The provider console: the scrubbed SDK event stream newest first,
+           with one row per provider request. It reads the typed
            provider-request facts on the diagnostics stream, never the
-           composed message line. -->
+           composed message line. The detail view repeats those typed fields
+           and reads the live cache counters; neither is ever written back to
+           the stream. -->
       <section id="provider-console-panel" hidden aria-label="Provider console">
         <div class="provider-console-header">
           <h2 class="provider-console-title">Provider console</h2>
           <button id="provider-console-close" type="button"
                   aria-label="Close provider console">&times;</button>
         </div>
-        <div class="provider-console-filters">
-          <label>Provider
-            <select id="provider-console-provider-filter">
-              <option value="">All</option>
-            </select>
+        <div class="provider-console-list-view">
+          <div class="provider-console-filters">
+            <label>Level
+              <select id="provider-console-level-filter">
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+              </select>
+            </label>
+            <label>Provider
+              <select id="provider-console-provider-filter">
+                <option value="">All</option>
+              </select>
+            </label>
+            <label>Outcome
+              <select id="provider-console-outcome-filter">
+                <option value="">All</option>
+                <option value="success">Success</option>
+                <option value="redirect">Redirect</option>
+                <option value="client-error">Client error</option>
+                <option value="server-error">Server error</option>
+                <option value="transport-failure">Transport failure</option>
+                <option value="unclassified">Unclassified</option>
+              </select>
+            </label>
+          </div>
+          <p id="provider-console-registration-note" class="provider-console-note" hidden>
+            No provider is registered. Add one in Settings, then search for a
+            place, plan a route or load a tile.
+          </p>
+          <label class="provider-console-capture-row">
+            <input id="provider-console-capture" type="checkbox">
+            Capture response excerpts
           </label>
-          <label>Outcome
-            <select id="provider-console-outcome-filter">
-              <option value="">All</option>
-              <option value="success">Success</option>
-              <option value="redirect">Redirect</option>
-              <option value="client-error">Client error</option>
-              <option value="server-error">Server error</option>
-              <option value="transport-failure">Transport failure</option>
-              <option value="unclassified">Unclassified</option>
-            </select>
-          </label>
+          <!-- The session's cache counters: the tile pipeline's counts from the
+               last settled frame beside the traffic cache's, both read from the
+               SDK's own readbacks. Read-only; never a credential or URL. -->
+          <dl class="provider-console-cache-counters" aria-label="Cache counters">
+            <dt>Tile cache</dt>
+            <dd id="provider-console-tile-cache-counters">No GPU frame settled yet.</dd>
+            <dt>Traffic cache</dt>
+            <dd id="provider-console-traffic-cache-counters">
+              Unavailable — no traffic provider is registered.
+            </dd>
+          </dl>
+          <ul id="provider-console-rows" class="provider-console-rows"></ul>
+          <p id="provider-console-empty" class="provider-console-empty">
+            No provider request yet. Search, plan a route or load a tile to see
+            one.
+          </p>
+          <div class="provider-console-actions">
+            <button id="provider-console-copy" type="button">Copy</button>
+            <button id="provider-console-export" type="button">Export</button>
+          </div>
         </div>
-        <label class="provider-console-capture-row">
-          <input id="provider-console-capture" type="checkbox">
-          Capture response excerpts
-        </label>
-        <ul id="provider-console-rows" class="provider-console-rows"></ul>
-        <p id="provider-console-empty" class="provider-console-empty">
-          No provider request yet. Search, plan a route or load a tile to see
-          one.
-        </p>
-        <div class="provider-console-actions">
-          <button id="provider-console-copy" type="button">Copy</button>
-          <button id="provider-console-export" type="button">Export</button>
-        </div>
+        <!-- One event's typed detail. The provider fields come from the
+             structured trace on the event; the cache rows are live reads of
+             the tile source status and the traffic cache statistics. -->
+        <section id="provider-console-detail" class="provider-console-detail"
+                 hidden aria-label="Event detail">
+          <div class="provider-console-detail-header">
+            <h3 id="provider-console-detail-title" class="provider-console-detail-title">
+              Event detail
+            </h3>
+            <button id="provider-console-detail-close" type="button">Back</button>
+          </div>
+          <dl class="provider-console-detail-fields">
+            <dt>Severity</dt>
+            <dd id="provider-console-detail-severity"></dd>
+            <dt>Target</dt>
+            <dd id="provider-console-detail-target"></dd>
+            <dt>Message</dt>
+            <dd id="provider-console-detail-message"></dd>
+          </dl>
+          <dl id="provider-console-detail-provider-fields"
+              class="provider-console-detail-fields">
+            <dt>Provider</dt>
+            <dd id="provider-console-detail-provider"></dd>
+            <dt>Provider key</dt>
+            <dd id="provider-console-detail-provider-key"></dd>
+            <dt>Contract</dt>
+            <dd id="provider-console-detail-contract"></dd>
+            <dt>Method</dt>
+            <dd id="provider-console-detail-method"></dd>
+            <dt>Redacted path</dt>
+            <dd id="provider-console-detail-path"></dd>
+            <dt>Status class</dt>
+            <dd id="provider-console-detail-status"></dd>
+            <dt>Duration</dt>
+            <dd id="provider-console-detail-duration"></dd>
+            <dt>Outcome</dt>
+            <dd id="provider-console-detail-outcome"></dd>
+            <dt>Response bytes</dt>
+            <dd id="provider-console-detail-bytes"></dd>
+            <dt id="provider-console-detail-excerpt-label">Response excerpt</dt>
+            <dd id="provider-console-detail-excerpt"></dd>
+          </dl>
+          <h4 class="provider-console-detail-title">Cache</h4>
+          <dl class="provider-console-detail-fields" aria-label="Cache readback">
+            <dt>Tile cache</dt>
+            <dd id="provider-console-detail-tile-cache">No GPU frame settled yet.</dd>
+            <dt>Traffic cache</dt>
+            <dd id="provider-console-detail-traffic-cache">
+              Unavailable — no traffic provider is registered.
+            </dd>
+          </dl>
+        </section>
       </section>
       <div id="attribution-control">
         <section id="attribution-panel" hidden aria-label="Map attribution and terms">

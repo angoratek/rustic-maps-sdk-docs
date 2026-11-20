@@ -2,7 +2,7 @@
   "schema_version": 1,
   "artifact": {
     "name": "reference-flows",
-    "purpose": "The ordered reference-application flows every target must run, with the visible outcome, copy ID and automation hook of each step (docs/design/ReferenceApplicationBehavior.md)."
+    "purpose": "The ordered reference-application flows every target must run, with the visible outcome, copy ID and automation hook of each step (docs/ReferenceAppUX.md)."
   },
   "schema_documentation": {
     "flow": "flow_id, label, scenario, screenshot_step_id (a step ID, or null when the flow is not the screenshot scenario), screenshot_frames (the published frame set on the reference flow), preconditions, steps",
@@ -216,7 +216,14 @@
       "hook_kind": "css_selector",
       "source_paths": [
         "platform/web/index.html",
-        "platform/web/playground.mjs"
+        "platform/web/playground.mjs",
+        "platform/web/playground_preferences.mjs",
+        "platform/web/playground_provider_settings.mjs",
+        "platform/web/playground_base_map.mjs",
+        "platform/web/playground_overlays.mjs",
+        "platform/web/playground_navigation.mjs",
+        "platform/web/playground_diagnostics.mjs",
+        "platform/web/playground_map_surface.mjs"
       ],
       "build_input": {
         "path": "platform/web/serve.mjs",

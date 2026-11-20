@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -203,38 +203,21 @@ Rust and have no platform dependency.</p>
 </div>
 <p>The crates are consumed from the SDK source today; a registry package follows
 the first Rust release.</p>
-<h2 id="install-from-the-source-archive"><a class="header" href="#install-from-the-source-archive">Install from the source archive</a></h2>
-<p>The Rust artifact is <code>rustic-maps-sdk-rust-v0.1.0.tar.gz</code>: the tracked source
-tree at the release commit, under one <code>rustic-maps-sdk-rust-v0.1.0/</code>
-directory. It contains the workspace manifest and lock file, every workspace
-crate, the platform package sources and build scripts, the documentation
-sources, and both license files (MIT and Apache-2.0). The provider
-implementations come from the published <code>everymap-*</code> crates the lock file
-pins, not from workspace members.</p>
+<h2 id="install-from-the-source-tree"><a class="header" href="#install-from-the-source-tree">Install from the source tree</a></h2>
+<p>The Rust package is the workspace source: the workspace manifest and lock file,
+every workspace crate, the platform package sources and build scripts, the
+documentation sources, and both license files. The provider implementations
+come from the published <code>everymap-*</code> crates the lock file pins.</p>
 <ol>
-<li>Download the archive and its <code>.sha256</code> sidecar from
-<a href="downloads.html">Downloads</a>.</li>
-<li>Verify the checksum against the sidecar.</li>
-<li>Unpack the archive.</li>
+<li>Get the repository source tree.</li>
 <li>Point a path dependency at the crate you use, as the
 <a href="downloads.html#rust">Downloads</a> page shows.</li>
 </ol>
-<p>The archive contains source only. Cargo builds the crates your application
-uses from that source, including their tests. The workspace lock file pins
-dependency versions; Cargo downloads those dependencies from their own
-sources unless your environment already provides them. Rust 1.87 or newer is
-required, and the workspace uses the 2024 edition.</p>
-<p>The archive does not ship:</p>
-<ul>
-<li>compiled libraries, an AAR, an XCFramework, a wasm module, or npm tarballs;
-the platform artifacts are separate downloads;</li>
-<li>generated Kotlin, Swift or TypeScript bindings; the build scripts generate
-them from the contract;</li>
-<li>a provider credential, a local configuration file, or an environment file;</li>
-<li>the release’s Sigstore signature bundles; they attach to each published
-artifact on the release record;</li>
-<li>the Git history; the archive is the release commit’s snapshot.</li>
-</ul>
+<p>Cargo builds the crates your application uses from source, including their
+tests, and downloads pinned dependencies from their own sources. Rust 1.89 or
+newer is required, and the workspace uses the 2024 edition. The source tree
+contains no compiled libraries, generated bindings, provider credential,
+Sigstore bundles or Git history.</p>
 <h2 id="camera-and-projection-without-a-gpu"><a class="header" href="#camera-and-projection-without-a-gpu">Camera and projection without a GPU</a></h2>
 <p>Camera math and projection are pure Rust and run anywhere:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -254,20 +237,17 @@ let screen_point = camera.project_to_screen(
 );
 <span class="boring">}</span></code></pre>
 <h2 id="rendering-a-frame"><a class="header" href="#rendering-a-frame">Rendering a frame</a></h2>
-<p><code>rustic-maps-rendering</code>’s headless renderer draws into an offscreen <code>wgpu</code> target:
-create a <code>HeadlessTileRenderer</code> over a <code>GraphicsContext</code>, resolve the camera’s
-visible tiles through a <code>TileScheduler</code>, and read the frame back as RGBA
-bytes. The renderer is the same one the native surfaces use, so what you see
-offscreen matches what a platform view presents.</p>
-<p>The browser uses the same camera, overlay, label and vector-style modules; it
-binds them through a WebAssembly canvas adapter rather than a Rust surface.</p>
+<p><code>rustic-maps-rendering</code>’s headless renderer draws into an offscreen <code>wgpu</code>
+target: create a <code>HeadlessTileRenderer</code> over a <code>GraphicsContext</code>, resolve the
+camera’s visible tiles through a <code>TileScheduler</code>, and read the frame back as
+RGBA bytes. It is the same renderer the native surfaces use, and the browser
+binds the same modules through a WebAssembly canvas adapter.</p>
 <h2 id="providers"><a class="header" href="#providers">Providers</a></h2>
 <p>Vendor providers implement the contracts in <code>everymap-core</code> — geocoding,
 search, type-ahead, routing, a distance matrix, traffic, raster and vector
-tiles. The SDK adapts them to its own traits at
-<code>rustic_maps_core::everymap_bridge</code> and registers them in the
-<code>rustic-maps-core</code> registry. A host that implements a provider inside its own
-application implements the <code>geospatial-traits</code> traits directly. See
+tiles. The SDK adapts them at <code>rustic_maps_core::everymap_bridge</code> and registers
+them in the <code>rustic-maps-core</code> registry. A host implementing a provider inside
+its own application implements the <code>geospatial-traits</code> traits directly. See
 <a href="adding-a-provider.html">Add a provider</a> for the descriptor fields and the
 registration path.</p>
 <h2 id="positioning"><a class="header" href="#positioning">Positioning</a></h2>

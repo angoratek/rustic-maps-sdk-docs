@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,12 +176,58 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="offline-maps"><a class="header" href="#offline-maps">Offline maps</a></h1>
-<p>Keep map imagery and routing working without a network. A disk response
-cache holds raster tile imagery under your byte budget, including named
-regions you download ahead of time, and a compiled routing archive returns
-routes with no network round trip. Android, iOS and React Native download
-regions; the browser surface has no disk store for offline regions and keeps
-offline imagery in the page’s own storage.</p>
+<p>Keep map imagery and routing working without a network. A disk response cache
+holds raster tiles under your byte budget, including named regions you
+download ahead of time, and a compiled routing archive returns routes with no
+network request. Regions have their own pack byte budget, separate from the
+general cache. Android, iOS and React Native download regions; the browser has
+no SDK-owned disk store and keeps offline imagery in the page’s own storage.</p>
+<h2 id="rules-that-apply-on-the-native-platforms"><a class="header" href="#rules-that-apply-on-the-native-platforms">Rules that apply on the native platforms</a></h2>
+<ul>
+<li><code>setProviderCredentialWithTileCache</code> installs the provider set and wraps the
+raster-tile contract in a disk response cache at a path you own, under an
+absolute byte budget. A refusal, such as an unusable path or a non-positive
+budget, returns the reason verbatim.</li>
+<li>The cache starts at the tiles category’s 30-calendar-day default time-to-live,
+the imagery-provider terms ceiling. <code>setRasterTileCacheTimeToLive</code> tunes it;
+<code>rasterTileCacheTerms</code> reads the effective value, the provider’s declared
+ceiling and the category default. A higher request is accepted, and the
+ceiling clamps what the cache retains.</li>
+<li>A region pack has its own byte budget beside the general cache. Until you set
+one, packs have no separate byte limit and the only size cap is the
+65,536-tile structural limit. A download that would cross the budget stops,
+keeps the tiles already stored and reports a cache failure; raise the budget
+and call <code>downloadRegion</code> again to resume. A zero budget is refused with the
+reason, and a missing tile cache reports that the cache is not configured.</li>
+<li>A download writes every tile of a bounding box and zoom range into the same
+SQLite cache the live map reads, pins those tiles against ordinary eviction,
+and reports progress. <code>regionTileCount</code> validates the definition and counts
+tiles before anything is written; a zoom deeper than the provider’s declared
+ceiling, or a region above the tile limit, throws before the download starts.</li>
+<li>The progress listener receives one <code>Downloading</code> report before the first
+tile, one per completed tile, and exactly one terminal <code>Completed</code>,
+<code>Cancelled</code> or <code>Failed</code> report. It runs on an SDK worker thread: post the UI
+update to the main thread and do not call back into the manager.</li>
+<li>Cancellation is a partial success: the terminal phase is <code>Cancelled</code>, the
+returned record keeps <code>presentTileCount</code> below <code>memberTileCount</code>, and the
+next <code>downloadRegion</code> fetches only the missing tiles.</li>
+<li>Stop the app, turn off the network and open it again: downloaded tiles
+render from disk at the downloaded zooms, and <code>regionRecords()</code> still returns
+the region with its stored tile count, payload bytes and effective retention.
+Deleting the region returns the map to network rendering. Cached responses
+also render whenever the network is unavailable: a miss goes to the network
+and back-fills, a hit comes from disk. Render the regions your users expect
+to revisit once while online.</li>
+<li>The offline routing layer runs inside the SDK over a compiled RMOG archive:
+an OpenStreetMap extract in, a self-describing archive out, A* over the
+graph, turn restrictions honored, and maneuver text derived from the
+geometry. Pass the archive bytes, not a path, so the call works on every
+platform. The request uses the archive profile defaults: automobile,
+fastest, metric. A corrupt archive fails with <code>OfflineRoutingFailure</code>. The
+SDK does not fall back to the archive when the online provider fails; catch
+that failure and call the archive route yourself. Maneuver texts stay honest
+where the extract carries no street names.</li>
+</ul>
 <div class="platform-tabs">
 <div class="platform-tab-titles" role="tablist">
 <button type="button" data-platform-tab="android">Android</button>
@@ -192,8 +238,6 @@ offline imagery in the page’s own storage.</p>
 
 <div class="platform-tab-panel" data-platform-panel="android">
 <h3 id="register-the-providers-with-a-tile-cache"><a class="header" href="#register-the-providers-with-a-tile-cache">Register the providers with a tile cache</a></h3>
-<p>One registration call installs the map-platform provider set and wraps the
-raster-tile contract in the disk response cache:</p>
 <pre><code class="language-kotlin">val providerKey = "mapquest"
 val tileCacheDatabaseFile = File(context.cacheDir, "reference-tile-cache.sqlite")
 val tileCacheBudgetBytes = 16777216UL   // 16 MiB
@@ -205,13 +249,7 @@ mapSdk.setProviderCredentialWithTileCache(
     tileCacheBudgetBytes,
 )
 </code></pre>
-<p>The call opens or creates the SQLite response cache at the path. A refusal,
-such as an unusable path or a non-positive budget, returns the reason
-verbatim.</p>
 <h3 id="read-and-tune-the-caching-terms"><a class="header" href="#read-and-tune-the-caching-terms">Read and tune the caching terms</a></h3>
-<p>The cache starts at the tiles category’s default time-to-live of 30 calendar
-days, the imagery-provider terms ceiling. Tune the live value and read the
-value in force:</p>
 <pre><code class="language-kotlin">mapSdk.setRasterTileCacheTimeToLive(timeToLiveSeconds)
 val terms = mapSdk.rasterTileCacheTerms()
 // terms.effectiveTimeToLiveSeconds
@@ -223,13 +261,13 @@ val terms = mapSdk.rasterTileCacheTerms()
 // offlineManager.setTileTimeToLive(timeToLiveSeconds)
 // val terms = offlineManager.tileCacheTerms()
 </code></pre>
-<p>A request above the provider’s declared ceiling is accepted, and the
-ceiling clamps what the cache retains; the readback shows the effective
-value, so display it in your offline-maps settings screen.</p>
+<h3 id="set-a-byte-budget-for-offline-regions"><a class="header" href="#set-a-byte-budget-for-offline-regions">Set a byte budget for offline regions</a></h3>
+<pre><code class="language-kotlin">val offlineManager = OfflineManager(mapSdk)
+val packByteBudget = 64UL * 1024UL * 1024UL   // 64 MiB
+offlineManager.setTilePackByteBudget(packByteBudget)
+val effectivePackByteBudget = offlineManager.tilePackByteBudget()
+</code></pre>
 <h3 id="download-a-region-for-offline-use"><a class="header" href="#download-a-region-for-offline-use">Download a region for offline use</a></h3>
-<p>A region download writes every tile of a bounding box and zoom range into the
-same SQLite cache the live map reads, pins those tiles against ordinary
-eviction, and reports progress. Define the region first with these values.</p>
 <pre><code class="language-kotlin">val region = RegionDefinition(
     regionId = "downtown-sacramento",
     displayName = "Downtown Sacramento",
@@ -247,13 +285,7 @@ eviction, and reports progress. Define the region first with these values.</p>
 val offlineManager = OfflineManager(mapSdk)
 val totalTileCount = offlineManager.regionTileCount(region) // 23 tiles
 </code></pre>
-<p><code>regionTileCount</code> validates the definition and counts the tiles before
-anything is written. A maximum zoom deeper than the provider’s declared
-ceiling, or a region above the tile limit, throws before the download
-starts.</p>
-<p>Start the download with a listener. It receives one <code>Downloading</code> report
-before the first tile, one report per completed tile, and exactly one
-terminal <code>Completed</code>, <code>Cancelled</code> or <code>Failed</code> report:</p>
+<p>Start the download with a listener:</p>
 <pre><code class="language-kotlin">val progressListener = object : RegionDownloadProgressListener {
     override fun onRegionDownloadProgress(progress: RegionDownloadProgress) {
         runOnUiThread {
@@ -265,14 +297,9 @@ terminal <code>Completed</code>, <code>Cancelled</code> or <code>Failed</code> r
 }
 val record: RegionRecord = offlineManager.downloadRegion(region, progressListener)
 </code></pre>
-<p>The listener runs on an SDK worker thread, so post the UI update to the main
-thread; do not call back into the manager from it.</p>
 <p>Cancel an in-flight download with the region id:</p>
 <pre><code class="language-kotlin">offlineManager.cancelRegionDownload(region.regionId)
 </code></pre>
-<p>Cancellation is a partial success: the terminal phase is <code>Cancelled</code>, the
-returned record keeps <code>presentTileCount</code> below <code>memberTileCount</code>, and the next
-<code>downloadRegion</code> call fetches only the missing tiles.</p>
 <p>List the regions stored on disk, read one, and delete it:</p>
 <pre><code class="language-kotlin">val storedRegions: List&lt;RegionRecord&gt; = offlineManager.regionRecords()
 val storedRegion: RegionRecord? = offlineManager.regionRecord(region.regionId)
@@ -280,25 +307,7 @@ val storedRegion: RegionRecord? = offlineManager.regionRecord(region.regionId)
 // effectiveTimeToLiveSeconds
 val removal: RegionRemovalReport = offlineManager.deleteRegion(region.regionId)
 </code></pre>
-<h3 id="restart-without-a-network"><a class="header" href="#restart-without-a-network">Restart without a network</a></h3>
-<p>Stop the app, turn off the network, and open it again. The downloaded tiles
-render from disk at the zooms you downloaded, and <code>regionRecords()</code> still
-returns the region with its stored tile count, payload bytes and effective
-retention. Deleting the region returns the map to network rendering.</p>
-<h3 id="pre-warm-the-tiles-you-need"><a class="header" href="#pre-warm-the-tiles-you-need">Pre-warm the tiles you need</a></h3>
-<p>Cached tile responses render whenever the network is unavailable: a
-cache miss goes to the network and back-fills, and a cache hit comes from
-disk. Render the regions your users expect to revisit once while
-online, and the cache holds them until the budget or time-to-live says
-otherwise.</p>
 <h3 id="route-without-the-network"><a class="header" href="#route-without-the-network">Route without the network</a></h3>
-<p>The offline routing layer runs inside the SDK: a compiled routing
-archive — OpenStreetMap extract in, self-describing archive file out —
-returns routes with A* over the archive’s graph, honoring recorded turn
-restrictions and deriving maneuver text from the geometry’s bearing change.</p>
-<p>The contract carries the route call on every surface. Pass the archive bytes,
-not a path, so the same call works on Android, iOS, React Native, and the
-browser.</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.GeographicCoordinate
 import uniffi.rustic_maps.offlineRouteFromArchiveBytes
 
@@ -310,11 +319,6 @@ val plannedRoute = offlineRouteFromArchiveBytes(
     GeographicCoordinate(latitude = 0.001, longitude = 0.002),
 )
 </code></pre>
-<p>The request uses the archive profile’s default options: automobile, fastest,
-metric. A corrupt archive throws <code>OfflineRoutingFailure</code>. The SDK does not
-fall back to the archive when the online provider fails; catch the online
-failure and call the archive route yourself. Maneuver texts stay honest where
-the extract carries no street names.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="ios">
@@ -345,10 +349,13 @@ let terms = try mapSdk.rasterTileCacheTerms()
 // try offlineManager.setTileTimeToLive(timeToLiveSeconds: timeToLiveSeconds)
 // let terms = try offlineManager.tileCacheTerms()
 </code></pre>
+<h3 id="set-a-byte-budget-for-offline-regions-1"><a class="header" href="#set-a-byte-budget-for-offline-regions-1">Set a byte budget for offline regions</a></h3>
+<pre><code class="language-swift">let offlineManager = OfflineManager(mapSdk: mapSdk)
+let packByteBudget: UInt64 = 64 * 1024 * 1024   // 64 MiB
+try offlineManager.setTilePackByteBudget(byteBudget: packByteBudget)
+let effectivePackByteBudget = try offlineManager.tilePackByteBudget()
+</code></pre>
 <h3 id="download-a-region-for-offline-use-1"><a class="header" href="#download-a-region-for-offline-use-1">Download a region for offline use</a></h3>
-<p>A region download writes every tile of a bounding box and zoom range into the
-same SQLite cache the live map reads, pins those tiles against ordinary
-eviction, and reports progress. Define the region first with these values.</p>
 <pre><code class="language-swift">let region = RegionDefinition(
     regionId: "downtown-sacramento",
     displayName: "Downtown Sacramento",
@@ -366,13 +373,7 @@ eviction, and reports progress. Define the region first with these values.</p>
 let offlineManager = OfflineManager(mapSdk: mapSdk)
 let totalTileCount = try offlineManager.regionTileCount(region: region) // 23 tiles
 </code></pre>
-<p><code>regionTileCount</code> validates the definition and counts the tiles before
-anything is written. A maximum zoom deeper than the provider’s declared
-ceiling, or a region above the tile limit, throws before the download
-starts.</p>
-<p>Start the download with a listener. It receives one <code>Downloading</code> report
-before the first tile, one report per completed tile, and exactly one
-terminal <code>Completed</code>, <code>Cancelled</code> or <code>Failed</code> report:</p>
+<p>Start the download with a listener:</p>
 <pre><code class="language-swift">final class RegionProgressListener: RegionDownloadProgressListener {
     func onRegionDownloadProgress(progress: RegionDownloadProgress) {
         Task { @MainActor in
@@ -389,14 +390,9 @@ let record: RegionRecord = try await offlineManager.downloadRegion(
     progressListener: progressListener
 )
 </code></pre>
-<p>The listener runs on an SDK worker thread, so hop to the main actor before
-touching UI; do not call back into the manager from it.</p>
 <p>Cancel an in-flight download with the region id:</p>
 <pre><code class="language-swift">offlineManager.cancelRegionDownload(regionId: region.regionId)
 </code></pre>
-<p>Cancellation is a partial success: the terminal phase is <code>.cancelled</code>, the
-returned record keeps <code>presentTileCount</code> below <code>memberTileCount</code>, and the next
-<code>downloadRegion</code> call fetches only the missing tiles.</p>
 <p>List the regions stored on disk, read one, and delete it:</p>
 <pre><code class="language-swift">let storedRegions: [RegionRecord] = try await offlineManager.regionRecords()
 let storedRegion: RegionRecord? = try await offlineManager.regionRecord(
@@ -408,19 +404,7 @@ let removal: RegionRemovalReport = try await offlineManager.deleteRegion(
     regionId: region.regionId
 )
 </code></pre>
-<h3 id="restart-without-a-network-1"><a class="header" href="#restart-without-a-network-1">Restart without a network</a></h3>
-<p>Stop the app, turn off the network, and open it again. The downloaded tiles
-render from disk at the zooms you downloaded, and <code>regionRecords()</code> still
-returns the region with its stored tile count, payload bytes and effective
-retention. Deleting the region returns the map to network rendering.</p>
-<h3 id="pre-warm-and-render-offline"><a class="header" href="#pre-warm-and-render-offline">Pre-warm and render offline</a></h3>
-<p>Cached tiles render whenever the network is unavailable. Render the regions
-your users revisit while online; the cache serves them from disk.</p>
 <h3 id="route-without-the-network-1"><a class="header" href="#route-without-the-network-1">Route without the network</a></h3>
-<p>The offline routing layer runs inside the SDK over a compiled archive:
-A* on the archive’s graph, recorded turn restrictions honored, maneuver
-text derived from the geometry. The contract call takes the archive bytes,
-not a path, so the same call works on every platform:</p>
 <pre><code class="language-swift">// The compiled RMOG archive's bytes, bundled with the app or downloaded.
 let archiveURL = URL(fileURLWithPath: "routing_grid.rmog")
 let archiveBytes = try Data(contentsOf: archiveURL)
@@ -430,16 +414,14 @@ let plannedRoute = try await offlineRouteFromArchiveBytes(
     end: GeographicCoordinate(latitude: 0.001, longitude: 0.002)
 )
 </code></pre>
-<p>The request uses the archive profile’s default options: automobile, fastest,
-metric. A corrupt archive throws <code>OfflineRoutingFailure</code>. The SDK does not
-fall back to the archive when the online provider fails; catch the online
-failure and call the archive route yourself.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="react-native">
 <h3 id="register-the-providers-with-a-tile-cache-2"><a class="header" href="#register-the-providers-with-a-tile-cache-2">Register the providers with a tile cache</a></h3>
-<p>The package’s SDK handle installs the provider set and wraps the raster-tile
-contract in the disk response cache:</p>
+<p>The package opens or creates the cache under the application’s caches
+directory with a 16 MiB budget; JavaScript passes the provider key and the
+credential, never a file path. Re-registration replaces the raster-tile slot,
+cache included.</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
 async function createMapSdkWithTileCache(providerKey, providerApiKey) {
@@ -454,15 +436,7 @@ async function createMapSdkWithTileCache(providerKey, providerApiKey) {
   return mapSdk;
 }
 </code></pre>
-<p>The package opens (or creates) the cache under the application’s caches
-directory with a 16 MiB budget; JavaScript passes the provider key and the
-credential, never a file path. A refusal resolves with <code>isApplied: false</code> and
-the provider’s verbatim <code>detailText</code>. Re-registration replaces the raster-tile
-slot, cache included.</p>
 <h3 id="read-and-tune-the-caching-terms-2"><a class="header" href="#read-and-tune-the-caching-terms-2">Read and tune the caching terms</a></h3>
-<p>The cache starts at the tiles category’s default time-to-live of 30 calendar
-days, the imagery-provider terms ceiling. Tune the live value and read the
-value in force:</p>
 <pre><code class="language-js">import { MapsSdk } from '@angoratek/rustic-maps-sdk/MapsSdk';
 
 const mapSdk = await MapsSdk.create();
@@ -475,13 +449,10 @@ if (terms !== null) {
   // terms.defaultTimeToLiveSeconds
 }
 </code></pre>
-<p>A request above the provider’s declared ceiling is accepted, and the ceiling
-clamps what the cache retains; the readback shows the effective value, so
-display it in your offline-maps settings screen.</p>
+<h3 id="set-a-byte-budget-for-offline-regions-2"><a class="header" href="#set-a-byte-budget-for-offline-regions-2">Set a byte budget for offline regions</a></h3>
+<p>The generated contract binding carries <code>setTilePackByteBudget</code> and
+<code>tilePackByteBudget</code> on its offline manager.</p>
 <h3 id="download-a-region-for-offline-use-2"><a class="header" href="#download-a-region-for-offline-use-2">Download a region for offline use</a></h3>
-<p>A region download writes every tile of a bounding box and zoom range into the
-same SQLite cache the live map reads, pins those tiles against ordinary
-eviction, and reports progress. Define the region first with these values.</p>
 <pre><code class="language-js">import {
   RasterImageFormat,
   RasterTileResolution,
@@ -504,13 +475,7 @@ const region = RegionDefinition.create({
 
 const totalTileCount = offlineManager.regionTileCount(region); // 23 tiles
 </code></pre>
-<p><code>regionTileCount</code> validates the definition and counts the tiles before
-anything is written. A maximum zoom deeper than the provider’s declared
-ceiling, or a region above the tile limit, rejects before the download
-starts.</p>
-<p>Start the download with a listener. It receives one <code>Downloading</code> report
-before the first tile, one report per completed tile, and exactly one
-terminal <code>Completed</code>, <code>Cancelled</code> or <code>Failed</code> report:</p>
+<p>Start the download with a listener:</p>
 <pre><code class="language-js">const progressListener = {
   onRegionDownloadProgress(progress) {
     // progress.phase: 'Downloading', 'Completed', 'Cancelled' or 'Failed'
@@ -521,14 +486,9 @@ terminal <code>Completed</code>, <code>Cancelled</code> or <code>Failed</code> r
 
 const record = await offlineManager.downloadRegion(region, progressListener);
 </code></pre>
-<p>The listener runs on an SDK worker thread, so marshal the UI update in your
-shell; do not call back into the manager from it.</p>
 <p>Cancel an in-flight download with the region id:</p>
 <pre><code class="language-js">await offlineManager.cancelRegionDownload(region.regionId);
 </code></pre>
-<p>Cancellation is a partial success: the terminal phase is <code>Cancelled</code>, the
-returned record keeps <code>presentTileCount</code> below <code>memberTileCount</code>, and the next
-<code>downloadRegion</code> call fetches only the missing tiles.</p>
 <p>List the regions stored on disk, read one, and delete it:</p>
 <pre><code class="language-js">const storedRegions = await offlineManager.regionRecords();
 const storedRegion = await offlineManager.regionRecord(region.regionId);
@@ -536,21 +496,7 @@ const storedRegion = await offlineManager.regionRecord(region.regionId);
 // effectiveTimeToLiveSeconds
 const removal = await offlineManager.deleteRegion(region.regionId);
 </code></pre>
-<h3 id="restart-without-a-network-2"><a class="header" href="#restart-without-a-network-2">Restart without a network</a></h3>
-<p>Stop the app, turn off the network, and open it again. The downloaded tiles
-render from disk at the zooms you downloaded, and <code>regionRecords()</code> still
-returns the region with its stored tile count, payload bytes and effective
-retention. Deleting the region returns the map to network rendering.</p>
-<h3 id="pre-warm-the-tiles-you-need-1"><a class="header" href="#pre-warm-the-tiles-you-need-1">Pre-warm the tiles you need</a></h3>
-<p>Cached tile responses render whenever the network is unavailable: a cache miss
-goes to the network and back-fills, and a cache hit answers from disk. Render
-the regions your users expect to revisit once while online, and the cache
-holds them until the budget or time-to-live says otherwise.</p>
 <h3 id="route-without-the-network-2"><a class="header" href="#route-without-the-network-2">Route without the network</a></h3>
-<p>The compiled routing archive returns routes with A* over its graph, honoring
-recorded turn restrictions and deriving maneuver text from the geometry. The
-generated bindings carry the contract’s archive-route call; pass the bytes,
-not a path:</p>
 <pre><code class="language-js">import { offlineRouteFromArchiveBytes } from '@angoratek/rustic-maps-sdk';
 
 // The compiled RMOG archive's bytes, bundled with the app or downloaded.
@@ -562,51 +508,39 @@ const plannedOfflineRoute = await offlineRouteFromArchiveBytes(
   { latitude: 0.001, longitude: 0.002 },
 );
 </code></pre>
-<p>The request uses the archive profile’s default options: automobile, fastest,
-metric. A corrupt archive rejects with <code>OfflineRoutingFailure</code>. The SDK does
-not fall back to the archive when an online route fails; handle that failure
-in your own code.</p>
 </div>
 
 <div class="platform-tab-panel" data-platform-panel="wasm">
 <h3 id="what-the-browser-surface-carries"><a class="header" href="#what-the-browser-surface-carries">What the browser surface carries</a></h3>
-<p>The browser surface has no SDK-owned disk store: there is no SQLite tile
-cache, no byte budget, and no offline-region store. The region download,
-progress, listing and deletion steps of the native tabs have no counterpart
-here. Offline region downloads are not available in the browser, and the
-WebAssembly TypeScript surface neither declares nor serves those members.</p>
-<p>What the WebAssembly build carries is the routing archive: archive bytes in,
-route records out, with no provider and no network round trip. The same
-compiled archive serves the native platforms, so one compile feeds every
-target.</p>
-<p>A page that needs offline imagery keeps the tiles it fetched in the browser’s
-own storage, such as Cache Storage or IndexedDB, and serves them to the SDK
-through a URL-template raster source it controls. The SDK does not download,
-pin, count or delete those tiles; your page owns that lifecycle, including
-when the stored tiles expire.</p>
+<p>The browser surface has no SDK-owned disk store: no SQLite tile cache, no byte
+budget and no offline-region store. The region download, progress, listing and
+deletion steps of the native tabs have no counterpart, and the WebAssembly
+TypeScript surface neither declares nor serves those members.</p>
+<p>The build carries the routing archive: archive bytes in, route records out,
+with no provider and no network request. A page that needs offline imagery
+keeps fetched tiles in the browser’s own storage, such as Cache Storage or
+IndexedDB, and serves them through a URL-template raster source it controls.
+The SDK does not download, pin, count or delete those tiles; your page owns
+that lifecycle, including when they expire.</p>
 <h3 id="route-over-the-archive"><a class="header" href="#route-over-the-archive">Route over the archive</a></h3>
-<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/rustic_maps_web_bindings.js';
+<pre><code class="language-js">import { offlineRouteFromArchiveBytes } from './web/rustic_maps.js';
 
 const archiveResponse = await fetch('/offline-graph/routing-grid.rmog');
-const archiveBytes = new Uint8Array(await archiveResponse.arrayBuffer());
+const archiveBytes = await archiveResponse.arrayBuffer();
 
 const plannedRoute = await offlineRouteFromArchiveBytes(
   archiveBytes,
-  originLatitude,
-  originLongitude,
-  endLatitude,
-  endLongitude,
+  { latitude: originLatitude, longitude: originLongitude },
+  { latitude: endLatitude, longitude: endLongitude },
 );
 </code></pre>
 <p>The result is the same <code>Route</code>/<code>RouteLeg</code>/<code>RouteStep</code> record the live route
-call returns, so the route overlay and framing steps from <a href="search-and-routing.html">Search and
+call returns, so the overlay and framing steps from <a href="search-and-routing.html">Search and
 routing</a> apply unchanged. The call rejects with the
 reason when the bytes fail archive validation, a coordinate falls outside
-every node’s snap tolerance, or the two points are not connected in the
-graph.</p>
-<p>Where the bytes come from is the page’s decision: ship the archive with the
-app, fetch it once and keep it in the browser’s own storage, or read it from
-<code>&lt;input type="file"&gt;</code> for a local preview.</p>
+every node’s snap tolerance, or the two points are not connected in the graph.
+Ship the archive with the app, fetch it once and keep it in browser storage,
+or read it from <code>&lt;input type="file"&gt;</code> for a local preview.</p>
 </div>
 
 </div>

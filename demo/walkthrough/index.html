@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Walkthrough</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <main class="walkthrough" aria-label="Recorded walkthrough">
+    <header class="walkthrough-header">
+      <h1 class="walkthrough-title">Walkthrough</h1>
+      <nav class="platforms" id="platforms" aria-label="Platform"></nav>
+    </header>
+
+    <section class="stage" aria-label="Phone frame">
+      <div class="phone" id="phone">
+        <img class="still" data-buffer="front" alt="">
+        <img class="still" data-buffer="back" alt="">
+        <video class="transition-video" id="transition-video" muted playsinline preload="auto" hidden></video>
+        <div class="hotspots" id="hotspots"></div>
+      </div>
+      <p class="caption" id="caption"></p>
+    </section>
+
+    <footer class="walkthrough-footer">
+      <div class="progress" id="progress" role="progressbar" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">1 / 1</div>
+      <div class="dots" id="dots" aria-label="Screens"></div>
+    </footer>
+  </main>
+
+  <script type="application/json" id="walkthrough-data">{"platform_order":["android","ios","react_native"],"platforms":{"android":{"display_name":"Android","aspect_ratio":2.1667,"screens":[{"id":"plan-sheet","step_id":"assign_destination","caption":"The plan sheet with both endpoints chosen.","image":"assets/android/android-plan-sheet.png","hotspots":[]},{"id":"provider-section","step_id":"open_settings","caption":"The provider section with each capability's display name and credential state.","image":"assets/android/android-provider-section.png","hotspots":[]},{"id":"navigation","step_id":"drive","caption":"Simulated navigation with the turn banner, route polyline, ETA line and 1x playback controls.","image":"assets/android/android-navigation.png","hotspots":[]},{"id":"vector-base","step_id":"open","caption":"The styled vector base with its place labels.","image":"assets/android/android-vector-base.png","hotspots":[]},{"id":"layers-closed","step_id":"open","caption":"The map with the layers control closed over the applied raster base.","image":"assets/android/android-layers-closed.png","hotspots":[]},{"id":"layers-open","step_id":"open","caption":"The same camera with the layers panel open on its lower rows.","image":"assets/android/android-layers-open.png","hotspots":[]}]},"ios":{"display_name":"iOS","aspect_ratio":2.1667,"screens":[{"id":"plan-sheet","step_id":"assign_destination","caption":"The plan sheet with both endpoints chosen.","image":"assets/ios/ios-plan-sheet.png","hotspots":[]},{"id":"provider-section","step_id":"open_settings","caption":"The provider section with each capability's display name and credential state.","image":"assets/ios/ios-provider-section.png","hotspots":[]},{"id":"navigation","step_id":"drive","caption":"Simulated navigation with the turn banner, route polyline, ETA line and 1x playback controls.","image":"assets/ios/ios-navigation.png","hotspots":[]},{"id":"vector-base","step_id":"open","caption":"The styled vector base with its place labels.","image":"assets/ios/ios-vector-base.png","hotspots":[]},{"id":"layers-closed","step_id":"open","caption":"The map with the layers control closed over the applied raster base.","image":"assets/ios/ios-layers-closed.png","hotspots":[]},{"id":"layers-open","step_id":"open","caption":"The same camera with the layers panel open on its lower rows.","image":"assets/ios/ios-layers-open.png","hotspots":[]}]},"react_native":{"display_name":"React Native","aspect_ratio":2.1667,"screens":[{"id":"plan-sheet","step_id":"assign_destination","caption":"The plan sheet with both endpoints chosen.","image":"assets/react_native/react-native-plan-sheet.png","hotspots":[]},{"id":"provider-section","step_id":"open_settings","caption":"The provider section with each capability's display name and credential state.","image":"assets/react_native/react-native-provider-section.png","hotspots":[]},{"id":"navigation","step_id":"drive","caption":"Simulated navigation with the turn banner, route polyline, ETA line and 1x playback controls.","image":"assets/react_native/react-native-navigation.png","hotspots":[]},{"id":"vector-base","step_id":"open","caption":"The styled vector base with its place labels.","image":"assets/react_native/react-native-vector-base.png","hotspots":[]},{"id":"layers-closed","step_id":"open","caption":"The map with the layers control closed over the applied raster base.","image":"assets/react_native/react-native-layers-closed.png","hotspots":[]},{"id":"layers-open","step_id":"open","caption":"The same camera with the layers panel open on its lower rows.","image":"assets/react_native/react-native-layers-open.png","hotspots":[]}]}}}</script>
+  <script src="player.js"></script>
+</body>
+</html>

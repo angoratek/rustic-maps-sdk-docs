@@ -233,221 +233,217 @@
 <a href=#233 id=233 data-nosnippet>233</a>        DEFAULT_FIELD_OF_VIEW_DEGREES, MAXIMUM_PITCH_DEGREES, MAXIMUM_ZOOM_LEVEL,
 <a href=#234 id=234 data-nosnippet>234</a>        MINIMUM_ZOOM_LEVEL, MapCamera, ViewportPixels,
 <a href=#235 id=235 data-nosnippet>235</a>    };
-<a href=#236 id=236 data-nosnippet>236</a>    <span class="kw">use </span>geospatial_types::GeographicCoordinate;
+<a href=#236 id=236 data-nosnippet>236</a>    <span class="kw">use </span>rustic_maps_test_support::validated_coordinate <span class="kw">as </span>coordinate;
 <a href=#237 id=237 data-nosnippet>237</a>
-<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">fn </span>coordinate(latitude: f64, longitude: f64) -&gt; GeographicCoordinate {
-<a href=#239 id=239 data-nosnippet>239</a>        GeographicCoordinate::from_degrees(latitude, longitude).unwrap()
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">fn </span>viewport() -&gt; ViewportPixels {
+<a href=#239 id=239 data-nosnippet>239</a>        ViewportPixels::new(<span class="number">1024.0</span>, <span class="number">768.0</span>).unwrap()
 <a href=#240 id=240 data-nosnippet>240</a>    }
 <a href=#241 id=241 data-nosnippet>241</a>
-<a href=#242 id=242 data-nosnippet>242</a>    <span class="kw">fn </span>viewport() -&gt; ViewportPixels {
-<a href=#243 id=243 data-nosnippet>243</a>        ViewportPixels::new(<span class="number">1024.0</span>, <span class="number">768.0</span>).unwrap()
-<a href=#244 id=244 data-nosnippet>244</a>    }
-<a href=#245 id=245 data-nosnippet>245</a>
-<a href=#246 id=246 data-nosnippet>246</a>    <span class="doccomment">/// Headroom for the focal point's world point landing back under its
-<a href=#247 id=247 data-nosnippet>247</a>    /// pixel after a delta; matrix round trips at zoom 14 permit
-<a href=#248 id=248 data-nosnippet>248</a>    /// sub-hundredth-pixel drift (the same class the camera tests carry).
-<a href=#249 id=249 data-nosnippet>249</a>    </span><span class="kw">const </span>FOCAL_HOLD_TOLERANCE_PIXELS: f64 = <span class="number">1e-2</span>;
-<a href=#250 id=250 data-nosnippet>250</a>    <span class="doccomment">/// Headroom for the zoom delta arriving exactly (clamps pass the level
-<a href=#251 id=251 data-nosnippet>251</a>    /// through `MapCamera::new` unmodified in range).
-<a href=#252 id=252 data-nosnippet>252</a>    </span><span class="kw">const </span>ZOOM_LEVEL_TOLERANCE: f64 = <span class="number">1e-9</span>;
-<a href=#253 id=253 data-nosnippet>253</a>    <span class="doccomment">/// Headroom for bearing wrap arithmetic on the rotate answers.
-<a href=#254 id=254 data-nosnippet>254</a>    </span><span class="kw">const </span>BEARING_DEGREES_TOLERANCE: f64 = <span class="number">1e-9</span>;
-<a href=#255 id=255 data-nosnippet>255</a>
-<a href=#256 id=256 data-nosnippet>256</a>    <span class="doccomment">/// The sample camera: a recorded neighborhood at a typical map zoom,
-<a href=#257 id=257 data-nosnippet>257</a>    /// pitched and turned so the corrections run under a real perspective,
-<a href=#258 id=258 data-nosnippet>258</a>    /// not only top-down.
-<a href=#259 id=259 data-nosnippet>259</a>    </span><span class="kw">fn </span>fixture_camera() -&gt; MapCamera {
-<a href=#260 id=260 data-nosnippet>260</a>        MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">25.0</span>, <span class="number">30.0</span>)
-<a href=#261 id=261 data-nosnippet>261</a>    }
-<a href=#262 id=262 data-nosnippet>262</a>
-<a href=#263 id=263 data-nosnippet>263</a>    <span class="doccomment">/// The focal pixel of the shared tests: a quarter of the viewport in
-<a href=#264 id=264 data-nosnippet>264</a>    /// from the top left, visibly off the center so the hold correction has
-<a href=#265 id=265 data-nosnippet>265</a>    /// work to do.
-<a href=#266 id=266 data-nosnippet>266</a>    </span><span class="kw">fn </span>focal_point(viewport: <span class="kw-2">&amp;</span>ViewportPixels) -&gt; [f64; <span class="number">2</span>] {
-<a href=#267 id=267 data-nosnippet>267</a>        [viewport.width_pixels * <span class="number">0.25</span>, viewport.height_pixels * <span class="number">0.25</span>]
-<a href=#268 id=268 data-nosnippet>268</a>    }
-<a href=#269 id=269 data-nosnippet>269</a>
-<a href=#270 id=270 data-nosnippet>270</a>    <span class="kw">fn </span>assert_points_agree(first: [f64; <span class="number">2</span>], second: [f64; <span class="number">2</span>], tolerance_pixels: f64) {
-<a href=#271 id=271 data-nosnippet>271</a>        <span class="macro">assert!</span>(
-<a href=#272 id=272 data-nosnippet>272</a>            (first[<span class="number">0</span>] - second[<span class="number">0</span>]).hypot(first[<span class="number">1</span>] - second[<span class="number">1</span>]) &lt;= tolerance_pixels,
-<a href=#273 id=273 data-nosnippet>273</a>            <span class="string">"screen points must agree within {tolerance_pixels} px: {first:?} vs {second:?}"</span>,
-<a href=#274 id=274 data-nosnippet>274</a>        );
-<a href=#275 id=275 data-nosnippet>275</a>    }
-<a href=#276 id=276 data-nosnippet>276</a>
-<a href=#277 id=277 data-nosnippet>277</a>    <span class="attr">#[test]
-<a href=#278 id=278 data-nosnippet>278</a>    </span><span class="kw">fn </span>pan_tracks_the_pointers_ground_point_to_the_viewport_center() {
-<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span>camera = fixture_camera();
-<a href=#280 id=280 data-nosnippet>280</a>        <span class="kw">let </span>viewport = viewport();
-<a href=#281 id=281 data-nosnippet>281</a>        <span class="kw">let </span>delta_pixels = [<span class="number">64.0</span>, -<span class="number">48.0</span>];
-<a href=#282 id=282 data-nosnippet>282</a>        <span class="kw">let </span>viewport_center = viewport_center_pixels(<span class="kw-2">&amp;</span>viewport);
-<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">let </span>pointer_start = [
-<a href=#284 id=284 data-nosnippet>284</a>            viewport_center[<span class="number">0</span>] - delta_pixels[<span class="number">0</span>],
-<a href=#285 id=285 data-nosnippet>285</a>            viewport_center[<span class="number">1</span>] - delta_pixels[<span class="number">1</span>],
-<a href=#286 id=286 data-nosnippet>286</a>        ];
-<a href=#287 id=287 data-nosnippet>287</a>        <span class="kw">let </span>pointer_ground = camera
-<a href=#288 id=288 data-nosnippet>288</a>            .screen_to_ground_coordinate(pointer_start, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#289 id=289 data-nosnippet>289</a>            .unwrap();
-<a href=#290 id=290 data-nosnippet>290</a>        <span class="kw">let </span>panned =
-<a href=#291 id=291 data-nosnippet>291</a>            camera.pan_by_screen_pixels(delta_pixels, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES);
-<a href=#292 id=292 data-nosnippet>292</a>        <span class="comment">// The pointer traveled from `pointer_start` to the center; the ground
-<a href=#293 id=293 data-nosnippet>293</a>        // point under its start must now sit at the center.
-<a href=#294 id=294 data-nosnippet>294</a>        </span>assert_points_agree(
-<a href=#295 id=295 data-nosnippet>295</a>            panned
-<a href=#296 id=296 data-nosnippet>296</a>                .project_to_screen(<span class="kw-2">&amp;</span>pointer_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#297 id=297 data-nosnippet>297</a>                .unwrap(),
-<a href=#298 id=298 data-nosnippet>298</a>            viewport_center,
-<a href=#299 id=299 data-nosnippet>299</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
-<a href=#300 id=300 data-nosnippet>300</a>        );
-<a href=#301 id=301 data-nosnippet>301</a>        <span class="comment">// Zoom, bearing and pitch ride through unchanged.
-<a href=#302 id=302 data-nosnippet>302</a>        </span><span class="macro">assert_eq!</span>(panned.zoom_level, camera.zoom_level);
-<a href=#303 id=303 data-nosnippet>303</a>        <span class="macro">assert_eq!</span>(panned.bearing_degrees, camera.bearing_degrees);
-<a href=#304 id=304 data-nosnippet>304</a>        <span class="macro">assert_eq!</span>(panned.pitch_degrees, camera.pitch_degrees);
-<a href=#305 id=305 data-nosnippet>305</a>    }
-<a href=#306 id=306 data-nosnippet>306</a>
-<a href=#307 id=307 data-nosnippet>307</a>    <span class="attr">#[test]
-<a href=#308 id=308 data-nosnippet>308</a>    </span><span class="kw">fn </span>pan_above_the_horizon_leaves_the_camera_unchanged() {
-<a href=#309 id=309 data-nosnippet>309</a>        <span class="kw">let </span>camera = MapCamera::new(coordinate(<span class="number">30.0</span>, <span class="number">20.0</span>), <span class="number">10.0</span>, <span class="number">0.0</span>, MAXIMUM_PITCH_DEGREES);
-<a href=#310 id=310 data-nosnippet>310</a>        <span class="kw">let </span>viewport = viewport();
-<a href=#311 id=311 data-nosnippet>311</a>        <span class="comment">// The top of the viewport looks past the horizon at maximum pitch, so
-<a href=#312 id=312 data-nosnippet>312</a>        // a pointer delta reaching it unprojects no ground.
-<a href=#313 id=313 data-nosnippet>313</a>        </span><span class="macro">assert!</span>(
-<a href=#314 id=314 data-nosnippet>314</a>            camera
-<a href=#315 id=315 data-nosnippet>315</a>                .screen_to_ground_coordinate([<span class="number">0.0</span>, <span class="number">0.0</span>], <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#316 id=316 data-nosnippet>316</a>                .is_none()
-<a href=#317 id=317 data-nosnippet>317</a>        );
-<a href=#318 id=318 data-nosnippet>318</a>        <span class="kw">let </span>panned = camera.pan_by_screen_pixels(
-<a href=#319 id=319 data-nosnippet>319</a>            [viewport.width_pixels, viewport.height_pixels],
-<a href=#320 id=320 data-nosnippet>320</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#321 id=321 data-nosnippet>321</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#322 id=322 data-nosnippet>322</a>        );
-<a href=#323 id=323 data-nosnippet>323</a>        <span class="macro">assert_eq!</span>(panned, camera);
-<a href=#324 id=324 data-nosnippet>324</a>    }
-<a href=#325 id=325 data-nosnippet>325</a>
-<a href=#326 id=326 data-nosnippet>326</a>    <span class="attr">#[test]
-<a href=#327 id=327 data-nosnippet>327</a>    </span><span class="kw">fn </span>focal_zoom_keeps_the_world_point_under_the_focal_pixel() {
-<a href=#328 id=328 data-nosnippet>328</a>        <span class="kw">let </span>camera = fixture_camera();
-<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">let </span>viewport = viewport();
-<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">let </span>focal = focal_point(<span class="kw-2">&amp;</span>viewport);
-<a href=#331 id=331 data-nosnippet>331</a>        <span class="kw">let </span>held_ground = camera
-<a href=#332 id=332 data-nosnippet>332</a>            .screen_to_ground_coordinate(focal, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#333 id=333 data-nosnippet>333</a>            .unwrap();
-<a href=#334 id=334 data-nosnippet>334</a>        <span class="kw">let </span>zoomed = camera.zoom_by_levels_around_screen_point(
-<a href=#335 id=335 data-nosnippet>335</a>            <span class="number">1.0</span>,
-<a href=#336 id=336 data-nosnippet>336</a>            focal,
-<a href=#337 id=337 data-nosnippet>337</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#338 id=338 data-nosnippet>338</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#339 id=339 data-nosnippet>339</a>        );
-<a href=#340 id=340 data-nosnippet>340</a>        <span class="macro">assert!</span>((zoomed.zoom_level - (camera.zoom_level + <span class="number">1.0</span>)).abs() &lt; ZOOM_LEVEL_TOLERANCE);
-<a href=#341 id=341 data-nosnippet>341</a>        assert_points_agree(
-<a href=#342 id=342 data-nosnippet>342</a>            zoomed
-<a href=#343 id=343 data-nosnippet>343</a>                .project_to_screen(<span class="kw-2">&amp;</span>held_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#344 id=344 data-nosnippet>344</a>                .unwrap(),
-<a href=#345 id=345 data-nosnippet>345</a>            focal,
-<a href=#346 id=346 data-nosnippet>346</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
-<a href=#347 id=347 data-nosnippet>347</a>        );
-<a href=#348 id=348 data-nosnippet>348</a>        <span class="comment">// The center moved toward the held point's ground position (a
-<a href=#349 id=349 data-nosnippet>349</a>        // zoom-in pans the anchor toward the point being held) but zoom,
-<a href=#350 id=350 data-nosnippet>350</a>        // bearing and pitch carry through.
-<a href=#351 id=351 data-nosnippet>351</a>        </span><span class="macro">assert_eq!</span>(zoomed.bearing_degrees, camera.bearing_degrees);
-<a href=#352 id=352 data-nosnippet>352</a>        <span class="macro">assert_eq!</span>(zoomed.pitch_degrees, camera.pitch_degrees);
-<a href=#353 id=353 data-nosnippet>353</a>        <span class="kw">let </span>camera_world = <span class="kw">crate</span>::projection::coordinate_to_normalized_world(<span class="kw-2">&amp;</span>camera.center);
-<a href=#354 id=354 data-nosnippet>354</a>        <span class="kw">let </span>zoomed_world = <span class="kw">crate</span>::projection::coordinate_to_normalized_world(<span class="kw-2">&amp;</span>zoomed.center);
-<a href=#355 id=355 data-nosnippet>355</a>        <span class="comment">// The fixture focal sits left of and above the center (northwest on
-<a href=#356 id=356 data-nosnippet>356</a>        // the ground at bearing 25°), so the anchor must move the same way.
-<a href=#357 id=357 data-nosnippet>357</a>        </span><span class="macro">assert!</span>(zoomed_world[<span class="number">0</span>] &lt; camera_world[<span class="number">0</span>] || zoomed_world[<span class="number">1</span>] &lt; camera_world[<span class="number">1</span>]);
-<a href=#358 id=358 data-nosnippet>358</a>    }
-<a href=#359 id=359 data-nosnippet>359</a>
-<a href=#360 id=360 data-nosnippet>360</a>    <span class="attr">#[test]
-<a href=#361 id=361 data-nosnippet>361</a>    </span><span class="kw">fn </span>focal_zoom_clamps_to_the_camera_zoom_range() {
-<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>camera = MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>);
-<a href=#363 id=363 data-nosnippet>363</a>        <span class="kw">let </span>viewport = viewport();
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="comment">// Zoom-in clamp against an off-center focal: top-down, so the whole
-<a href=#365 id=365 data-nosnippet>365</a>        // held-point correction is affine and stays inside the map square.
-<a href=#366 id=366 data-nosnippet>366</a>        </span><span class="kw">let </span>held_ground = camera
-<a href=#367 id=367 data-nosnippet>367</a>            .screen_to_ground_coordinate(
-<a href=#368 id=368 data-nosnippet>368</a>                focal_point(<span class="kw-2">&amp;</span>viewport),
-<a href=#369 id=369 data-nosnippet>369</a>                <span class="kw-2">&amp;</span>viewport,
-<a href=#370 id=370 data-nosnippet>370</a>                DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#371 id=371 data-nosnippet>371</a>            )
-<a href=#372 id=372 data-nosnippet>372</a>            .unwrap();
-<a href=#373 id=373 data-nosnippet>373</a>        <span class="kw">let </span>zoomed_in = camera.zoom_by_levels_around_screen_point(
-<a href=#374 id=374 data-nosnippet>374</a>            <span class="number">100.0</span>,
-<a href=#375 id=375 data-nosnippet>375</a>            focal_point(<span class="kw-2">&amp;</span>viewport),
-<a href=#376 id=376 data-nosnippet>376</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#377 id=377 data-nosnippet>377</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#378 id=378 data-nosnippet>378</a>        );
-<a href=#379 id=379 data-nosnippet>379</a>        <span class="macro">assert_eq!</span>(zoomed_in.zoom_level, MAXIMUM_ZOOM_LEVEL);
-<a href=#380 id=380 data-nosnippet>380</a>        assert_points_agree(
-<a href=#381 id=381 data-nosnippet>381</a>            zoomed_in
-<a href=#382 id=382 data-nosnippet>382</a>                .project_to_screen(<span class="kw-2">&amp;</span>held_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#383 id=383 data-nosnippet>383</a>                .unwrap(),
-<a href=#384 id=384 data-nosnippet>384</a>            focal_point(<span class="kw-2">&amp;</span>viewport),
-<a href=#385 id=385 data-nosnippet>385</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
-<a href=#386 id=386 data-nosnippet>386</a>        );
-<a href=#387 id=387 data-nosnippet>387</a>        <span class="comment">// Zoom-out clamp about the viewport center: at minimum zoom the view
-<a href=#388 id=388 data-nosnippet>388</a>        // footprint spans whole world copies, where the held-point
-<a href=#389 id=389 data-nosnippet>389</a>        // correction is out of square — a center focal keeps the test honest
-<a href=#390 id=390 data-nosnippet>390</a>        // and asserts the clamp itself.
-<a href=#391 id=391 data-nosnippet>391</a>        </span><span class="kw">let </span>zoomed_out = camera.zoom_by_levels_around_screen_point(
-<a href=#392 id=392 data-nosnippet>392</a>            -<span class="number">100.0</span>,
-<a href=#393 id=393 data-nosnippet>393</a>            viewport_center_pixels(<span class="kw-2">&amp;</span>viewport),
-<a href=#394 id=394 data-nosnippet>394</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#395 id=395 data-nosnippet>395</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#396 id=396 data-nosnippet>396</a>        );
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="macro">assert_eq!</span>(zoomed_out.zoom_level, MINIMUM_ZOOM_LEVEL);
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="macro">assert_eq!</span>(zoomed_out.center, camera.center);
-<a href=#399 id=399 data-nosnippet>399</a>        <span class="macro">assert_eq!</span>(zoomed_out.bearing_degrees, camera.bearing_degrees);
-<a href=#400 id=400 data-nosnippet>400</a>        <span class="macro">assert_eq!</span>(zoomed_out.pitch_degrees, camera.pitch_degrees);
-<a href=#401 id=401 data-nosnippet>401</a>    }
-<a href=#402 id=402 data-nosnippet>402</a>
-<a href=#403 id=403 data-nosnippet>403</a>    <span class="attr">#[test]
-<a href=#404 id=404 data-nosnippet>404</a>    </span><span class="kw">fn </span>focal_rotation_keeps_the_world_point_under_the_focal_pixel() {
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>camera = fixture_camera();
-<a href=#406 id=406 data-nosnippet>406</a>        <span class="kw">let </span>viewport = viewport();
-<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">let </span>focal = focal_point(<span class="kw-2">&amp;</span>viewport);
-<a href=#408 id=408 data-nosnippet>408</a>        <span class="kw">let </span>held_ground = camera
-<a href=#409 id=409 data-nosnippet>409</a>            .screen_to_ground_coordinate(focal, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#410 id=410 data-nosnippet>410</a>            .unwrap();
-<a href=#411 id=411 data-nosnippet>411</a>        <span class="kw">let </span>rotated = camera.rotate_by_degrees_around_screen_point(
-<a href=#412 id=412 data-nosnippet>412</a>            <span class="number">45.0</span>,
-<a href=#413 id=413 data-nosnippet>413</a>            focal,
-<a href=#414 id=414 data-nosnippet>414</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#415 id=415 data-nosnippet>415</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#242 id=242 data-nosnippet>242</a>    <span class="doccomment">/// Headroom for the focal point's world point landing back under its
+<a href=#243 id=243 data-nosnippet>243</a>    /// pixel after a delta; matrix round trips at zoom 14 permit
+<a href=#244 id=244 data-nosnippet>244</a>    /// sub-hundredth-pixel drift (the same class the camera tests carry).
+<a href=#245 id=245 data-nosnippet>245</a>    </span><span class="kw">const </span>FOCAL_HOLD_TOLERANCE_PIXELS: f64 = <span class="number">1e-2</span>;
+<a href=#246 id=246 data-nosnippet>246</a>    <span class="doccomment">/// Headroom for the zoom delta arriving exactly (clamps pass the level
+<a href=#247 id=247 data-nosnippet>247</a>    /// through `MapCamera::new` unmodified in range).
+<a href=#248 id=248 data-nosnippet>248</a>    </span><span class="kw">const </span>ZOOM_LEVEL_TOLERANCE: f64 = <span class="number">1e-9</span>;
+<a href=#249 id=249 data-nosnippet>249</a>    <span class="doccomment">/// Headroom for bearing wrap arithmetic on the rotate answers.
+<a href=#250 id=250 data-nosnippet>250</a>    </span><span class="kw">const </span>BEARING_DEGREES_TOLERANCE: f64 = <span class="number">1e-9</span>;
+<a href=#251 id=251 data-nosnippet>251</a>
+<a href=#252 id=252 data-nosnippet>252</a>    <span class="doccomment">/// The sample camera: a recorded neighborhood at a typical map zoom,
+<a href=#253 id=253 data-nosnippet>253</a>    /// pitched and turned so the corrections run under a real perspective,
+<a href=#254 id=254 data-nosnippet>254</a>    /// not only top-down.
+<a href=#255 id=255 data-nosnippet>255</a>    </span><span class="kw">fn </span>fixture_camera() -&gt; MapCamera {
+<a href=#256 id=256 data-nosnippet>256</a>        MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">25.0</span>, <span class="number">30.0</span>)
+<a href=#257 id=257 data-nosnippet>257</a>    }
+<a href=#258 id=258 data-nosnippet>258</a>
+<a href=#259 id=259 data-nosnippet>259</a>    <span class="doccomment">/// The focal pixel of the shared tests: a quarter of the viewport in
+<a href=#260 id=260 data-nosnippet>260</a>    /// from the top left, visibly off the center so the hold correction has
+<a href=#261 id=261 data-nosnippet>261</a>    /// work to do.
+<a href=#262 id=262 data-nosnippet>262</a>    </span><span class="kw">fn </span>focal_point(viewport: <span class="kw-2">&amp;</span>ViewportPixels) -&gt; [f64; <span class="number">2</span>] {
+<a href=#263 id=263 data-nosnippet>263</a>        [viewport.width_pixels * <span class="number">0.25</span>, viewport.height_pixels * <span class="number">0.25</span>]
+<a href=#264 id=264 data-nosnippet>264</a>    }
+<a href=#265 id=265 data-nosnippet>265</a>
+<a href=#266 id=266 data-nosnippet>266</a>    <span class="kw">fn </span>assert_points_agree(first: [f64; <span class="number">2</span>], second: [f64; <span class="number">2</span>], tolerance_pixels: f64) {
+<a href=#267 id=267 data-nosnippet>267</a>        <span class="macro">assert!</span>(
+<a href=#268 id=268 data-nosnippet>268</a>            (first[<span class="number">0</span>] - second[<span class="number">0</span>]).hypot(first[<span class="number">1</span>] - second[<span class="number">1</span>]) &lt;= tolerance_pixels,
+<a href=#269 id=269 data-nosnippet>269</a>            <span class="string">"screen points must agree within {tolerance_pixels} px: {first:?} vs {second:?}"</span>,
+<a href=#270 id=270 data-nosnippet>270</a>        );
+<a href=#271 id=271 data-nosnippet>271</a>    }
+<a href=#272 id=272 data-nosnippet>272</a>
+<a href=#273 id=273 data-nosnippet>273</a>    <span class="attr">#[test]
+<a href=#274 id=274 data-nosnippet>274</a>    </span><span class="kw">fn </span>pan_tracks_the_pointers_ground_point_to_the_viewport_center() {
+<a href=#275 id=275 data-nosnippet>275</a>        <span class="kw">let </span>camera = fixture_camera();
+<a href=#276 id=276 data-nosnippet>276</a>        <span class="kw">let </span>viewport = viewport();
+<a href=#277 id=277 data-nosnippet>277</a>        <span class="kw">let </span>delta_pixels = [<span class="number">64.0</span>, -<span class="number">48.0</span>];
+<a href=#278 id=278 data-nosnippet>278</a>        <span class="kw">let </span>viewport_center = viewport_center_pixels(<span class="kw-2">&amp;</span>viewport);
+<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span>pointer_start = [
+<a href=#280 id=280 data-nosnippet>280</a>            viewport_center[<span class="number">0</span>] - delta_pixels[<span class="number">0</span>],
+<a href=#281 id=281 data-nosnippet>281</a>            viewport_center[<span class="number">1</span>] - delta_pixels[<span class="number">1</span>],
+<a href=#282 id=282 data-nosnippet>282</a>        ];
+<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">let </span>pointer_ground = camera
+<a href=#284 id=284 data-nosnippet>284</a>            .screen_to_ground_coordinate(pointer_start, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#285 id=285 data-nosnippet>285</a>            .unwrap();
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">let </span>panned =
+<a href=#287 id=287 data-nosnippet>287</a>            camera.pan_by_screen_pixels(delta_pixels, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES);
+<a href=#288 id=288 data-nosnippet>288</a>        <span class="comment">// The pointer traveled from `pointer_start` to the center; the ground
+<a href=#289 id=289 data-nosnippet>289</a>        // point under its start must now sit at the center.
+<a href=#290 id=290 data-nosnippet>290</a>        </span>assert_points_agree(
+<a href=#291 id=291 data-nosnippet>291</a>            panned
+<a href=#292 id=292 data-nosnippet>292</a>                .project_to_screen(<span class="kw-2">&amp;</span>pointer_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#293 id=293 data-nosnippet>293</a>                .unwrap(),
+<a href=#294 id=294 data-nosnippet>294</a>            viewport_center,
+<a href=#295 id=295 data-nosnippet>295</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
+<a href=#296 id=296 data-nosnippet>296</a>        );
+<a href=#297 id=297 data-nosnippet>297</a>        <span class="comment">// Zoom, bearing and pitch ride through unchanged.
+<a href=#298 id=298 data-nosnippet>298</a>        </span><span class="macro">assert_eq!</span>(panned.zoom_level, camera.zoom_level);
+<a href=#299 id=299 data-nosnippet>299</a>        <span class="macro">assert_eq!</span>(panned.bearing_degrees, camera.bearing_degrees);
+<a href=#300 id=300 data-nosnippet>300</a>        <span class="macro">assert_eq!</span>(panned.pitch_degrees, camera.pitch_degrees);
+<a href=#301 id=301 data-nosnippet>301</a>    }
+<a href=#302 id=302 data-nosnippet>302</a>
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="attr">#[test]
+<a href=#304 id=304 data-nosnippet>304</a>    </span><span class="kw">fn </span>pan_above_the_horizon_leaves_the_camera_unchanged() {
+<a href=#305 id=305 data-nosnippet>305</a>        <span class="kw">let </span>camera = MapCamera::new(coordinate(<span class="number">30.0</span>, <span class="number">20.0</span>), <span class="number">10.0</span>, <span class="number">0.0</span>, MAXIMUM_PITCH_DEGREES);
+<a href=#306 id=306 data-nosnippet>306</a>        <span class="kw">let </span>viewport = viewport();
+<a href=#307 id=307 data-nosnippet>307</a>        <span class="comment">// The top of the viewport looks past the horizon at maximum pitch, so
+<a href=#308 id=308 data-nosnippet>308</a>        // a pointer delta reaching it unprojects no ground.
+<a href=#309 id=309 data-nosnippet>309</a>        </span><span class="macro">assert!</span>(
+<a href=#310 id=310 data-nosnippet>310</a>            camera
+<a href=#311 id=311 data-nosnippet>311</a>                .screen_to_ground_coordinate([<span class="number">0.0</span>, <span class="number">0.0</span>], <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#312 id=312 data-nosnippet>312</a>                .is_none()
+<a href=#313 id=313 data-nosnippet>313</a>        );
+<a href=#314 id=314 data-nosnippet>314</a>        <span class="kw">let </span>panned = camera.pan_by_screen_pixels(
+<a href=#315 id=315 data-nosnippet>315</a>            [viewport.width_pixels, viewport.height_pixels],
+<a href=#316 id=316 data-nosnippet>316</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#317 id=317 data-nosnippet>317</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#318 id=318 data-nosnippet>318</a>        );
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="macro">assert_eq!</span>(panned, camera);
+<a href=#320 id=320 data-nosnippet>320</a>    }
+<a href=#321 id=321 data-nosnippet>321</a>
+<a href=#322 id=322 data-nosnippet>322</a>    <span class="attr">#[test]
+<a href=#323 id=323 data-nosnippet>323</a>    </span><span class="kw">fn </span>focal_zoom_keeps_the_world_point_under_the_focal_pixel() {
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">let </span>camera = fixture_camera();
+<a href=#325 id=325 data-nosnippet>325</a>        <span class="kw">let </span>viewport = viewport();
+<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">let </span>focal = focal_point(<span class="kw-2">&amp;</span>viewport);
+<a href=#327 id=327 data-nosnippet>327</a>        <span class="kw">let </span>held_ground = camera
+<a href=#328 id=328 data-nosnippet>328</a>            .screen_to_ground_coordinate(focal, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#329 id=329 data-nosnippet>329</a>            .unwrap();
+<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">let </span>zoomed = camera.zoom_by_levels_around_screen_point(
+<a href=#331 id=331 data-nosnippet>331</a>            <span class="number">1.0</span>,
+<a href=#332 id=332 data-nosnippet>332</a>            focal,
+<a href=#333 id=333 data-nosnippet>333</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#334 id=334 data-nosnippet>334</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#335 id=335 data-nosnippet>335</a>        );
+<a href=#336 id=336 data-nosnippet>336</a>        <span class="macro">assert!</span>((zoomed.zoom_level - (camera.zoom_level + <span class="number">1.0</span>)).abs() &lt; ZOOM_LEVEL_TOLERANCE);
+<a href=#337 id=337 data-nosnippet>337</a>        assert_points_agree(
+<a href=#338 id=338 data-nosnippet>338</a>            zoomed
+<a href=#339 id=339 data-nosnippet>339</a>                .project_to_screen(<span class="kw-2">&amp;</span>held_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#340 id=340 data-nosnippet>340</a>                .unwrap(),
+<a href=#341 id=341 data-nosnippet>341</a>            focal,
+<a href=#342 id=342 data-nosnippet>342</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
+<a href=#343 id=343 data-nosnippet>343</a>        );
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="comment">// The center moved toward the held point's ground position (a
+<a href=#345 id=345 data-nosnippet>345</a>        // zoom-in pans the anchor toward the point being held) but zoom,
+<a href=#346 id=346 data-nosnippet>346</a>        // bearing and pitch carry through.
+<a href=#347 id=347 data-nosnippet>347</a>        </span><span class="macro">assert_eq!</span>(zoomed.bearing_degrees, camera.bearing_degrees);
+<a href=#348 id=348 data-nosnippet>348</a>        <span class="macro">assert_eq!</span>(zoomed.pitch_degrees, camera.pitch_degrees);
+<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">let </span>camera_world = <span class="kw">crate</span>::projection::coordinate_to_normalized_world(<span class="kw-2">&amp;</span>camera.center);
+<a href=#350 id=350 data-nosnippet>350</a>        <span class="kw">let </span>zoomed_world = <span class="kw">crate</span>::projection::coordinate_to_normalized_world(<span class="kw-2">&amp;</span>zoomed.center);
+<a href=#351 id=351 data-nosnippet>351</a>        <span class="comment">// The fixture focal sits left of and above the center (northwest on
+<a href=#352 id=352 data-nosnippet>352</a>        // the ground at bearing 25°), so the anchor must move the same way.
+<a href=#353 id=353 data-nosnippet>353</a>        </span><span class="macro">assert!</span>(zoomed_world[<span class="number">0</span>] &lt; camera_world[<span class="number">0</span>] || zoomed_world[<span class="number">1</span>] &lt; camera_world[<span class="number">1</span>]);
+<a href=#354 id=354 data-nosnippet>354</a>    }
+<a href=#355 id=355 data-nosnippet>355</a>
+<a href=#356 id=356 data-nosnippet>356</a>    <span class="attr">#[test]
+<a href=#357 id=357 data-nosnippet>357</a>    </span><span class="kw">fn </span>focal_zoom_clamps_to_the_camera_zoom_range() {
+<a href=#358 id=358 data-nosnippet>358</a>        <span class="kw">let </span>camera = MapCamera::new(coordinate(<span class="number">38.5766</span>, -<span class="number">121.4944</span>), <span class="number">14.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>);
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="kw">let </span>viewport = viewport();
+<a href=#360 id=360 data-nosnippet>360</a>        <span class="comment">// Zoom-in clamp against an off-center focal: top-down, so the whole
+<a href=#361 id=361 data-nosnippet>361</a>        // held-point correction is affine and stays inside the map square.
+<a href=#362 id=362 data-nosnippet>362</a>        </span><span class="kw">let </span>held_ground = camera
+<a href=#363 id=363 data-nosnippet>363</a>            .screen_to_ground_coordinate(
+<a href=#364 id=364 data-nosnippet>364</a>                focal_point(<span class="kw-2">&amp;</span>viewport),
+<a href=#365 id=365 data-nosnippet>365</a>                <span class="kw-2">&amp;</span>viewport,
+<a href=#366 id=366 data-nosnippet>366</a>                DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#367 id=367 data-nosnippet>367</a>            )
+<a href=#368 id=368 data-nosnippet>368</a>            .unwrap();
+<a href=#369 id=369 data-nosnippet>369</a>        <span class="kw">let </span>zoomed_in = camera.zoom_by_levels_around_screen_point(
+<a href=#370 id=370 data-nosnippet>370</a>            <span class="number">100.0</span>,
+<a href=#371 id=371 data-nosnippet>371</a>            focal_point(<span class="kw-2">&amp;</span>viewport),
+<a href=#372 id=372 data-nosnippet>372</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#373 id=373 data-nosnippet>373</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#374 id=374 data-nosnippet>374</a>        );
+<a href=#375 id=375 data-nosnippet>375</a>        <span class="macro">assert_eq!</span>(zoomed_in.zoom_level, MAXIMUM_ZOOM_LEVEL);
+<a href=#376 id=376 data-nosnippet>376</a>        assert_points_agree(
+<a href=#377 id=377 data-nosnippet>377</a>            zoomed_in
+<a href=#378 id=378 data-nosnippet>378</a>                .project_to_screen(<span class="kw-2">&amp;</span>held_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#379 id=379 data-nosnippet>379</a>                .unwrap(),
+<a href=#380 id=380 data-nosnippet>380</a>            focal_point(<span class="kw-2">&amp;</span>viewport),
+<a href=#381 id=381 data-nosnippet>381</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
+<a href=#382 id=382 data-nosnippet>382</a>        );
+<a href=#383 id=383 data-nosnippet>383</a>        <span class="comment">// Zoom-out clamp about the viewport center: at minimum zoom the view
+<a href=#384 id=384 data-nosnippet>384</a>        // footprint spans whole world copies, where the held-point
+<a href=#385 id=385 data-nosnippet>385</a>        // correction is out of square — a center focal keeps the test honest
+<a href=#386 id=386 data-nosnippet>386</a>        // and asserts the clamp itself.
+<a href=#387 id=387 data-nosnippet>387</a>        </span><span class="kw">let </span>zoomed_out = camera.zoom_by_levels_around_screen_point(
+<a href=#388 id=388 data-nosnippet>388</a>            -<span class="number">100.0</span>,
+<a href=#389 id=389 data-nosnippet>389</a>            viewport_center_pixels(<span class="kw-2">&amp;</span>viewport),
+<a href=#390 id=390 data-nosnippet>390</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#391 id=391 data-nosnippet>391</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#392 id=392 data-nosnippet>392</a>        );
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="macro">assert_eq!</span>(zoomed_out.zoom_level, MINIMUM_ZOOM_LEVEL);
+<a href=#394 id=394 data-nosnippet>394</a>        <span class="macro">assert_eq!</span>(zoomed_out.center, camera.center);
+<a href=#395 id=395 data-nosnippet>395</a>        <span class="macro">assert_eq!</span>(zoomed_out.bearing_degrees, camera.bearing_degrees);
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="macro">assert_eq!</span>(zoomed_out.pitch_degrees, camera.pitch_degrees);
+<a href=#397 id=397 data-nosnippet>397</a>    }
+<a href=#398 id=398 data-nosnippet>398</a>
+<a href=#399 id=399 data-nosnippet>399</a>    <span class="attr">#[test]
+<a href=#400 id=400 data-nosnippet>400</a>    </span><span class="kw">fn </span>focal_rotation_keeps_the_world_point_under_the_focal_pixel() {
+<a href=#401 id=401 data-nosnippet>401</a>        <span class="kw">let </span>camera = fixture_camera();
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">let </span>viewport = viewport();
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">let </span>focal = focal_point(<span class="kw-2">&amp;</span>viewport);
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span>held_ground = camera
+<a href=#405 id=405 data-nosnippet>405</a>            .screen_to_ground_coordinate(focal, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#406 id=406 data-nosnippet>406</a>            .unwrap();
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">let </span>rotated = camera.rotate_by_degrees_around_screen_point(
+<a href=#408 id=408 data-nosnippet>408</a>            <span class="number">45.0</span>,
+<a href=#409 id=409 data-nosnippet>409</a>            focal,
+<a href=#410 id=410 data-nosnippet>410</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#411 id=411 data-nosnippet>411</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#412 id=412 data-nosnippet>412</a>        );
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="macro">assert!</span>(
+<a href=#414 id=414 data-nosnippet>414</a>            (rotated.bearing_degrees - (camera.bearing_degrees + <span class="number">45.0</span>)).abs()
+<a href=#415 id=415 data-nosnippet>415</a>                &lt; BEARING_DEGREES_TOLERANCE
 <a href=#416 id=416 data-nosnippet>416</a>        );
-<a href=#417 id=417 data-nosnippet>417</a>        <span class="macro">assert!</span>(
-<a href=#418 id=418 data-nosnippet>418</a>            (rotated.bearing_degrees - (camera.bearing_degrees + <span class="number">45.0</span>)).abs()
-<a href=#419 id=419 data-nosnippet>419</a>                &lt; BEARING_DEGREES_TOLERANCE
-<a href=#420 id=420 data-nosnippet>420</a>        );
-<a href=#421 id=421 data-nosnippet>421</a>        assert_points_agree(
-<a href=#422 id=422 data-nosnippet>422</a>            rotated
-<a href=#423 id=423 data-nosnippet>423</a>                .project_to_screen(<span class="kw-2">&amp;</span>held_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
-<a href=#424 id=424 data-nosnippet>424</a>                .unwrap(),
-<a href=#425 id=425 data-nosnippet>425</a>            focal,
-<a href=#426 id=426 data-nosnippet>426</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
-<a href=#427 id=427 data-nosnippet>427</a>        );
-<a href=#428 id=428 data-nosnippet>428</a>        <span class="macro">assert_eq!</span>(rotated.zoom_level, camera.zoom_level);
-<a href=#429 id=429 data-nosnippet>429</a>        <span class="macro">assert_eq!</span>(rotated.pitch_degrees, camera.pitch_degrees);
-<a href=#430 id=430 data-nosnippet>430</a>    }
-<a href=#431 id=431 data-nosnippet>431</a>
-<a href=#432 id=432 data-nosnippet>432</a>    <span class="attr">#[test]
-<a href=#433 id=433 data-nosnippet>433</a>    </span><span class="kw">fn </span>rotation_about_the_viewport_center_moves_only_the_bearing() {
-<a href=#434 id=434 data-nosnippet>434</a>        <span class="kw">let </span>camera = fixture_camera();
-<a href=#435 id=435 data-nosnippet>435</a>        <span class="kw">let </span>viewport = viewport();
-<a href=#436 id=436 data-nosnippet>436</a>        <span class="kw">let </span>rotated = camera.rotate_by_degrees_around_screen_point(
-<a href=#437 id=437 data-nosnippet>437</a>            <span class="number">450.0</span>,
-<a href=#438 id=438 data-nosnippet>438</a>            viewport_center_pixels(<span class="kw-2">&amp;</span>viewport),
-<a href=#439 id=439 data-nosnippet>439</a>            <span class="kw-2">&amp;</span>viewport,
-<a href=#440 id=440 data-nosnippet>440</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
-<a href=#441 id=441 data-nosnippet>441</a>        );
-<a href=#442 id=442 data-nosnippet>442</a>        <span class="comment">// The 90° overshoot wraps through the camera constructor.
-<a href=#443 id=443 data-nosnippet>443</a>        </span><span class="macro">assert!</span>(
-<a href=#444 id=444 data-nosnippet>444</a>            (rotated.bearing_degrees - (camera.bearing_degrees + <span class="number">90.0 </span>+ <span class="number">360.0</span>).rem_euclid(<span class="number">360.0</span>))
-<a href=#445 id=445 data-nosnippet>445</a>                .abs()
-<a href=#446 id=446 data-nosnippet>446</a>                &lt; BEARING_DEGREES_TOLERANCE
-<a href=#447 id=447 data-nosnippet>447</a>        );
-<a href=#448 id=448 data-nosnippet>448</a>        <span class="macro">assert_eq!</span>(rotated.center, camera.center);
-<a href=#449 id=449 data-nosnippet>449</a>        <span class="macro">assert_eq!</span>(rotated.zoom_level, camera.zoom_level);
-<a href=#450 id=450 data-nosnippet>450</a>        <span class="macro">assert_eq!</span>(rotated.pitch_degrees, camera.pitch_degrees);
-<a href=#451 id=451 data-nosnippet>451</a>    }
-<a href=#452 id=452 data-nosnippet>452</a>}
+<a href=#417 id=417 data-nosnippet>417</a>        assert_points_agree(
+<a href=#418 id=418 data-nosnippet>418</a>            rotated
+<a href=#419 id=419 data-nosnippet>419</a>                .project_to_screen(<span class="kw-2">&amp;</span>held_ground, <span class="kw-2">&amp;</span>viewport, DEFAULT_FIELD_OF_VIEW_DEGREES)
+<a href=#420 id=420 data-nosnippet>420</a>                .unwrap(),
+<a href=#421 id=421 data-nosnippet>421</a>            focal,
+<a href=#422 id=422 data-nosnippet>422</a>            FOCAL_HOLD_TOLERANCE_PIXELS,
+<a href=#423 id=423 data-nosnippet>423</a>        );
+<a href=#424 id=424 data-nosnippet>424</a>        <span class="macro">assert_eq!</span>(rotated.zoom_level, camera.zoom_level);
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="macro">assert_eq!</span>(rotated.pitch_degrees, camera.pitch_degrees);
+<a href=#426 id=426 data-nosnippet>426</a>    }
+<a href=#427 id=427 data-nosnippet>427</a>
+<a href=#428 id=428 data-nosnippet>428</a>    <span class="attr">#[test]
+<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">fn </span>rotation_about_the_viewport_center_moves_only_the_bearing() {
+<a href=#430 id=430 data-nosnippet>430</a>        <span class="kw">let </span>camera = fixture_camera();
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">let </span>viewport = viewport();
+<a href=#432 id=432 data-nosnippet>432</a>        <span class="kw">let </span>rotated = camera.rotate_by_degrees_around_screen_point(
+<a href=#433 id=433 data-nosnippet>433</a>            <span class="number">450.0</span>,
+<a href=#434 id=434 data-nosnippet>434</a>            viewport_center_pixels(<span class="kw-2">&amp;</span>viewport),
+<a href=#435 id=435 data-nosnippet>435</a>            <span class="kw-2">&amp;</span>viewport,
+<a href=#436 id=436 data-nosnippet>436</a>            DEFAULT_FIELD_OF_VIEW_DEGREES,
+<a href=#437 id=437 data-nosnippet>437</a>        );
+<a href=#438 id=438 data-nosnippet>438</a>        <span class="comment">// The 90° overshoot wraps through the camera constructor.
+<a href=#439 id=439 data-nosnippet>439</a>        </span><span class="macro">assert!</span>(
+<a href=#440 id=440 data-nosnippet>440</a>            (rotated.bearing_degrees - (camera.bearing_degrees + <span class="number">90.0 </span>+ <span class="number">360.0</span>).rem_euclid(<span class="number">360.0</span>))
+<a href=#441 id=441 data-nosnippet>441</a>                .abs()
+<a href=#442 id=442 data-nosnippet>442</a>                &lt; BEARING_DEGREES_TOLERANCE
+<a href=#443 id=443 data-nosnippet>443</a>        );
+<a href=#444 id=444 data-nosnippet>444</a>        <span class="macro">assert_eq!</span>(rotated.center, camera.center);
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="macro">assert_eq!</span>(rotated.zoom_level, camera.zoom_level);
+<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert_eq!</span>(rotated.pitch_degrees, camera.pitch_degrees);
+<a href=#447 id=447 data-nosnippet>447</a>    }
+<a href=#448 id=448 data-nosnippet>448</a>}
 </code></pre></div></section></main></body></html>

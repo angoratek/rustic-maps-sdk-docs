@@ -14,7 +14,7 @@ import {
   vectorTileGeographicBounds,
   vectorTileOverlayDescriptors,
   vectorTileOverlayDescriptorsForStyle,
-} from './pkg/rustic_maps_web_bindings.js';
+} from './generated/rustic_maps_bg.js';
 
 /** Edge length of one demo raster tile, in screen pixels. */
 export const DEFAULT_TILE_SIZE_PIXELS = 256;

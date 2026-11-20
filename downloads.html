@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,15 +176,15 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="downloads"><a class="header" href="#downloads">Downloads</a></h1>
-<p>Every package is published under this site’s own versioned path,
-<code>/downloads/vX.Y.Z/</code>, and mirrored to an immutable release record: the version
-page lists the exact files, and a new version never rewrites an existing one.
-There is no Maven Central, npm registry or Swift Package Manager registry
-entry — the files served from this site are the artifacts you install.</p>
-<!-- downloads-version:begin -->## Version 0.1.0<!-- downloads-version:end -->
-<p>The files below are built from this repository and served from this site.
-Every file carries a <code>.sha256</code> sidecar, and
-<a href="downloads/v0.1.0/SHA256SUMS.txt"><code>SHA256SUMS.txt</code></a> covers the set.</p>
+<p><strong>No versioned release is published yet.</strong> Every package is built from source
+with the scripts in this repository. There is no Maven Central, npm registry or
+Swift Package Manager registry entry, and this site does not host a versioned
+download path. When a release is published, it uses this site’s own versioned
+path (<code>/downloads/vX.Y.Z/</code>), carries a <code>.sha256</code> sidecar and a Sigstore bundle,
+and never rewrites an existing file.</p>
+<!-- downloads-version:begin -->## No versioned release yet<!-- downloads-version:end -->
+<p>No versioned artifact is available to download. Run the script for your
+platform and install its output through the steps in the <a href="first-map.html">tutorials</a>.</p>
 <!-- downloads-table:begin -->
 <div class="table-wrapper">
 <table>
@@ -192,29 +192,20 @@ Every file carries a <code>.sha256</code> sidecar, and
 <tr><th>Platform</th><th>Artifact</th></tr>
 </thead>
 <tbody>
-<tr><td>Android</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar"><code>rustic-maps-sdk-android-v0.1.0.aar</code></a> — one package: the Kotlin bindings, the Rust library for arm64-v8a, armeabi-v7a and x86_64, and the <code>MapView</code> with its Compose wrapper · 15.9 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-android-v0.1.0.aar.sha256"><code>sha256</code></a></td></tr>
-<tr><td>iOS</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip"><code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code></a> — the XCFramework (arm64 device and simulator slices) for a Swift Package Manager binary target · 99.1 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-ios-v0.1.0.xcframework.zip.sha256"><code>sha256</code></a></td></tr>
-<tr><td>All platforms</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>rustic-maps-sdk-notices-v0.1.0.md</code></a> — the third-party dependency notices that accompany your distribution · 56 kB · <a href="downloads/v0.1.0/rustic-maps-sdk-notices-v0.1.0.html"><code>sha256</code></a></td></tr>
-<tr><td>React Native</td><td><code>rustic-maps-sdk-rn-v0.1.0.tgz</code> — the TurboModule package (<code>@angoratek/rustic-maps-sdk</code>) with the compiled Android libraries and iOS framework · 256.5 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-rn-v0.1.0.tgz.sha256"><code>sha256</code></a> · ships with the release, not hosted here</td></tr>
-<tr><td>Rust</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-rust-v0.1.0.tar.gz"><code>rustic-maps-sdk-rust-v0.1.0.tar.gz</code></a> — the workspace crates’ source archive at this version; unpack it and use the crates by path dependency · 27.8 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-rust-v0.1.0.tar.gz.sha256"><code>sha256</code></a></td></tr>
-<tr><td>WebAssembly</td><td><a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz"><code>rustic-maps-sdk-web-v0.1.0.tgz</code></a> — one package: the wasm module, its JavaScript shim, both type files, the manifest, licenses and notices; install it with npm or extract it and serve the <code>package/</code> directory · 1.7 MB · <a href="downloads/v0.1.0/rustic-maps-sdk-web-v0.1.0.tgz.sha256"><code>sha256</code></a></td></tr>
+<tr><td>—</td><td>No versioned artifact is published yet; build one with the script table below.</td></tr>
 </tbody>
 </table>
 </div>
 <!-- downloads-table:end -->
-<p>Each artifact file and <code>SHA256SUMS.txt</code> also have a <code>.sigstore.json</code>
-signature bundle, attached by the release workflow when it publishes a
-release; the checksum files above are always present.</p>
-<h2 id="what-accompanies-every-release"><a class="header" href="#what-accompanies-every-release">What accompanies every release</a></h2>
+<h2 id="when-a-version-is-published"><a class="header" href="#when-a-version-is-published">When a version is published</a></h2>
 <p>Every version carries a per-file <code>.sha256</code> sidecar, an aggregated
 <code>SHA256SUMS.txt</code> manifest covering all files, and a Sigstore signature bundle
 (<code>.sigstore.json</code>) per file and for <code>SHA256SUMS.txt</code> itself. A published
 version is immutable: a problem is fixed by a new version, never by replacing a
 file.</p>
-<h2 id="verifying-an-artifact"><a class="header" href="#verifying-an-artifact">Verifying an artifact</a></h2>
-<p>Verify the checksum first, then the signature. The signature bundles bind the
-file to the release workflow and the <code>vX.Y.Z</code> tag, so the verification command
-pins both:</p>
+<h2 id="verifying-a-published-artifact"><a class="header" href="#verifying-a-published-artifact">Verifying a published artifact</a></h2>
+<p>Verify by checksum first, then signature. The signature bundles bind the file to
+the release workflow and the <code>vX.Y.Z</code> tag:</p>
 <pre><code class="language-bash">sha256sum --check SHA256SUMS.txt --ignore-missing
 
 cosign verify-blob &lt;artifact-file&gt; \
@@ -222,31 +213,25 @@ cosign verify-blob &lt;artifact-file&gt; \
   --certificate-identity-regexp "&lt;the identity printed by your download page&gt;" \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 </code></pre>
-<p>The version page prints the exact identity string for its own tag. The
-<code>--ignore-missing</code> flag keeps the <code>sha256sum</code> run to the files you actually
-downloaded.</p>
+<p>The version page prints the exact identity string for its own tag.</p>
 <h3 id="rust"><a class="header" href="#rust">Rust</a></h3>
-<p>The Rust archive carries the workspace source at this version. It contains no
-compiled libraries, generated bindings or credentials; Cargo builds the crates
-you use from source. The <a href="rust.html#install-from-the-source-archive">Rust guide</a>
-lists what the archive contains and what it leaves out. Unpack it and point a
-path dependency at the crates you use:</p>
+<p>The Rust package is the workspace source itself: no compiled libraries,
+generated bindings or credentials. Cargo builds the crates you use. The <a href="rust.html#install-from-the-source-tree">Rust
+guide</a> lists what the source tree contains
+and what it leaves out. Point a path dependency at the crates you use:</p>
 <pre><code class="language-toml">[dependencies]
-rustic-maps-rendering = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-rendering" }
-rustic-maps-navigation = { path = "rustic-maps-sdk-rust-v0.1.0/crates/rustic-maps-navigation" }
+rustic-maps-rendering = { path = "crates/rustic-maps-rendering" }
+rustic-maps-navigation = { path = "crates/rustic-maps-navigation" }
 </code></pre>
-<p>The <a href="rust.html">Rust guide</a> walks the same map, routing and navigation steps the
-other platforms use. A crates.io registry entry is not part of this version;
-the archive is the source of truth.</p>
-<h2 id="installing-from-a-release"><a class="header" href="#installing-from-a-release">Installing from a release</a></h2>
+<p>A crates.io registry entry is not published yet; the source tree is the source
+of truth.</p>
+<h2 id="install-a-built-package"><a class="header" href="#install-a-built-package">Install a built package</a></h2>
 <p>The <a href="first-map.html">tutorials</a> carry the per-platform install steps against
 these exact artifact names: the AAR for Android, the checksummed zip for the
-Swift Package Manager binary target, and the npm tarball for WebAssembly,
-which also serves a static host that extracts its <code>package/</code> directory. The
-npm packages ship the same generated trees with a manifest, licenses and
-notices.</p>
-<p>To build the same packages from a checkout, each one has a script that
-produces the artifact the tutorials install —</p>
+Swift Package Manager binary target, and the npm tarball for WebAssembly, which
+also serves a static host that extracts its <code>package/</code> directory.</p>
+<p>To build the packages from a checkout, each one has a script that produces the
+artifact the tutorials install:</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -256,12 +241,11 @@ produces the artifact the tutorials install —</p>
 <tr><td>Android</td><td><code>scripts/build-android.sh</code></td><td>the one AAR: bindings, three ABIs and <code>MapView</code></td></tr>
 <tr><td>iOS</td><td><code>scripts/build-ios.sh</code></td><td>the XCFramework and the verified Swift package</td></tr>
 <tr><td>React Native</td><td><code>scripts/build-rn.sh</code></td><td>the generated TurboModule sources and native payload</td></tr>
-<tr><td>WebAssembly</td><td><code>scripts/package-web-npm.sh</code></td><td>the npm tarball (build the wasm package first)</td></tr>
+<tr><td>WebAssembly</td><td><code>scripts/package-web-npm.sh</code></td><td>the npm tarball, after the wasm build</td></tr>
 </tbody>
 </table>
 </div>
-<p>The scripts print their prerequisites when one is missing; they are the same
-steps the release pipeline runs.</p>
+<p>The scripts print their prerequisites when one is missing.</p>
 
                     </main>
 

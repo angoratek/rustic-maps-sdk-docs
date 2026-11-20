@@ -28,7 +28,7 @@ export const uiStrings = {
   'plan.searching_in_flight': 'Searching…',
   'plan.empty_results_hint': 'No results yet; search a place above.',
   // The unified reference-application behavior model's field and flow copy
-  // (docs/design/ReferenceApplicationBehavior.md §Copy). Every value mirrors
+  // (docs/ReferenceAppUX.md §2.5). Every value mirrors
   // one `ui_labels` row in platform/reference-tokens.json.
   'plan.origin_label': 'Origin',
   'plan.destination_label': 'Destination',

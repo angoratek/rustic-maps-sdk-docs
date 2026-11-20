@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,7 +186,7 @@ OSRM, Valhalla, HERE, Google Maps, TomTom, Mapbox and Radar, and any <code>{z}/{
 raster or vector source connects through the URL-template providers.</p>
 <p class="landing-cta">
 <a href="demo/">Open the live wasm demo</a>
-<a href="demo/mobile/">Run the apps on a hosted device</a>
+<a href="demo/walkthrough/">Watch the recorded walkthrough</a>
 <a href="first-map.html">Start building</a>
 <a href="downloads.html">Downloads</a>
 </p>
@@ -199,21 +199,17 @@ raster or vector source connects through the URL-template providers.</p>
 <h3 id="one-contract-four-platforms"><a class="header" href="#one-contract-four-platforms">One contract, four platforms</a></h3>
 <p>You call the same members on every target: Kotlin suspend functions, Swift async
 throwing methods, React Native promises, and the WebAssembly TypeScript surface.
-One UniFFI interface definition generates the native bindings, and the browser
-mirror is checked against it. The contract changes addition-only: existing
-members keep their signature and meaning.</p>
+One UniFFI definition generates the native bindings, the browser mirror is
+checked against it, and the contract changes addition-only.</p>
 </div>
 
 <div class="feature-card">
 <h3 id="search-routing-and-traffic"><a class="header" href="#search-routing-and-traffic">Search, routing, and traffic</a></h3>
-<p>Ten provider contracts cover geocoding (forward and reverse), routing, the
-distance matrix, place search, traffic incidents, traffic flow, elevation,
-raster tiles, vector tiles, and offline routing. MapQuest implements geocoding,
-routing, the distance matrix, place search, traffic, and raster tiles with a
-shared rate limiter and bounded retries. Photon serves keyless geocoding and
-search, OSRM and Valhalla serve keyless routing, and the URL-template
-providers serve any raster or vector base map. The SDK adds a disk response
-cache with per-category time-to-live.</p>
+<p>Ten provider contracts cover geocoding, routing, the distance matrix, place
+search, traffic incidents, traffic flow, elevation, raster tiles, vector tiles,
+and offline routing. MapQuest implements the platform API set; Photon serves
+keyless geocoding and search, OSRM and Valhalla serve keyless routing, and the
+URL-template providers serve any raster or vector base map.</p>
 </div>
 
 <div class="feature-card">
@@ -221,8 +217,8 @@ cache with per-category time-to-live.</p>
 <p>The renderer spans web-mercator projection, an anchored camera with animations
 and fit-bounds framing, exact frustum tile listing, a frame-driven tile scheduler
 with per-frame budgets and parent fallback, and a byte-budget tile texture pool
-feeding a <code>wgpu</code> pipeline. Raster and vector scenes draw on Android, iOS, and
-React Native surfaces and in the browser through WebGPU.</p>
+feeding a <code>wgpu</code> pipeline. Raster and vector scenes draw on Android, iOS, React
+Native and in the browser through WebGPU.</p>
 </div>
 
 <div class="feature-card">
@@ -245,8 +241,7 @@ when you choose to fall back.</p>
 <h3 id="structured-diagnostics"><a class="header" href="#structured-diagnostics">Structured diagnostics</a></h3>
 <p>A bounded, per-subsystem diagnostics ring streams structured log events to a
 listener with coordinate scrubbing at the sink. Readbacks expose frame tile
-statistics, cache terms, and provider-failure records, so a screen in your
-product can show what the SDK is doing.</p>
+statistics, cache terms, and provider-failure records.</p>
 </div>
 
 </div>
@@ -273,12 +268,9 @@ documentation lives in the generated <a href="api-reference.html">API reference<
 <h2 id="requirements-at-a-glance"><a class="header" href="#requirements-at-a-glance">Requirements at a glance</a></h2>
 <ul>
 <li><strong>Android</strong>: API level 24 or higher. One AAR carries the bindings, the
-<code>MapView</code> and three ABIs; it measures about 16 MiB (8.7 to 13 MiB a
-library after strip).</li>
-<li><strong>iOS</strong>: iOS 17 or higher. The XCFramework ships two arm64 slices.</li>
-<li><strong>React Native</strong>: React Native 0.88 or newer and React 19 or newer. The
-package ships as a source TurboModule and builds the native payload in your
-project unless you pack a prebuilt payload into the tarball.</li>
+<code>MapView</code> and three ABIs; it measures about 16 MiB.</li>
+<li><strong>iOS</strong>: iOS 17 or higher. The XCFramework ships two arm64 architectures.</li>
+<li><strong>React Native</strong>: React Native 0.88 or newer and React 19 or newer.</li>
 <li><strong>WebAssembly</strong>: a browser with WebGPU. The wasm package measures 3.6 MiB.</li>
 </ul>
 <p>Artifacts are distributed from the <a href="downloads.html">Downloads</a> page rather than a
@@ -298,14 +290,11 @@ maps</a>.</li>
 layers and traffic</a>.</li>
 <li>Serve each capability from a different provider: <a href="mix-providers-per-capability.html">Mix providers per
 capability</a>.</li>
-<li>See the core running from a browser, no build step: <a href="live-demo.html">Live
-demo</a>.</li>
 </ol>
 <h2 id="license-and-attribution"><a class="header" href="#license-and-attribution">License and attribution</a></h2>
 <p>The SDK is dual-licensed under <strong>MIT OR Apache-2.0</strong>. Map imagery © MapQuest;
 map data © OpenStreetMap contributors (ODbL). See <a href="third-party-notices.html">third-party
-notices</a> for the full attribution and license table, and
-keep the attribution visible in your application.</p>
+notices</a> for the full attribution and license table.</p>
 
                     </main>
 

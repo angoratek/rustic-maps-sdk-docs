@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,24 +176,17 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="show-the-devices-location"><a class="header" href="#show-the-devices-location">Show the device’s location</a></h1>
-<p>Show the user’s position on the map: a tracking dot with the source’s accuracy
-ring, a camera centred on the fix, and an honest line when the permission is
-denied or the service is unavailable.</p>
-<p>The host owns the operating system’s location API and its permission prompt.
-Every host pushes its fixes into the same Rust <code>PositionController</code>, which
-validates them, ignores stationary repeats when smoothing course and tracks
-staleness. The renderer draws the dot; the camera and the navigation controller
-read the same stream.</p>
-<h2 id="the-shared-scenario"><a class="header" href="#the-shared-scenario">The shared scenario</a></h2>
-<ul>
-<li>Start the source after the permission is granted.</li>
-<li>Draw the renderer’s tracking dot with <code>showAccuracyRing</code> and the controller’s
-smoothed course.</li>
-<li>Centre the camera on each fix at follow zoom 15.</li>
-<li>Stop the source when the control is turned off and clear the layer.</li>
-<li>State a denied permission, a disabled service, an unavailable source and a
-timeout in the same words on every platform.</li>
-</ul>
+<p>Show the user’s position on the map: a tracking dot with the source’s accuracy ring, a
+camera centred on the fix, and an honest line when the permission is denied or the
+service is unavailable.</p>
+<p>The host owns the operating system’s location API and its permission prompt. Every host
+pushes its fixes into the same Rust <code>PositionController</code>, which validates them, ignores
+stationary repeats when smoothing course and tracks staleness. The renderer draws the
+dot; the camera and the navigation controller read the same stream. Start the source
+after permission is granted, draw the dot with <code>showAccuracyRing</code> and the controller’s
+smoothed course, centre the camera on each fix at follow zoom 15, and stop the source
+and clear the layer when the control is turned off. A denied permission, a disabled
+service, an unavailable source and a timeout read the same words on every platform.</p>
 <h2 id="android"><a class="header" href="#android">Android</a></h2>
 <pre><code class="language-kotlin">import com.rusticmaps.sdk.DeviceLocationSource
 import uniffi.rustic_maps.LocationIndicatorState
@@ -229,7 +222,7 @@ if (!deviceLocationSource.start()) {
 deviceLocationSource.stop()
 </code></pre>
 <h2 id="ios"><a class="header" href="#ios">iOS</a></h2>
-<!-- docs-snippet: skip — the snippet uses the MapNativeCoreUI view's location layer and its DeviceLocationSource, which the contract-only Swift snippet harness does not mirror. -->
+<!-- docs-snippet: skip — the snippet uses the MapNativeCoreUI view's location layer and its DeviceLocationSource, which the contract-only Swift snippet check does not mirror. -->
 <pre><code class="language-swift">import MapNativeCoreUI
 import RusticMapsSDK
 
@@ -274,24 +267,28 @@ const sourceStatus = await sdk.deviceLocationSourceStatus();
 await sdk.stopDeviceLocation();
 </code></pre>
 <p>Ask for the Android runtime permission with <code>PermissionsAndroid</code> before
-<code>startDeviceLocation</code>; the iOS authorization prompt is raised by the source.</p>
+<code>startDeviceLocation</code>; iOS raises the authorization prompt from the source.</p>
 <h2 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h2>
-<pre><code class="language-ts">import { PositionController } from './pkg/rustic_maps_web_bindings.js';
+<pre><code class="language-ts">import { PositionController, PositionSourceError } from './web/rustic_maps.js';
 
 const positionController = new PositionController();
 const watchIdentifier = navigator.geolocation.watchPosition(
   position =&gt; {
-    positionController.feedFix(
-      position.coords.latitude,
-      position.coords.longitude,
-      position.coords.accuracy,
-    );
+    positionController.feedFix({
+      coordinate: {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      },
+      horizontalAccuracyMeters: position.coords.accuracy,
+    });
     // Draw the tracking dot with the controller's smoothed course and centre
-    // the camera through MapView.setLocationIndicator and setCamera.
+    // the camera through BrowserMapView.setLocationIndicator and setCamera.
   },
   error =&gt; {
     positionController.sourceFailed(
-      error.code === 1 ? 'permissionDenied' : 'unavailable',
+      error.code === 1
+        ? PositionSourceError.PermissionDenied
+        : PositionSourceError.Unavailable,
     );
   },
 );
@@ -308,9 +305,9 @@ let source = SimulatedPositionSource::new(&amp;route, pace, 5.0)?;
 let mut controller = PositionController::new();
 controller.feed_fix(source.fix_at_elapsed_seconds(0.0))?;
 <span class="boring">}</span></code></pre>
-<p>A Rust application supplies fixes from its own OS source (or the simulated
-source above) and reads <code>latest_fix</code>, <code>smoothed_course_heading_degrees</code> and
-<code>is_stale</code>. See <a href="rust.html">Use the SDK from Rust</a>.</p>
+<p>A Rust application supplies fixes from its own OS source or the simulated source above,
+then reads <code>latest_fix</code>, <code>smoothed_course_heading_degrees</code> and <code>is_stale</code>. See <a href="rust.html">Use the
+SDK from Rust</a>.</p>
 
                     </main>
 

@@ -334,40 +334,49 @@
 <a href=#334 id=334 data-nosnippet>334</a>    </span><span class="kw">pub </span>minimum_zoom_level: u8,
 <a href=#335 id=335 data-nosnippet>335</a>    <span class="doccomment">/// Highest zoom level the provider serves.
 <a href=#336 id=336 data-nosnippet>336</a>    </span><span class="kw">pub </span>maximum_zoom_level: u8,
-<a href=#337 id=337 data-nosnippet>337</a>}
-<a href=#338 id=338 data-nosnippet>338</a>
-<a href=#339 id=339 data-nosnippet>339</a><span class="doccomment">/// Vector map imagery served as Mapbox Vector Tile protobuf.
-<a href=#340 id=340 data-nosnippet>340</a>///
-<a href=#341 id=341 data-nosnippet>341</a>/// Each implementation serves one web-mercator XYZ tileset and reports its
-<a href=#342 id=342 data-nosnippet>342</a>/// cache namespace, attribution and zoom span through
-<a href=#343 id=343 data-nosnippet>343</a>/// [`Self::source_descriptor`].
-<a href=#344 id=344 data-nosnippet>344</a></span><span class="attr">#[async_trait]
-<a href=#345 id=345 data-nosnippet>345</a></span><span class="kw">pub trait </span>VectorTileProvider: Send + Sync {
-<a href=#346 id=346 data-nosnippet>346</a>    <span class="doccomment">/// Describes the served tileset: cache namespace, attribution and zoom
-<a href=#347 id=347 data-nosnippet>347</a>    /// span.
-<a href=#348 id=348 data-nosnippet>348</a>    </span><span class="kw">fn </span>source_descriptor(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VectorTileSourceDescriptor;
-<a href=#349 id=349 data-nosnippet>349</a>
-<a href=#350 id=350 data-nosnippet>350</a>    <span class="doccomment">/// Fetches one web-mercator XYZ vector tile in its wire encoding: MVT
-<a href=#351 id=351 data-nosnippet>351</a>    /// protobuf, optionally gzip-wrapped.
-<a href=#352 id=352 data-nosnippet>352</a>    ///
-<a href=#353 id=353 data-nosnippet>353</a>    /// # Parameters
-<a href=#354 id=354 data-nosnippet>354</a>    /// - `tile_x`, `tile_y` — the tile's column and row at `zoom_level`.
-<a href=#355 id=355 data-nosnippet>355</a>    /// - `zoom_level` — the web-mercator zoom level of the tile.
-<a href=#356 id=356 data-nosnippet>356</a>    ///
-<a href=#357 id=357 data-nosnippet>357</a>    /// # Returns
-<a href=#358 id=358 data-nosnippet>358</a>    /// The tile bytes together with the encoding they arrived in.
-<a href=#359 id=359 data-nosnippet>359</a>    ///
-<a href=#360 id=360 data-nosnippet>360</a>    /// # Errors
-<a href=#361 id=361 data-nosnippet>361</a>    /// Returns [`SDKError::NetworkRequestFailed`] when the request cannot
-<a href=#362 id=362 data-nosnippet>362</a>    /// reach the provider, [`SDKError::ResponseParsingFailure`] when the
-<a href=#363 id=363 data-nosnippet>363</a>    /// payload is empty or undecodable, and
-<a href=#364 id=364 data-nosnippet>364</a>    /// [`SDKError::ProviderRequestRejected`] when the tile is outside the
-<a href=#365 id=365 data-nosnippet>365</a>    /// served zoom span.
-<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">async fn </span>fetch_vector_tile(
-<a href=#367 id=367 data-nosnippet>367</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#368 id=368 data-nosnippet>368</a>        tile_x: u32,
-<a href=#369 id=369 data-nosnippet>369</a>        tile_y: u32,
-<a href=#370 id=370 data-nosnippet>370</a>        zoom_level: u8,
-<a href=#371 id=371 data-nosnippet>371</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;VectorTileData, SDKError&gt;;
-<a href=#372 id=372 data-nosnippet>372</a>}
+<a href=#337 id=337 data-nosnippet>337</a>    <span class="doccomment">/// Style names or families the tileset is designed to be rendered with,
+<a href=#338 id=338 data-nosnippet>338</a>    /// in the provider's preference order; empty when it declares none.
+<a href=#339 id=339 data-nosnippet>339</a>    ///
+<a href=#340 id=340 data-nosnippet>340</a>    /// The hints are the provider's own declaration of the tileset's schema
+<a href=#341 id=341 data-nosnippet>341</a>    /// or style family (for example `omv` and `base` for HERE's vector
+<a href=#342 id=342 data-nosnippet>342</a>    /// tileset), not a guess. Style selection treats them as advisory; a
+<a href=#343 id=343 data-nosnippet>343</a>    /// consumer verifying that a style document's declared source names this
+<a href=#344 id=344 data-nosnippet>344</a>    /// tileset uses them as additional served-tileset identities.
+<a href=#345 id=345 data-nosnippet>345</a>    </span><span class="kw">pub </span>style_hints: Vec&lt;String&gt;,
+<a href=#346 id=346 data-nosnippet>346</a>}
+<a href=#347 id=347 data-nosnippet>347</a>
+<a href=#348 id=348 data-nosnippet>348</a><span class="doccomment">/// Vector map imagery served as Mapbox Vector Tile protobuf.
+<a href=#349 id=349 data-nosnippet>349</a>///
+<a href=#350 id=350 data-nosnippet>350</a>/// Each implementation serves one web-mercator XYZ tileset and reports its
+<a href=#351 id=351 data-nosnippet>351</a>/// cache namespace, attribution and zoom span through
+<a href=#352 id=352 data-nosnippet>352</a>/// [`Self::source_descriptor`].
+<a href=#353 id=353 data-nosnippet>353</a></span><span class="attr">#[async_trait]
+<a href=#354 id=354 data-nosnippet>354</a></span><span class="kw">pub trait </span>VectorTileProvider: Send + Sync {
+<a href=#355 id=355 data-nosnippet>355</a>    <span class="doccomment">/// Describes the served tileset: cache namespace, attribution and zoom
+<a href=#356 id=356 data-nosnippet>356</a>    /// span.
+<a href=#357 id=357 data-nosnippet>357</a>    </span><span class="kw">fn </span>source_descriptor(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VectorTileSourceDescriptor;
+<a href=#358 id=358 data-nosnippet>358</a>
+<a href=#359 id=359 data-nosnippet>359</a>    <span class="doccomment">/// Fetches one web-mercator XYZ vector tile in its wire encoding: MVT
+<a href=#360 id=360 data-nosnippet>360</a>    /// protobuf, optionally gzip-wrapped.
+<a href=#361 id=361 data-nosnippet>361</a>    ///
+<a href=#362 id=362 data-nosnippet>362</a>    /// # Parameters
+<a href=#363 id=363 data-nosnippet>363</a>    /// - `tile_x`, `tile_y` — the tile's column and row at `zoom_level`.
+<a href=#364 id=364 data-nosnippet>364</a>    /// - `zoom_level` — the web-mercator zoom level of the tile.
+<a href=#365 id=365 data-nosnippet>365</a>    ///
+<a href=#366 id=366 data-nosnippet>366</a>    /// # Returns
+<a href=#367 id=367 data-nosnippet>367</a>    /// The tile bytes together with the encoding they arrived in.
+<a href=#368 id=368 data-nosnippet>368</a>    ///
+<a href=#369 id=369 data-nosnippet>369</a>    /// # Errors
+<a href=#370 id=370 data-nosnippet>370</a>    /// Returns [`SDKError::NetworkRequestFailed`] when the request cannot
+<a href=#371 id=371 data-nosnippet>371</a>    /// reach the provider, [`SDKError::ResponseParsingFailure`] when the
+<a href=#372 id=372 data-nosnippet>372</a>    /// payload is empty or undecodable, and
+<a href=#373 id=373 data-nosnippet>373</a>    /// [`SDKError::ProviderRequestRejected`] when the tile is outside the
+<a href=#374 id=374 data-nosnippet>374</a>    /// served zoom span.
+<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">async fn </span>fetch_vector_tile(
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#377 id=377 data-nosnippet>377</a>        tile_x: u32,
+<a href=#378 id=378 data-nosnippet>378</a>        tile_y: u32,
+<a href=#379 id=379 data-nosnippet>379</a>        zoom_level: u8,
+<a href=#380 id=380 data-nosnippet>380</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;VectorTileData, SDKError&gt;;
+<a href=#381 id=381 data-nosnippet>381</a>}
 </code></pre></div></section></main></body></html>

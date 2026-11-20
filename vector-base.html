@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,38 +176,38 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="draw-a-providers-own-map-style"><a class="header" href="#draw-a-providers-own-map-style">Draw a provider’s own map style</a></h1>
-<p>A provider that publishes a vector style document draws its tiles the way its
-own cartographers designed them. This page installs that style as your base
-map, so roads, water, place names and icons match the tiles exactly, and
-explains what the SDK fetches, what it refuses, and what it keeps on the
-device.</p>
+<p>A provider that publishes a vector style document draws its tiles the way its own
+cartographers designed them. This page installs that style as the base map and explains
+what the SDK fetches, what it refuses and what it keeps.</p>
 <h2 id="what-you-get"><a class="header" href="#what-you-get">What you get</a></h2>
 <ul>
-<li>A base map painted with the style document the provider publishes, not a
-style that ships with the SDK.</li>
-<li>Place names drawn in the style’s own font and icons drawn from its own
-sprite sheet.</li>
-<li>A status readback that reports the style id, the tileset name and the style’s
-attribution line.</li>
-<li>The fetched style document, glyph ranges and sprite sheet kept on the device
-for up to thirty days, so a reopened application paints without requesting
-them again.</li>
+<li>A base map painted with the provider’s published style document, not a style that
+ships with the SDK.</li>
+<li>Place names in the style’s own font and icons from its own sprite sheet.</li>
+<li>Route references drawn as shaped badges, a shield or rounded rectangle in the style’s
+own colours with the reference centred inside, when the style declares a shield block
+for its route-reference layer. A style whose tileset carries no route-reference layer
+declares no badge and paints no route reference.</li>
+<li>A status readback with the style id, the tileset name, the attribution line, every
+property the renderer could not apply, every asset that fell back, and each source’s
+matched and painted layer counts.</li>
+<li>The fetched document, glyph ranges and sprite sheet kept in the installed tile cache
+for up to thirty days, or for the session when no cache is installed, so a reopened
+application paints without requesting them again.</li>
 </ul>
 <h2 id="what-you-need"><a class="header" href="#what-you-need">What you need</a></h2>
 <ul>
 <li>A vector-tile provider whose registry entry declares a style document
-(<code>document_url</code>). HERE and Mapbox do today, under the style ids <code>omv-light</code>
-and <code>streets-light</code>.</li>
+(<code>document_url</code>). HERE and Mapbox do, under <code>omv-light</code> and <code>streets-light</code>.</li>
 <li>That provider’s credential applied at runtime. The SDK never ships a key.</li>
-<li>A target that carries the provider: Android, iOS, React Native and the
-browser all do, and a Rust application reaches the same member.</li>
+<li>Android, iOS, React Native, the browser, or a Rust application.</li>
 </ul>
 <h2 id="steps"><a class="header" href="#steps">Steps</a></h2>
 <ol>
 <li>
-<p><strong>Configure the provider with your credential.</strong> Use the provider’s own
-registration path, exactly as you would for its geocoding or routing
-contracts. The credential lives in the provider client from this point on.</p>
+<p><strong>Configure the provider with your credential.</strong> Use its own registration path,
+exactly as for geocoding or routing. The credential lives in the provider client from
+this point on.</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.MapSdk
 import uniffi.rustic_maps.ProviderContract
 
@@ -216,9 +216,9 @@ mapSdk.configureProvider(ProviderContract.VectorTiles, "here", providerApiKey)
 </code></pre>
 </li>
 <li>
-<p><strong>Install the style by provider key and style id.</strong> The address is the
-provider’s published document, as the registry lists it; it carries no
-credential, because the provider’s client appends it.</p>
+<p><strong>Install the style by provider key and style id.</strong> The address is the provider’s
+published document as the registry lists it; it carries no credential, because the
+provider’s client appends it.</p>
 <pre><code class="language-kotlin">import uniffi.rustic_maps.ProviderVectorTileSource
 
 val source = ProviderVectorTileSource(
@@ -232,33 +232,43 @@ mapView.setProviderVectorTileSourceFromDocument(
 </code></pre>
 </li>
 <li>
-<p><strong>Read the status back.</strong> <code>vectorTileSourceStatus()</code> reports the style id
-you installed, the tileset’s name and the attribution line the style
-requires. Show that line wherever the map is shown.</p>
+<p><strong>Read the status back.</strong> <code>vectorTileSourceStatus()</code> reports the installed style id,
+the tileset name and the attribution line the style requires; show that line wherever
+the map is shown. It also reports the unsupported-property count with a sorted,
+bounded list of names, the assets that fell back to a degraded draw, and each
+source’s matched and drawn layer counts for the last resolved frame, so your UI can
+tell “still loading” from “this style asks for something the renderer does not
+paint”.</p>
 </li>
 <li>
-<p><strong>Reopen the application.</strong> The same family installs again without a
-request while the kept resources are younger than thirty days and the
-device cache is installed.</p>
+<p><strong>Reopen the application.</strong> The same family installs again without a request while
+the kept resources are younger than thirty days and the device cache is installed.</p>
 </li>
 </ol>
 <h2 id="what-the-sdk-fetches-and-what-it-refuses"><a class="header" href="#what-the-sdk-fetches-and-what-it-refuses">What the SDK fetches, and what it refuses</a></h2>
-<p>An install fetches four resources through the provider’s authenticated
-client: the style document, its Latin glyph ranges, its sprite index and its
-sprite sheet. Each address resolves against the document’s own address — an
-absolute address, a path root-relative to the document’s origin, or a path
-relative to the document’s directory.</p>
+<p>An install fetches four resources through the provider’s authenticated client: the style
+document, its Latin glyph ranges, its sprite index and its sprite sheet. Each address
+resolves against the document’s own address: absolute, root-relative to its origin, or
+relative to its directory.</p>
 <ul>
-<li>The credential travels only to the document’s own origin and to the hosts
-the provider declares for its published resources. A style document naming
-any other host is refused before a request is made, and the refusal names
-the host.</li>
-<li>An address the SDK cannot fetch — a vendor’s own URI scheme, or a path that
-climbs above the document’s directory — is not a credential risk. The
-install continues with the SDK’s embedded Latin font and draws no icons, so
-a base never fails over an address the SDK cannot read.</li>
-<li>A style with no glyph endpoint or no sprite draws its labels in the embedded
-font and its icons not at all.</li>
+<li>A provider whose documents name resources with the vendor’s URI scheme resolves them
+through that provider’s API before the host check.</li>
+<li>The credential travels only to the document’s own origin and to the hosts the provider
+declares. A document naming any other host is refused before a request, and the
+refusal names the host.</li>
+<li>An address the SDK cannot fetch, an unrecognized URI scheme or a path above the
+document’s directory, continues with the SDK’s embedded Latin font and draws no icons,
+so a base never fails over an address the SDK cannot read.</li>
+<li>A style with no glyph endpoint or no sprite draws labels in the embedded font and its
+icons not at all.</li>
+<li>A property or layer kind the renderer does not paint is reported as a diagnostic; a
+fill pattern paints the layer’s fill colour.</li>
+<li>A document and its tileset must use the same schema. A document naming a tileset the
+provider does not serve is refused before install, naming the declared source and the
+served tileset. A source kind the vector base cannot draw is reported by name as a
+degraded asset.</li>
+<li>A layer reading a source layer the tiles do not carry is counted as unmatched, so the
+readback names the mismatch.</li>
 </ul>
 <h2 id="what-each-target-calls"><a class="header" href="#what-each-target-calls">What each target calls</a></h2>
 <div class="table-wrapper">
@@ -275,17 +285,15 @@ font and its icons not at all.</li>
 </tbody>
 </table>
 </div>
-<p>The committed styles — <code>bright-light</code>, <code>fiord-dark</code>, <code>positron-light</code>,
-<code>carto-light</code>, <code>carto-dark</code> — install through the sibling member without a
-credential: <code>set_provider_vector_tile_source</code> with the provider key and style
-id.</p>
+<p>The committed styles — <code>bright-light</code>, <code>fiord-dark</code>, <code>positron-light</code>, <code>carto-light</code>,
+<code>carto-dark</code> — install through <code>set_provider_vector_tile_source</code> with the provider key
+and style id, without a credential.</p>
 <h2 id="next"><a class="header" href="#next">Next</a></h2>
 <ul>
-<li><a href="provider-capabilities-rust.html">Provider capabilities in Rust</a> lists every
-provider, the style ids each declares, and the attribution each one
-requires.</li>
-<li><a href="map-layers-and-traffic.html">Map layers and traffic</a> shows the layers control
-that switches between these bases on every platform.</li>
+<li><a href="provider-capabilities-rust.html">Provider capabilities in Rust</a> lists every provider,
+the style ids each declares, and the attribution each one requires.</li>
+<li><a href="map-layers-and-traffic.html">Map layers and traffic</a> shows the layers control that
+switches between these bases on every platform.</li>
 </ul>
 
                     </main>

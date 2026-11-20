@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["bounding_box","coordinate","elevation","error","place","raster","route","traffic","vector"]};
+window.SIDEBAR_ITEMS = {"mod":["bounding_box","coordinate","elevation","error","mercator","place","raster","route","traffic","vector"]};

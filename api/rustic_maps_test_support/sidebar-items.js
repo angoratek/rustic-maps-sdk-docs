@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SACRAMENTO_CAMERA_ZOOM_LEVEL","SACRAMENTO_LATITUDE_DEGREES","SACRAMENTO_LONGITUDE_DEGREES","SACRAMENTO_TILE_X","SACRAMENTO_TILE_Y","SACRAMENTO_TILE_ZOOM_LEVEL"],"fn":["camera","compact_viewport","coordinate","sacramento_camera","square_viewport","validated_coordinate","viewport"]};

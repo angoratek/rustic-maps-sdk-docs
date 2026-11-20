@@ -18,9 +18,10 @@
 // constructs before readiness (`SmoothstepTimedEase`, `ExponentialValueChase`,
 // `FollowCamera` and `LocationPoseAnimator`) defer creating their Rust object
 // until first use, so this module never delays the page's module evaluation.
-// In Node the generated bindings are initialized synchronously from the
-// package's bytes.
+// In Node the specs have no page bootstrap, so the module opens the generated
+// package itself at import time.
 
+import { uniffiInitAsync } from './generated/index.js';
 import {
   CourseMedianSmoother,
   ExponentialValueChase as NativeExponentialValueChase,
@@ -30,21 +31,19 @@ import {
   TraceCursor,
   bearingOffNorthDegrees,
   followZoomTowardTripEnd,
-  initSync,
   scaleBarDistanceLabelText,
   selectScaleBarScale,
   signedAngularDifferenceDegrees,
   smoothstepEasedProgress,
   traceDispatchIntervalMilliseconds,
-} from './pkg/rustic_maps_web_bindings.js';
+} from './generated/rustic_maps_bg.js';
 
+// In Node the page's `main.mjs` is not loaded, so the specs that import this
+// module open the module themselves. The generated entrypoint is idempotent;
+// in the browser `main.mjs` owns the one initialization and this branch does
+// nothing, so page module evaluation is never delayed.
 if (typeof window === 'undefined') {
-  const { readFileSync } = await import('node:fs');
-  initSync({
-    module: readFileSync(
-      new URL('./pkg/rustic_maps_web_bindings_bg.wasm', import.meta.url),
-    ),
-  });
+  await uniffiInitAsync(new URL('./generated/rustic_maps.wasm', import.meta.url));
 }
 
 /** Full circle in degrees (the bearing wraps' modulus). */
@@ -155,7 +154,7 @@ export const FOLLOW_DEMO_FIX_HORIZONTAL_ACCURACY_METERS = 8.0;
 export const FOLLOW_DEMO_SPEED_METERS_PER_SECOND =
   1.4 * FOLLOW_DEMO_PLAYBACK_TIME_ACCELERATION_FACTOR;
 
-// --- The diagnostics pane's shared bounds (docs/design/ReferenceApplicationBehavior.md
+// --- The diagnostics pane's shared bounds (docs/ReferenceAppUX.md
 // §The bounded stream): one display window and one flush limit per pane, with
 // the refresh cadence the page coalesces its ring reads to. The values land as
 // behavior tokens in platform/reference-tokens.json so the four mirrors cannot

@@ -1,0 +1,245 @@
+:root {
+  --background: #f4f4f5;
+  --surface: #ffffff;
+  --foreground: #18181b;
+  --muted: #52525b;
+  --border: #d4d4d8;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --phone-border: #18181b;
+  --focus-ring: #f59e0b;
+  --radius: 12px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090b;
+    --surface: #18181b;
+    --foreground: #fafafa;
+    --muted: #a1a1aa;
+    --border: #3f3f46;
+    --accent: #60a5fa;
+    --accent-contrast: #09090b;
+    --phone-border: #fafafa;
+    --focus-ring: #fbbf24;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.walkthrough {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-height: 100vh;
+  padding: 20px 16px 32px;
+}
+
+.walkthrough-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 24px;
+  width: 100%;
+}
+
+.walkthrough-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.platforms[hidden] {
+  display: none;
+}
+
+.platform-button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.platform-button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.platform-button:hover {
+  border-color: var(--accent);
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.phone {
+  --walkthrough-aspect: 2.037;
+  position: relative;
+  width: min(92vw, 430px, calc(72vh / var(--walkthrough-aspect)));
+  aspect-ratio: 1 / var(--walkthrough-aspect);
+  overflow: hidden;
+  border: 6px solid var(--phone-border);
+  border-radius: 28px;
+  background: #000000;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 22%);
+  touch-action: none;
+}
+
+.still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.still.is-active {
+  opacity: 1;
+}
+
+.transition-video {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.transition-video.is-visible {
+  opacity: 1;
+}
+
+.transition-video[hidden] {
+  display: none;
+}
+
+.hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hotspot {
+  position: absolute;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.hotspot:hover {
+  border-color: rgb(37 99 235 / 55%);
+}
+
+.hotspot:focus-visible,
+.platform-button:focus-visible,
+.dot:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.authoring-active .hotspot {
+  pointer-events: none;
+}
+
+.caption {
+  max-width: 44rem;
+  min-height: 3rem;
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.walkthrough-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dot[aria-current="step"] {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .still,
+  .transition-video {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .walkthrough {
+    padding: 16px 12px 24px;
+  }
+
+  .phone {
+    border-width: 4px;
+    border-radius: 22px;
+  }
+}

@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c350c9c1.js";
+            window.path_to_searchindex_js = "searchindex-a4bde3ad.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-5807ce67.js"></script>
+        <script src="toc-61fb7536.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -176,10 +176,10 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="requirements-and-distributions"><a class="header" href="#requirements-and-distributions">Requirements and distributions</a></h1>
-<p>The SDK ships as release archives that you download and install into your
-project. This page lists the minimum platform versions, the artifact each
-platform installs, and what each artifact weighs. <a href="downloads.html">Downloads</a>
-lists the released files and their checksums.</p>
+<p>The SDK builds from source into the archives you install into your project.
+This page lists the minimum platform versions, the artifact each platform
+installs, and what each artifact weighs. <a href="downloads.html">Downloads</a> explains how
+to build each artifact.</p>
 <h2 id="android"><a class="header" href="#android">Android</a></h2>
 <div class="table-wrapper">
 <table>
@@ -192,10 +192,11 @@ lists the released files and their checksums.</p>
 <tr><td>Android Gradle Plugin</td><td>9.0.0 (Gradle wrapper 9.5.1)</td></tr>
 <tr><td>Kotlin binding runtime</td><td><code>net.java.dev.jna:jna:5.18.1@aar</code> (UniFFI runtime)</td></tr>
 <tr><td>Coroutines</td><td><code>org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2</code></td></tr>
+<tr><td>Compose host</td><td><code>androidx.compose.ui:ui</code> from the application’s Compose BOM, plus <code>androidx.lifecycle:lifecycle-runtime-compose:2.9.4</code>; not required for the <code>AndroidView</code> path</td></tr>
 </tbody>
 </table>
 </div>
-<p>The release ships one AAR:</p>
+<p>The Android distribution is one AAR:</p>
 <ul>
 <li><code>rustic-maps-sdk-android-v0.1.0.aar</code> — the Kotlin bindings, the Rust
 library for arm64-v8a, armeabi-v7a, and x86_64, and the <code>MapView</code> with its
@@ -216,27 +217,26 @@ libraries measure 12 MiB for arm64-v8a, 8.7 MiB for armeabi-v7a, and
 </tbody>
 </table>
 </div>
-<p>The artifact is
+<p>The iOS package is
 <code>rustic-maps-sdk-ios-v0.1.0.xcframework.zip</code>: the XCFramework containing the
 static library, its headers, and module maps, packaged for a Swift Package
-Manager binary target. Each slice measures 217 MiB, and 207 MiB after
+Manager binary target. Each architecture measures 217 MiB, and 207 MiB after
 <code>strip -x</code>. A static archive carries every compiled object, and your final
 link discards unused code, so these archive sizes are not the size your
 application adds.</p>
 <h2 id="react-native"><a class="header" href="#react-native">React Native</a></h2>
-<p>The artifact is <code>rustic-maps-sdk-rn-v0.1.0.tgz</code>, the TurboModule package
-(<code>@angoratek/rustic-maps-sdk</code>). It carries the generated TypeScript surface,
-the JSI C++ glue, the podspec and CMake wiring, and the compiled Rust
-libraries:</p>
+<p>The React Native build produces <code>rustic-maps-sdk-rn-v0.1.0.tgz</code>, the
+TurboModule package (<code>@angoratek/rustic-maps-sdk</code>). It carries the generated
+TypeScript surface, the JSI C++ glue, the podspec and CMake wiring, and the
+compiled Rust libraries:</p>
 <ul>
 <li><code>android/src/main/jniLibs/&lt;abi&gt;/librustic_maps.a</code> for arm64-v8a,
-armeabi-v7a, and x86_64, which the module’s CMake build links;</li>
+armeabi-v7a, and x86_64, linked by the module’s CMake build;</li>
 <li><code>AngoratekRusticMapsSdkFramework.xcframework</code> for arm64 device and arm64
-simulator, which the pod vendors.</li>
+simulator, vendored by the pod.</li>
 </ul>
-<p>The tarball downloads 249 MiB and unpacks to 786 MiB. The static archives
-account for almost all of it; your final link discards the code your app does
-not use.</p>
+<p>The tarball downloads 249 MiB and unpacks to 786 MiB; the static archives
+account for almost all of it, and your final link discards unused code.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -245,7 +245,7 @@ not use.</p>
 <tbody>
 <tr><td>React Native</td><td>0.88 or later</td></tr>
 <tr><td>React</td><td>19 or later</td></tr>
-<tr><td>Android build</td><td>Android Studio with the Android SDK and NDK; set <code>reactNativeArchitectures</code> to arm64-v8a, armeabi-v7a and x86_64, then Gradle compiles the TurboModule C++ and links the packaged archives</td></tr>
+<tr><td>Android build</td><td>Android Studio with the Android SDK and NDK; set <code>reactNativeArchitectures</code> to arm64-v8a, armeabi-v7a and x86_64</td></tr>
 <tr><td>iOS build</td><td>Xcode and CocoaPods; run <code>pod install</code> after installing the package</td></tr>
 <tr><td>Rust toolchain</td><td>not needed; the package carries the compiled libraries</td></tr>
 </tbody>
@@ -254,7 +254,7 @@ not use.</p>
 <p>For a different React Native or React version, regenerate the glue with a
 matching generator version.</p>
 <h2 id="webassembly"><a class="header" href="#webassembly">WebAssembly</a></h2>
-<p>The wasm artifact is one package:</p>
+<p>The WebAssembly build produces one package:</p>
 <ul>
 <li><code>rustic-maps-sdk-web-v0.1.0.tgz</code> — the wasm module, its JavaScript shim,
 both type files, the npm manifest, the licenses and the notices. Install it
@@ -270,27 +270,16 @@ user agent. MDN’s WebGPU page carries the live compatibility table.</p>
 <p><code>rustic-maps-sdk-notices-v0.1.0.md</code> carries the third-party dependency notices
 that accompany your own distribution.</p>
 <h2 id="versions-policy"><a class="header" href="#versions-policy">Versions policy</a></h2>
-<ul>
-<li><strong>Pin exact versions.</strong> Release archives are immutable and carry a version
-in the file name, for example <code>rustic-maps-sdk-android-v0.1.0.aar</code>. Keep the
-version you validated against, and upgrade deliberately.</li>
-<li><strong>One version line.</strong> The Cargo workspace version is the single source of
-truth: the Android Maven publication, the npm packages, and the Swift
-manifest are all stamped from it at release time. The compiled SDK also
-returns its version through <code>getSdkCompiledVersion</code> across the FFI, so your
-diagnostics screen can verify the loaded library matches the artifacts you
-shipped.</li>
-<li><strong>The FFI contract changes addition-only.</strong> Existing members keep their
-signature and meaning, so a minor-version upgrade keeps your compiled
-bindings valid. Packaging changes, such as an artifact-set change or a
-renamed target, bump the minor version while the release is 0.x.</li>
-<li><strong>Semantic versioning from 0.1.0.</strong> A <code>vX.Y.Z</code> tag triggers a release. Tags
-are never moved, and a broken release is superseded by a new tag.</li>
-<li><strong>Checksums and signatures.</strong> Every release carries a per-asset SHA-256
-checksum, an aggregated checksum manifest, and Sigstore signature bundles.
-Verifying them is part of the <a href="downloads.html">Downloads</a> flow.</li>
-</ul>
-<p>The sizes above are measured from the 0.1.0 artifacts.</p>
+<p>Pin exact versions. Release archives are immutable and carry a version in the
+file name, for example <code>rustic-maps-sdk-android-v0.1.0.aar</code>; keep the version
+you validated against and upgrade deliberately. One Cargo workspace version is
+the single source of truth, and <code>getSdkCompiledVersion</code> returns the loaded
+core’s version across the FFI. The FFI contract changes addition-only, so a
+minor upgrade keeps your compiled bindings valid. Every release carries a
+per-asset SHA-256 checksum, an aggregated manifest, and Sigstore bundles; the
+<a href="versions-and-support.html">versions and support</a> page covers the numbering,
+release tracks and verification.</p>
+<p>The sizes above are measured from locally built artifacts.</p>
 
                     </main>
 

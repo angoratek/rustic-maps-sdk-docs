@@ -15,6 +15,39 @@ namespace rustic_maps {
     /// Version of the SDK build, for example `0.12.0`.
     string get_sdk_compiled_version();
 
+    /// Resolves a provider registry capability name to the contract it
+    /// denotes.
+    ///
+    /// A provider descriptor declares the capabilities it serves in
+    /// `served_contracts` with the registry's snake_case names (`geocoding`,
+    /// `distance_matrix`, …). Settings surfaces and registration paths use
+    /// this function instead of their own name tables, so adding a capability
+    /// to the registry never requires editing a platform wrapper.
+    ///
+    /// # Parameters
+    /// - `registry_name` — one entry of a descriptor's `served_contracts`
+    ///   list.
+    ///
+    /// # Returns
+    /// The matching `ProviderContract`, or null when this build's contract
+    /// does not define the name. A registry newer than the SDK may declare a
+    /// capability this build cannot serve; callers skip that entry.
+    ProviderContract? provider_contract_from_registry_name(string registry_name);
+
+    /// Returns the provider registry capability name for a contract.
+    ///
+    /// Every `ProviderContract` variant carries exactly one registry name,
+    /// matching the spelling `served_contracts` uses in the shared provider
+    /// registry.
+    ///
+    /// # Parameters
+    /// - `contract` — the capability to name.
+    ///
+    /// # Returns
+    /// The registry's snake_case storage name (`geocoding`,
+    /// `distance_matrix`, …).
+    string registry_name_for_provider_contract(ProviderContract contract);
+
     /// Projects a geographic coordinate into the normalized world square.
     ///
     /// # Parameters
@@ -99,6 +132,72 @@ namespace rustic_maps {
     /// The default reroute-recalculation policy: a 5 second cooldown and a
     /// 50 meter movement threshold.
     ReroutePolicy default_reroute_policy();
+
+    /// The display text of one maneuver instruction.
+    ///
+    /// The composed display text wins; when it is absent the
+    /// provider-authored display text renders verbatim; when neither exists
+    /// the honest `No instruction text provided` line renders. The
+    /// `Unavailable` instruction-text kind carries null text fields, so it
+    /// renders the same honest line rather than an invented instruction. Use
+    /// this for the then-line; use `instruction_banner_text` for the turn
+    /// banner.
+    ///
+    /// # Parameters
+    /// - `composed_display_text` — the banner variant composed by the
+    ///   contract, when present.
+    /// - `provider_display_text` — the provider-authored display text,
+    ///   verbatim, when present.
+    ///
+    /// # Returns
+    /// The display line, never empty for absent provider text.
+    string instruction_display_text(
+        string? composed_display_text,
+        string? provider_display_text
+    );
+
+    /// The speech text of one maneuver instruction.
+    ///
+    /// The composed speech text wins; when it is absent the provider-authored
+    /// speech text is returned verbatim. When neither exists the maneuver is
+    /// never spoken, so the result is null.
+    ///
+    /// # Parameters
+    /// - `composed_speech_text` — the text-to-speech variant composed by the
+    ///   contract, when present.
+    /// - `provider_speech_text` — the provider-authored speech text,
+    ///   verbatim, when present.
+    ///
+    /// # Returns
+    /// The line to speak verbatim, or null when the provider authored none.
+    string? instruction_speech_text(
+        string? composed_speech_text,
+        string? provider_speech_text
+    );
+
+    /// The turn banner's full instruction line.
+    ///
+    /// The line is the display text (`instruction_display_text`) followed by
+    /// the roundabout exit suffix: ` (exit <index>)` for a roundabout
+    /// maneuver and nothing for every other maneuver. The then-line renders
+    /// the display text alone.
+    ///
+    /// # Parameters
+    /// - `composed_display_text` — the banner variant composed by the
+    ///   contract, when present.
+    /// - `provider_display_text` — the provider-authored display text,
+    ///   verbatim, when present.
+    /// - `roundabout_exit_index` — the structured exit index of a roundabout
+    ///   maneuver, when the contract carries one.
+    ///
+    /// # Returns
+    /// The banner line, including the honest unavailable line when the
+    /// provider authored no display text.
+    string instruction_banner_text(
+        string? composed_display_text,
+        string? provider_display_text,
+        u8? roundabout_exit_index
+    );
 };
 
 /// A position on the WGS 84 ellipsoid in decimal degrees.
@@ -247,6 +346,28 @@ interface MapCamera {
     /// the box spans no positive world area.
     [Throws=SdkError, Name=fit_bounds]
     constructor(BoundingBox bounding_box, ViewportSize viewport, EdgeInsets edge_insets, double maximum_zoom_level);
+
+    /// Eases from `start_camera` toward `target_camera` over `fraction`.
+    ///
+    /// The SDK's one camera-interpolation curve: the fraction is clamped into
+    /// `[0, 1]` and eased with smoothstep, the center travels the shortest
+    /// longitude path in Mercator space, zoom and pitch interpolate linearly,
+    /// and the bearing takes the shortest arc. Fractions at or below zero
+    /// answer `start_camera` verbatim and fractions at or above one answer
+    /// `target_camera` verbatim, so an animation's endpoints are exact.
+    ///
+    /// # Parameters
+    /// - `start_camera` — the pose the interpolation starts from.
+    /// - `target_camera` — the pose the interpolation heads toward.
+    /// - `fraction` — animation progress, clamped into `[0, 1]`.
+    ///
+    /// # Returns
+    /// The camera pose at the eased progress between the two poses.
+    ///
+    /// # Errors
+    /// Throws `InvalidCoordinateInput` when `fraction` is not finite.
+    [Throws=SdkError, Name=interpolate]
+    constructor(MapCamera start_camera, MapCamera target_camera, double fraction);
 
     /// Projects a coordinate to viewport pixels (origin top-left, y down).
     ///
@@ -457,6 +578,43 @@ interface RasterTileProvider {
         RasterImageFormat image_format,
         RasterTileResolution tile_resolution
     );
+};
+
+/// Vector-tile provider contract. Implement this interface and register the
+/// implementation with `MapSdk::register_vector_tile_provider_from_foreign` to
+/// serve the SDK's vector-tile calls.
+///
+/// The provider serves one web-mercator XYZ tileset and reports its tileset
+/// name, attribution, zoom span, wire encoding and style hints through
+/// `source_descriptor`. A provider-backed vector base installed with
+/// `MapView::set_provider_vector_tile_source` then paints that tileset. The
+/// encoding and hints are advisory: each fetched tile reports the encoding
+/// its payload actually arrived in, and the installed style decides the
+/// document.
+[Trait, WithForeign]
+interface VectorTileProvider {
+    /// Describes the served tileset: tileset name, attribution, zoom span,
+    /// wire encoding and style hints.
+    VectorTileSourceDescriptor source_descriptor();
+
+    /// Fetches one web-mercator XYZ vector tile in its wire encoding.
+    ///
+    /// # Parameters
+    /// - `tile_x` — tile column.
+    /// - `tile_y` — tile row, counted from the north.
+    /// - `zoom_level` — zoom level of the tile.
+    ///
+    /// # Returns
+    /// The tile bytes together with the encoding they arrived in.
+    ///
+    /// # Errors
+    /// Throw `SdkError` to report a transport, parsing, rejection or rate
+    /// limit failure, or to refuse a tile outside the served zoom span.
+    ///
+    /// # Async
+    /// Runs asynchronously on behalf of the calling SDK call.
+    [Async, Throws=SdkError]
+    VectorTileData fetch_vector_tile(u32 tile_x, u32 tile_y, u8 zoom_level);
 };
 
 /// Routing contract implemented by foreign code and registered on `MapSdk`
@@ -1020,6 +1178,68 @@ dictionary UrlTemplateRasterTileSource {
     double? refill_tokens_per_second = null;
 };
 
+/// Wire encoding of a vector tile's byte payload.
+///
+/// Tile services commonly serve Mapbox Vector Tile protobuf with
+/// `Content-Encoding: gzip`. A fetched tile reports the encoding it actually
+/// arrived in; a decoder decompresses only `GzippedMapboxVectorTile`.
+enum VectorTileEncoding {
+    "MapboxVectorTile",
+    "GzippedMapboxVectorTile",
+};
+
+/// One HTTP header a vector-tile source's requests carry.
+dictionary SourceHeader {
+    /// Header name.
+    string name;
+    /// Header value.
+    string value;
+};
+
+/// Description of one vector-tileset source a foreign vector-tile provider
+/// serves.
+///
+/// The source name namespaces every cached payload for the tileset, so two
+/// providers, or one provider serving two tilesets, never share cache entries
+/// even for identical zoom/x/y arguments.
+dictionary VectorTileSourceDescriptor {
+    /// Stable unique name of the tileset, used to namespace its cached vector
+    /// payloads so two tilesets serving one address never collide.
+    string source_name;
+    /// Human-readable attribution line the provider's usage terms require
+    /// wherever the imagery is shown.
+    string attribution_text;
+    /// Lowest zoom level the provider serves.
+    u8 minimum_zoom_level;
+    /// Highest zoom level the provider serves.
+    u8 maximum_zoom_level;
+    /// Wire encoding the provider expects this source's tiles to arrive in.
+    /// Advisory: every fetched `VectorTileData` reports the encoding its own
+    /// payload arrived in, and the decoder unwraps by that per-tile value.
+    VectorTileEncoding tile_encoding;
+    /// Style names or families the tileset is designed to be rendered with,
+    /// in the provider's preference order; empty when it declares none. The
+    /// installed style id alone decides which style document paints the
+    /// tiles, and a provider-backed base also treats each hint as an
+    /// additional name that a style document's declared source may use to
+    /// identify this tileset.
+    sequence<string> style_hints;
+};
+
+/// One fetched web-mercator XYZ vector tile.
+dictionary VectorTileData {
+    /// Tile column coordinate at the given zoom level.
+    u32 tile_x;
+    /// Tile row coordinate at the given zoom level.
+    u32 tile_y;
+    /// Zoom level this tile belongs to.
+    u8 zoom_level;
+    /// Wire encoding of the byte payload.
+    VectorTileEncoding tile_encoding;
+    /// Encoded tile bytes: MVT protobuf, optionally gzip-wrapped.
+    sequence<u8> tile_bytes;
+};
+
 /// One provider-neutral vector base-map source: a web-mercator XYZ vector
 /// tileset addressed by a `{z}/{x}/{y}` URL template, painted with one of the
 /// SDK's built-in styles.
@@ -1036,8 +1256,19 @@ dictionary UrlTemplateRasterTileSource {
 /// it paints beneath every overlay the view is asked to draw, so your markers,
 /// routes and location indicator stay above the base map.
 ///
-/// The built-in styles paint fills, lines and circles only; place labels and
-/// road shields are not rendered.
+/// The built-in styles paint fills, lines, circles and place labels, plus
+/// route-reference badges where the style declares a shield block for its
+/// `routes` layer.
+///
+/// An absent optional field declares nothing. The WebAssembly surface never
+/// inherits a provider declaration: every extra is the caller's own, and a
+/// browser request cannot set `User-Agent` or `Referer`, so a header naming
+/// either has no effect there. The native surface additionally inherits the
+/// published declaration of a keyless named tileset when the template matches
+/// one, so that tileset's recorded terms, subdomains, request headers and
+/// style hints survive. The WebAssembly TypeScript projection spells the
+/// optional members as required `T | null` fields, so pass null to declare
+/// none there.
 dictionary UrlTemplateVectorTileSource {
     /// The `{z}/{x}/{y}` URL template the tileset publishes: an absolute
     /// `http`/`https` URL carrying those three placeholders and no other.
@@ -1064,23 +1295,61 @@ dictionary UrlTemplateVectorTileSource {
     /// budget lowers the value here. It must be finite and strictly
     /// positive, or installation throws naming the source.
     double? refill_tokens_per_second = null;
+    /// Terms the tileset's usage policy requires alongside attribution; null
+    /// or empty declares none.
+    string? terms_text = null;
+    /// Values substituted for the template's optional `{s}` placeholder, in
+    /// the source's preference order; null or empty when the template has no
+    /// `{s}`.
+    sequence<string>? subdomains = null;
+    /// Headers every tile request carries, in the order given; null or empty
+    /// sends none. A credential a public template needs belongs here or in
+    /// the template itself.
+    sequence<SourceHeader>? headers = null;
+    /// Style names or families the tileset is designed to be rendered with,
+    /// in the provider's preference order; null or empty when it declares
+    /// none.
+    sequence<string>? style_hints = null;
 };
 
 /// A vector base map served by a provider configured through
-/// `MapSdk.configure_provider_set`. The provider supplies its own tileset
-/// name, attribution line and zoom span; you choose only the provider and
-/// the built-in style the base paints with.
+/// `MapSdk.configure_provider_set`. Native bindings also accept a provider
+/// registered from foreign code through
+/// `MapSdk.register_vector_tile_provider_from_foreign`; the WebAssembly
+/// surface has no foreign-registration seam. The provider supplies its own
+/// tileset name, attribution line and zoom span; you choose only the provider
+/// and the built-in style the base paints with.
 ///
 /// Installing a provider-backed base requires the vector-tile provider to be
 /// registered first and the style id to name a committed style whose schema
 /// matches the provider's tiles; otherwise installation throws naming the
 /// mismatch and leaves any base already installed in force.
 dictionary ProviderVectorTileSource {
-    /// The provider key that `configure_provider_set` registered for vector
-    /// tiles. A different installed provider is refused.
+    /// The provider key that registered the vector-tile provider, as
+    /// `configure_provider_set` records it. Native bindings also accept
+    /// `application` for a provider registered from foreign code; the
+    /// WebAssembly surface has no foreign-registration seam, so a page always
+    /// names a key it configured. A different installed provider is refused.
     string provider_key;
     /// The built-in style id the base paints with.
     string style_id;
+};
+
+/// One vector source's layer accounting for the last resolved frame.
+///
+/// `matched_layer_count` counts the source's style layers whose
+/// `source-layer` the painted tileset carries; a layer that names no source
+/// layer always matches. `drawn_layer_count` counts the source's layers that
+/// painted geometry or placed a label. The two differ when a layer reads a
+/// source layer the tileset does not carry, when its zoom span or visibility
+/// excludes the frame, or when its filter admits no feature.
+dictionary VectorTileSourceLayerCount {
+    /// The style source id the counts belong to.
+    string source_id;
+    /// The source's layers whose source layer the painted tileset carries.
+    u32 matched_layer_count;
+    /// The source's layers that painted in the frame.
+    u32 drawn_layer_count;
 };
 
 /// The vector base source's status: what the view is drawing a styled base
@@ -1108,6 +1377,24 @@ dictionary VectorTileSourceStatus {
     /// The last resolved frame's last tile failure detail; null when the frame
     /// had none (or no frame resolved yet).
     string? last_failure_detail;
+    /// Every unsupported-property diagnostic the installed style produced,
+    /// including a known layer kind this renderer cannot paint; zero when no
+    /// source is configured.
+    u32 unsupported_property_count;
+    /// The distinct unsupported properties, scope-qualified (`layer "id":
+    /// property`, `source "id": property` or `document: property`) and sorted.
+    /// The list is capped at 32 names so a large vendor document cannot grow
+    /// the readback without bound; the count still reports every diagnostic.
+    sequence<string> unsupported_property_names;
+    /// The assets that fell back to a degraded draw: a declared sprite the
+    /// install could not fetch, a declared glyph endpoint whose ranges did not
+    /// pack, or a declared source of a kind the vector base cannot draw. Names
+    /// are sorted and capped at 16; empty when no source is configured.
+    sequence<string> degraded_asset_names;
+    /// Each referenced source's layer accounting for the last resolved frame,
+    /// sorted by source id. Empty before the first frame resolves or when no
+    /// source is configured.
+    sequence<VectorTileSourceLayerCount> source_layer_counts;
 };
 
 /// Provider entry point of the SDK: resolves every call through the providers
@@ -1118,9 +1405,10 @@ dictionary VectorTileSourceStatus {
 /// registered provider throws `ProviderNotConfigured` naming the contract.
 ///
 /// The calls cover geocoding (forward and reverse), routing, distance matrix,
-/// place search, traffic incidents, traffic flow and raster tiles. Elevation
-/// and offline routing have no provider contract here: offline routing is the
-/// standalone `offline_route_from_archive_bytes` function.
+/// place search, traffic incidents, traffic flow, raster tiles and vector
+/// tiles. Elevation and offline routing have no provider contract here:
+/// offline routing is the standalone `offline_route_from_archive_bytes`
+/// function.
 interface MapSdk {
     /// Creates the SDK with no providers registered. Register providers before
     /// the first call that needs one.
@@ -1133,6 +1421,17 @@ interface MapSdk {
     /// Registers a raster-tile implementation. The provider starts serving
     /// `fetch_raster_tile` once this call returns.
     void register_raster_tile_provider_from_foreign(RasterTileProvider raster_tile_provider);
+
+    /// Registers a vector-tile implementation written in application code.
+    /// The provider starts serving `fetch_vector_tile` once this call returns,
+    /// and `MapView::set_provider_vector_tile_source` installs a base from it
+    /// when the source names the application key `application`.
+    void register_vector_tile_provider_from_foreign(VectorTileProvider vector_tile_provider);
+
+    /// Reports whether a vector-tile provider is registered: `true` once
+    /// `register_vector_tile_provider_from_foreign` has returned, `false`
+    /// while the slot is empty.
+    boolean vector_tile_provider_is_registered();
 
     /// Registers a routing implementation. The provider starts serving
     /// `calculate_route` once this call returns.
@@ -1570,6 +1869,20 @@ interface MapSdk {
     /// is registered or the registered provider owns its own freshness policy
     /// and answers uncached.
     TrafficFlowCacheStatistics? traffic_flow_cache_statistics();
+
+    /// Reads the installed tile payload cache's exact counters and occupancy,
+    /// for a diagnostics panel or a developer console.
+    ///
+    /// Both the raster base and the vector base fetch through the same
+    /// installed store, so one counter pair covers every payload lookup: a
+    /// hit was answered without a provider request and a miss went to the
+    /// provider (including a store read failure that degraded to a fetch).
+    /// The readback is read-only and never mutates the cache.
+    ///
+    /// # Returns
+    /// The counters and occupancy, or null when no tile cache is installed,
+    /// which is every browser session and a keyless native session.
+    TileCacheStatistics? tile_cache_statistics();
 };
 
 /// The effective raster-tile caching terms of the installed cache, shaped for
@@ -1610,6 +1923,21 @@ dictionary TrafficFlowCacheStatistics {
     u64 maximum_entry_count;
     /// Seconds a stored cell stays fresh.
     u64 time_to_live_seconds;
+};
+
+/// The installed tile payload cache's exact counters and occupancy, shaped
+/// for a diagnostics readback: the hits and misses prove a payload was
+/// answered without asking the provider, and the stored bytes show how much
+/// the cache holds now.
+dictionary TileCacheStatistics {
+    /// Payload lookups the store answered without a provider request.
+    u64 hit_count;
+    /// Payload lookups the store could not answer, including a failed store
+    /// read that degraded to a provider request.
+    u64 miss_count;
+    /// Bytes currently stored, or null when the store's occupancy could not
+    /// be read.
+    u64? stored_byte_count;
 };
 
 // ---------------------------------------------------------------------------
@@ -2393,6 +2721,59 @@ interface MapView {
     /// Builds the view over the SDK state it draws from.
     constructor(MapSdk map_sdk);
 
+    /// Reads the camera pose the view holds. The pose starts at zero
+    /// latitude and longitude, zoom 2, north-up and top-down, and every
+    /// `set_camera`, `fit_bounds` or accepted gesture transform updates it.
+    ///
+    /// The view stores its own pose so a platform wrapper reports the same
+    /// value it hands to `draw`; drawing itself still receives the pose as an
+    /// argument.
+    ///
+    /// # Returns
+    /// The current camera pose.
+    MapCamera camera();
+
+    /// Adopts `camera` as the view's current pose. The pose is already
+    /// validated (its constructor clamps zoom and pitch and wraps the
+    /// bearing), so adopting it cannot fail and never changes an overlay.
+    ///
+    /// # Parameters
+    /// - `camera` — the pose following frames and readbacks report.
+    void set_camera(MapCamera camera);
+
+    /// Frames `bounding_box` inside the attached viewport's inset region
+    /// (top-down and north-up by construction) and adopts the fitted camera.
+    ///
+    /// # Parameters
+    /// - `bounding_box` — the area to frame.
+    /// - `edge_insets` — pixels kept clear on each viewport edge.
+    /// - `maximum_zoom_level` — upper zoom bound for the fitted camera.
+    ///
+    /// # Returns
+    /// The adopted camera, or null when no surface viewport is attached yet;
+    /// nothing changes in that case.
+    ///
+    /// # Errors
+    /// Throws `InvalidCoordinateInput` when the bounding box is not
+    /// canonical, the insets are negative or unusable, the maximum zoom is
+    /// not finite, or the box spans no positive world area. A refused fit
+    /// keeps the previous camera.
+    [Throws=SdkError]
+    MapCamera? fit_bounds(BoundingBox bounding_box, EdgeInsets edge_insets, double maximum_zoom_level);
+
+    /// Reads the geographic bounds of the attached viewport at the current
+    /// camera pose.
+    ///
+    /// The four viewport corners are unprojected through the current camera.
+    /// A steep pitch can put the far corner below the horizon; when fewer
+    /// than three corners reach the ground, the camera's own ground scale
+    /// bounds a box around its center instead.
+    ///
+    /// # Returns
+    /// The viewport's geographic bounds, or null when no surface viewport is
+    /// attached or the projection cannot answer.
+    BoundingBox? camera_geographic_bounds();
+
     /// Attaches the platform surface at the given initial physical-pixel
     /// extent. The extent must be non-zero; a platform view that is not laid
     /// out yet waits for `resize`. The call validates the handle, acquires the
@@ -2634,10 +3015,15 @@ interface MapView {
     void set_vector_tile_source(UrlTemplateVectorTileSource source);
 
     /// Installs a vector base map served by a provider registered with
-    /// `MapSdk.configure_provider_set` for the vector-tiles capability. The
-    /// provider supplies the tileset name, attribution line and zoom span its
+    /// `MapSdk.configure_provider_set` for the vector-tiles capability, or by
+    /// `MapSdk.register_vector_tile_provider_from_foreign`. The provider
+    /// supplies the tileset name, attribution line and zoom span its
     /// descriptor declares; the source record names only the provider and the
     /// built-in style.
+    ///
+    /// A provider registered from foreign code is selected under the
+    /// application key `application`, so `source.provider_key` must carry that
+    /// key to resolve it.
     ///
     /// The whole source builds before the view changes, so a refused call
     /// (no vector-tile provider registered, a source naming a different
@@ -3061,6 +3447,42 @@ interface OfflineManager {
     [Throws=SdkError]
     void set_tile_time_to_live(u64 time_to_live_seconds);
 
+    /// Reserves a payload-byte budget for tile packs beside the general
+    /// LRU cache. Every later `download_region` enforces it: a download that
+    /// would take its pack past the budget stops, keeps the tiles already
+    /// stored and their membership, and reports `CacheOperationFailure`; a
+    /// later call under a raised budget resumes the remaining tiles.
+    ///
+    /// The budget is its own reserve, so ordinary cache eviction never frees
+    /// a present pack tile, and the structural 65,536-tile cap remains the
+    /// only tile-count limit. A region download that would exceed the
+    /// provider's own cache retention terms stores at those terms exactly as
+    /// before.
+    ///
+    /// # Parameters
+    /// - `byte_budget` — maximum payload bytes the packs may hold.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed and `InvalidCoordinateInput` for a zero budget, which would
+    /// refuse every pack download.
+    [Throws=SdkError]
+    void set_tile_pack_byte_budget(u64 byte_budget);
+
+    /// Reads the effective payload-byte budget reserved for tile packs. The
+    /// value is the last accepted reservation, or the SDK default when the
+    /// application has not reserved one; the readback never changes the
+    /// cache.
+    ///
+    /// # Returns
+    /// The effective pack byte budget in bytes.
+    ///
+    /// # Errors
+    /// Throws `ProviderNotConfigured` naming `TileCache` when no tile cache is
+    /// installed.
+    [Throws=SdkError]
+    u64 tile_pack_byte_budget();
+
     /// Answers how many tiles the region enumerates, so a settings surface can
     /// warn about a large download before starting it. The call only validates
     /// the definition and enumerates tiles; nothing is written.
@@ -3267,6 +3689,9 @@ interface PositionController {
     /// degrees clockwise from true north, or null when no fix carried a
     /// course.
     double? smoothed_course_degrees();
+
+    /// The age after which the controller considers a fix stale, in seconds.
+    double stale_after_seconds();
 
     /// Whether the latest fix is older than the staleness threshold at
     /// `now_seconds`. A fix without a timestamp is never stale.

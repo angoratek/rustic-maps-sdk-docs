@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["PROVIDER_ENTRIES"],"enum":["Contract"],"fn":["build_vendor","entry_for_key"],"struct":["ProviderEntry","VendorImplementations"]};
+window.SIDEBAR_ITEMS = {"constant":["MAPBOX_FONTS_URI_PREFIX","MAPBOX_SPRITES_URI_PREFIX","PROVIDER_ENTRIES"],"enum":["Contract"],"fn":["build_vendor","entry_for_key","resolve_mapbox_style_resource_address"],"struct":["ProviderEntry","VendorImplementations"]};

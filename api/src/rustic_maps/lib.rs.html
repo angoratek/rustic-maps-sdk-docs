@@ -80,82 +80,98 @@
 <a href=#80 id=80 data-nosnippet>80</a><span class="kw">pub mod </span>engines;
 <a href=#81 id=81 data-nosnippet>81</a><span class="kw">pub mod </span>error;
 <a href=#82 id=82 data-nosnippet>82</a><span class="kw">pub mod </span>foreign_providers;
-<a href=#83 id=83 data-nosnippet>83</a><span class="kw">pub mod </span>navigation;
-<a href=#84 id=84 data-nosnippet>84</a><span class="kw">pub mod </span>offline_routing;
-<a href=#85 id=85 data-nosnippet>85</a><span class="kw">pub mod </span>panic_boundary;
-<a href=#86 id=86 data-nosnippet>86</a><span class="doccomment">/// The platform window-handle lowering onto `wgpu`'s unsafe surface target:
-<a href=#87 id=87 data-nosnippet>87</a>/// native-only, like the surface renderer it feeds.
-<a href=#88 id=88 data-nosnippet>88</a></span><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
-<a href=#89 id=89 data-nosnippet>89</a></span><span class="kw">pub mod </span>platform_surface;
-<a href=#90 id=90 data-nosnippet>90</a><span class="kw">pub mod </span>positioning;
-<a href=#91 id=91 data-nosnippet>91</a><span class="kw">pub mod </span>projection;
-<a href=#92 id=92 data-nosnippet>92</a><span class="kw">pub mod </span>provider;
-<a href=#93 id=93 data-nosnippet>93</a><span class="kw">pub mod </span>provider_catalog;
-<a href=#94 id=94 data-nosnippet>94</a><span class="kw">pub mod </span>provider_diagnostics;
-<a href=#95 id=95 data-nosnippet>95</a><span class="kw">pub mod </span>records;
-<a href=#96 id=96 data-nosnippet>96</a><span class="kw">pub mod </span>runtime;
-<a href=#97 id=97 data-nosnippet>97</a><span class="kw">pub mod </span>simulation;
-<a href=#98 id=98 data-nosnippet>98</a><span class="doccomment">/// The native surface view over `rustic-maps-rendering`'s surface renderer.
-<a href=#99 id=99 data-nosnippet>99</a></span><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
-<a href=#100 id=100 data-nosnippet>100</a></span><span class="kw">pub mod </span>surface_view;
-<a href=#101 id=101 data-nosnippet>101</a>
-<a href=#102 id=102 data-nosnippet>102</a><span class="kw">pub use </span><span class="kw">crate</span>::camera::MapCamera;
-<a href=#103 id=103 data-nosnippet>103</a><span class="kw">pub use </span><span class="kw">crate</span>::diagnostics::SdkDiagnosticEventListener;
-<a href=#104 id=104 data-nosnippet>104</a><span class="kw">pub use </span><span class="kw">crate</span>::engines::{
-<a href=#105 id=105 data-nosnippet>105</a>    Diagnostics, OfflineManager, RegionDownloadProgressListener, RoutingEngine, SearchEngine,
-<a href=#106 id=106 data-nosnippet>106</a>};
-<a href=#107 id=107 data-nosnippet>107</a><span class="kw">pub use </span><span class="kw">crate</span>::error::SdkError;
-<a href=#108 id=108 data-nosnippet>108</a><span class="kw">pub use </span><span class="kw">crate</span>::foreign_providers::{
-<a href=#109 id=109 data-nosnippet>109</a>    DistanceMatrixProvider, ElevationProvider, GeocodingProvider, RasterTileProvider,
-<a href=#110 id=110 data-nosnippet>110</a>    RoutingProvider, SearchPlaceProvider, TrafficFlowProvider, TrafficIncidentProvider,
-<a href=#111 id=111 data-nosnippet>111</a>};
-<a href=#112 id=112 data-nosnippet>112</a><span class="kw">pub use </span><span class="kw">crate</span>::navigation::{
-<a href=#113 id=113 data-nosnippet>113</a>    NavigationListener, Navigator, Subscription, default_deviation_policy, default_reroute_policy,
-<a href=#114 id=114 data-nosnippet>114</a>    default_step_advance_policy,
-<a href=#115 id=115 data-nosnippet>115</a>};
-<a href=#116 id=116 data-nosnippet>116</a><span class="kw">pub use </span><span class="kw">crate</span>::offline_routing::offline_route_from_archive_bytes;
-<a href=#117 id=117 data-nosnippet>117</a><span class="kw">pub use </span><span class="kw">crate</span>::positioning::PositionController;
-<a href=#118 id=118 data-nosnippet>118</a><span class="kw">pub use </span><span class="kw">crate</span>::projection::{
-<a href=#119 id=119 data-nosnippet>119</a>    coordinate_to_normalized_world, tile_key_for_coordinate, tiles_covering,
-<a href=#120 id=120 data-nosnippet>120</a>};
-<a href=#121 id=121 data-nosnippet>121</a><span class="kw">pub use </span><span class="kw">crate</span>::provider::MapSdk;
-<a href=#122 id=122 data-nosnippet>122</a><span class="kw">pub use </span><span class="kw">crate</span>::records::{
-<a href=#123 id=123 data-nosnippet>123</a>    ActiveManeuverInstruction, AvoidOptions, BoundingBox, DeviationGradeKind, DeviationInfo,
-<a href=#124 id=124 data-nosnippet>124</a>    DeviationPolicy, DeviationPolicyKind, DeviationStatusChange, DeviationStatusChangeKind,
-<a href=#125 id=125 data-nosnippet>125</a>    DistanceMatrix, DistanceMatrixEntry, DistancePhrase, DistancePhraseKind, DistanceUnit,
-<a href=#126 id=126 data-nosnippet>126</a>    EdgeInsets, ElevationPoint, FrameStatistics, GeocodeQuality, GeographicCoordinate,
-<a href=#127 id=127 data-nosnippet>127</a>    LocationIndicatorState, LocationIndicatorStyle, LocationIndicatorVisualKind, LogEvent,
-<a href=#128 id=128 data-nosnippet>128</a>    ManeuverInstructionText, ManeuverInstructionTextKind, MapOverlay, MapOverlayKind,
-<a href=#129 id=129 data-nosnippet>129</a>    NavigationInstruction, NavigationLocationUpdate, NavigationPhase, NavigationPhaseChange,
-<a href=#130 id=130 data-nosnippet>130</a>    NormalizedWorldCoordinate, OverlayColor, Place, PositionFix, PositionSourceError,
-<a href=#131 id=131 data-nosnippet>131</a>    ProviderContract, ProviderFailureClassification, ProviderFailureDiagnostic,
-<a href=#132 id=132 data-nosnippet>132</a>    ProviderRegistration, ProviderRequestTrace, ProviderVectorTileSource, RasterImageFormat,
-<a href=#133 id=133 data-nosnippet>133</a>    RasterTileData, RasterTileResolution, RegionDefinition, RegionDownloadPhase,
-<a href=#134 id=134 data-nosnippet>134</a>    RegionDownloadProgress, RegionRecord, RegionRemovalReport, ReroutePolicy, Route,
-<a href=#135 id=135 data-nosnippet>135</a>    RouteCapabilities, RouteLeg, RouteOptions, RouteStep, RouteStepPosition, RouteStrategy,
-<a href=#136 id=136 data-nosnippet>136</a>    ScreenPoint, SdkLogSeverity, SimulatedTripFix, SimulatedTripPace, SpeechInstruction,
-<a href=#137 id=137 data-nosnippet>137</a>    SpeechInstructionKind, StepAdvancePolicy, StepAdvancePolicyKind, SurfaceHandle, TileCacheTerms,
-<a href=#138 id=138 data-nosnippet>138</a>    TileKey, TrafficFlowCacheStatistics, TrafficFlowCongestionLevel, TrafficFlowData,
-<a href=#139 id=139 data-nosnippet>139</a>    TrafficIncident, TrafficIncidentSeverity, TrafficIncidentType, TransportationMode,
-<a href=#140 id=140 data-nosnippet>140</a>    TripNavigationState, TripProgress, UnitSystem, UpcomingManeuverInstruction,
-<a href=#141 id=141 data-nosnippet>141</a>    UrlTemplateRasterTileSource, UrlTemplateVectorTileSource, VectorTileSourceStatus, ViewportSize,
-<a href=#142 id=142 data-nosnippet>142</a>};
-<a href=#143 id=143 data-nosnippet>143</a><span class="kw">pub use </span><span class="kw">crate</span>::simulation::RouteSimulator;
-<a href=#144 id=144 data-nosnippet>144</a><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
-<a href=#145 id=145 data-nosnippet>145</a></span><span class="kw">pub use </span><span class="kw">crate</span>::surface_view::MapView;
-<a href=#146 id=146 data-nosnippet>146</a>
-<a href=#147 id=147 data-nosnippet>147</a><span class="doccomment">/// Version of the compiled SDK, equal to the workspace package version.
-<a href=#148 id=148 data-nosnippet>148</a></span><span class="kw">pub const </span>SDK_COMPILED_VERSION: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>);
-<a href=#149 id=149 data-nosnippet>149</a>
-<a href=#150 id=150 data-nosnippet>150</a><span class="doccomment">/// Version of the compiled SDK, surfaced for diagnostics, mirroring
-<a href=#151 id=151 data-nosnippet>151</a>/// `rustic-maps-web-bindings`' same-named export.
-<a href=#152 id=152 data-nosnippet>152</a></span><span class="kw">pub fn </span>get_sdk_compiled_version() -&gt; String {
-<a href=#153 id=153 data-nosnippet>153</a>    SDK_COMPILED_VERSION.to_string()
-<a href=#154 id=154 data-nosnippet>154</a>}
-<a href=#155 id=155 data-nosnippet>155</a>
-<a href=#156 id=156 data-nosnippet>156</a><span class="comment">// Scaffolding generated at build time from the frozen UDL. The contract is
-<a href=#157 id=157 data-nosnippet>157</a>// compiled on every target; the build script excludes only the native surface
-<a href=#158 id=158 data-nosnippet>158</a>// `MapView` interface from the wasm scaffolding, because the browser owns the
-<a href=#159 id=159 data-nosnippet>159</a>// surface in the hand-written canvas class.
-<a href=#160 id=160 data-nosnippet>160</a></span><span class="macro">uniffi::include_scaffolding!</span>(<span class="string">"rustic_maps"</span>);
+<a href=#83 id=83 data-nosnippet>83</a><span class="kw">pub mod </span>instruction;
+<a href=#84 id=84 data-nosnippet>84</a><span class="kw">pub mod </span>navigation;
+<a href=#85 id=85 data-nosnippet>85</a><span class="kw">pub mod </span>offline_routing;
+<a href=#86 id=86 data-nosnippet>86</a><span class="kw">pub mod </span>panic_boundary;
+<a href=#87 id=87 data-nosnippet>87</a><span class="doccomment">/// The platform window-handle lowering onto `wgpu`'s unsafe surface target:
+<a href=#88 id=88 data-nosnippet>88</a>/// native-only, like the surface renderer it feeds.
+<a href=#89 id=89 data-nosnippet>89</a></span><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
+<a href=#90 id=90 data-nosnippet>90</a></span><span class="kw">pub mod </span>platform_surface;
+<a href=#91 id=91 data-nosnippet>91</a><span class="kw">pub mod </span>positioning;
+<a href=#92 id=92 data-nosnippet>92</a><span class="kw">pub mod </span>projection;
+<a href=#93 id=93 data-nosnippet>93</a><span class="kw">pub mod </span>provider;
+<a href=#94 id=94 data-nosnippet>94</a><span class="kw">pub mod </span>provider_catalog;
+<a href=#95 id=95 data-nosnippet>95</a><span class="kw">pub mod </span>provider_contract_names;
+<a href=#96 id=96 data-nosnippet>96</a><span class="kw">pub mod </span>provider_diagnostics;
+<a href=#97 id=97 data-nosnippet>97</a><span class="kw">pub mod </span>records;
+<a href=#98 id=98 data-nosnippet>98</a><span class="kw">pub mod </span>runtime;
+<a href=#99 id=99 data-nosnippet>99</a><span class="kw">pub mod </span>simulation;
+<a href=#100 id=100 data-nosnippet>100</a><span class="doccomment">/// The native surface view over `rustic-maps-rendering`'s surface renderer.
+<a href=#101 id=101 data-nosnippet>101</a></span><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
+<a href=#102 id=102 data-nosnippet>102</a></span><span class="kw">pub mod </span>surface_view;
+<a href=#103 id=103 data-nosnippet>103</a>
+<a href=#104 id=104 data-nosnippet>104</a><span class="kw">pub use </span><span class="kw">crate</span>::camera::MapCamera;
+<a href=#105 id=105 data-nosnippet>105</a><span class="kw">pub use </span><span class="kw">crate</span>::diagnostics::SdkDiagnosticEventListener;
+<a href=#106 id=106 data-nosnippet>106</a><span class="kw">pub use </span><span class="kw">crate</span>::engines::{
+<a href=#107 id=107 data-nosnippet>107</a>    Diagnostics, OfflineManager, RegionDownloadProgressListener, RoutingEngine, SearchEngine,
+<a href=#108 id=108 data-nosnippet>108</a>};
+<a href=#109 id=109 data-nosnippet>109</a><span class="kw">pub use </span><span class="kw">crate</span>::error::SdkError;
+<a href=#110 id=110 data-nosnippet>110</a><span class="kw">pub use </span><span class="kw">crate</span>::foreign_providers::{
+<a href=#111 id=111 data-nosnippet>111</a>    DistanceMatrixProvider, ElevationProvider, GeocodingProvider, RasterTileProvider,
+<a href=#112 id=112 data-nosnippet>112</a>    RoutingProvider, SearchPlaceProvider, TrafficFlowProvider, TrafficIncidentProvider,
+<a href=#113 id=113 data-nosnippet>113</a>    VectorTileProvider,
+<a href=#114 id=114 data-nosnippet>114</a>};
+<a href=#115 id=115 data-nosnippet>115</a><span class="kw">pub use </span><span class="kw">crate</span>::instruction::{
+<a href=#116 id=116 data-nosnippet>116</a>    instruction_banner_text, instruction_display_text, instruction_speech_text,
+<a href=#117 id=117 data-nosnippet>117</a>};
+<a href=#118 id=118 data-nosnippet>118</a><span class="kw">pub use </span><span class="kw">crate</span>::navigation::{
+<a href=#119 id=119 data-nosnippet>119</a>    NavigationListener, Navigator, Subscription, default_deviation_policy, default_reroute_policy,
+<a href=#120 id=120 data-nosnippet>120</a>    default_step_advance_policy,
+<a href=#121 id=121 data-nosnippet>121</a>};
+<a href=#122 id=122 data-nosnippet>122</a><span class="kw">pub use </span><span class="kw">crate</span>::offline_routing::offline_route_from_archive_bytes;
+<a href=#123 id=123 data-nosnippet>123</a><span class="kw">pub use </span><span class="kw">crate</span>::positioning::PositionController;
+<a href=#124 id=124 data-nosnippet>124</a><span class="kw">pub use </span><span class="kw">crate</span>::projection::{
+<a href=#125 id=125 data-nosnippet>125</a>    coordinate_to_normalized_world, tile_key_for_coordinate, tiles_covering,
+<a href=#126 id=126 data-nosnippet>126</a>};
+<a href=#127 id=127 data-nosnippet>127</a><span class="kw">pub use </span><span class="kw">crate</span>::provider::MapSdk;
+<a href=#128 id=128 data-nosnippet>128</a><span class="kw">pub use </span><span class="kw">crate</span>::provider_contract_names::{
+<a href=#129 id=129 data-nosnippet>129</a>    provider_contract_from_registry_name, registry_name_for_provider_contract,
+<a href=#130 id=130 data-nosnippet>130</a>};
+<a href=#131 id=131 data-nosnippet>131</a><span class="kw">pub use </span><span class="kw">crate</span>::records::{
+<a href=#132 id=132 data-nosnippet>132</a>    ActiveManeuverInstruction, AvoidOptions, BoundingBox, DeviationGradeKind, DeviationInfo,
+<a href=#133 id=133 data-nosnippet>133</a>    DeviationPolicy, DeviationPolicyKind, DeviationStatusChange, DeviationStatusChangeKind,
+<a href=#134 id=134 data-nosnippet>134</a>    DistanceMatrix, DistanceMatrixEntry, DistancePhrase, DistancePhraseKind, DistanceUnit,
+<a href=#135 id=135 data-nosnippet>135</a>    EdgeInsets, ElevationPoint, FrameStatistics, GeocodeQuality, GeographicCoordinate,
+<a href=#136 id=136 data-nosnippet>136</a>    LocationIndicatorState, LocationIndicatorStyle, LocationIndicatorVisualKind, LogEvent,
+<a href=#137 id=137 data-nosnippet>137</a>    ManeuverInstructionText, ManeuverInstructionTextKind, MapOverlay, MapOverlayKind,
+<a href=#138 id=138 data-nosnippet>138</a>    NavigationInstruction, NavigationLocationUpdate, NavigationPhase, NavigationPhaseChange,
+<a href=#139 id=139 data-nosnippet>139</a>    NormalizedWorldCoordinate, OverlayColor, Place, PositionFix, PositionSourceError,
+<a href=#140 id=140 data-nosnippet>140</a>    ProviderContract, ProviderFailureClassification, ProviderFailureDiagnostic,
+<a href=#141 id=141 data-nosnippet>141</a>    ProviderRegistration, ProviderRequestTrace, ProviderVectorTileSource, RasterImageFormat,
+<a href=#142 id=142 data-nosnippet>142</a>    RasterTileData, RasterTileResolution, RegionDefinition, RegionDownloadPhase,
+<a href=#143 id=143 data-nosnippet>143</a>    RegionDownloadProgress, RegionRecord, RegionRemovalReport, ReroutePolicy, Route,
+<a href=#144 id=144 data-nosnippet>144</a>    RouteCapabilities, RouteLeg, RouteOptions, RouteStep, RouteStepPosition, RouteStrategy,
+<a href=#145 id=145 data-nosnippet>145</a>    ScreenPoint, SdkLogSeverity, SimulatedTripFix, SimulatedTripPace, SourceHeader,
+<a href=#146 id=146 data-nosnippet>146</a>    SpeechInstruction, SpeechInstructionKind, StepAdvancePolicy, StepAdvancePolicyKind,
+<a href=#147 id=147 data-nosnippet>147</a>    SurfaceHandle, TileCacheStatistics, TileCacheTerms, TileKey, TrafficFlowCacheStatistics,
+<a href=#148 id=148 data-nosnippet>148</a>    TrafficFlowCongestionLevel, TrafficFlowData, TrafficIncident, TrafficIncidentSeverity,
+<a href=#149 id=149 data-nosnippet>149</a>    TrafficIncidentType, TransportationMode, TripNavigationState, TripProgress, UnitSystem,
+<a href=#150 id=150 data-nosnippet>150</a>    UpcomingManeuverInstruction, UrlTemplateRasterTileSource, UrlTemplateVectorTileSource,
+<a href=#151 id=151 data-nosnippet>151</a>    VectorTileData, VectorTileEncoding, VectorTileSourceDescriptor, VectorTileSourceLayerCount,
+<a href=#152 id=152 data-nosnippet>152</a>    VectorTileSourceStatus, ViewportSize,
+<a href=#153 id=153 data-nosnippet>153</a>};
+<a href=#154 id=154 data-nosnippet>154</a><span class="kw">pub use </span><span class="kw">crate</span>::simulation::RouteSimulator;
+<a href=#155 id=155 data-nosnippet>155</a><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
+<a href=#156 id=156 data-nosnippet>156</a></span><span class="kw">pub use </span><span class="kw">crate</span>::surface_view::MapView;
+<a href=#157 id=157 data-nosnippet>157</a>
+<a href=#158 id=158 data-nosnippet>158</a><span class="doccomment">/// Version of the compiled SDK, equal to the workspace package version.
+<a href=#159 id=159 data-nosnippet>159</a></span><span class="kw">pub const </span>SDK_COMPILED_VERSION: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>);
+<a href=#160 id=160 data-nosnippet>160</a>
+<a href=#161 id=161 data-nosnippet>161</a><span class="doccomment">/// Version of the compiled SDK, surfaced for diagnostics, mirroring
+<a href=#162 id=162 data-nosnippet>162</a>/// `rustic-maps-web-bindings`' same-named export.
+<a href=#163 id=163 data-nosnippet>163</a></span><span class="kw">pub fn </span>get_sdk_compiled_version() -&gt; String {
+<a href=#164 id=164 data-nosnippet>164</a>    SDK_COMPILED_VERSION.to_string()
+<a href=#165 id=165 data-nosnippet>165</a>}
+<a href=#166 id=166 data-nosnippet>166</a>
+<a href=#167 id=167 data-nosnippet>167</a><span class="comment">// Scaffolding generated at build time from the committed UDL. The contract is
+<a href=#168 id=168 data-nosnippet>168</a>// compiled on every target: natively from the frozen contract, and on wasm
+<a href=#169 id=169 data-nosnippet>169</a>// from `rustic_maps_wasm.udl`, which is the same contract without the native
+<a href=#170 id=170 data-nosnippet>170</a>// surface `MapView` interface (the browser owns the surface in the
+<a href=#171 id=171 data-nosnippet>171</a>// hand-written canvas class).
+<a href=#172 id=172 data-nosnippet>172</a></span><span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
+<a href=#173 id=173 data-nosnippet>173</a></span><span class="macro">uniffi::include_scaffolding!</span>(<span class="string">"rustic_maps_wasm"</span>);
+<a href=#174 id=174 data-nosnippet>174</a>
+<a href=#175 id=175 data-nosnippet>175</a><span class="attr">#[cfg(not(target_arch = <span class="string">"wasm32"</span>))]
+<a href=#176 id=176 data-nosnippet>176</a></span><span class="macro">uniffi::include_scaffolding!</span>(<span class="string">"rustic_maps"</span>);
 </code></pre></div></section></main></body></html>

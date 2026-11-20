@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["provider_contract_from_registry_name","registry_name_for_provider_contract"]};

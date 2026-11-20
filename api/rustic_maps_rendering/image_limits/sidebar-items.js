@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAXIMUM_IMAGE_ALLOCATION_BYTES","MAXIMUM_IMAGE_HEIGHT_PIXELS","MAXIMUM_IMAGE_WIDTH_PIXELS"],"enum":["ImageDecodeError"],"fn":["decode_image_with_limits"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAXIMUM_TILE_PACK_TILE_COUNT"],"fn":["enumerate_region_tiles"],"struct":["TilePackDescription","TilePackManager","TilePackProgress","TilePackRecord","TilePackRemovalReport","TilePackTileAddress"]};
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_TILE_PACK_BYTE_BUDGET_BYTES","MAXIMUM_TILE_PACK_TILE_COUNT"],"fn":["enumerate_region_tiles"],"struct":["TilePackDescription","TilePackManager","TilePackProgress","TilePackRecord","TilePackRemovalReport","TilePackTileAddress"]};
